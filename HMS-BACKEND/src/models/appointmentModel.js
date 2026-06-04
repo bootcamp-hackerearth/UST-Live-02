@@ -1,0 +1,63 @@
+const mongoose = require('mongoose');
+const Counter = require('./counterModel');
+
+const appointmentSchema = new mongoose.Schema({
+  appointmentId: {
+    type: String,
+    unique: true,
+    trim: true,
+  },
+  patientId: {
+    type: String,
+    ref: 'Patient',
+    required: [true, 'Patient Id is required'],
+  },
+  doctorEmployeeId: {
+    type: String,
+    ref: 'Employee',
+    required: [true, 'Doctor ID is required'],
+  },
+  date: {
+    type: Date,
+    required: [true, 'Appointment date is required'],
+  },
+  timeSlot: {
+    type: String,
+    required: [true, 'Time slot is required'],
+    trim: true,
+    match: [
+      /^\d{2}:\d{2}-\d{2}:\d{2}$/,
+      'Time slot must be in HH:MM-HH:MM format (e.g. 09:00-09:30)',
+    ],
+  },
+  status: {
+    type: String,
+    enum: {
+      values: ['BOOKED', 'CANCELLED', 'COMPLETED'],
+      message: 'Status must be BOOKED, CANCELLED, or COMPLETED',
+    },
+    default: 'BOOKED',
+  },
+  createdByEmployeeId: {
+    type: String,
+    ref: 'Employee',
+    required: [true, 'Created by Employee ID is required'],
+  },
+
+});
+
+appointmentSchema.pre('save', async function (next) {
+  try {
+    if (!this.appointmentId) {
+      const seq = await Counter.getNextSequence('appointmentId');
+
+      this.appointmentId = `APT-${String(seq).padStart(4, '0')}`;
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+module.exports = mongoose.model('Appointment', appointmentSchema);
