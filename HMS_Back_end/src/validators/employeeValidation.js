@@ -68,7 +68,14 @@ const validateSlot = (slot, seen, byDay) => {
 const employeeBaseValidators = [
   body("username").notEmpty().withMessage("Username is required"),
 
-  body("name").notEmpty().withMessage("Name is required"),
+  body("name")
+    .trim()
+    .notEmpty()
+    .withMessage("Name is required")
+    .isLength({ min: 3 })
+    .withMessage("Name must be at least 3 characters long")
+    .matches(/^[A-Za-z\s]+$/)
+    .withMessage("Name must contain only alphabets and spaces"),
 
   body("phone")
     .matches(PHONE_REGEX)
@@ -96,7 +103,7 @@ const employeeBaseValidators = [
     }),
 
   body("joiningDate").isISO8601().toDate().withMessage("Valid joining date is required"),
-  
+
   body("qualification")
     .isArray({ min: 1 })
     .withMessage("At least one qualification is required"),
@@ -112,7 +119,7 @@ const employeeBaseValidators = [
     .if((value, { req }) => SPECIALIZATION_DESIGNATIONS_SET.has(req.body.designation))
     .notEmpty()
     .withMessage("Specialization is required"),
-  
+
   // DOCTOR only fields
   body("consultationFee")
     .if(body("designation").equals("DOCTOR"))
