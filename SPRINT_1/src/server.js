@@ -6,6 +6,8 @@ const PORT = process.env.PORT || 8000;
 const startServer = async () => {
   try {
     await connnectDB();
+    console.log("Database connected successfully");
+
     await seedAdmin();
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
@@ -16,4 +18,3 @@ const startServer = async () => {
   }
 };
 startServer();
-console.log("Database connected successfully");
