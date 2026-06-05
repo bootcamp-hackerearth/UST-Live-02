@@ -1,3 +1,1 @@
-# UST-Live-02
-
-Initialized by UST EvalHub.
+HMS backend project using node.js, express.ja and mongoDB
