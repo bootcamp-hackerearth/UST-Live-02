@@ -2,9 +2,6 @@ const express = require("express");
 const authRoutes = require("./routes/auth.routes");
 const employeeRoutes = require("./routes/employee.routes");
 
-
-
-const cors = require("cors");
 const app = express();
 app.disable("x-powered-by");
 
