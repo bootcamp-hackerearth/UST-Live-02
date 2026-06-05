@@ -1,0 +1,6 @@
+projectKey=Sprint1_Backend
+serverUrl=http://localhost:9000
+serverVersion=26.1.0.118079
+dashboardUrl=http://localhost:9000/dashboard?id=Sprint1_Backend
+ceTaskId=e0e7aa26-9735-4ae4-8318-d80a26eab2a2
+ceTaskUrl=http://localhost:9000/api/ce/task?id=e0e7aa26-9735-4ae4-8318-d80a26eab2a2
