@@ -2,6 +2,7 @@ const express = require("express");
 const errorHandler = require("./middlewares/errorhandler.middleware");
 const morgan = require("morgan");
 const app = express();
+app.disable("x-powered-by");
 const seedData = require("./utils/seedData");
 const seedAdmin = require("./utils/seedAdmin");
 const userRoute = require("./routes/user.routes");
