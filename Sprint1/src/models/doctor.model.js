@@ -13,6 +13,12 @@ const doctor = mongoose.Schema(
         qualification: {
             type: String,
         },
+        availabilityStartTime: {
+            type: String,
+        },
+        availabilityEndTime: {
+            type: String,
+        },
         consultationFee: {
             type: Number,
             required: true,
@@ -21,12 +27,6 @@ const doctor = mongoose.Schema(
             type: String,
             unique: true,
             required: true,
-        },
-        availabilityStartTime: {
-            type: String,
-        },
-        availabilityEndTime: {
-            type: String,
         },
         experienceYears: {
             type: Number,
