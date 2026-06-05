@@ -1,6 +1,7 @@
 const { body } = require("express-validator");
 const medicalRoles = new Set(["DOCTOR", "NURSE", "PHARMACIST", "LAB_TECH"]);
 
+//VALIDATOR FOR SIGNUP DATA
 exports.signupValidation = [
   body("email")
     .trim()
@@ -138,6 +139,7 @@ exports.signupValidation = [
   }),
 ];
 
+//VALIDATOR FOR LOGIN DATA
 exports.loginValidation = [
   body("email")
     .trim()

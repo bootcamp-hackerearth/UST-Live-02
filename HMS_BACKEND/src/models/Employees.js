@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const generateId = require("../utils/generateID");
 
+//SCHEMA TO STORE EMPLOYEE-RELATED INFO
 const employeeSchema = new mongoose.Schema(
   {
     employeeCode: { type: String, unique: true },
@@ -11,6 +12,10 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"],
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "INACTIVE", "ADMIN_APPROVAL_PENDING"],
     },
     designation: { type: String, required: true },
     joiningDate: { type: Date, required: true },

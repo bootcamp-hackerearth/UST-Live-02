@@ -8,6 +8,7 @@ const {
 } = require("../validations/authValidation");
 const { signup, login } = require("../controllers/authController");
 
+//ROUTES RELATED TO AUTHENTICATION
 router.post("/signup", signupValidation, validate, signup);
 router.post("/login", loginValidation, validate, login);
 

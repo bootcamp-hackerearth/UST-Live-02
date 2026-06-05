@@ -4,6 +4,7 @@ const validate = require("../middlewares/validate");
 const authenticateToken = require("../middlewares/authMiddleware");
 const { getMe } = require("../controllers/profileController");
 
+//ROUTES RELATES TO PROFILE INFO
 router.get("/getMe", authenticateToken, getMe);
 
 module.exports = router;

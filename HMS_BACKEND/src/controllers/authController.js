@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const Employees = require("../models/Employees");
 const Users = require("../models/Users");
 
+//SIGNUP
 exports.signup = async (req, res) => {
   try {
     const {
@@ -23,7 +24,7 @@ exports.signup = async (req, res) => {
 
     const existingUser = await Users.findOne({ email: email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(409).json({ message: "Email already exists" });
     }
 
     const profile = await Employees.findOne({
@@ -85,6 +86,7 @@ exports.signup = async (req, res) => {
   }
 };
 
+//LOGIN
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;

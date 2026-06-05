@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+//USER AUTHENTICATION AND ROLE MANAGEMENT SCHEMA
 const userSchema = new mongoose.Schema(
   {
     email: {

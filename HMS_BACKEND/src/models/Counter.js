@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+//COUNTER TO KEEP TRACK OF EACH UNIQUE ID
 const counterSchema = new mongoose.Schema(
   {
     name: {
