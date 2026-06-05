@@ -1,15 +1,3 @@
- 
-// Appointment
- 
-// id
-//appointment id
-// patientId → Patient
-// doctorEmployeeId → Employee (designation Doctor)
-// date
-// timeSlot
-// status → BOOKED | CANCELLED | COMPLETED
-// createdByEmployeeId → Employee (Receptionist / Admin) 
-
 const mongoose = require("mongoose");
 const  Counter = require("./Counter");
 

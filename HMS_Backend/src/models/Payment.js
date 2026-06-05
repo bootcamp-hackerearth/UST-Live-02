@@ -1,13 +1,3 @@
-// Payment
- 
-// id
-// billId
-// amount
-// method → CASH | CARD | UPI
-// paidAt
-// receivedByEmployeeId → Employee (cashier) 
-
-
 
 const mongoose = require("mongoose"); 
 const Counter = require("./Counter");

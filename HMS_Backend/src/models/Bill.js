@@ -1,13 +1,3 @@
-// Bill
- 
-// id
-// patientId
-// appointmentId (optional)
-// items[] (serviceName, amount)
-// total
-// status → PENDING | PAID | PARTIAL
-// createdByEmployeeId → Employee (cashier/admin)
- 
 const mongoose = require("mongoose"); 
 const Counter = require("./Counter");
  

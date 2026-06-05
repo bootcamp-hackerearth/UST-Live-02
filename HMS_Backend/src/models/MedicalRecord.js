@@ -1,12 +1,3 @@
-// id
-// appointmentId
-// patientId
-// doctorEmployeeId
-// symptoms
-// diagnosis
-// prescriptionItems[] (name, dosage, duration)
-// notes
-// createdAt
 const mongoose = require("mongoose"); 
 const Counter = require("./Counter")
  
