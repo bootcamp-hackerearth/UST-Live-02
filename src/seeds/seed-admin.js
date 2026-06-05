@@ -5,7 +5,7 @@ const ROLES = require("../constants/roles");
 const seedAdmin = async () => {
   try {
     const existingAdmin = await User.findOne({
-      email: "admin@gmail.com",
+      email: process.env.ADMIN_EMAIL,
     });
 
     if (existingAdmin) {
@@ -13,10 +13,10 @@ const seedAdmin = async () => {
       return;
     }
 
-    const hashedPassword = await bcrypt.hash("Admin@123", 10);
+    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
 
     await User.create({
-      email: "admin@gmail.com",
+      email: process.env.ADMIN_EMAIL,
       passwordHash: hashedPassword,
       roles: [ROLES.ADMIN],
       isFirstLogin: false,
