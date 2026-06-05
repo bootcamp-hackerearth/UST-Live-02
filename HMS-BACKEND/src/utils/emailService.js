@@ -10,9 +10,9 @@ const sendEmail = async ({ to, subject, htmlContent,
             subject,
             htmlContent
         });
-        console.log(`Mail sent to ${to}`);
+        logger.info(`Mail sent to ${to}`);
     } catch (error) {
-        console.error("Email Error:", error);
+        logger.error("Email Error:", error.message);
         throw error;
     }
 };

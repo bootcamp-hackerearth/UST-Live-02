@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require("morgan");
+const logger = require("../src/utils/logger");
 
 const app = express();
 
@@ -31,7 +32,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res) => {
-  console.error('Global Error:', err.message);
+  logger.error("Global error:", err.message);
 
   res.status(err.status || 500).json({
     success: false,

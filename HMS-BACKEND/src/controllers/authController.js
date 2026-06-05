@@ -37,7 +37,7 @@ const register = async (req, res) => {
       availabilitySlots,
     } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim(), });
     if (existingUser) {
       return res.status(409).json({ message: "Email already registered" });
     }
@@ -60,8 +60,9 @@ const register = async (req, res) => {
     });
 
     const savedEmployee = await employee.save();
-    
+
     const verificationToken = crypto.randomBytes(32).toString("hex");
+
     const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await User.create({
@@ -71,7 +72,7 @@ const register = async (req, res) => {
       employeeId: savedEmployee._id,
       verificationToken,
       verificationTokenExpiry,
-      isActive: false,
+      status: "INACTIVE",
     });
 
     const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email/${verificationToken}`;
@@ -83,7 +84,7 @@ const register = async (req, res) => {
         htmlContent: verificationEmailTemplate(name, verificationUrl),
       });
     } catch (error) {
-      console.warn("Email failed:", error.message);
+      logger.warn("Email failed:", error.message);
     }
 
     res.status(201).json({
@@ -91,8 +92,14 @@ const register = async (req, res) => {
       message: "Employee Created Successfully. Verification Email sent",
       data: savedEmployee,
     });
-
   } catch (error) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(409).json({
+        success: false,
+        message: `${field} already exists`,
+      });
+    }
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -115,10 +122,7 @@ const login = async (req, res) => {
       email: email.toLowerCase().trim(),
     })
       .select("+passwordHash +refreshToken")
-      .populate(
-        "employeeId",
-        "employeeCode name role department email phone",
-      );
+      .populate("employeeId", "employeeCode name role department email phone");
 
     if (!user) {
       return res.status(401).json({
@@ -157,7 +161,7 @@ const login = async (req, res) => {
       data: {
         userId: user.userId,
         email: user.email,
-        role: user.role,
+        role: user.roles,
         status: user.status,
         lastLoginAt: user.lastLoginAt,
         tokens: {
@@ -167,7 +171,7 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("login error: ", error);
+    logger.error("login error: ", error.message);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -199,7 +203,7 @@ const getProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("Get User profile error: ", error);
+    logger.error("Get User profile error:", error.message);
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -225,7 +229,7 @@ const verifyEmail = async (req, res) => {
       });
     }
 
-    user.status = "ACTIVE";
+    user.isActive = true;
 
     user.verificationToken = null;
     user.verificationTokenExpiry = null;

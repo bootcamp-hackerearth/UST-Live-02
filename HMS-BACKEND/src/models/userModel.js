@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["ACTIVE", "INACTIVE"],
-      default: "INACTIVE",
+      default: "ACTIVE",
     },
     roles: {
       type: [String],
@@ -58,10 +58,16 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.pre("save", async function () {
-  if (!this.userId) {
-    const seq = await Counter.getNextSequence("userId");
-    this.userId = `USR-${String(seq).padStart(4, "0")}`;
+
+userSchema.pre("save", async function (next) {
+  try {
+    if (!this.userId) {
+      const seq = await Counter.getNextSequence("userId");
+      this.userId = `USR-${String(seq).padStart(4, "0")}`;
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 

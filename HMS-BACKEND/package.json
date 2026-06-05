@@ -31,6 +31,8 @@
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
-    "globals": "^17.6.0"
+    "globals": "^17.6.0",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
   }
 }
