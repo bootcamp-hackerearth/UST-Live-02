@@ -3,7 +3,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
-const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const validateUniqueEmployeeFields = require("../validators/validateUniqueEmployeeFields");
 const getCurrentUser = require("../utils/getCurrentUser");

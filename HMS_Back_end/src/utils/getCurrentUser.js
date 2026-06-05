@@ -24,7 +24,6 @@ async function getCurrentUser(employeeCode, res) {
     return res.status(200).json({
         message: "User retrieved successfully",
         user: {
-            employeeCode: user.employeeCode,
             username: user.username,
             email: user.email,
             roles: user.roles,
