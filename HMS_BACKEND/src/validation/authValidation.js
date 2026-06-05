@@ -70,10 +70,10 @@ const signupValidation = [
     .isDate()
     .withMessage("proper Date Fromat required"),
 
-  body('specialization')
+  body('specialisation')
     .optional()
     .isString()
-    .withMessage('Specialization must be a string.'),
+    .withMessage('Specialisation must be a string.'),
 
   body('qualification')
     .notEmpty()

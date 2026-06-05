@@ -17,7 +17,6 @@ exports.signup = async (req, res) => {
       phone,
       department,
       designation,
-      status,
       joiningDate,
       medicalRegistrationNumber,
       specialisation,
@@ -52,7 +51,7 @@ exports.signup = async (req, res) => {
       phone,
       department,
       designation,
-      status,
+      status: "INACTIVE",
       joiningDate,
       medicalRegistrationNumber,
       specialisation,
@@ -63,34 +62,49 @@ exports.signup = async (req, res) => {
 
     const savedEmployee = await employee.save();
 
-    const verificationToken =
-      crypto.randomBytes(32).toString("hex");
+    const verificationToken = crypto.randomBytes(32).toString("hex");
 
     const verificationTokenExpiry = new Date(
       Date.now() + 24 * 60 * 60 * 1000
     );
 
-    const user = await User.create({
-      email,
-      passwordHash,
-      role: designation,
-      employeeId: savedEmployee.employeeId,
-      verificationToken,
-      verificationTokenExpiry,
-      isActive: false
-    });
+    let user;
+    try {
+      user = await User.create({
+        email,
+        passwordHash,
+        role: designation,
+        employeeId: savedEmployee.employeeId,
+        verificationToken,
+        verificationTokenExpiry,
+        isActive: false
+      });
+    } catch (userCreateError) {
+      await Employee.findByIdAndDelete(savedEmployee._id);
+      throw userCreateError;
+    }
 
     const verificationUrl =
       `${process.env.BASE_URL}/api/auth/verify-email/${verificationToken}`;
 
-    await sendEmail({
-      to: email,
-      subject: "Verify Your HMS Account",
-      htmlContent: verificationEmailTemplate(
-        name,
-        verificationUrl
-      )
-    });
+    try {
+      await sendEmail({
+        to: email,
+        subject: "Verify Your HMS Account",
+        htmlContent: verificationEmailTemplate(name, verificationUrl)
+      });
+    } catch (emailError) {
+      console.error("EMAIL SEND FAILED:", emailError);
+      return res.status(201).json({
+        success: true,
+        message: "Account created but verification email failed. Contact admin.",
+        user: {
+          email: user.email,
+          role: user.role,
+          employeeId: user.employeeId
+        }
+      });
+    }
 
     return res.status(201).json({
       success: true,
@@ -105,7 +119,6 @@ exports.signup = async (req, res) => {
   } catch (err) {
     console.error("SIGNUP ERROR:");
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: err.message
@@ -140,8 +153,14 @@ exports.login = async (req, res) => {
       });
     }
 
-    user.lastLoginAt = new Date();
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "Account not verified. Please check your email."
+      });
+    }
 
+    user.lastLoginAt = new Date();
     await user.save();
 
     const token = jwt.sign(
@@ -169,7 +188,6 @@ exports.login = async (req, res) => {
   } catch (err) {
     console.error("LOGIN ERROR:");
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: err.message
@@ -196,6 +214,13 @@ exports.getProfile = async (req, res) => {
       employeeId: user.employeeId
     }).select("-__v");
 
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee profile not found"
+      });
+    }
+
     return res.status(200).json({
       success: true,
       user,
@@ -205,7 +230,6 @@ exports.getProfile = async (req, res) => {
   } catch (err) {
     console.error("GET PROFILE ERROR:");
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: err.message
@@ -213,9 +237,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// ======================================================
 // VERIFY EMAIL
-// ======================================================
 
 exports.verifyEmail = async (req, res) => {
   try {
@@ -223,9 +245,7 @@ exports.verifyEmail = async (req, res) => {
 
     const user = await User.findOne({
       verificationToken: token,
-      verificationTokenExpiry: {
-        $gt: new Date()
-      }
+      verificationTokenExpiry: { $gt: new Date() }
     });
 
     if (!user) {
@@ -238,8 +258,12 @@ exports.verifyEmail = async (req, res) => {
     user.isActive = true;
     user.verificationToken = null;
     user.verificationTokenExpiry = null;
-
     await user.save();
+
+    await Employee.findOneAndUpdate(
+      { employeeId: user.employeeId },
+      { status: "ACTIVE" }
+    );
 
     return res.status(200).json({
       success: true,
@@ -249,7 +273,6 @@ exports.verifyEmail = async (req, res) => {
   } catch (err) {
     console.error("VERIFY EMAIL ERROR:");
     console.error(err);
-
     return res.status(500).json({
       success: false,
       message: err.message

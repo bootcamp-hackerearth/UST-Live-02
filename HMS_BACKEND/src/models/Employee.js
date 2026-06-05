@@ -51,7 +51,7 @@ const employeeSchema = new mongoose.Schema(
         status: {
             type: String,
             enum: ["ACTIVE", "INACTIVE"],
-            default: "ACTIVE"
+            default: "INACTIVE"
         },
 
         joiningDate: {
@@ -61,7 +61,8 @@ const employeeSchema = new mongoose.Schema(
 
         medicalRegistrationNumber: {
             unique: true,
-            type: String
+            type: String,
+            sparse: true
         },
 
         specialisation: {
