@@ -1,8 +1,8 @@
 /**
-*  Sanitizes a list of qualifications by trimming spaces, removing empty strings, and eliminating duplicates
-* @param {Array<string>} qualifications - The list of qualification strings
-* @returns {Array<string>} The sanitized list of qualifications
-**/
+ * Sanitizes the qualifications array by trimming spaces, removing empty strings, and eliminating duplicates
+ * @param {Array<string>} qualifications - The array of qualification strings
+ * @returns {Array<string>} The sanitized array of qualification strings
+ */
 const sanitizeQualifications = (qualifications = []) => {
   // Trim spaces
   const trimmedQualifications = qualifications.map((qualification) =>

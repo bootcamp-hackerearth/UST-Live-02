@@ -1,9 +1,8 @@
 const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
-
 /**
- * A function to build employee profile data
- * @param {Object} employee - The employee data
- * @returns {Object} The built employee profile
+ * Builds the employee profile response object
+ * @param {Object} employee - The employee document
+ * @returns {Object} The constructed employee profile object
  */
 const buildEmployeeProfile = (employee) => {
 
@@ -11,7 +10,6 @@ const buildEmployeeProfile = (employee) => {
         employeeCode: employee.employeeCode,
         name: employee.name,
         phone: employee.phone,
-        email: employee.email,
         department: employee.department,
         designation: employee.designation,
         joiningDate: employee.joiningDate,
