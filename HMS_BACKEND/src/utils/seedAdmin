@@ -1,0 +1,75 @@
+const bcrypt = require('bcrypt');
+
+const User = require('../models/User.model');
+const Role = require('../models/Role.model');
+const Employee = require('../models/Employee.model');
+
+const ADMIN_EMAIL = 'admin@gmail.com';
+const ADMIN_PASSWORD = 'Admin@123';
+
+const seedAdmin = async () => {
+    try {
+        const adminRole = await Role.findOne({ name: 'Admin' });
+
+        if (!adminRole) {
+            throw new Error('Admin role not found. Seed roles first.');
+        }
+
+        const existingAdmin = await User.findOne({ email: ADMIN_EMAIL });
+
+        if (existingAdmin) {
+            await ensureAdminEmployeeExists(existingAdmin._id);
+            console.log(' Admin already seeded');
+            return;
+        }
+
+        const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
+
+        const adminUser = await User.create({
+            firstName: 'Super',
+            lastName: 'Admin',
+            email: ADMIN_EMAIL,
+            passwordHash,
+            roleId: adminRole._id,
+            isVerified: true,
+            status: 'ACTIVE',
+            mustChangePassword: false
+        });
+
+        await createAdminEmployee(adminUser._id);
+
+        console.log('Admin seeded successfully');
+
+    } catch (error) {
+        if (error.code === 11000) {
+            console.log('Admin already seeded');
+            return;
+        }
+
+        console.error('Error seeding admin:', error.message);
+    }
+};
+
+const ensureAdminEmployeeExists = async (userId) => {
+    const existingEmployee = await Employee.findOne({ userId });
+
+    if (existingEmployee) {
+        return existingEmployee;
+    }
+
+    return createAdminEmployee(userId);
+};
+
+const createAdminEmployee = async (userId) => {
+    return Employee.create({
+        userId,
+        employeeCode: 'ADM001',
+        phone: '9999999999',
+        department: 'Admin',
+        designation: 'Administrator',
+        status: 'ACTIVE',
+        joiningDate: new Date()
+    });
+};
+
+module.exports = seedAdmin;
