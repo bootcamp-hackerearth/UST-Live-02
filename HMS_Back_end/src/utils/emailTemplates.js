@@ -1,5 +1,8 @@
-const frontendUrl = () =>
-  (process.env.FRONTEND_URL || "http://localhost:4200").replace(/\/+$/, "");
+const frontendUrl = () => {
+  let url = process.env.FRONTEND_URL || "http://localhost:4200";
+  while (url.endsWith("/")) url = url.slice(0, -1);
+  return url;
+};
 
 const loginUrl = () => `${frontendUrl()}/login`;
 

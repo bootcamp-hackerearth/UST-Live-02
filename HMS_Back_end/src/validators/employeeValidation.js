@@ -114,11 +114,35 @@ const employeeBaseValidators = [
     .notEmpty()
     .withMessage("Medical registration number is required"),
 
+  // Medical registration number must NOT be provided for non-medical designations
+  body("medicalRegistrationNumber")
+    .if((value, { req }) => !MEDICAL_DESIGNATIONS_SET.has(req.body.designation))
+    .custom((value) => {
+      if (value !== undefined && value !== null && value !== "") {
+        throw new Error(
+          "medicalRegistrationNumber is only applicable for DOCTOR, NURSE, and PHARMACIST designations",
+        );
+      }
+      return true;
+    }),
+
   // Specialization is required for designations that carry one
   body("specialization")
     .if((value, { req }) => SPECIALIZATION_DESIGNATIONS_SET.has(req.body.designation))
     .notEmpty()
     .withMessage("Specialization is required"),
+
+  // Specialization must NOT be provided for non-specialization designations
+  body("specialization")
+    .if((value, { req }) => !SPECIALIZATION_DESIGNATIONS_SET.has(req.body.designation))
+    .custom((value) => {
+      if (value !== undefined && value !== null && value !== "") {
+        throw new Error(
+          "specialization is only applicable for DOCTOR and LAB_TECH designations",
+        );
+      }
+      return true;
+    }),
 
   // DOCTOR only fields
   body("consultationFee")
@@ -126,7 +150,19 @@ const employeeBaseValidators = [
     .notEmpty()
     .withMessage("Consultation fee is required for doctor"),
 
-  // Each slot's start must precede its end
+  // consultationFee must NOT be provided for non-doctor designations
+  body("consultationFee")
+    .if((value, { req }) => req.body.designation !== "DOCTOR")
+    .custom((value) => {
+      if (value !== undefined && value !== null && value !== "") {
+        throw new Error(
+          "consultationFee is only applicable for DOCTOR designation",
+        );
+      }
+      return true;
+    }),
+
+  // Availability slots are required for doctor
   body("availabilitySlots")
     .if(body("designation").equals("DOCTOR"))
     .isArray({ min: 1 })
@@ -137,6 +173,18 @@ const employeeBaseValidators = [
       const byDay = {};
       for (const slot of slots) {
         validateSlot(slot, seen, byDay);
+      }
+      return true;
+    }),
+
+  // availabilitySlots must NOT be provided for non-doctor designations
+  body("availabilitySlots")
+    .if((value, { req }) => req.body.designation !== "DOCTOR")
+    .custom((value) => {
+      if (Array.isArray(value) && value.length > 0) {
+        throw new Error(
+          "availabilitySlots is only applicable for DOCTOR designation",
+        );
       }
       return true;
     }),
