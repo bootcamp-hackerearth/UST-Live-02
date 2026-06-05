@@ -54,9 +54,9 @@ exports.signUp = async (req, res) => {
             employeeId: employee.employeeId
         });
 
-        res.status(200).json({
+        res.status(201).json({
             success: true,
-            message: "Register Sucessful",
+            message: "Signup Sucessful",
             user: {
                 id: user._id,
                 email: user.email,
@@ -81,14 +81,14 @@ exports.login = async (req, res) => {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid email or password"
+                message: "Invalid email, Check and try again"
             });
         }
         const passwordMatch = await bcrypt.compare(password, user.passwordHash);
         if (!passwordMatch) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid email or password"
+                message: "Invalid password, Try again"
             });
         }
 

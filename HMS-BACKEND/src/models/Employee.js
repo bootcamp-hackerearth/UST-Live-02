@@ -70,7 +70,7 @@ employeeSchema.pre('save', async function () {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'employee' },
                 { $inc: { seq: 1 } },
-                { new: true, upsert: true }
+                { returnDocument: "after", upsert: true }
             );
             this.employeeId = `EMP-${String(counter.seq).padStart(6, '0')}`;
         } catch (err) {

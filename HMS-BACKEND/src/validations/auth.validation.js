@@ -1,6 +1,5 @@
 const { body } = require('express-validator');
 const givenRoles = ['OWNER', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'CASHIER', 'NURSE', 'LAB_TECH', 'PHARMACIST'];
-const givenStatus = ['ACTIVE', 'INACTIVE'];
 const givenDepartments = ["OPD", "IPD", "LAB", "PHARMACY", "ADMINISTRATION"];
 const medicRoles = new Set(['DOCTOR', 'NURSE', 'LAB_TECH', 'PHARMACIST']);
 

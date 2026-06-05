@@ -1,4 +1,5 @@
 const userModel = require("../models/User");
+const employeeModel = require("../models/Employee");
 
 //PROFILE
 exports.profile = async (req, res) => {
@@ -11,15 +12,17 @@ exports.profile = async (req, res) => {
             });
         }
 
+        const employee = await employeeModel.findOne({ employeeId: user.employeeId });
+        if (!employee) {
+            return res.status(404).json({
+                success: false,
+                message: "Employee not found"
+            });
+        }
+
         res.status(200).json({
             success: true,
-            user: {
-                id: user._id,
-                email: user.email,
-                role: user.roles,
-                last_login: user.lastLoginAt,
-                created_at: user.createdAt,
-            }
+            employee
         });
     } catch (err) {
         console.error("Profile error:", err);
