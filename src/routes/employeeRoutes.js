@@ -10,7 +10,7 @@ const { signupEmployee, login, getProfile, resetPassword } = require("../control
 
 router.post("/signup-employee", auth, allowedRoles("TECHNICIAN","ADMIN"), signupValidation, validate, signupEmployee);
 router.post("/login", loginValidation, validate, login);
-router.post("/reset-password", auth, resetPassword);
-router.get("/me", auth, getProfile);
+router.post("/reset-password", auth,loginValidation, resetPassword);
+router.get("/profile", auth, getProfile);
 
 module.exports = router;

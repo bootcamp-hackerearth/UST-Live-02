@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const Counter = require("./Counter");
 
-
 const employeeSchema = new mongoose.Schema({
     employeeCode: { type: String, unique: true },
     name: { type: String, required: true },
@@ -21,16 +20,13 @@ const employeeSchema = new mongoose.Schema({
 
 employeeSchema.pre('save', async function (next) {
     if (this.isNew) {
-        try {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'employee' },
                 { $inc: { seq: 1 } }, 
                 { new: true, upsert: true } 
             );
             this.employeeCode = `EMP-${String(counter.seq).padStart(6, '0')}`; 
-        } catch (err) {
-            return next(err);
-        }
+       
     }
 
 });
