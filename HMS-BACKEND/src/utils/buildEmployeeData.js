@@ -1,7 +1,10 @@
 const sanitizeQualifications = require("./qualificationSanitizer");
 const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
-
-// Build the employee document payload from request body
+/**
+* A function to build employee data from request body
+* @param {Object} data - The employee data
+* @returns {Object} The built employee data
+*/
 const buildEmployeeData = (data) => {
   const {
     name,

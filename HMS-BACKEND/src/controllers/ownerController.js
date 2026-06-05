@@ -3,8 +3,12 @@ const User = require("../models/Users");
 const emailTemplates = require("../utils/emailTemplates");
 const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
-
-// Create an ADMIN account with a temporary password
+/**
+*   Create an ADMIN account with a temporary password
+* @param {Object} req - The request object containing employee and user data
+* @param {Object} res - The response object
+* @returns {Promise<void>} A promise that resolves when the account is created and email is sent
+*/
 const createAdmin = async (req, res) => {
   try {
     const { employee, user } = await createAccountWithEmployee(req, { // NOSONAR: false positive; function is async but Sonar loses type info across CommonJS require
@@ -37,7 +41,12 @@ const createAdmin = async (req, res) => {
   }
 };
 
-// List all admin users with their linked employee records
+/**
+* List all admin users with their linked employee records
+*@param {Object} req - The request object
+* @param {Object} res - The response object
+* @returns {Promise<void>} A promise that resolves when the admins are retrieved and sent in response
+*/
 const getAdmins = async (req, res) => {
   try {
     const admins = await User.find({

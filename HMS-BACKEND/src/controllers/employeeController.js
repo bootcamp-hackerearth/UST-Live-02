@@ -1,6 +1,10 @@
 const getCurrentUser = require("../utils/getCurrentUser");
-
-// Get current authenticated user + profile
+/**
+ * Fetch the current user's account and profile
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Promise<void>} A promise that resolves when the user's information is fetched
+ */
 exports.getMe = async (req, res) => {
 
     try {

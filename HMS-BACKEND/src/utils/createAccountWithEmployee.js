@@ -5,7 +5,14 @@ const sendEmail = require("./sendEmail");
 const generateTemporaryPassword = require("./generateTemporaryPassword");
 const buildEmployeeData = require("./buildEmployeeData");
 const validateUniqueEmployeeFields = require("../validators/validateUniqueEmployeeFields");
-// Creates employee + user account
+/**
+*  Creates employee + user account
+* @param {Object} req - The request object containing employee and user data
+* @param {Object} options - Additional options for account creation
+* @param {Array<string>} options.roles - The roles to assign to the user
+* @param {Function} options.emailTemplate - A function that generates email content given username and temporary password
+* @returns {Promise<{ employee: Object, user: Object }>} A promise that resolves with the created employee and user objects
+*/
 async function createAccountWithEmployee(
     req,
     { roles, emailTemplate }

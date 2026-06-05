@@ -1,6 +1,13 @@
 const axios = require("axios");
 const https = require("node:https");
-
+/**
+* A Mailing function
+* @param {Object} options - The email options
+* @param {string} options.to - The recipient's email address
+* @param {string} options.subject - The email subject
+* @param {string} options.html - The HTML content of the email
+* @returns {Promise<void>} A promise that resolves when the email is sent
+*/
 const sendEmail = async ({ to, subject, html }) => {
 
     const agent = new https.Agent({

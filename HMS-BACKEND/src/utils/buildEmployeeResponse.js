@@ -1,5 +1,10 @@
 const buildEmployeeProfile = require("./buildEmployeeProfile");
-
+/**
+*  Builds employee response by merging employee and user data
+* @param {Array<Object>} employees - The list of employee documents
+* @param {Array<Object>} users - The list of user documents
+* @returns {Array<Object>} The list of merged employee responses
+**/
 const buildEmployeeResponse = (employees, users) => {
 
     // Build user lookup map

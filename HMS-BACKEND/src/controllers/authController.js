@@ -10,8 +10,12 @@ const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
 require("dotenv").config();
-
-// Authenticate a user and return a JWT with their roles
+/**
+ * Authenticate a user and return a JWT with their roles
+ * @param {Object} req 
+ * @param {Object} res 
+ * @returns {Promise<void>} A promise that resolves when the user is authenticated and token is returned
+ */
 exports.login = async (req, res) => {
 
     try {
@@ -97,8 +101,12 @@ exports.login = async (req, res) => {
         });
     }
 };
-
-// Allow an authenticated user to change their own password
+/**
+ * Allow an authenticated user to change their own password
+ * @param {Object} req 
+ * @param {Object} res 
+ * @returns {Promise<void>} A promise that resolves when the password is changed
+ */
 exports.changePassword = async (req, res) => {
 
     try {
@@ -160,15 +168,22 @@ exports.changePassword = async (req, res) => {
         });
     }
 };
-
-// Stateless logout — JWT invalidation is handled client-side
+/**
+ * Logout a user
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ */
 exports.logout = (req, res) => {
     res.status(200).json({
         message: "User has been logged out successfully"
     });
 };
-
-// Return the current user's account and profile
+/**
+ * Fetch the current user's account and profile
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Promise<void>} A promise that resolves when the user's information is fetched
+ */
 exports.me = async (req, res) => {
     try {
         return await getCurrentUser(req.user.employeeCode, res);
@@ -181,7 +196,12 @@ exports.me = async (req, res) => {
     }
 };
 
-// Submit a self-registration request
+/**
+ * Submit a self-registration request
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Promise<void>} A promise that resolves when the registration request is submitted
+ */
 exports.selfRegister = async (req, res) => {
 
     const { username, email, password, designation } = req.body;

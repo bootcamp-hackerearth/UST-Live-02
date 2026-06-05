@@ -1,6 +1,12 @@
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const buildEmployeeProfile = require("./buildEmployeeProfile");
+/**
+* A Get current User  function
+* @param {string} employeeCode - The employee code
+* @param {Object} res - The response object
+* @returns {Promise<void>} A promise that resolves when the user is retrieved
+*/
 
 async function getCurrentUser(employeeCode, res) {
     const user = await User.findOne({ employeeCode })

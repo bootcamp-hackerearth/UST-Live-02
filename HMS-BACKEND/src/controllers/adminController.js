@@ -4,8 +4,12 @@ const emailTemplates = require("../utils/emailTemplates");
 const sendEmail = require("../utils/sendEmail");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const { RESTRICTED_ROLES_SET } = require("../config/constants");
-
-// Create a new STAFF employee account with a temporary password
+/**
+ * Create a new STAFF employee account with a temporary password
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Promise<void>} A promise that resolves when the employee account is created
+ */
 exports.createEmployee = async (req, res) => {
   const { designation } = req.body;
 
@@ -47,7 +51,12 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
-// Approve a self-registered employee
+/**
+ * Approve a self-registered employee
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Promise<void>} A promise that resolves when the employee account is approved
+ */
 exports.approveEmployee = async (req, res) => {
   try {
     const employeeCode = req.params.employeeCode;
@@ -103,7 +112,12 @@ exports.approveEmployee = async (req, res) => {
   }
 };
 
-// Reject a self-registration request
+/**
+ * Reject a self-registration request
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Promise<void>} A promise that resolves when the registration request is rejected
+ */
 exports.rejectEmployee = async (req, res) => {
   try {
     const employeeCode = req.params.employeeCode;
