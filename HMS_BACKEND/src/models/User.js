@@ -5,7 +5,7 @@ const userSchema=new mongooge.Schema(
      userName:{type:String,require:true,trim:true},
      passwordHash:{type:String,require:true},
      //status:{type:Boolean,default:true},
-     roles:{type:String, enum: [ "OWNER","ADMIN","DOCTOR","RECEPTIONIST","CASHIER","NURSE", "LAB_TECH", "PHARMACIST"],required:true},
+     roles:{type:String, enum: [ "OWNER","ADMIN","DOCTOR","RECEPTIONIST","CASHIER","NURSE", "LAB_TECH", "PHARMACIST","TECHNICIAN"],required:true},
   
     status: {
       type: String,

@@ -1,43 +1,93 @@
-const User = require('../models/User');
+const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const crypto = require("node:crypto");
-const Employee = require('../models/Employee');
+const Employee = require("../models/Employee");
 const jwt = require("jsonwebtoken");
 const ApiResponse = require("../utils/ApiResponse");
 const ApiError = require("../utils/ApiError");
+
+
 exports.signUp = async (req, res) => {
   try {
     const { email, roles, employeeData } = req.body;
-
-    const existingUser = await User.findOne({ userName: email });
-    if (existingUser) {
-      return res.status(400).json(
-        new ApiError(400, "User already exists")
-      );
+    if (email !== employeeData.email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and Employee Email should match",
+      });
     }
+
+    if (roles !== "DOCTOR") {
+      delete employeeData.medicalRegistrationNumber;
+      delete employeeData.specialization;
+      delete employeeData.qualification;
+      delete employeeData.consultationFee;
+    }
+
+    const existingUser = await User.findOne({
+      userName: email,
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    const existingEmployee = await Employee.findOne({
+      email: employeeData.email,
+    });
+
+    if (existingEmployee) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee email already exists",
+      });
+    }
+
     const employee = await Employee.create(employeeData);
+
     const tempPassword = crypto.randomBytes(8).toString("hex");
+
+    console.log("Temporary Password:", tempPassword);
+
     const passwordHash = await bcrypt.hash(tempPassword, 10);
-    console.log("Temporary Password",tempPassword);
+
+    // Create User
     const user = await User.create({
       userName: email,
       passwordHash,
       roles,
       employeeId: employee.employeeCode,
-      mustResetPassword: true
+      mustResetPassword: true,
     });
-    return res.status(201).json(
-      new ApiResponse(
-        201,
-        { employee, user },
-        "Employee created successfully"
-      )
-    );
 
+    return res.status(201).json({
+      success: true,
+      message: "Employee created successfully",
+      data: {
+        employee,
+        user,
+      },
+    });
   } catch (error) {
-    return res.status(500).json(
-      new ApiError(500, error.message || "Internal Server Error")
-    );
+    // Mongo Duplicate Key Error
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+
+      return res.status(409).json({
+        success: false,
+        message: `${field} already exists`,
+      });
+    }
+
+   
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
   }
 };
 
@@ -47,40 +97,41 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({ userName: email }).populate("employeeId");
     if (!user) {
-      return res.status(404).json(
-        new ApiError(404, "User not found")
-      );
+      return res.status(404).json(new ApiError(404, "User not found"));
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      return res.status(401).json(
-        new ApiError(401, "Invalid password")
-      );
+      return res.status(401).json(new ApiError(401, "Invalid password"));
     }
-
+  
     const token = jwt.sign(
       { userId: user._id, role: user.roles },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN },
     );
     if (user.mustResetPassword) {
-      return res.status(200).json(
-        new ApiResponse(200, { token, resetRequired: true }, "Password reset required")
-      );
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            { token, resetRequired: true },
+            "Password reset required",
+          ),
+        );
     }
 
     user.lastLoginAt = new Date();
     await user.save();
 
-    return res.status(200).json(
-      new ApiResponse(200, { token, user }, "Login successful")
-    );
-
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { token, user }, "Login successful"));
   } catch (error) {
-    return res.status(500).json(
-      new ApiError(500, error.message || "Internal Server Error")
-    );
+    return res
+      .status(500)
+      .json(new ApiError(500, error.message || "Internal Server Error"));
   }
 };
 
@@ -91,9 +142,7 @@ exports.resetPassword = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json(
-        new ApiError(404, "User not found")
-      );
+      return res.status(404).json(new ApiError(404, "User not found"));
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -102,14 +151,11 @@ exports.resetPassword = async (req, res) => {
 
     await user.save();
 
-    return res.status(200).json(
-      new ApiResponse(200, null, "Password updated successfully")
-    );
-
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Password updated successfully"));
   } catch (error) {
-    return res.status(500).json(
-      new ApiError(500, error.message)
-    );
+    return res.status(500).json(new ApiError(500, error.message));
   }
 };
 exports.getProfile = async (req, res) => {
@@ -119,18 +165,13 @@ exports.getProfile = async (req, res) => {
       .populate("employeeId");
 
     if (!user) {
-      return res.status(404).json(
-        new ApiError(404, "User not found")
-      );
+      return res.status(404).json(new ApiError(404, "User not found"));
     }
 
-    return res.status(200).json(
-      new ApiResponse(200, user, "Profile fetched successfully")
-    );
-
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Profile fetched successfully"));
   } catch (error) {
-    return res.status(500).json(
-      new ApiError(500, error.message)
-    );
+    return res.status(500).json(new ApiError(500, error.message));
   }
 };

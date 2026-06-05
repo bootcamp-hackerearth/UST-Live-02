@@ -14,7 +14,7 @@ const {
   adminSignupValidation,
 } = require("../middleware/validations");
 router.post("/login", loginValidation, validate, login);
-router.post("/signup", auth, allowRoles("ADMIN", "OWNER"), adminSignupValidation, validate, signUp);
+router.post("/signup", auth, allowRoles("ADMIN", "TECHNICIAN"), adminSignupValidation, validate, signUp);
 router.post("/reset-password", auth, loginValidation,resetPassword);
 router.get("/profile", auth, getProfile);
 module.exports = router;

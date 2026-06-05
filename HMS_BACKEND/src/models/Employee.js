@@ -40,7 +40,7 @@ const employeeSchema =new mongoose.Schema({
     default: null
   },
    joiningDate:{type:Date},
-   medicalRegistrationNumber:{type:String,trim:true,unique:true},
+   medicalRegistrationNumber:{type:String,trim:true,unique:true,sparse:true},
    specialization:{type:String,trim:true},
    qualification:{type:String,trim:true},
    consultationFee:{type:Number,min:0},
@@ -81,7 +81,7 @@ employeeSchema.pre('save', async function (next) {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'Employee' },
                 { $inc: { seq: 1 } }, // Creates sequence
-                { new: true, upsert: true } // upsert is update and insert
+                { returnDocument: "after", upsert: true } 
             );
             this.employeeCode = `EMP-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
         } catch (err) {
