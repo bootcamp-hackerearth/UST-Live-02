@@ -1,16 +1,18 @@
 const { body } = require("express-validator");
 const loginValidation = [
-  body("loginId").notEmpty().withMessage("Email/EmpId is required"),
+  body("loginId").trim().notEmpty().withMessage("Email/EmpId is required"),
   body("password").notEmpty().withMessage("Password is required"),
 ];
 const createPasswordValidation = [
   body("loginId").notEmpty().withMessage("Login ID is required"),
 
   body("temporaryPassword")
+    .trim()
     .notEmpty()
     .withMessage("Temporary password is required"),
 
   body("newPassword")
+    .trim()
     .notEmpty()
     .withMessage("New password is required")
     .isLength({ min: 8, max: 20 })

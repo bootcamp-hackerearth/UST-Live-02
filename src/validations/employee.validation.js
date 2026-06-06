@@ -6,6 +6,8 @@ const registerEmployeeValidation = [
     .trim()
     .notEmpty()
     .withMessage("Employee name is required")
+    .matches(/^[A-Za-z\s.]+$/)
+    .withMessage("Name can contain only letters, spaces and dots")
     .isLength({ min: 2, max: 100 })
     .withMessage("Name must be between 2 and 100 characters"),
 
@@ -18,6 +20,7 @@ const registerEmployeeValidation = [
     .normalizeEmail(),
 
   body("phone")
+    .trim()
     .notEmpty()
     .withMessage("Phone number is required")
     .matches(/^\d{10}$/)
