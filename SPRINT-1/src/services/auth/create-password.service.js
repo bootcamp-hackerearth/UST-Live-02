@@ -39,9 +39,6 @@ const createEmployeePassword = async (passwordData) => {
     throw new Error("Password is already created for this account");
   }
 
-  console.log(typeof user.passwordHash);
-  console.log(user.passwordHash);
-
   const isTemporaryPasswordValid = await bcrypt.compare(temporaryPassword,user.temporaryPasswordHash);
 
   if (!isTemporaryPasswordValid) {
