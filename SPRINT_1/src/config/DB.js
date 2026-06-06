@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const connectDB = async () => {
     try {
         if (mongoose.connection.readyState >= 1) return;
@@ -10,3 +11,4 @@ const connectDB = async () => {
         process.exit(1);
     }
 };
+module.exports = connectDB;

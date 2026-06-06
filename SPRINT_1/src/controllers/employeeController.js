@@ -24,9 +24,6 @@ exports.signup = async (req, res) => {
             availabilitySlots
         } = req.body;
 
-
-
-
         const existingEmp = await Employee.findOne({
             $or: [{ email }, { phone }]
         });

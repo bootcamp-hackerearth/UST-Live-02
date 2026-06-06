@@ -6,6 +6,7 @@ const morgan = require("morgan");
 const mongoose = require("mongoose");
 const app = express();
 const employeeRoutes = require("./src/routes/employeeRoutes");
+const connectDB = require("./src/config/db");
 
 // Used for secure http
 app.use(helmet());
@@ -27,9 +28,6 @@ app.use("/api",employeeRoutes);
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err.message));
+connectDB();
 
 module.exports = app;

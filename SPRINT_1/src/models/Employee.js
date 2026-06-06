@@ -22,8 +22,6 @@ const employeeSchema = new mongoose.Schema({
 
     {
         timestamps: true
-        
-        
     }
 )
 
@@ -32,10 +30,10 @@ employeeSchema.pre('save', async function (next) {
         try {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'employee' },
-                { $inc: { seq: 1 } }, // Creates sequence
-                { new: true, upsert: true } // upsert is update and insert
+                { $inc: { seq: 1 } }, 
+                { new: true, upsert: true } 
             );
-            this.employeeCode = `EMP-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
+            this.employeeCode = `EMP-${String(counter.seq).padStart(6, '0')}`;
         } catch (err) {
             return next(err);
         }

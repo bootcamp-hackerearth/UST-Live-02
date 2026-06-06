@@ -8,5 +8,3 @@ module.exports = function validateRequest(req, res, next) {
     }
     next();
 };
-
-
