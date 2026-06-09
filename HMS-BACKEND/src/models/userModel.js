@@ -59,15 +59,14 @@ const userSchema = new mongoose.Schema(
 );
 
 
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   try {
     if (!this.userId) {
       const seq = await Counter.getNextSequence("userId");
       this.userId = `USR-${String(seq).padStart(4, "0")}`;
     }
-    next();
   } catch (error) {
-    next(error);
+    throw error;
   }
 });
 

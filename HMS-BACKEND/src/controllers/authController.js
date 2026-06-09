@@ -1,256 +1,419 @@
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
-const User = require("../models/userModel");
-const Employee = require("../models/employeeModel");
-const { sendEmail } = require("../utils/emailService");
-const { verificationEmailTemplate } = require("../utils/emailTemplate");
+const User = require("../models/Users");
+const Employee = require("../models/Employees");
+const sendEmail = require("../utils/sendEmail");
+const emailTemplates = require("../utils/emailTemplates");
+const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
+const buildEmployeeData = require("../utils/buildEmployeeData");
+const validateUniqueEmployeeFields = require("../validators/validateUniqueEmployeeFields");
+const getCurrentUser = require("../utils/getCurrentUser");
+const { RESTRICTED_ROLES_SET } = require("../config/constants");
+require("dotenv").config();
 
-const {
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../utils/generateToken");
-
-const buildTokenPayload = (user) => ({
-  id: user._id,
-  userId: user.userId,
-  email: user.email,
-  roles: user.roles,
-  status: user.status,
-  employeeId: user.employeeId || null,
-});
-
-const register = async (req, res) => {
-  try {
-    const {
-      email,
-      password,
-      name,
-      phone,
-      department,
-      role,
-      status,
-      joiningDate,
-      medicalRegistrationNumber,
-      specialization,
-      qualification,
-      consultationFee,
-      availabilitySlots,
-    } = req.body;
-
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim(), });
-    if (existingUser) {
-      return res.status(409).json({ message: "Email already registered" });
-    }
-
-    const password_hash = await bcrypt.hash(password, 12);
-
-    const employee = new Employee({
-      email,
-      name,
-      phone,
-      department,
-      role,
-      status,
-      joiningDate,
-      medicalRegistrationNumber,
-      specialization,
-      qualification,
-      consultationFee,
-      availabilitySlots,
-    });
-
-    const savedEmployee = await employee.save();
-
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    await User.create({
-      email,
-      passwordHash: password_hash,
-      roles: [role],
-      employeeId: savedEmployee._id,
-      verificationToken,
-      verificationTokenExpiry,
-      status: "INACTIVE",
-    });
-
-    const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email/${verificationToken}`;
+// Authenticate a user and return a JWT with their roles
+exports.login = async (req, res) => {
 
     try {
-      await sendEmail({
-        to: email,
-        subject: "Verify Your HMS Account",
-        htmlContent: verificationEmailTemplate(name, verificationUrl),
-      });
-    } catch (error) {
-      logger.warn("Email failed:", error.message);
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        console.log(user);
+        if (!user) {
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
+        }
+
+        const isMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
+        console.log(isMatch);
+        if (!isMatch) {
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
+        }
+
+        // Block login for non-ACTIVE accounts with a status-specific message
+        const blockedStatuses = {
+            PENDING: "Admin approval is pending",
+            REJECTED: "Registration request is rejected",
+            INACTIVE: "Account is inactive"
+        };
+
+        const blockedMessage = blockedStatuses[user.status];
+
+        if (blockedMessage) {
+            return res.status(403).json({
+                message: blockedMessage
+            });
+        }
+
+        user.lastLoginAt = new Date();
+        await user.save();
+
+        // Load the linked employee profile to include in the response
+        const employee = await Employee.findOne({
+            employeeCode: user.employeeCode
+        }).select("-__v");
+
+        if (!employee) {
+            return res.status(404).json({
+                message: "Employee profile not found!!"
+            });
+        }
+
+        const profile = buildEmployeeProfile(employee);
+
+        // Sign a JWT containing the employee code and roles
+        const token = jwt.sign(
+            {
+                employeeCode: user.employeeCode,
+                roles: user.roles
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: process.env.JWT_EXPIRES_IN
+            }
+        );
+
+        res.status(200).json({
+            message: "Login successful",
+            token,
+            user: {
+                employeeCode: user.employeeCode,
+                username: user.username,
+                email: user.email,
+                roles: user.roles,
+                mustChangePassword: user.mustChangePassword,
+                lastLoginAt: user.lastLoginAt,
+                profile
+            }
+        });
     }
+    catch (err) {
+    console.error("Login error:", err);
 
-    res.status(201).json({
-      success: true,
-      message: "Employee Created Successfully. Verification Email sent",
-      data: savedEmployee,
+    res.status(500).json({
+        message: err.message,
+        name: err.name
     });
-  } catch (error) {
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyValue)[0];
-      return res.status(409).json({
-        success: false,
-        message: `${field} already exists`,
-      });
+}
+}
+
+// Allow an authenticated user to change their own password
+exports.changePassword = async (req, res) => {
+
+    try {
+        const employeeCode = req.user.employeeCode;
+
+        const {
+            currentPassword,
+            newPassword,
+            confirmPassword
+        } = req.body;
+
+        const user = await User.findOne({
+            employeeCode
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found!!"
+            });
+        }
+
+        const isMatch = Boolean(await bcrypt.compare(currentPassword, user.passwordHash));
+        if (!isMatch) {
+            return res.status(401).json({
+                message: "Current password is incorrect"
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match!!"
+            });
+        }
+
+        const samePassword = Boolean(await bcrypt.compare(newPassword, user.passwordHash));
+        if (samePassword) {
+            return res.status(400).json({
+                message: "New password cannot be the same as current password"
+            })
+        }
+
+        // Hash and persist the new password, clearing the forced-change flag
+        const newPassHash = await bcrypt.hash(newPassword, 10);
+
+        user.passwordHash = newPassHash;
+        user.mustChangePassword = false;
+
+        await user.save();
+
+        res.status(200).json({
+            message: "Password changed successfully"
+        });
+
     }
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "email and password are required",
-      });
+    catch (err) {
+        console.error("Error during password change: ", err);
+        return res.status(500).json({
+            message: "Server error during password change"
+        });
     }
+}
 
-    const user = await User.findOne({
-      email: email.toLowerCase().trim(),
-    })
-      .select("+passwordHash +refreshToken")
-      .populate("employeeId", "employeeCode name role department email phone");
+// Generate a short-lived reset token and email it to the user
+exports.forgotPassword = async (req, res) => {
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
+    try {
+        const { email } = req.body;
+
+        const user = await User.findOne({
+            email
+        });
+
+        if (
+            !user ||
+            String(user.status) !== "ACTIVE"
+        ) {
+            return res.status(200).json({
+                message:
+                    "If the email exists, a reset link has been sent"
+            });
+        }
+
+        // Create a random token, store only its hash so the raw value cannot be recovered from the DB
+        const resetPasswordToken = crypto.randomBytes(32).toString("hex");
+        const resetPasswordTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+        const resetPasswordTokenHash =
+            crypto
+                .createHash("sha256")
+                .update(resetPasswordToken)
+                .digest("hex");
+
+        user.resetPasswordTokenHash = resetPasswordTokenHash;
+        user.resetPasswordTokenExpiry = resetPasswordTokenExpiry;
+
+        await user.save();
+
+        // dev only: print reset link to console for manual testing without email
+        if (process.env.NODE_ENV !== "production") {
+            console.log(
+                "\n[DEV] Reset link for " + user.email + ":\n" +
+                emailTemplates.frontendUrl() +
+                "/reset-password?token=" + resetPasswordToken + "\n"
+            );
+        }
+
+        // Send the raw token in the email attached to the url
+        try {
+            await sendEmail({
+                to: user.email,
+                ...emailTemplates.passwordReset({ resetToken: resetPasswordToken })
+            });
+        } catch (emailError) {
+            console.error("Email sending error:", emailError);
+        }
+
+        res.status(200).json({
+            message: "If the email exists, a reset link has been sent."
+        });
+
     }
-
-    if (user.status === "INACTIVE") {
-      return res.status(403).json({
-        success: false,
-        message: "Your account is INACTIVE. Contact administrator",
-      });
+    catch (err) {
+        console.error("Error during forgot password: ", err);
+        return res.status(500).json({
+            message: "Server error during forgot password"
+        });
     }
+}
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+// Validate the reset token and set a new password
+exports.resetPassword = async (req, res) => {
 
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
+    try {
+        const {
+            resetToken,
+            newPassword,
+            confirmPassword
+        } = req.body;
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match!!"
+            });
+        }
+
+        // Hash the incoming token to look it up against the stored hash
+        const hashedToken =
+            crypto
+                .createHash("sha256")
+                .update(resetToken)
+                .digest("hex");
+
+        const user = await User.findOne({
+            resetPasswordTokenHash: hashedToken,
+            resetPasswordTokenExpiry: {
+                $gt: new Date()
+            }
+        });
+
+        if (!user){
+            return res.status(400).json({
+                message: "Invalid or expired token"
+            });
+        }
+
+        if (String(user.status) !== "ACTIVE"){
+            return res.status(400).json({
+                message: "Invalid or expired token"
+            })
+        }
+
+        const isSamePassword = Boolean(await bcrypt.compare(newPassword, user.passwordHash));
+        if (isSamePassword){
+            return res.status(400).json({
+                message: "New password cannot be the same as current password"
+            });
+        }
+
+        // Hash the new password and clear the reset token fields
+        const newHash = await bcrypt.hash(newPassword, 10);
+
+        user.passwordHash = newHash;
+
+        user.resetPasswordTokenHash = null;
+        user.resetPasswordTokenExpiry = null;
+        user.mustChangePassword = false;
+
+        await user.save();
+
+        res.status(200).json({
+            message: "Password reset successful"
+        })
+
     }
-
-    const payload = buildTokenPayload(user);
-    const accessToken = generateAccessToken(payload);
-    const refreshToken = generateRefreshToken({ id: user._id });
-
-    user.refreshToken = refreshToken;
-    user.lastLoginAt = new Date();
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: {
-        userId: user.userId,
-        email: user.email,
-        role: user.roles,
-        status: user.status,
-        lastLoginAt: user.lastLoginAt,
-        tokens: {
-          accessToken,
-          refreshToken,
-        },
-      },
-    });
-  } catch (error) {
-    logger.error("login error: ", error.message);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-const getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).populate(
-      "employeeId",
-      "employeeCode name role department email phone specialization",
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+    catch (err) {
+        console.error("Error during reset password: ", err);
+        res.status(500).json({
+            message: "Server error during reset password"
+        });
     }
+}
 
-    return res.status(200).json({
-      success: true,
-      message: "User Profile: ",
-      data: {
-        userId: user.userId,
-        email: user.email,
-        status: user.status,
-        employee: user.employeeId || null,
-        lastLoginAt: user.lastLoginAt,
-        createdAt: user.createdAt,
-      },
+// Stateless logout — JWT invalidation is handled client-side
+exports.logout = (req, res) => {
+    res.status(200).json({
+        message: "User has been logged out successfully"
     });
-  } catch (error) {
-    logger.error("Get User profile error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+}
 
-const verifyEmail = async (req, res) => {
-  try {
-    const { token } = req.params;
-
-    const user = await User.findOne({
-      verificationToken: token,
-      verificationTokenExpiry: {
-        $gt: new Date(),
-      },
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired token",
-      });
+// Return the current user's account and profile (used on page refresh)
+exports.me = async (req, res) => {
+    try {
+        return await getCurrentUser(req.user.employeeCode, res);
     }
+    catch (err) {
+        console.error("Error during me: ", err);
+        return res.status(500).json({
+            message: "Server error while fetching current user"
+        });
+    }
+}
 
-    user.isActive = true;
+// Submit a self-registration request
+exports.selfRegister = async (req, res) => {
 
-    user.verificationToken = null;
-    user.verificationTokenExpiry = null;
+    const { username, email, password, designation } = req.body;
 
-    await user.save();
+    try {
+        if (RESTRICTED_ROLES_SET.has(designation)) {
+            return res.status(403).json({
+                message:
+                    "Invalid designation. Cannot create admin or owner accounts."
+            });
+        }
 
-    return res.status(200).json({
-      success: true,
-      message: "Email verified successfully",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+        const uniquenessResult = await validateUniqueEmployeeFields(req.body);
 
-module.exports = {
-  register,
-  login,
-  getProfile,
-  verifyEmail,
-};
+        if (!uniquenessResult.success) {
+            return res.status(uniquenessResult.status).json({
+                message: uniquenessResult.message
+            });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        const employeeData = buildEmployeeData(req.body);
+
+        const employee = new Employee(employeeData);
+        await employee.save();
+
+        const user = new User({
+            username,
+            email,
+            passwordHash,
+            roles: ["STAFF"],
+            employeeCode: employee.employeeCode,
+            status: "PENDING",
+            mustChangePassword: false,
+            createdByAdmin: false,
+            approvedBy: null,
+            approvedAt: null,
+            createdBy: "Self registration"
+        });
+
+        await user.save();
+
+        // Notify all active admins and owners of the pending registration
+        try {
+            const admins = await User.find({
+                roles: { $in: ["ADMIN", "OWNER"] },
+                status: "ACTIVE"
+            });
+
+            const adminEmails = admins.map((admin) => admin.email);
+
+            if (adminEmails.length) {
+                await sendEmail({
+                    to: adminEmails,
+                    ...emailTemplates.registrationRequest({
+                        name: employee.name,
+                        employeeCode: employee.employeeCode,
+                        department: employee.department,
+                        designation: employee.designation
+                    })
+                });
+            }
+        } catch (emailError) {
+            console.error("Admin notification email error:", emailError);
+        }
+
+        return res.status(201).json({
+            message: "Registration request successful. Wait for admin approval.",
+
+            user: {
+                username: user.username,
+                email: user.email,
+                roles: user.roles
+            },
+
+            employee: {
+                employeeCode: employee.employeeCode,
+                name: employee.name,
+                department: employee.department,
+                designation: employee.designation
+            }
+        });
+    }
+    catch (err) {
+        console.error("Employee self registration error:", err);
+
+        return res.status(500).json({
+            message: "Server error during employee self registration"
+        });
+    }
+}
