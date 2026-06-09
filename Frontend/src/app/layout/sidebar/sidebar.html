@@ -1,0 +1,56 @@
+<div class="sidebar">
+
+    <!-- LOGO -->
+
+    <div class="logo">
+
+        <h2>
+            HMS
+        </h2>
+
+        <p>
+            Hospital Management
+        </p>
+
+    </div>
+
+    <!-- MENU -->
+
+    <div class="menu">
+
+        <!-- ADMIN ONLY -->
+        <a *ngIf="user?.role === 'admin'" routerLink="/dashboard" routerLinkActive="active">
+            Dashboard
+        </a>
+
+        <!-- ALL USERS -->
+        <a routerLink="/profile" routerLinkActive="active">
+            Profile
+        </a>
+
+        <!-- ADMIN ONLY -->
+        <a *ngIf="user?.role === 'admin' || user?.role === 'receptionist'" routerLink="/employees" routerLinkActive="active">
+            Employees
+        </a>
+
+        <!-- ADMIN ONLY -->
+        <a *ngIf="user?.role === 'admin'" routerLink="/approval" routerLinkActive="active">
+            Approval
+        </a>
+
+        <!-- ADMIN + RECEPTIONIST -->
+        <a *ngIf="
+        user?.role === 'admin' ||
+        user?.role === 'receptionist'
+    " routerLink="/patients" routerLinkActive="active">
+            Patients
+        </a>
+
+        <!-- ALL USERS -->
+        <a routerLink="/appointments" routerLinkActive="active">
+            Appointments
+        </a>
+
+    </div>
+
+</div>
