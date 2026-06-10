@@ -1,3 +1,3 @@
-# UST-Live-02
+q# UST-Live-02
 
 Initialized by UST EvalHub.

@@ -1,0 +1,68 @@
+const Node = require('../models/node.model');
+
+const seedNodes = async () => {
+  try {
+    const nodes = [
+      {
+        name: 'Dashboard',
+        path: '/dashboard',
+        icon: 'bi bi-speedometer2',
+        role: ['Admin'],
+        order: 1,
+      },
+      {
+        name: 'Patients',
+        path: '/patients',
+        icon: 'bi bi-person-hearts',
+        role: ['Admin', 'Receptionist'],
+        order: 2,
+      },
+      {
+        name: 'Employees',
+        path: '/employees',
+        icon: 'bi bi-person-badge',
+        role: ['Admin'],
+        order: 3,
+      },
+      {
+        name: 'Appointments',
+        path: '/appointments',
+        icon: 'bi bi-calendar-event',
+        role: ['Admin', 'Receptionist', 'Doctor'],
+        order: 4,
+      },
+      {
+        name: 'Approvals',
+        path: '/approvals',
+        icon: 'bi bi-check2-square',
+        role: ['Admin'],
+        order: 5,
+      },
+      {
+        name: 'Doctors',
+        path: '/doctors',
+        icon: 'bi bi-person-vcard',
+        role: ['Admin'],
+        order: 6,
+      },
+    ];
+
+    for (const node of nodes) {
+      await Node.findOneAndUpdate(
+        { path: node.path },
+        node,
+        {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true,
+        }
+      );
+    }
+
+    console.log('Nodes seeded successfully');
+  } catch (error) {
+    console.error('Error seeding nodes:', error.message);
+  }
+};
+
+module.exports = seedNodes;
