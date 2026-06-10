@@ -1,23 +1,23 @@
 const bcrypt = require("bcryptjs");
+
 const User = require("../../models/User");
 const Employee = require("../../models/Employee");
-const STATUS = require("../../constants/status");
+
 const generateToken = require("../../utils/generateToken");
+
 const loginUser = async (loginData) => {
-const { loginId, password } = loginData;
+  const { loginId, password } = loginData;
 
   let user = null;
 
+  // Allow login using email or employee code
   const isEmailLogin = loginId.includes("@");
 
-// Login using email
   if (isEmailLogin) {
     user = await User.findOne({
       email: loginId.toLowerCase(),
     });
   } else {
-   
-// Login using employee code
     const employee = await Employee.findOne({
       employeeCode: loginId,
     });
@@ -30,54 +30,63 @@ const { loginId, password } = loginData;
       employeeId: employee._id,
     });
   }
+
+  // Validate user account
   if (!user) {
     throw new Error("Invalid credentials");
   }
 
-  if (user.status !== "ACTIVE") {
-  throw new Error("Account is inactive");
+  // Check account status
+  if (user.status === "PENDING") {
+    throw new Error("Your account is pending admin approval");
   }
 
+  if (user.status === "REJECTED") {
+    throw new Error("Your registration was rejected");
+  }
+
+  if (user.status === "INACTIVE") {
+    throw new Error("Account is inactive");
+  }
 
   let isPasswordValid = false;
 
- // First login
+  // Validate password based on login stage
   if (user.isFirstLogin) {
-    console.log("FIRST LOGIN");
-
-    console.log(user.temporaryPasswordHash);
-
     isPasswordValid = await bcrypt.compare(
       password,
-
-      user.temporaryPasswordHash,
+      user.temporaryPasswordHash
     );
   } else {
-
-    // Normal login
-    console.log("NORMAL LOGIN");
-    console.log(user.passwordHash);
-    isPasswordValid = await bcrypt.compare( password,user.passwordHash);
+    isPasswordValid = await bcrypt.compare(
+      password,
+      user.passwordHash
+    );
   }
 
-// invalid password
+  // Reject invalid password
   if (!isPasswordValid) {
     throw new Error("Invalid credentials");
   }
 
-  //Generate Token
+  // Generate JWT token
   const tokenPayload = {
     userId: user._id,
     employeeId: user.employeeId,
     roles: user.roles,
   };
+
   const token = generateToken(tokenPayload);
 
-  // last login
+  // Update last login timestamp
   user.lastLoginAt = new Date();
+
   await user.save();
 
-  return {token,user: { email: user.email, isFirstLogin: user.isFirstLogin, roles: user.roles, employeeId: user.employeeId }};
+  return {
+    token,
+    user,
+  };
 };
 
 module.exports = loginUser;

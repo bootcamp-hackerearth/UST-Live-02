@@ -1,8 +1,8 @@
 const bcrypt = require("bcryptjs");
+
 const User = require("../../models/User");
 const Employee = require("../../models/Employee");
 
-//creating password for first time login
 const createEmployeePassword = async (passwordData) => {
   const {
     loginId,
@@ -11,12 +11,16 @@ const createEmployeePassword = async (passwordData) => {
     securityQuestion,
     securityAnswer,
   } = passwordData;
+
   let user = null;
 
+  // Allow login using email or employee code
   const isEmailLogin = loginId.includes("@");
 
   if (isEmailLogin) {
-    user = await User.findOne({ email: loginId.toLowerCase()});
+    user = await User.findOne({
+      email: loginId.toLowerCase(),
+    });
   } else {
     const employee = await Employee.findOne({
       employeeCode: loginId,
@@ -31,32 +35,43 @@ const createEmployeePassword = async (passwordData) => {
     });
   }
 
+  // Ensure user account exists
   if (!user) {
     throw new Error("User not found");
   }
 
+  // Prevent password recreation after first login
   if (!user.isFirstLogin) {
     throw new Error("Password is already created for this account");
   }
 
-  console.log(typeof user.passwordHash);
-  console.log(user.passwordHash);
-
-  // temporary password validation
-  const isTemporaryPasswordValid = await bcrypt.compare(temporaryPassword,user.temporaryPasswordHash);
+  // Verify temporary password
+  const isTemporaryPasswordValid = await bcrypt.compare(
+    temporaryPassword,
+    user.temporaryPasswordHash
+  );
 
   if (!isTemporaryPasswordValid) {
     throw new Error("Invalid temporary password");
   }
+
+  // Hash password and security answer
   const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+  const hashedSecurityAnswer = await bcrypt.hash(
+    securityAnswer.trim().toLowerCase(),
+    10
+  );
+
+  // Update account credentials
   user.passwordHash = hashedNewPassword;
   user.temporaryPasswordHash = null;
   user.isFirstLogin = false;
   user.securityQuestion = securityQuestion;
-  const hashedAnswer =
- await bcrypt.hash(securityAnswer,10);
- user.securityAnswer = hashedAnswer;
+  user.securityAnswer = hashedSecurityAnswer;
+
   await user.save();
+
   return {
     message: "Password created successfully",
   };
