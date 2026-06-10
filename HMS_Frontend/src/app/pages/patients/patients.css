@@ -1,0 +1,472 @@
+.patient-page {
+  background: var(--page-bg);
+  height: calc(100vh - 17vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+
+.form-grid-address {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 24px;
+  row-gap: 16px;
+}
+
+
+
+.page-header {
+  background: var(--card-bg);
+  padding: 16px 20px;
+  border: 0.5px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+
+.page-header h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.add-btn,
+.dark-btn {
+  height: 44px;
+  background-color: #2563EB;
+  color: #ffffff;
+  border: none;
+  padding: 0 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-btn:hover,
+.dark-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+
+
+.table-toolbar {
+  background: var(--card-bg);
+  padding: 14px 16px;
+  border-left: 0.5px solid var(--border-color);
+  border-right: 0.5px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-box input {
+  width: 260px;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  outline: none;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.search-box input::placeholder {
+  color: var(--text-placeholder);
+  font-weight: 400;
+}
+
+.search-box input:focus {
+  border-bottom-color: var(--primary);
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-secondary);
+}
+
+.table-actions select {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.table-actions i {
+  font-size: 18px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.table-actions i:hover {
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+
+
+.patient-table-section {
+  background: var(--card-bg);
+  border: 0.5px solid var(--border-color);
+  border-top: none;
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.patient-table-section table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.patient-table-section th {
+  position: sticky;
+  top:0;
+  text-align: left;
+  padding: 14px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--page-bg);
+  white-space: normal;
+  word-break: break-word;
+  border-bottom: 0.5px solid var(--border-color);
+}
+
+.patient-table-section td {
+  padding: 14px 10px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-primary);
+  border-bottom: 0.5px solid var(--border-color);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.patient-table-section tbody tr:hover {
+  background-color: #F8F8F5;
+}
+
+
+
+.empty-state {
+  text-align: center;
+  padding: 35px 20px 45px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.empty-illustration {
+  margin: 28px auto 20px;
+  width: 90px;
+  height: 72px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-placeholder);
+  background: #F8F8F5;
+}
+
+.empty-illustration i {
+  font-size: 42px;
+}
+
+.empty-state h3 {
+  margin-top: 16px;
+  color: var(--success-text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+
+
+.table-footer {
+  background: var(--card-bg);
+  padding: 14px 16px;
+  border: 0.5px solid var(--border-color);
+  border-top: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+
+
+
+.table-footer p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.pagination {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.pagination i {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 16px;
+  transition: 0.2s ease;
+}
+
+.pagination i:hover {
+  color: var(--primary);
+  transform: scale(1.15);
+}
+
+
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 24px;
+}
+
+.modal-box {
+  width: 900px;
+  max-width: 95vw;
+  max-height: 90vh;
+  background-color: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  padding: 20px 24px;
+  border-bottom: 0.5px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: var(--page-bg);
+  border: none;
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #E6E3D8;
+}
+
+.modal-body {
+  padding: 22px;
+  overflow-y: auto;
+}
+
+
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-label);
+  margin-bottom: 6px;
+}
+
+.form-group label span {
+  color: var(--danger-text);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background-color: var(--card-bg);
+  box-sizing: border-box;
+  color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--focus-shadow);
+}
+
+.form-section-title {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 0.5px solid var(--border-color);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-footer {
+  padding: 14px 22px;
+  border-top: 0.5px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background-color: var(--card-bg);
+}
+
+.cancel-btn,
+.save-btn {
+  min-width: 90px;
+  height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--primary);
+}
+
+.save-btn {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.cancel-btn:hover {
+  background-color: var(--primary-light);
+}
+
+.save-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+
+
+.error-msg {
+  color: var(--danger-text);
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 400;
+  display: block;
+}
+
+.form-group input.ng-invalid.ng-touched,
+.form-group select.ng-invalid.ng-touched,
+.form-group textarea.ng-invalid.ng-touched {
+  border-color: var(--danger-text);
+}
+
+.save-btn:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .table-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .add-btn,
+  .dark-btn {
+    flex: 1;
+  }
+
+  .form-grid,
+  .form-grid-address {
+    grid-template-columns: 1fr;
+  }
+}
+
+.page-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.pagination i.disabled {
+  color: var(--border-color);
+  pointer-events: none;
+  cursor: not-allowed;
+  transform: none;
+}
