@@ -1,0 +1,258 @@
+<div class="join-container">
+
+  <div class="join-card">
+
+    <div class="join-header">
+      <h2>Join Us</h2>
+      <p>Submit your employee request for admin approval</p>
+    </div>
+
+    @if (successMessage) {
+      <p class="success-message">{{ successMessage }}</p>
+    }
+
+    @if (errorMessage) {
+      <p class="error-message">{{ errorMessage }}</p>
+    }
+
+    @if (!emailChecked) {
+
+      <form class="email-check-form" (ngSubmit)="checkEmail()" #emailForm="ngForm">
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="emailData.email"
+            placeholder="Enter your email"
+            required>
+        </div>
+
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="emailForm.invalid || isCheckingEmail">
+          {{ isCheckingEmail ? 'Checking...' : 'Check Email' }}
+        </button>
+
+      </form>
+
+    }
+
+    @if (emailChecked) {
+
+      <form (ngSubmit)="submitJoinUs()" #joinForm="ngForm">
+
+        <div class="checked-email-box">
+          <span>Email verified for form:</span>
+          <strong>{{ joinUsData.email }}</strong>
+          <button type="button" (click)="resetEmailCheck()">Change Email</button>
+        </div>
+
+        <div class="section-title">Basic Details</div>
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input
+              type="text"
+              name="firstName"
+              [(ngModel)]="joinUsData.firstName"
+              placeholder="Enter first name"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input
+              type="text"
+              name="lastName"
+              [(ngModel)]="joinUsData.lastName"
+              placeholder="Enter last name"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="joinUsData.password"
+              placeholder="Create password"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input
+              type="text"
+              name="phone"
+              [(ngModel)]="joinUsData.phone"
+              placeholder="Enter phone number"
+              required>
+          </div>
+
+        </div>
+
+        <div class="section-title">Employee Details</div>
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="role">Role</label>
+            <select
+              name="role"
+              [(ngModel)]="joinUsData.role"
+              required>
+              <option value="">Select role</option>
+              <option value="Doctor">Doctor</option>
+              <option value="Receptionist">Receptionist</option>
+              <option value="Pharmacist">Pharmacist</option>
+              <option value="Lab Technician">Lab Technician</option>
+              <option value="Nurse">Nurse</option>
+            </select>
+          </div>
+
+         <div class="form-group">
+  <label for="department">Department</label>
+  <select
+    name="department"
+    [(ngModel)]="joinUsData.department"
+    required>
+    <option value="">Select department</option>
+
+    @for (department of departments; track department) {
+      <option [value]="department">{{ department }}</option>
+    }
+  </select>
+</div>
+          <div class="form-group">
+  <label for="designation">Designation</label>
+  <select
+    name="designation"
+    [(ngModel)]="joinUsData.designation"
+    required>
+    <option value="">Select designation</option>
+
+    @for (designation of designations; track designation) {
+      <option [value]="designation">{{ designation }}</option>
+    }
+  </select>
+</div>
+
+          <div class="form-group">
+            <label for="joiningDate">Joining Date</label>
+            <input
+              type="date"
+              name="joiningDate"
+              [(ngModel)]="joinUsData.joiningDate"
+              required>
+          </div>
+
+        </div>
+
+        @if (joinUsData.role === 'Doctor') {
+
+          <div class="doctor-section">
+
+            <div class="section-title">Doctor Details</div>
+
+            <div class="form-grid">
+
+              <div class="form-group">
+                <label for="specialization">Specialization</label>
+                <input
+                  type="text"
+                  name="specialization"
+                  [(ngModel)]="joinUsData.specialization"
+                  placeholder="Eg: Cardiology"
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="qualification">Qualification</label>
+                <input
+                  type="text"
+                  name="qualification"
+                  [(ngModel)]="joinUsData.qualification"
+                  placeholder="Eg: MBBS MD"
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="consultation">Consultation Fee</label>
+                <input
+                  type="number"
+                  name="consultationFee"
+                  [(ngModel)]="joinUsData.consultationFee"
+                  placeholder="Enter consultation fee"
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="medicalRegistrationNo">Medical Registration No</label>
+                <input
+                  type="text"
+                  name="medicalRegistrationNo"
+                  [(ngModel)]="joinUsData.medicalRegistrationNo"
+                  placeholder="Eg: KL-MED-12345"
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="availabilityStartTime">Availability Start Time</label>
+                <input
+                  type="text"
+                  name="availabilityStartTime"
+                  [(ngModel)]="joinUsData.availabilityStartTime"
+                  placeholder="Eg: 09:00 AM"
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="availabilityEndTime">Availability End Time</label>
+                <input
+                  type="text"
+                  name="availabilityEndTime"
+                  [(ngModel)]="joinUsData.availabilityEndTime"
+                  placeholder="Eg: 04:00 PM"
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="experienceYears">Experience Years</label>
+                <input
+                  type="number"
+                  name="experienceYears"
+                  [(ngModel)]="joinUsData.experienceYears"
+                  placeholder="Enter experience years"
+                  required>
+              </div>
+
+            </div>
+
+          </div>
+
+        }
+
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="joinForm.invalid || isSubmitting">
+          {{ isSubmitting ? 'Submitting...' : 'Submit Join Request' }}
+        </button>
+
+      </form>
+
+    }
+
+    <p class="login-text">
+      Already approved?
+      <a routerLink="/login">Login here</a>
+    </p>
+
+  </div>
+
+</div>

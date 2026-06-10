@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+:root {
+  --font-main: 'DM Sans', sans-serif;
+  --page-bg: #F1EFE8;
+  --card-bg: #FFFFFF;
+  --primary: #185FA5;
+  --primary-dark: #0C447C;
+  --primary-light: #E6F1FB;
+  --text-primary: #2C2C2A;
+  --text-secondary: #5F5E5A;
+  --text-label: #444441;
+  --text-placeholder: #888780;
+  --border-color: #D3D1C7;
+  --success-bg: #EAF3DE;
+  --success-text: #27500A;
+  --danger-bg: #FCEBEB;
+  --danger-text: #A32D2D;
+  --warning-bg: #FAEEDA;
+  --warning-text: #854F0B;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --focus-shadow: 0 0 0 3px rgba(24, 95, 165, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-main);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--page-bg);
+  color: var(--text-primary);
+}

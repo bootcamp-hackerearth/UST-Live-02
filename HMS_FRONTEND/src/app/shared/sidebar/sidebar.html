@@ -1,0 +1,18 @@
+
+<div class="sidebar">
+    <div class="menu">
+        <!-- ng:for(nodes) -->
+         @for(node of nodes;track node._id){
+
+            <a [routerLink]="getFullPath(node.path)"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact:true}">
+                <i [class]="node.icon"></i>
+                {{node.name}}
+            </a>
+
+         }
+    
+
+    </div>
+</div>
