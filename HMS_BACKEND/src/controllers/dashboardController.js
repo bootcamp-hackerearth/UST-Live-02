@@ -5,7 +5,7 @@ const Appointments = require("../models/Appointments");
 exports.getDashboardStats = async (req, res) => {
   try {
     const totalEmployees = await Employees.countDocuments();
-    const activeEmployees = await Employees.countDocuments({ status: true });
+    const activeEmployees = await Employees.countDocuments({ status: "ACTIVE" });
     const pendingApprovals = await Users.countDocuments({
       status: "ADMIN_APPROVAL_PENDING",
     });
