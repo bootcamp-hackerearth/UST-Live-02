@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
+const generateId = require("../utils/generateID");
 
-//COUNTER TO KEEP TRACK OF EACH UNIQUE ID
 const counterSchema = new mongoose.Schema(
   {
     name: {

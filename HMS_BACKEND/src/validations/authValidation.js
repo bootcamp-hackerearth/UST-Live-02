@@ -1,7 +1,6 @@
 const { body } = require("express-validator");
 const medicalRoles = new Set(["DOCTOR", "NURSE", "PHARMACIST", "LAB_TECH"]);
 
-//VALIDATOR FOR SIGNUP DATA
 exports.signupValidation = [
   body("email")
     .trim()
@@ -77,16 +76,16 @@ exports.signupValidation = [
     return true;
   }),
 
-  body("availabilitySlots").custom((value, { req }) => {
+  body("weeklySchedule").custom((value, { req }) => {
     if (req.body.role === "DOCTOR") {
       if (!Array.isArray(value) || value.length === 0) {
-        throw new Error("Availability slots are required for doctors.");
+        throw new Error("Weekly schedule is required for doctors.");
       }
     } else if (
       value !== undefined &&
       (Array.isArray(value) ? value.length > 0 : value !== "")
     ) {
-      throw new Error("Availability slots must only be provided by doctors.");
+      throw new Error("Weekly schedule must only be provided by doctors.");
     }
     return true;
   }),
@@ -119,27 +118,9 @@ exports.signupValidation = [
     return true;
   }),
 
-  body("qualification").custom((value, { req }) => {
-    const isMedicalRole = medicalRoles.has(req.body.role);
-    if (isMedicalRole) {
-      if (!Array.isArray(value) || value.length === 0) {
-        throw new Error(
-          `At least one qualification is required for role: ${req.body.role}.`,
-        );
-      }
-    } else if (
-      value !== undefined &&
-      (Array.isArray(value) ? value.length > 0 : value !== "")
-    ) {
-      throw new Error(
-        "Qualifications must not be provided for non-medical roles.",
-      );
-    }
-    return true;
-  }),
+  body("qualification").notEmpty().withMessage("Qualification is required"),
 ];
 
-//VALIDATOR FOR LOGIN DATA
 exports.loginValidation = [
   body("email")
     .trim()
@@ -148,4 +129,18 @@ exports.loginValidation = [
     .normalizeEmail(),
 
   body("password").notEmpty().withMessage("Password is required"),
+];
+
+exports.changePasswordValidation = [
+  body("newPassword")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain at least one uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("Password must contain at least one lowercase letter")
+    .matches(/\d/)
+    .withMessage("Password must contain at least one number")
+    .matches(/[\W_]/)
+    .withMessage("Password must contain at least one special character"),
 ];

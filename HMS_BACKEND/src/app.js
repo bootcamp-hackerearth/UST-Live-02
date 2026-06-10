@@ -11,7 +11,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
-    credentials: false,
+    credentials: true,
   }),
 );
 
@@ -25,6 +25,24 @@ app.use("/api/auth", authRoutes);
 
 const profileRoutes = require("./routes/profileRoutes");
 app.use("/api/profile", profileRoutes);
+
+const appointmentRoutes = require("./routes/appointmentRoutes");
+app.use("/api/appointment", appointmentRoutes);
+
+const menuNodeRoutes = require("./routes/menuNodeRoutes");
+app.use("/api/menuNode", menuNodeRoutes);
+
+const dashboardRoutes = require("./routes/dashboardRoutes");
+app.use("/api/dashboard", dashboardRoutes);
+
+const employeeRoutes = require("./routes/employeeRoutes");
+app.use("/api/employees", employeeRoutes);
+
+const patientRoutes = require("./routes/patientRoutes");
+app.use("/api/patients", patientRoutes);
+
+const verifyEmailRoutes = require("./routes/emailVerificationRoutes");
+app.use("/api/email", verifyEmailRoutes)
 
 try {
   mongoose.connect(process.env.MONGO_URI);

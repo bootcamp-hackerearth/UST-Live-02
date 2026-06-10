@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-//USER AUTHENTICATION AND ROLE MANAGEMENT SCHEMA
 const userSchema = new mongoose.Schema(
   {
     email: {
@@ -13,28 +12,36 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     status: {
       type: String,
-      enum: ["ACTIVE", "INACTIVE", "ADMIN_APPROVAL_PENDING"],
+      enum: [
+        "ACTIVE",
+        "INACTIVE",
+        "PASSWORD_CHANGE_PENDING",
+        "ADMIN_APPROVAL_PENDING",
+      ],
     },
-    role: [
-      {
-        type: String,
-        enum: [
-          "OWNER",
-          "ADMIN",
-          "DOCTOR",
-          "RECEPTIONIST",
-          "CASHIER",
-          "NURSE",
-          "LAB_TECH",
-          "PHARMACIST",
-        ],
-        required: true,
-      },
-    ],
+    role: {
+      type: String,
+      enum: [
+        "OWNER",
+        "ADMIN",
+        "DOCTOR",
+        "RECEPTIONIST",
+        "CASHIER",
+        "CASHIER",
+        "NURSE",
+        "LAB_TECH",
+        "PHARMACIST",
+        "PATIENT",
+      ],
+      required: true,
+    },
     employeeID: { type: String, ref: "Employees" },
+    patientUHID: { type: String, ref: "Patients", default: null },
     lastLogin: { type: Date, default: null },
-    verificationToken: { type: String, default: null },
-    verificationTokenExpiry: { type: Date, default: null },
+    isEmailVerified: { type: Boolean, default: false },
+    verification_token: { type: String },
+    verification_expiry: { type: Date },
+    isCreatedByAdmin: { type: Boolean },
   },
   { timestamps: true },
 );

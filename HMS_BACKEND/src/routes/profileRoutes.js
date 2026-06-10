@@ -1,10 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const validate = require("../middlewares/validate");
-const authenticateToken = require("../middlewares/authMiddleware");
+const { authenticateToken } = require("../middlewares/authMiddleware");
 const { getMe } = require("../controllers/profileController");
+const validate = require("../middlewares/validate");
 
-//ROUTES RELATES TO PROFILE INFO
-router.get("/getMe", authenticateToken, getMe);
+router.get("/me", authenticateToken, getMe);
 
 module.exports = router;

@@ -1,0 +1,209 @@
+<div class="page-wrapper">
+  @if (!isLoading && user) {
+    <div class="profile-banner">
+      <div class="avatar-app">
+        <i id="person-icon-main" class="bi bi-person-circle"></i>
+      </div>
+
+      <div class="banner-info">
+        <p class="eyebrow-text">MY PROFILE</p>
+        <h2 class="user-name">{{ user.name }}</h2>
+        <div class="designation-row">
+          <i class="bi bi-briefcase"></i>
+          <span>{{ user.designation || 'Staff Member' }}</span>
+        </div>
+
+        <div class="status-wrapper">
+          <span class="badge" [ngClass]="user.status === 'ACTIVE' ? 'active' : 'inactive'">
+            <span class="status-dot"></span>
+            {{ user.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+          </span>
+          <span class="role-badge">
+            <i class="bi bi-shield"></i>
+            {{ user?.role | titlecase }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <i class="bi bi-envelope"></i>
+        </div>
+        <div class="stat-text">
+          <label for="email">EMAIL</label>
+          <span class="truncate">{{ user.email || 'N/A' }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <i class="bi bi-shield"></i>
+        </div>
+        <div class="stat-text">
+          <label for="role">ROLE</label>
+          <span class="truncate">{{ user.role | titlecase }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <i class="bi bi-briefcase"></i>
+        </div>
+        <div class="stat-text">
+          <label for="designation">DESIGNATION</label>
+          <span class="truncate">{{ user.designation || 'N/A' }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon red">
+          <i class="bi bi-check2-circle"></i>
+        </div>
+        <div class="stat-text">
+          <label for="status">STATUS</label>
+          <span class="truncate">{{ user.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-card">
+      <div class="details-header-row">
+        <div>
+          <p class="account-details-subtitle">ACCOUNT DETAILS</p>
+          <h3 class="section-title">Personal Information</h3>
+        </div>
+      </div>
+
+      <div class="sub-header-center">
+        <span>BASIC INFO</span>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-group">
+          <label for="fullName">
+            <i class="bi bi-person"></i>
+            FULL NAME
+          </label>
+          <div class="info-box">{{ user.name || 'N/A' }}</div>
+        </div>
+        <div class="info-group">
+          <label for="emailAddress">
+            <i class="bi bi-envelope"></i>
+            EMAIL ADDRESS
+          </label>
+          <div class="info-box">{{ user.email || 'N/A' }}</div>
+        </div>
+        <div class="info-group">
+          <label for="role">
+            <i class="bi bi-shield"></i>
+            ROLE
+          </label>
+          <div class="info-box">{{ user.role || 'N/A' }}</div>
+        </div>
+        <div class="info-group">
+          <label for="designation">
+            <i class="bi bi-briefcase"></i>
+            DESIGNATION
+          </label>
+          <div class="info-box">{{ user.designation || 'N/A' }}</div>
+        </div>
+        <div class="info-group">
+          <label for="qualification">
+            <i class="bi bi-award"></i>
+            QUALIFICATIONS</label
+          >
+          <div class="info-box">
+            {{ user.qualification?.length ? user.qualification.join(', ') : 'N/A' }}
+          </div>
+        </div>
+        <div class="info-group">
+          <label for="phone">
+            <i class="bi bi-telephone"></i>
+            PHONE</label
+          >
+          <div class="info-box">
+            {{ user.phone }}
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-header-center mt-4">
+        <span>ACCOUNT STATUS</span>
+      </div>
+
+      <div class="info-grid single-col">
+        <div class="info-group">
+          <label for="currentStatus">
+            <i class="bi bi-check2-circle"></i>
+            CURRENT STATUS
+          </label>
+          <div class="info-box">
+            {{ user.status?.toUpperCase() === 'ACTIVE' ? 'Active' : 'Inactive' }}
+          </div>
+        </div>
+      </div>
+
+      @if (user.medicalRegistrationNo || user.specialization) {
+        <div class="sub-header-center mt-4">
+          <span>MEDICAL CREDENTIALS</span>
+        </div>
+        <div class="info-grid">
+          <div class="info-group">
+            <label for="medicalRegistrationNo">
+              <i class="bi bi-clipboard-pulse"></i>
+              MEDICAL REGISTRATION NO.</label
+            >
+            <div class="info-box">{{ user.medicalRegistrationNo || 'N/A' }}</div>
+          </div>
+          <div class="info-group">
+            <label for="specialization">
+              <i class="bi bi-book"></i>
+              SPECIALIZATION</label
+            >
+            <div class="info-box">{{ user.specialization || 'N/A' }}</div>
+          </div>
+
+          <div class="info-group">
+            <label for="consultationFee">
+              <i class="bi bi-currency-rupee"></i>
+              CONSULTATION FEE</label
+            >
+            <div class="info-box">
+              {{
+                user.consultationFee
+                  ? (user.consultationFee | currency: 'INR' : 'symbol' : '1.0-0')
+                  : 'N/A'
+              }}
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (user.weeklySchedule && user.weeklySchedule.length > 0) {
+        <div class="sub-header-center mt-4">
+          <span> CONSULTATION SCHEDULE </span>
+        </div>
+
+        <div class="info-grid">
+          @for (day of user.weeklySchedule; track day.dayOfWeek) {
+            <div class="info-group">
+              <label for="dayOfWeek">
+                <i class="bi bi-calendar-event"></i>
+                {{ day.dayOfWeek }}</label
+              >
+              <div class="info-box">
+                @for (slot of day.slots; track slot.startTime) {
+                  <div>{{ slot.startTime }} - {{ slot.endTime }}</div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else if (isLoading) {
+    <div class="loading-spinner">Loading profile...</div>
+  }
+</div>
