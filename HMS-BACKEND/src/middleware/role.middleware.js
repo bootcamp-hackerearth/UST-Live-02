@@ -1,7 +1,7 @@
 const roleMiddleware = (...allowedRoles) => {
   return (req, res, next) => {
     const userRoles = req.user.roles;
-
+    
     const hasPermission = allowedRoles.some((role) => userRoles.includes(role));
 
     if (!hasPermission) {
