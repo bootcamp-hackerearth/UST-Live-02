@@ -1,0 +1,143 @@
+<div class="availability-page">
+  <!-- Header -->
+
+  <div class="availability-header glass-card">
+    <div>
+      <p class="page-label">Doctor Schedule</p>
+
+      <h1>Doctor Availability</h1>
+
+      <p class="page-subtitle">Configure working days, consultation timings and slots.</p>
+    </div>
+
+    <div class="availability-status">
+      @if( availabilityForm .value .isAvailable ){
+
+      <span class="status active">Available</span>
+
+      } @else {
+
+      <span class="status inactive">Unavailable</span>
+
+      }
+    </div>
+  </div>
+
+  <!-- Form -->
+
+  <form [formGroup]="availabilityForm" (ngSubmit)="onSubmit()" class="availability-form glass-card">
+    <!-- Availability Toggle -->
+
+    <div class="toggle-card">
+      <div>
+        <h3>Doctor Availability</h3>
+
+        <p>Enable or disable appointment booking.</p>
+      </div>
+
+      <label class="switch">
+        <input type="checkbox" formControlName="isAvailable" />
+
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Working Days -->
+
+    <div class="section">
+      <h2>Working Days</h2>
+
+      <div class="days-container">
+        @for( day of workingDays; track day ){
+
+        <button
+          type="button"
+          class="day-btn"
+          [class.active]="
+                    availabilityForm
+                    .value
+                    .workingDays
+                    ?.includes(day)
+                    "
+          (click)="
+                    toggleDay(day)
+                    "
+        >
+          {{ day }}
+        </button>
+
+        }
+      </div>
+    </div>
+
+    <!-- Timing Section -->
+
+    <div class="section">
+      <h2>Consultation Timing</h2>
+
+      <div class="grid">
+        <!-- Start -->
+
+        <div class="form-group">
+          <label>Start Time</label>
+
+          <input type="time" formControlName="startTime" />
+        </div>
+
+        <!-- End -->
+
+        <div class="form-group">
+          <label>End Time</label>
+
+          <input type="time" formControlName="endTime" />
+        </div>
+
+        <!-- Break Start -->
+
+        <div class="form-group">
+          <label>Break Start</label>
+
+          <input type="time" formControlName="breakStartTime" />
+        </div>
+
+        <!-- Break End -->
+
+        <div class="form-group">
+          <label>Break End</label>
+
+          <input type="time" formControlName="breakEndTime" />
+        </div>
+
+        <!-- Slot Duration -->
+
+        <div class="form-group">
+          <label>Slot Duration</label>
+
+          <select formControlName="slotDuration">
+            <option value="15">15 Minutes</option>
+
+            <option value="30">30 Minutes</option>
+
+            <option value="45">45 Minutes</option>
+
+            <option value="60">60 Minutes</option>
+          </select>
+        </div>
+
+        <!-- Max Patients -->
+
+        <div class="form-group">
+          <label>Max Patients Per Day</label>
+
+          <input type="number" formControlName="maxPatientsPerDay" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+
+    <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+       {{ isSubmitting ? 'Saving...' : 'Save Availability' }}
+    </button>
+  </form>
+</div>
