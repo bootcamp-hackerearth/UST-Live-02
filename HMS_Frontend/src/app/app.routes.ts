@@ -51,22 +51,14 @@ import { MyProfile } from './features/profile/my-profile/my-profile';
 import { Home } from './features/floater/home/home';
 
 export const routes: Routes = [
-  /*
-    |--------------------------------------------------------------------------
-    | Home Route
-    |--------------------------------------------------------------------------
-    */
+  //  Home Route
   {
     path: '',
 
     component: Home
   },
 
-  /*
-    |--------------------------------------------------------------------------
-    | Auth Routes
-    |--------------------------------------------------------------------------
-    */
+  //  Auth Routes
   {
     path: '',
 
@@ -104,11 +96,7 @@ export const routes: Routes = [
     ]
   },
 
-  /*
-    |--------------------------------------------------------------------------
-    | Protected Dashboard Routes
-    |--------------------------------------------------------------------------
-    */
+  //  Protected Dashboard Routes
   {
     path: '',
 
@@ -117,11 +105,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
 
     children: [
-      /*
-        |--------------------------------------------------------------------------
-        | Default Redirect
-        |--------------------------------------------------------------------------
-        */
+      //  Default Redirect
       {
         path: '',
 
@@ -130,11 +114,7 @@ export const routes: Routes = [
         pathMatch: 'full'
       },
 
-      /*
-  |--------------------------------------------------------------------------
-  | Admin Dashboard
-  |--------------------------------------------------------------------------
-  */
+      //  Admin Dashboard
       {
         path: 'dashboard/admin',
 
@@ -142,11 +122,7 @@ export const routes: Routes = [
         canActivate: [adminGuard]
       },
 
-      /*
-        |--------------------------------------------------------------------------
-        | Doctor Dashboard
-        |--------------------------------------------------------------------------
-        */
+      //  Doctor Dashboard
       {
         path: 'dashboard/doctor',
 
@@ -154,11 +130,7 @@ export const routes: Routes = [
         canActivate: [doctorGuard]
       },
 
-      /*
-        |--------------------------------------------------------------------------
-        | Receptionist Dashboard
-        |--------------------------------------------------------------------------
-        */
+      //  Receptionist Dashboard
       {
         path: 'dashboard/receptionist',
 
@@ -166,11 +138,7 @@ export const routes: Routes = [
         canActivate: [receptionistGuard]
       },
 
-      /*
-        |--------------------------------------------------------------------------
-        | Employees
-        |--------------------------------------------------------------------------
-        */
+      //  Employees
       {
         path: 'employees',
 
@@ -211,11 +179,7 @@ export const routes: Routes = [
         canActivate: [adminGuard]
       },
 
-      /*
-        |--------------------------------------------------------------------------
-        | Patients
-        |--------------------------------------------------------------------------
-        */
+      //  Patients
       {
         path: 'patients/create',
 
@@ -289,11 +253,7 @@ export const routes: Routes = [
     ]
   },
 
-  /*
-    |--------------------------------------------------------------------------
-    | Wildcard Route
-    |--------------------------------------------------------------------------
-    */
+  //  Wildcard Route
   {
     path: '**',
 
