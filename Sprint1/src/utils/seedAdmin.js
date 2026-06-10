@@ -5,6 +5,7 @@ const Role = require("../models/role.model");
 const seedAdmin = async () => {
   try {
     const admin = await Role.findOne({ roleCode: "ADM" });
+    
     const existingUser = await User.findOne({ email: "admin@gmail.com" });
     if (existingUser) {
       console.log("Admin already seeded");
