@@ -6,10 +6,10 @@ const registerEmployeeValidation = [
     .trim()
     .notEmpty()
     .withMessage("Employee name is required")
-    .matches(/^[A-Za-z\s.]+$/)
-    .withMessage("Name can contain only letters, spaces and dots")
     .isLength({ min: 2, max: 100 })
-    .withMessage("Name must be between 2 and 100 characters"),
+    .withMessage("Name must be between 2 and 100 characters")
+    .matches(/^[A-Za-z\s]+$/)
+    .withMessage("Employee name can contain only alphabets and spaces"),
 
   body("email")
     .trim()
@@ -20,7 +20,6 @@ const registerEmployeeValidation = [
     .normalizeEmail(),
 
   body("phone")
-    .trim()
     .notEmpty()
     .withMessage("Phone number is required")
     .matches(/^\d{10}$/)
@@ -61,13 +60,23 @@ const registerEmployeeValidation = [
     .withMessage("Consultation fee cannot be negative"),
 
   body("medicalRegistrationNo")
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("Medical registration number is too long"),
+    .optional({ values: "falsy" })
+    .isLength({
+      min: 5,
+      max: 50,
+    })
+    .withMessage(
+      "Medical registration number must be between 5 and 50 characters",
+    )
+    .matches(/^[A-Za-z0-9\-/]+$/)
+    .withMessage("Medical registration number contains invalid characters"),
+  body("qualification")
+    .optional({ values: "falsy" })
+    .isArray()
+    .withMessage("Qualification must be an array"),
 
   body("specialization")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .isLength({ max: 100 })
     .withMessage("Specialization is too long"),

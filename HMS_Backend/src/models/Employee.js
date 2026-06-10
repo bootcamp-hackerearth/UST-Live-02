@@ -3,9 +3,18 @@ const STATUS = require("../constants/status");
 
 const employeeSchema = new mongoose.Schema(
   {
-    employeeCode: { type: String, required: true, unique: true, trim: true },
+    employeeCode: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
 
-    name: { type: String, required: true, trim: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
     gender: {
       type: String,
@@ -52,10 +61,13 @@ const employeeSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Medical registration number for doctors
     medicalRegistrationNo: {
       type: String,
       trim: true,
       default: null,
+      unique: true,
+      sparse: true,
     },
 
     specialization: {
@@ -71,7 +83,12 @@ const employeeSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [STATUS.ACTIVE, STATUS.INACTIVE, STATUS.PENDING, STATUS.REJECTED],
+      enum: [
+        STATUS.ACTIVE,
+        STATUS.INACTIVE,
+        STATUS.PENDING,
+        STATUS.REJECTED,
+      ],
       default: STATUS.PENDING,
     },
 
@@ -85,6 +102,7 @@ const employeeSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Doctor availability configuration
     availability: {
       workingDays: [
         {
@@ -127,7 +145,7 @@ const employeeSchema = new mongoose.Schema(
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
 const Employee = mongoose.model("Employee", employeeSchema);

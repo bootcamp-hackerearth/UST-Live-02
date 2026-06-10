@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 
+// Verify JWT token and attach user details to the request
 const authMiddleware = (req, res, next) => {
   try {
     const authorizationHeader = req.headers.authorization;
@@ -23,6 +24,7 @@ const authMiddleware = (req, res, next) => {
     }
 
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+
     req.user = decodedToken;
 
     next();

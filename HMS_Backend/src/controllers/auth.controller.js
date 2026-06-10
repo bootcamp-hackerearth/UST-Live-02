@@ -1,11 +1,13 @@
-const login_User = require("../services/auth/login.service");
-const getCurrent_LoggedInUser = require("../services/auth/get-current-user.service");
-const create_EmployeePassword = require("../services/auth/create-password.service");
+const loginUser = require("../services/auth/login.service");
+const getCurrentLoggedInUser = require("../services/auth/get-current-user.service");
+const createEmployeePassword = require("../services/auth/create-password.service");
+const registerEmployeeSelf = require("../services/auth/registerEmployeeSelf.service");
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 
-//login
 const login = async (req, res) => {
   try {
-    const loginResponse = await login_User(req.body);
+    const loginResponse = await loginUser(req.body);
 
     return res.status(200).json({
       success: true,
@@ -13,43 +15,202 @@ const login = async (req, res) => {
       data: loginResponse,
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error("LOGIN ERROR:", error);
+
+    if (
+      error.message === "Invalid credentials" ||
+      error.message === "Incorrect password"
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to login at this time",
     });
   }
 };
 
-//create password
 const createPassword = async (req, res) => {
   try {
-    const serviceResponse = await create_EmployeePassword(req.body);
+    const serviceResponse = await createEmployeePassword(req.body);
 
     return res.status(200).json({
       success: true,
       message: serviceResponse.message,
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error("CREATE PASSWORD ERROR:", error);
+
+    if (error.message === "Employee not found") {
+      return res.status(404).json({
+        success: false,
+        message: "Employee record not found",
+      });
+    }
+
+    if (error.message === "Password already created") {
+      return res.status(409).json({
+        success: false,
+        message: "Password has already been created",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to create password",
     });
   }
 };
 
-//Current User -->Logged in
-const get_CurrentUser = async (req, res) => {
+const getCurrentUser = async (req, res) => {
   try {
-    const user = await getCurrent_LoggedInUser(req.user.userId);
+    const user = await getCurrentLoggedInUser(req.user.userId);
 
     return res.status(200).json({
       success: true,
+      message: "User profile retrieved successfully",
       data: user,
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error("GET CURRENT USER ERROR:", error);
+
+    if (error.message === "User not found") {
+      return res.status(404).json({
+        success: false,
+        message: "User profile not found",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to retrieve user profile",
+    });
+  }
+};
+
+const register = async (req, res) => {
+  try {
+    const result = await registerEmployeeSelf(req.body);
+
+    return res.status(201).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    console.error("REGISTER ERROR:", error.message);
+
+    if (error.message === "Medical registration number already exists") {
+      return res.status(409).json({
+        success: false,
+        message: "Medical registration number already exists",
+      });
+    }
+
+    if (error.message === "Phone number is already registered") {
+      return res.status(409).json({
+        success: false,
+        message: "Phone number is already registered",
+      });
+    }
+
+    if (error.message === "Email is already registered") {
+      return res.status(409).json({
+        success: false,
+        message: "Email is already registered",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed",
+    });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with the provided email address",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Security question retrieved successfully",
+      securityQuestion: user.securityQuestion,
+    });
+  } catch (error) {
+    console.error("FORGOT PASSWORD ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process forgot password request",
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, securityAnswer, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No account found with the provided email address",
+      });
+    }
+
+    const isValidAnswer = await bcrypt.compare(
+      securityAnswer.trim().toLowerCase(),
+      user.securityAnswer
+    );
+
+    if (!isValidAnswer) {
+      return res.status(401).json({
+        success: false,
+        message: "Security answer is incorrect",
+      });
+    }
+
+    const isSamePassword = await bcrypt.compare(
+      newPassword,
+      user.passwordHash
+    );
+
+    if (isSamePassword) {
+      return res.status(409).json({
+        success: false,
+        message: "New password must be different from the current password",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.passwordHash = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error("RESET PASSWORD ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reset password",
     });
   }
 };
@@ -57,5 +218,8 @@ const get_CurrentUser = async (req, res) => {
 module.exports = {
   login,
   createPassword,
-  get_CurrentUser,
+  getCurrentUser,
+  register,
+  forgotPassword,
+  resetPassword,
 };
