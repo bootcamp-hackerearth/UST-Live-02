@@ -7,12 +7,18 @@ const seedAdmin = async () => {
 
     if (existingAdmin) {
       console.log("Admin already exists");
+
       return;
     }
 
     const hashedPassword = await bcrypt.hash("Admin@123", 10);
 
-    await User.create({ email: "admin@gmail.com", passwordHash: hashedPassword, roles: [ROLES.ADMIN], isFirstLogin: false});
+    await User.create({
+      email: "admin@gmail.com",
+      passwordHash: hashedPassword,
+      roles: [ROLES.ADMIN],
+      isFirstLogin: false,
+    });
 
     console.log("Admin created successfully");
   } catch (error) {
