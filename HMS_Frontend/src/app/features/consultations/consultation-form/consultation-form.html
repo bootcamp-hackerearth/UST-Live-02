@@ -1,0 +1,175 @@
+<div class="consultation-container">
+  <!-- Header -->
+
+  <div class="top-section">
+    <h1>Consultation Form</h1>
+  </div>
+
+  <!-- Patient Card -->
+
+  @if(appointment){
+
+  <div class="patient-card">
+    <h2>{{ appointment?.patientId?.firstName }} {{ appointment?.patientId?.lastName }}</h2>
+
+    <div class="patient-info">
+      <p>
+        <strong>Patient ID:</strong>
+
+        {{ appointment?.patientId?.patientId }}
+      </p>
+
+      <p>
+        <strong>Appointment:</strong>
+
+        {{ appointment?.appointmentType }}
+      </p>
+
+      <p>
+        <strong>Time:</strong>
+
+        {{ appointment?.timeSlot }}
+      </p>
+    </div>
+  </div>
+
+  }
+
+  <!-- Form -->
+
+  <form [formGroup]="consultationForm" (ngSubmit)="onSubmit()">
+    <!-- Diagnosis -->
+
+    <div class="form-group">
+      <label>Diagnosis</label>
+
+      <textarea formControlName="diagnosis" placeholder="Enter diagnosis"></textarea>
+    </div>
+
+    <!-- Symptoms -->
+
+    <div class="form-group">
+      <label>Symptoms</label>
+
+      <textarea formControlName="symptoms" placeholder="Fever, Cough, Headache"></textarea>
+    </div>
+
+    <!-- Doctor Notes -->
+
+    <div class="form-group">
+      <label>Doctor Notes</label>
+
+      <textarea formControlName="doctorNotes" placeholder="Enter doctor notes"></textarea>
+    </div>
+
+    <!-- Vitals -->
+
+    <div formGroupName="vitals" class="vitals-grid">
+      <!-- Blood Pressure -->
+
+      <div class="form-group">
+        <label>Blood Pressure</label>
+
+        <input type="text" formControlName="bloodPressure" placeholder="120/80" />
+      </div>
+
+      <!-- Pulse Rate -->
+
+      <div class="form-group">
+        <label>Pulse Rate</label>
+
+        <input type="number" formControlName="pulseRate" placeholder="72" />
+      </div>
+
+      <!-- Oxygen Level -->
+
+      <div class="form-group">
+        <label>Oxygen Level</label>
+
+        <input type="number" formControlName="oxygenLevel" placeholder="98" />
+      </div>
+
+      <!-- Temperature -->
+
+      <div class="form-group">
+        <label>Temperature</label>
+
+        <input type="number" formControlName="temperature" placeholder="Celsius" />
+      </div>
+
+      <!-- Weight -->
+
+      <div class="form-group">
+        <label>Weight</label>
+
+        <input type="number" formControlName="weight" placeholder="in kg" />
+      </div>
+    </div>
+
+    <!-- Prescription Section -->
+
+    <div class="prescription-section">
+      <div class="prescription-top">
+        <h2>Prescriptions</h2>
+
+        <button type="button" class="add-btn" (click)="addPrescription()">+ Add Medicine</button>
+      </div>
+
+      <!-- Prescription Array -->
+
+      <div formArrayName="prescriptions">
+        @for( prescription of prescriptions.controls; track $index ){
+
+        <div class="prescription-card" [formGroupName]="$index">
+          <!-- Medicine Name -->
+
+          <div class="form-group">
+            <label>Medicine Name</label>
+
+            <input type="text" formControlName="medicineName" />
+          </div>
+
+          <!-- Dosage -->
+
+          <div class="form-group">
+            <label>Dosage</label>
+
+            <input type="text" formControlName="dosage" />
+          </div>
+
+          <!-- Frequency -->
+
+          <div class="form-group">
+            <label>Frequency/Day</label>
+
+            <input type="text" formControlName="frequency" />
+          </div>
+
+          <!-- Duration -->
+
+          <div class="form-group">
+            <label>Duration</label>
+
+            <input type="text" formControlName="duration" />
+          </div>
+
+          <!-- Remove Button -->
+
+          @if( prescriptions.length > 1 ){
+
+          <button type="button" class="remove-btn" (click)="removePrescription($index)">Remove</button>
+
+          }
+        </div>
+
+        }
+      </div>
+    </div>
+
+    <!-- Submit -->
+
+    <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+      @if(isSubmitting){ Saving... } @else { Complete Consultation }
+    </button>
+  </form>
+</div>

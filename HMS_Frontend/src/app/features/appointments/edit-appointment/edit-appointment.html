@@ -1,0 +1,150 @@
+<div class="edit-appointment-container">
+  <h1>Edit Appointment</h1>
+
+  <form [formGroup]="appointmentForm" (ngSubmit)="onSubmit()">
+    <div class="grid">
+      <!-- Doctor -->
+      <div class="form-group">
+        <label for = "doctor">Doctor</label>
+        <select formControlName="doctorEmployeeId" (change)="fetchAvailableSlots()">
+          <option value="">Select Doctor</option>
+          @for ( doctor of doctors; track doctor._id ) {
+          <option [value]="doctor._id">{{ doctor.name }}</option>
+          }
+        </select>
+        @if(appointmentForm.get('doctorEmployeeId')?.invalid && appointmentForm.get('doctorEmployeeId')?.touched){
+        <span class="error-text">Doctor is required</span>
+        }
+      </div>
+
+      <!-- Appointment Date -->
+      <div class="form-group">
+        <label for ="appointmentDate">Appointment Date</label>
+        <input type="date" formControlName="appointmentDate" (change)="fetchAvailableSlots()" />
+        @if(appointmentForm.get('appointmentDate')?.invalid && appointmentForm.get('appointmentDate')?.touched){
+        <span class="error-text">Appointment Date is required</span>
+        } @if(noSlotsError){
+        <span class="error-text">Doctor is not available on this day</span>
+        }
+      </div>
+
+      <!-- Appointment Type -->
+      <div class="form-group">
+        <label for = "appointmentType">Appointment Type</label>
+        <select formControlName="appointmentType">
+          <option value="">Select Appointment Type</option>
+          <option value="CONSULTATION">Consultation</option>
+          <option value="FOLLOW_UP">Follow Up</option>
+          <option value="EMERGENCY">Emergency</option>
+          <option value="VIDEO_CONSULTATION">Video Consultation</option>
+          <option value="ROUTINE_CHECKUP">Routine Checkup</option>
+        </select>
+        @if(appointmentForm.get('appointmentType')?.invalid && appointmentForm.get('appointmentType')?.touched){
+        <span class="error-text">Appointment Type is required</span>
+        }
+      </div>
+
+      <!-- Priority -->
+      <div class="form-group">
+        <label for = "priority">Priority</label>
+        <select formControlName="priority">
+          <option value="">Select Priority</option>
+          <option value="NORMAL">Normal</option>
+          <option value="URGENT">Urgent</option>
+          <option value="CRITICAL">Critical</option>
+        </select>
+        @if(appointmentForm.get('priority')?.invalid && appointmentForm.get('priority')?.touched){
+        <span class="error-text">Priority is required</span>
+        }
+      </div>
+
+      <!-- Payment Status -->
+      <div class="form-group">
+        <label for = "payment">Payment Status</label>
+        <select formControlName="paymentStatus">
+          <option value="">Select Payment Status</option>
+          <option value="PENDING">Pending</option>
+          <option value="PAID">Paid</option>
+          <option value="INSURANCE">Insurance</option>
+        </select>
+        @if(appointmentForm.get('paymentStatus')?.invalid && appointmentForm.get('paymentStatus')?.touched){
+        <span class="error-text">Payment Status is required</span>
+        }
+      </div>
+
+      <!-- Visit Mode -->
+      <div class="form-group">
+        <label for ="visitMode">Visit Mode</label>
+        <select formControlName="visitMode">
+          <option value="">Select Visit Mode</option>
+          <option value="OFFLINE">Offline</option>
+          <option value="ONLINE">Online</option>
+          <option value="HOME_VISIT">Home Visit</option>
+        </select>
+        @if(appointmentForm.get('visitMode')?.invalid && appointmentForm.get('visitMode')?.touched){
+        <span class="error-text">Visit Mode is required</span>
+        }
+      </div>
+
+      <!-- Status -->
+      <div class="form-group">
+        <label for = "status">Status</label>
+        <select formControlName="status">
+          <option value="">Select Status</option>
+          <option value="BOOKED">Booked</option>
+          <option value="IN_CONSULTATION">In Consultation</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        @if(appointmentForm.get('status')?.invalid && appointmentForm.get('status')?.touched){
+        <span class="error-text">Status is required</span>
+        }
+      </div>
+    </div>
+
+    <!-- Slots -->
+    @if( appointmentForm.get('status')?.value !== 'COMPLETED' && appointmentForm.get('status')?.value !== 'CANCELLED' ){
+    <div class="slots-section">
+      <h2>Available Slots</h2>
+      <div class="slots-container">
+        @for ( slot of availableSlots; track slot ) {
+        <button
+          type="button"
+          class="slot-btn"
+          [class.active]="appointmentForm.get('timeSlot')?.value === slot"
+          (click)="appointmentForm.get('timeSlot')?.setValue(slot)"
+        >
+          {{ slot }}
+        </button>
+        }
+      </div>
+      @if(appointmentForm.get('timeSlot')?.invalid && appointmentForm.get('timeSlot')?.touched){
+      <span class="error-text">Please select a time slot</span>
+      }
+    </div>
+    }
+
+    <!-- Symptoms -->
+    <div class="form-group full-width">
+      <label for = "symptoms">Symptoms</label>
+      <textarea formControlName="symptoms" placeholder="Enter symptoms"></textarea>
+    </div>
+
+    <!-- Reason -->
+    <div class="form-group full-width">
+      <label for ="reason">Reason</label>
+      <textarea formControlName="reason"></textarea>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-group full-width">
+      <label for ="notes">Notes</label>
+      <textarea formControlName="notes"></textarea>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+      @if(isSubmitting){ Updating... } @else { Update Appointment }
+    </button>
+  </form>
+</div>

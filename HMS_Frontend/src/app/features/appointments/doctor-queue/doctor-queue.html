@@ -1,0 +1,205 @@
+<div class="queue-page">
+  <!-- Header -->
+
+  <div class="queue-header glass-card">
+    <div>
+      <p class="page-label">Live Doctor Queue</p>
+
+      <h1>Today's Queue</h1>
+
+      <p class="page-subtitle">Manage consultations, patient flow and live appointments.</p>
+    </div>
+
+    <div class="queue-stats">
+      <div class="stat-card">
+        <span>Total Patients</span>
+
+        <h2>{{ appointments.length }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+
+  @if(isLoading){
+
+  <div class="loading-card glass-card">
+    <div class="loader"></div>
+
+    <p>Loading Queue...</p>
+  </div>
+
+  } @else {
+
+  <!-- Empty State -->
+
+  @if(appointments.length === 0){
+
+  <div class="empty-card glass-card">
+    <div class="empty-icon">🩺</div>
+
+    <h2>No Appointments Today</h2>
+
+    <p>Your queue is currently empty.</p>
+  </div>
+
+  } @else {
+
+  <!-- Queue -->
+
+  <div class="queue-grid">
+    @for ( appointment of appointments; track appointment._id ) {
+
+    <div class="queue-card glass-card">
+      <!-- Top -->
+
+      <div class="card-top">
+        <!-- Token -->
+
+        <div class="token-box">
+          <span>TOKEN</span>
+
+          <h2>#{{ appointment ?.tokenNumber }}</h2>
+        </div>
+
+        <!-- Status -->
+
+        <span
+          class="status-badge"
+          [class.booked]="
+                  appointment
+                  ?.status
+                  === 'BOOKED'
+                  "
+          [class.in-consultation]="
+                  appointment
+                  ?.status
+                  === 'IN_CONSULTATION'
+                  "
+          [class.completed]="
+                  appointment
+                  ?.status
+                  === 'COMPLETED'
+                  "
+          [class.cancelled]="
+                  appointment
+                  ?.status
+                  === 'CANCELLED'
+                  "
+        >
+          {{ appointment ?.status }}
+        </span>
+      </div>
+
+      <!-- Patient -->
+
+      <div class="patient-profile">
+        <div class="avatar">{{ appointment ?.patientId ?.firstName ?.charAt(0) }}</div>
+
+        <div>
+          <h3>{{ appointment ?.patientId ?.firstName }} {{ appointment ?.patientId ?.lastName }}</h3>
+
+          <p>{{ appointment ?.patientId ?.patientId }}</p>
+        </div>
+      </div>
+
+      <!-- Info -->
+
+      <div class="info-grid">
+        <div class="info-box">
+          <span>Appointment</span>
+
+          <strong>{{ appointment ?.timeSlot }}</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Type</span>
+
+          <strong>{{ appointment ?.appointmentType }}</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Priority</span>
+
+          <span
+            class="priority-badge"
+            [class.normal]="
+                      appointment
+                      ?.priority
+                      === 'NORMAL'
+                      "
+            [class.urgent]="
+                      appointment
+                      ?.priority
+                      === 'URGENT'
+                      "
+            [class.critical]="
+                      appointment
+                      ?.priority
+                      === 'CRITICAL'
+                      "
+          >
+            {{ appointment ?.priority }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Symptoms -->
+
+      <div class="symptoms-section">
+        <h4>Symptoms</h4>
+
+        <div class="symptoms-list">
+          @for ( symptom of appointment ?.symptoms; track symptom ) {
+
+          <span class="symptom-tag">{{ symptom }}</span>
+
+          }
+        </div>
+      </div>
+
+      <!-- Notes -->
+
+      <div class="notes-box">
+        <h4>Notes</h4>
+
+        <p>{{ appointment ?.notes || 'No notes available' }}</p>
+      </div>
+
+      <!-- Actions -->
+
+      <div class="actions">
+        @if( appointment ?.status === 'BOOKED' ){
+
+        <button
+          class="start-btn"
+          [routerLink]="[
+                    '/consultation',
+                    appointment._id
+                  ]"
+        >
+          Start Consultation
+        </button>
+
+        } @if( appointment ?.status === 'IN_CONSULTATION' ){
+
+        <button
+          class="complete-btn"
+          (click)="
+                  markCompleted(
+                    appointment
+                  )
+                  "
+        >
+          Mark Completed
+        </button>
+
+        }
+      </div>
+    </div>
+
+    }
+  </div>
+
+  } }
+</div>
