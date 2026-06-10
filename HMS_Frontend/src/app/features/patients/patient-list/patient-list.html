@@ -1,0 +1,155 @@
+<div class="patients-page">
+  <!-- Header -->
+
+  <div class="patients-header glass-card">
+    <div>
+      <p class="page-label">Patient Management</p>
+
+      <h1>Patients</h1>
+
+      <p class="page-subtitle">Manage patient records, history and profiles.</p>
+    </div>
+
+    <div class="header-right">
+      <div class="patient-count">{{ filteredPatients.length }} Patients</div>
+
+      <!-- Add Patient Button -->
+
+      @if( userRole !== 'DOCTOR' ){
+
+      <a routerLink="/patients/create" class="add-btn">+ Add Patient</a>
+
+      }
+    </div>
+  </div>
+
+  <!-- Search -->
+
+  <div class="filters-wrapper glass-card">
+    <div class="search-box">
+      <span>🔍</span>
+
+      <input
+        type="text"
+        placeholder="
+              Search patient name,
+              ID or phone
+              "
+        [(ngModel)]="
+              searchTerm
+              "
+        (input)="
+              searchPatients()
+              "
+      />
+    </div>
+  </div>
+
+  <!-- Table -->
+
+  <div class="table-wrapper glass-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+
+          <th>Patient ID</th>
+
+          <th>Gender</th>
+
+          <th>Phone</th>
+
+          <th>Blood Group</th>
+
+          <th>Status</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for( patient of filteredPatients; track patient._id ){
+
+        <tr>
+          <!-- Patient -->
+
+          <td>
+            <div class="patient-info">
+              <div class="avatar">{{ patient ?.firstName ?.charAt(0) }}</div>
+
+              <div>
+                <h4>{{ patient ?.firstName }} {{ patient ?.lastName }}</h4>
+
+                <span>{{ patient ?.email || 'No Email' }}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Patient ID -->
+
+          <td>
+            <div class="patient-id">{{ patient ?.patientId }}</div>
+          </td>
+
+          <!-- Gender -->
+
+          <td>
+            <span class="gender-badge">{{ patient ?.gender }}</span>
+          </td>
+
+          <!-- Phone -->
+
+          <td>{{ patient ?.countryCode }} {{ patient ?.phone }}</td>
+
+          <!-- Blood Group -->
+
+          <td>
+            <span class="blood-badge">🩸 {{ patient ?.bloodGroup || 'N/A' }}</span>
+          </td>
+
+          <!-- Status -->
+
+          <td>
+            <span class="status-badge">Active</span>
+          </td>
+
+          <!-- Actions -->
+
+          <td>
+            <div class="actions">
+              <!-- View -->
+
+              <a
+                class="action-btn view"
+                [routerLink]="[
+                                '/patients',
+                                patient._id
+                              ]"
+              >
+                View
+              </a>
+
+              <!-- Edit -->
+
+              @if( userRole !== 'DOCTOR' ){
+
+              <a
+                class="action-btn edit"
+                [routerLink]="[
+                                '/patients/edit',
+                                patient._id
+                              ]"
+              >
+                Edit
+              </a>
+
+              }
+            </div>
+          </td>
+        </tr>
+
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

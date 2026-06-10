@@ -1,0 +1,133 @@
+<div class="employee-page" *ngIf="employee as emp">
+  <!-- Hero -->
+
+  <div class="employee-hero glass-card">
+    <div class="employee-profile">
+      <div class="avatar">{{ emp.name?.charAt(0) }}</div>
+
+      <div>
+        <p class="page-label">Employee Profile</p>
+
+        <h1>{{ emp.name }}</h1>
+
+        <div class="hero-badges">
+          <span class="designation-badge">{{ emp.designation }}</span>
+
+          <span class="department-badge">{{ emp.department }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-card">
+      <span>Status</span>
+
+      <h3>{{ emp.status }}</h3>
+    </div>
+  </div>
+
+  <!-- Grid -->
+
+  <div class="info-grid">
+    <!-- Personal -->
+
+    <div class="info-card glass-card">
+      <h2>Personal Information</h2>
+
+      <div class="info-list">
+        <div class="info-item">
+          <label>Employee Code</label>
+
+          <p>{{ emp.employeeCode }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Email</label>
+
+          <p>{{ emp.email }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Phone</label>
+
+          <p>{{ emp.countryCode }} {{ emp.phone }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Gender</label>
+
+          <p>{{ emp.gender || 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Professional -->
+
+    <div class="info-card glass-card">
+      <h2>Professional Information</h2>
+
+      <div class="info-list">
+        <div class="info-item">
+          <label>Designation</label>
+
+          <p>{{ emp.designation }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Department</label>
+
+          <p>{{ emp.department }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Joining Date</label>
+
+          <p>{{ emp.joiningDate | date }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Status</label>
+
+          <p>{{ emp.status }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctor -->
+
+    <div
+      *ngIf="
+          emp.designation
+          === 'DOCTOR'
+          "
+      class="info-card glass-card doctor-card"
+    >
+      <h2>Doctor Information</h2>
+
+      <div class="info-list">
+        <div class="info-item">
+          <label>Specialization</label>
+
+          <p>{{ emp.specialization || 'N/A' }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Qualification</label>
+
+          <p>{{ emp.qualification && emp.qualification.length > 0 ? emp.qualification[0] : 'N/A' }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Consultation Fee</label>
+
+          <p>₹ {{ emp.consultationFee || 0 }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Availability</label>
+
+          <p>{{ emp.availabilitySlots && emp.availabilitySlots.length > 0 ? emp.availabilitySlots : 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

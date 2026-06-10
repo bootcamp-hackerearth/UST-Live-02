@@ -1,0 +1,135 @@
+@if(user){
+
+<div class="profile-page">
+  <!-- Hero Section -->
+
+  <div class="profile-hero glass-card">
+    <div class="profile-left">
+      <!-- Avatar -->
+
+      <div class="profile-avatar">{{ user?.name ?.charAt(0) }}</div>
+
+      <!-- User Info -->
+
+      <div>
+        <p class="profile-label">Employee Profile</p>
+
+        <h1>{{ user?.name }}</h1>
+
+        <div class="badge-group">
+          <span class="role-badge">{{ user?.designation }}</span>
+
+          <span class="department-badge">{{ user?.department }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+
+    <div class="status-card">
+      <span>Status</span>
+
+      <h3>{{ user?.status }}</h3>
+    </div>
+  </div>
+
+  <!-- Info Grid -->
+
+  <div class="profile-grid">
+    <!-- Personal -->
+
+    <div class="profile-card glass-card">
+      <h2>Personal Information</h2>
+
+      <div class="info-list">
+        <div class="info-item">
+          <label>Employee Code</label>
+
+          <p>{{ user?.employeeCode }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Email</label>
+
+          <p>{{ user?.email }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Phone</label>
+
+          <p>{{ user?.countryCode }} {{ user?.phone }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Gender</label>
+
+          <p>{{ user?.gender || 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Professional -->
+
+    <div class="profile-card glass-card">
+      <h2>Professional Information</h2>
+
+      <div class="info-list">
+        <div class="info-item">
+          <label>Designation</label>
+
+          <p>{{ user?.designation }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Department</label>
+
+          <p>{{ user?.department }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Joining Date</label>
+
+          <p>{{ user?.joiningDate | date }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Employee Status</label>
+
+          <p>{{ user?.status }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctor Info -->
+
+    @if( user?.designation === 'DOCTOR' ){
+
+    <div class="profile-card glass-card">
+      <h2>Doctor Information</h2>
+
+      <div class="info-list">
+        <div class="info-item">
+          <label>Specialization</label>
+
+          <p>{{ user?.specialization || 'N/A' }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Qualification</label>
+
+          <p>{{ user?.qualification?.[0] || 'N/A' }}</p>
+        </div>
+
+        <div class="info-item">
+          <label>Consultation Fee</label>
+
+          <p>₹ {{ user?.consultationFee || 0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    }
+  </div>
+</div>
+
+}

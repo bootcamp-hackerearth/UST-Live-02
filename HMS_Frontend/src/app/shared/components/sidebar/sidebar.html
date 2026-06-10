@@ -1,0 +1,63 @@
+<div class="sidebar">
+  <!-- Logo -->
+
+  <div class="logo">HMS</div>
+
+  <!-- Menu -->
+
+  <div class="menu">
+    <!-- ADMIN -->
+
+    <ng-container *ngIf="isAdmin()">
+      <a routerLink="/dashboard">Dashboard</a>
+
+      <a routerLink="/employees">Employees</a>
+
+      <a routerLink="/add-employee">Add Employee</a>
+
+      <a routerLink="/pending-employees">Pending Requests</a>
+    </ng-container>
+
+    <!-- DOCTOR -->
+
+    <ng-container *ngIf="isDoctor()">
+      <a routerLink="/dashboard">Dashboard</a>
+
+      <a routerLink="/appointments">Appointments</a>
+
+      <a routerLink="/patients">Patients</a>
+
+      <a routerLink="/availability">Availability</a>
+    </ng-container>
+
+    <!-- NURSE -->
+
+    <ng-container *ngIf="isNurse()">
+      <a routerLink="/dashboard">Dashboard</a>
+
+      <a routerLink="/assigned-patients">Assigned Patients</a>
+
+      <a routerLink="/vitals">Vitals</a>
+    </ng-container>
+
+    <!-- RECEPTIONIST -->
+
+    <ng-container
+      *ngIf="
+        isReceptionist()
+      "
+    >
+      <a routerLink="/dashboard">Dashboard</a>
+
+      <a routerLink="/patients">Patients</a>
+
+      <a routerLink="/appointments">Appointments</a>
+
+      <a routerLink="/billing">Billing</a>
+    </ng-container>
+  </div>
+
+  <!-- Logout -->
+
+  <button class="logout-btn" (click)="logout()">Logout</button>
+</div>
