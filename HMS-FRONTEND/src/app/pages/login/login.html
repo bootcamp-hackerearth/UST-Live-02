@@ -1,0 +1,134 @@
+<div class="login-page">
+
+    <div class="login-container">
+
+        <div class="login-branding">
+
+            <div class="branding-content">
+
+                <div class="brand-badge">
+                    HMS Portal
+                </div>
+
+                <h1>Hospital Management System</h1>
+
+                <p>
+                    Secure internal operations portal for hospital administration,
+                    doctors, receptionists and staff management.
+                </p>
+
+                <div class="branding-actions">
+
+                    <a routerLink="/join-us" class="join-us-button">
+                        Request Access
+                    </a>
+
+                    <p>
+                        Staff onboarding and secure internal access management.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="login-panel">
+
+            <div class="login-card">
+
+                <div class="login-header">
+
+                    <h2>Welcome Back</h2>
+
+                    <p>
+                        Login to continue to the internal portal
+                    </p>
+
+                </div>
+
+                <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form-content">
+
+                    <div class="form-group">
+
+                        <label for="email">
+                            Email Address <span>*</span>
+                        </label>
+
+                        <input id="email" type="email" formControlName="email" placeholder="Enter your email"
+                            class="enterprise-input">
+
+                        @if (email?.touched && email?.hasError('required')) {
+                        <small class="field-error">
+                            Email is required
+                        </small>
+                        }
+
+                        @if (email?.touched && email?.hasError('email')) {
+                        <small class="field-error">
+                            Enter a valid email address
+                        </small>
+                        }
+
+                        @if (email?.touched && email?.hasError('pattern') && !email?.hasError('email')) {
+                        <small class="field-error">
+                            Enter a valid email format
+                        </small>
+                        }
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <div class="password-header">
+
+                            <label for="password">
+                                Password <span>*</span>
+                            </label>
+
+                        
+
+                        </div>
+
+                        <input id="password" type="password" formControlName="password"
+                            placeholder="Enter your password" class="enterprise-input">
+
+                        @if (password?.touched && password?.hasError('required')) {
+                        <small class="field-error">
+                            Password is required
+                        </small>
+                        }
+
+                    </div>
+
+                    @if (errorMessage) {
+                    <div class="error-message">
+                        {{ errorMessage }}
+                    </div>
+                    }
+
+                    <button type="submit" [disabled]="isLoading" class="login-button">
+                        {{ isLoading ? 'Logging in...' : 'Login' }}
+                    </button>
+
+                </form>
+
+                <div class="login-footer">
+
+                    <p>
+                        Need access to the hospital portal?
+
+                        <a routerLink="/join-us" class="footer-register-link">
+                            Request access
+                        </a>
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
