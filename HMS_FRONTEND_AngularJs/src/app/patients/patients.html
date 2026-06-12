@@ -1,0 +1,177 @@
+<form #patientForm="ngForm" class="patient-form" (ngSubmit)="createPatient()">
+
+    <div class="form-row">
+
+        <!-- NAME -->
+        <div class="input-group">
+            <label>FULL NAME</label>
+
+            <input type="text" [(ngModel)]="formData.name" name="name" #nameField="ngModel" required
+                pattern="^[A-Za-z ]+$">
+
+            <div class="validation-error" *ngIf="nameField.invalid && nameField.touched">
+
+                <span *ngIf="nameField.errors?.['required']">
+                    Name is required
+                </span>
+
+                <span *ngIf="nameField.errors?.['pattern']">
+                    Only alphabets and spaces allowed
+                </span>
+
+            </div>
+        </div>
+
+        <!-- PHONE -->
+        <div class="input-group">
+            <label>PHONE NUMBER</label>
+
+            <input type="text" [(ngModel)]="formData.phone" name="phone" #phoneField="ngModel" required
+                pattern="^[0-9]{10}$" maxlength="10">
+
+            <div class="validation-error" *ngIf="phoneField.invalid && phoneField.touched">
+
+                <span *ngIf="phoneField.errors?.['required']">
+                    Phone number is required
+                </span>
+
+                <span *ngIf="phoneField.errors?.['pattern']">
+                    Phone number must be numeric and exactly 10 digits
+                </span>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="form-row">
+
+        <div class="input-group">
+            <label>GENDER</label>
+
+            <select [(ngModel)]="formData.gender" name="gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>DATE OF BIRTH</label>
+
+            <input type="date" [(ngModel)]="formData.date_of_birth" name="date_of_birth" #dobField="ngModel" required
+                [max]="maxDate">
+
+            <div class="validation-error" *ngIf="dobField.invalid && dobField.touched">
+
+                Date of Birth is required
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="form-row">
+
+        <!-- EMERGENCY CONTACT -->
+        <div class="input-group">
+            <label>EMERGENCY CONTACT</label>
+
+            <input type="text" [(ngModel)]="formData.emergencyContact" name="emergencyContact" #emergencyField="ngModel"
+                pattern="^[0-9]{10}$" maxlength="10">
+
+            <div class="validation-error" *ngIf="emergencyField.invalid && emergencyField.touched">
+
+                Emergency contact must be exactly 10 digits
+
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>STATUS</label>
+
+            <select [(ngModel)]="formData.status" name="status">
+                <option [ngValue]="true">Active</option>
+                <option [ngValue]="false">Inactive</option>
+            </select>
+        </div>
+
+    </div>
+
+    <div class="form-row">
+
+        <!-- ADDRESS -->
+        <div class="input-group">
+            <label>ADDRESS LINE</label>
+
+            <input type="text" [(ngModel)]="formData.address.line1" name="line1" #addressField="ngModel" required
+                pattern="^(?=.*[A-Za-z])(?=.*[0-9]).+$">
+
+            <div class="validation-error" *ngIf="addressField.invalid && addressField.touched">
+
+                <span *ngIf="addressField.errors?.['required']">
+                    Address is required
+                </span>
+
+                <span *ngIf="addressField.errors?.['pattern']">
+                    Address must contain both letters and numbers
+                </span>
+
+            </div>
+        </div>
+
+        <!-- CITY -->
+        <div class="input-group">
+            <label>CITY</label>
+
+            <input type="text" [(ngModel)]="formData.address.city" name="city" #cityField="ngModel" required
+                pattern="^[A-Za-z ]+$">
+
+            <div class="validation-error" *ngIf="cityField.invalid && cityField.touched">
+
+                <span *ngIf="cityField.errors?.['required']">
+                    City is required
+                </span>
+
+                <span *ngIf="cityField.errors?.['pattern']">
+                    City must contain only alphabets
+                </span>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="form-row">
+
+        <!-- POSTCODE -->
+        <div class="input-group">
+            <label>POSTCODE</label>
+
+            <input type="text" [(ngModel)]="formData.address.postcode" name="postcode" #postcodeField="ngModel" required
+                pattern="^[0-9]{6}$" maxlength="6">
+
+            <div class="validation-error" *ngIf="postcodeField.invalid && postcodeField.touched">
+
+                <span *ngIf="postcodeField.errors?.['required']">
+                    Postcode is required
+                </span>
+
+                <span *ngIf="postcodeField.errors?.['pattern']">
+                    Postcode must be numeric and exactly 6 digits
+                </span>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="submit-btn" [disabled]="patientForm.invalid">
+
+            Create Patient
+
+        </button>
+    </div>
+
+</form>
