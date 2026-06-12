@@ -119,13 +119,14 @@
     required
     minlength="8">
 
-  <span
-    class="toggle-password"
-    (click)="showPassword = !showPassword">
+  <button
+  type="button"
+  class="toggle-password"
+  (click)="showPassword = !showPassword">
 
-    {{ showPassword ? 'Hide' : 'Show' }}
+  {{ showPassword ? 'Hide' : 'Show' }}
 
-  </span>
+</button>
 
 </div>
 
@@ -151,14 +152,6 @@
   </span>
 
 </div>
-
-        <!-- FORGOT -->
-
-        <!-- <div class="forgot">
-
-          Forgot Password?
-
-        </div> -->
 
         <!-- BUTTON -->
 

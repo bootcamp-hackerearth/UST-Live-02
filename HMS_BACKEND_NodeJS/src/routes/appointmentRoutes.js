@@ -13,8 +13,6 @@ const {
   deleteAppointment,
   getAppointmentUI,
   getDoctors,
-  approveAppointment,
-  rejectAppointment,
 } = require("../controllers/appointmentController");
 
 /* VALIDATION */
@@ -55,19 +53,6 @@ router.delete(
 /* UI */
 
 router.get("/getAppointmentUI", auth, getAppointmentUI);
-//Approve Appointment
-router.put(
-  "/approveAppointment/:appointmentId",
-  auth,
-  roleValidation("admin", "receptionist"),
-  approveAppointment,
-);
-//Reject Appointment
-router.put(
-  "/rejectAppointment/:appointmentId",
-  auth,
-  roleValidation("admin", "receptionist"),
-  rejectAppointment,
-);
+
 
 module.exports = router;

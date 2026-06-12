@@ -252,4 +252,3 @@ exports.getDoctors = async (req, res) => {
 
   }
 };
-
