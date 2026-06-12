@@ -1,3 +1,5 @@
+import { ApiResponse, PaginatedData } from './api-response.model';
+
 export type AuditAction =
   | 'EMPLOYEE_CREATED'
   | 'EMPLOYEE_APPROVED'
@@ -28,11 +30,7 @@ export interface AuditLog {
   created_at: string;
 }
 
-export interface AuditLogsResponse {
-  message: string;
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+export interface AuditLogsData extends PaginatedData {
   logs: AuditLog[];
 }
+export type AuditLogsResponse = ApiResponse<AuditLogsData>;

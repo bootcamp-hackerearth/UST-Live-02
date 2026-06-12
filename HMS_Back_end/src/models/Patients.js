@@ -51,6 +51,14 @@ const patientSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    resetPasswordTokenHash: {
+        type: String,
+        default: undefined
+    },
+    resetPasswordTokenExpiry: {
+        type: Date,
+        default: undefined
+    },
     createdByEmployeeId: {
         type: String,
     }

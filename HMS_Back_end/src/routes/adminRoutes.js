@@ -26,7 +26,6 @@ const employeeUpdateValidation = [
   ...employeeCodeValidation,
   nameValidator("name", "Name", { optional: true }),
 ];
-
 const requestIdValidation = [
   param("requestId").notEmpty().withMessage("Request ID is required"),
 ];

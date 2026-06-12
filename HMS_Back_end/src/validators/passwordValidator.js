@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+
 const passwordStrengthValidator = (fieldName) =>
   body(fieldName)
     .isLength({ min: 8 })

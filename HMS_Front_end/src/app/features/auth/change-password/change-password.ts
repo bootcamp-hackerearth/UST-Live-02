@@ -9,6 +9,8 @@ import {
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import {
   passwordComplexity,
   passwordMatchValidator,
@@ -28,6 +30,7 @@ export class ChangePasswordComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   changeForm: FormGroup;
@@ -72,8 +75,9 @@ export class ChangePasswordComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.toast.success(
-            response?.message || 'Password changed successfully.',
+            response?.message || APP_MESSAGES.PASSWORD_CHANGED,
           );
+
           this.authService.refreshCurrentUser().subscribe({
             next: () => {
               this.loading = false;
@@ -81,6 +85,7 @@ export class ChangePasswordComponent implements OnInit {
               this.router.navigate(['/dashboard/overview']);
             },
             error: () => {
+
               this.loading = false;
               this.cdr.markForCheck();
               this.router.navigate(['/dashboard/overview']);
@@ -91,8 +96,7 @@ export class ChangePasswordComponent implements OnInit {
           this.loading = false;
           this.cdr.markForCheck();
           this.toast.error(
-            error.error?.message ||
-              'Failed to change password. Please try again.',
+            this.apiError.message(error, APP_MESSAGES.PASSWORD_CHANGE_FAILED),
           );
         },
       });

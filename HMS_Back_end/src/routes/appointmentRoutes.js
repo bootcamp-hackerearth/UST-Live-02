@@ -27,7 +27,6 @@ const VIEW_LEVEL = authorizeDesignation(
     "RECEPTIONIST",
     "DOCTOR"
 );
-
 router.post(
     "/create-appointment",
     RECEPTION_LEVEL,

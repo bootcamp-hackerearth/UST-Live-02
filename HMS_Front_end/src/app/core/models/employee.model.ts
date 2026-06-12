@@ -32,8 +32,8 @@ export type WeekDay =
 
 export interface AvailabilitySlot {
   day: WeekDay;
-  startTime: string;
-  endTime: string;
+  startTime: string; 
+  endTime: string;  
 }
 
 export interface EmployeeProfile {
@@ -94,6 +94,7 @@ export const DEPARTMENTS: Department[] = [
   'Reception',
   'Billing',
 ];
+
 export const STAFF_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'RECEPTIONIST',

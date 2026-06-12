@@ -2,7 +2,7 @@ const frontendUrl = () => {
   let url = process.env.FRONTEND_URL || "http://localhost:4200";
   while (url.endsWith("/")) url = url.slice(0, -1);
   return url;
-}
+};
 
 const loginUrl = () => `${frontendUrl()}/login`;
 
@@ -204,6 +204,17 @@ const passwordReset = ({ resetToken }) => ({
   `),
 });
 
+const patientPasswordResetCode = ({ resetCode }) => ({
+  subject: "HMS Password Reset Code",
+  html: wrap(`
+    <h2>HMS Password Reset</h2>
+    <p>Use the code below in the HMS patient app to reset your password.</p>
+    <p style="font-size: 24px; letter-spacing: 4px;"><strong>${resetCode}</strong></p>
+    <p>This code expires in 15 minutes.</p>
+    <p>If you did not request this, ignore this email.</p>
+  `),
+});
+
 module.exports = {
   frontendUrl,
   loginUrl,
@@ -220,4 +231,5 @@ module.exports = {
   appointmentUpdated,
   appointmentCanceled,
   passwordReset,
+  patientPasswordResetCode,
 };

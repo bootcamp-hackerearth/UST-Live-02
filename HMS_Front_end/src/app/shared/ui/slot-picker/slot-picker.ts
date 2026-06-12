@@ -10,6 +10,7 @@ import {
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 
+// Time-slot picker; renders slot chips, disabling those in bookedSlots
 @Component({
   selector: 'app-slot-picker',
   standalone: true,
@@ -25,6 +26,7 @@ import {
   ],
 })
 export class SlotPickerComponent implements ControlValueAccessor {
+  // All candidate slots for the selected doctor/day
   @Input() set slots(value: string[]) {
     this._slots.set(value || []);
   }
@@ -33,6 +35,7 @@ export class SlotPickerComponent implements ControlValueAccessor {
   }
   private readonly _slots = signal<string[]>([]);
 
+  // Slots already booked (rendered red + struck through + disabled)
   @Input() set bookedSlots(value: string[]) {
     this._booked.set(new Set(value || []));
   }
@@ -45,6 +48,8 @@ export class SlotPickerComponent implements ControlValueAccessor {
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
+
+  // ControlValueAccessor
   writeValue(value: any): void {
     this.selected.set(value ?? null);
   }
@@ -57,6 +62,8 @@ export class SlotPickerComponent implements ControlValueAccessor {
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
   }
+
+  // Rendering helpers
   isBooked(slot: string): boolean {
     return this._booked().has(slot);
   }
@@ -69,6 +76,7 @@ export class SlotPickerComponent implements ControlValueAccessor {
     if (this.disabled || this.isBooked(slot)) {
       return;
     }
+    // Toggle off if re-clicking the same slot
     const next = this.selected() === slot ? null : slot;
     this.selected.set(next);
     this.onChange(next);

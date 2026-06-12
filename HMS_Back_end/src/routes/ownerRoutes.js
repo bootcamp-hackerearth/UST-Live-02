@@ -19,7 +19,6 @@ const {
 router.use(auth, authorizeRoles("OWNER"));
 
 const adminCreationValidation = [
-
     usernameValidator(),
     nameValidator("name", "Name"),
     phoneValidator("phone"),
@@ -33,6 +32,7 @@ const adminCreationValidation = [
         .withMessage("Designation must be ADMIN"),
 
     joiningDateValidator(),
+
     qualificationValidator()
 ];
 

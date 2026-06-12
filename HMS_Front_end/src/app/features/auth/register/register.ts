@@ -10,6 +10,8 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import {
   STAFF_DESIGNATIONS,
@@ -50,6 +52,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDraft = inject(FormDraftService);
 
@@ -90,13 +93,16 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   }
 
   ngOnInit(): void {
+
     const draft = this.formDraft.get(DRAFT_KEY);
     if (draft) {
+
       const slots = Array.isArray(draft['availabilitySlots'])
         ? draft['availabilitySlots']
         : [];
       slots.forEach(() => this.addSlot());
       this.registerForm.patchValue(draft);
+
       this.refreshDesignationsForDepartment(false);
       this.onDesignationChange();
     }
@@ -128,10 +134,12 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   removeSlot(index: number): void {
     this.availabilitySlots.removeAt(index);
   }
+
   onDepartmentChange(): void {
     this.refreshDesignationsForDepartment(true);
     this.onDesignationChange();
   }
+
   private refreshDesignationsForDepartment(autoFill: boolean): void {
     const dept = this.registerForm.get('department')?.value as Department | '';
 
@@ -240,8 +248,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
         this.submitted = true;
         this.formDraft.clear(DRAFT_KEY);
         this.toast.success(
-          response?.message ||
-            'Registration request submitted. Await admin approval.',
+          response?.message || APP_MESSAGES.REGISTRATION_SUBMITTED,
         );
         setTimeout(() => this.router.navigate(['/login']), 2500);
       },
@@ -249,7 +256,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
         this.loading = false;
         this.cdr.markForCheck();
         this.toast.error(
-          error.error?.message || 'Registration failed. Please try again.',
+          this.apiError.message(error, APP_MESSAGES.REGISTRATION_FAILED),
         );
       },
     });

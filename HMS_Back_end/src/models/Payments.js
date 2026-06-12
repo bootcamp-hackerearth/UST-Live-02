@@ -35,7 +35,7 @@ paymentSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'payment' },
-                { $inc: { seq: 1 } },
+                { $inc: { seq: 1 } }, 
                 { new: true, upsert: true } 
             );
             this.paymentId = `PAY-${String(counter.seq).padStart(6, '0')}`; 

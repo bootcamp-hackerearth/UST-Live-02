@@ -1,4 +1,6 @@
 import { AvailabilitySlot } from './employee.model';
+import { ApiResponse, PaginatedData } from './api-response.model';
+
 export type AppointmentStatus = 'BOOKED' | 'CANCELED' | 'COMPLETED';
 
 export const APPOINTMENT_STATUSES: AppointmentStatus[] = [
@@ -55,29 +57,22 @@ export interface CreateAppointmentPayload {
 
 export type UpdateAppointmentPayload = CreateAppointmentPayload;
 
-export interface AppointmentsResponse {
-  message: string;
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+export interface AppointmentsData extends PaginatedData {
   appointments: Appointment[];
 }
+export type AppointmentsResponse = ApiResponse<AppointmentsData>;
 
-export interface AppointmentResponse {
-  message: string;
+export type AppointmentResponse = ApiResponse<{
   appointment: Appointment;
-}
+}>;
 
-export interface DoctorsResponse {
-  message: string;
+export type DoctorsResponse = ApiResponse<{
   total: number;
   doctors: DoctorOption[];
-}
+}>;
 
-export interface BookedSlotsResponse {
-  message: string;
+export type BookedSlotsResponse = ApiResponse<{
   doctorEmployeeId: string;
   date: string;
   bookedSlots: string[];
-}
+}>;

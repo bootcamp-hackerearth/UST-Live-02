@@ -9,6 +9,8 @@ import {
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import {
   passwordComplexity,
   passwordMatchValidator,
@@ -27,6 +29,7 @@ export class ResetPasswordComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   resetPasswordForm: FormGroup;
@@ -34,6 +37,7 @@ export class ResetPasswordComponent implements OnInit {
   errorMessage = '';
   passwordReset = false;
   submitted = false;
+
   sameAsCurrent = false;
   token = '';
 
@@ -52,6 +56,7 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
+
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
     if (!this.token) {
       this.errorMessage = 'Invalid or missing reset link.';
@@ -80,13 +85,14 @@ export class ResetPasswordComponent implements OnInit {
           this.cdr.markForCheck();
           this.passwordReset = true;
           this.toast.success(
-            response?.message || 'Password reset successfully.',
+            response?.message || APP_MESSAGES.PASSWORD_RESET,
           );
         },
         error: (error) => {
           this.loading = false;
           this.cdr.markForCheck();
-          const msg = error.error?.message || '';
+          const msg = this.apiError.message(error, '');
+
           if (/same as current/i.test(msg)) {
             this.sameAsCurrent = true;
             this.toast.error(msg);

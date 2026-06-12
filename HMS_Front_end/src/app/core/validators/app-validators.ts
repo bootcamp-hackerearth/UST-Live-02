@@ -9,6 +9,7 @@ export const PHONE_PATTERN = /^(\+\d{1,3} )?\d{10}$/;
 
 export const PASSWORD_PATTERN =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
+
 export const NAME_PATTERN = /^\p{L}[\p{L} .'-]*$/u;
 export const NAME_MIN_LENGTH = 2;
 export const NAME_MAX_LENGTH = 50;
@@ -34,7 +35,6 @@ function toDateOnly(value: unknown): Date | null {
   } else if (typeof value === 'string' || typeof value === 'number') {
     d = new Date(value);
   } else {
-
     return null;
   }
   if (Number.isNaN(d.getTime())) {
@@ -209,6 +209,7 @@ export const slotsNoConflict: ValidatorFn = (
     const day = (slot.day ?? '').toString().toUpperCase();
     const start = timeToMinutes(slot.startTime);
     const end = timeToMinutes(slot.endTime);
+
     if (!day || start === null || end === null || start >= end) {
       continue;
     }
@@ -237,7 +238,6 @@ export const slotsNoConflict: ValidatorFn = (
   return null;
 };
 
-
 export function passwordMatchValidator(
   passwordKey = 'password',
   confirmKey = 'confirmPassword',
@@ -252,7 +252,6 @@ export function passwordMatchValidator(
     return null;
   };
 }
-
 
 export const notBlank: ValidatorFn = (
   control: AbstractControl,

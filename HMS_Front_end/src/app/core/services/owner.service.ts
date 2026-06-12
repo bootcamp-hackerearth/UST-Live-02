@@ -2,13 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiMessage } from '../models/api-response.model';
+import { ApiMessage, ApiResponse } from '../models/api-response.model';
 import { CreateEmployeePayload, EmployeeListItem } from '../models/employee.model';
 
-export interface AdminsResponse {
+export type AdminsResponse = ApiResponse<{
   totalAdmins: number;
   admins: EmployeeListItem[];
-}
+}>;
 
 @Injectable({
   providedIn: 'root',

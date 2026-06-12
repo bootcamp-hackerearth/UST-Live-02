@@ -4,15 +4,18 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { MeResponse } from '../models/user.model';
 import { DoctorsResponse } from '../models/appointment.model';
+import { ApiResponse } from '../models/api-response.model';
+import { EmployeeProfile } from '../models/employee.model';
 
-export interface ProfileUpdateRequestResponse {
-  message: string;
-  request: {
+export type ProfileUpdateRequestResponse = ApiResponse<{
+  employee?: EmployeeProfile;
+  request?: {
     requestId: string;
     status: string;
     requestedChanges: Record<string, { old?: any; new?: any }>;
   };
-}
+}>;
+
 export interface ProfileUpdatePayload {
   phone?: string;
   qualification?: string[];
@@ -24,9 +27,11 @@ export interface ProfileUpdatePayload {
 export class EmployeeService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/employees`;
+
   getMe(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${this.apiUrl}/me`);
   }
+
   getDoctors(): Observable<DoctorsResponse> {
     return this.http.get<DoctorsResponse>(`${this.apiUrl}/doctors`);
   }

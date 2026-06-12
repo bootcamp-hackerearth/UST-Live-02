@@ -1,6 +1,9 @@
 const Appointment = require("../models/Appointments");
 const Patient = require("../models/Patients");
 const validateEmployeeStatus = require("./validateEmployeeStatus");
+const AppError = require("../utils/AppError");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
 const withExclusion = (filter, excludeAppointmentId) => {
   if (!excludeAppointmentId) return filter;
@@ -20,20 +23,10 @@ const checkAppointmentValidity = async ({
   });
 
   if (!patient) {
-    return {
-      success: false,
-      status: 404,
-      message: "Patient doesn't exist",
-    };
+    throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.DOESNT_EXIST);
   }
 
-  const validDoctor = await validateEmployeeStatus(doctorId, "DOCTOR");
-
-  if (!validDoctor.success) {
-    return validDoctor;
-  }
-
-  const doctor = validDoctor.employee;
+  const doctor = await validateEmployeeStatus(doctorId, "DOCTOR");
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -42,11 +35,13 @@ const checkAppointmentValidity = async ({
   apptDay.setHours(0, 0, 0, 0);
 
   if (apptDay.getTime() < todayStart.getTime()) {
-    return {
-      success: false,
-      status: 409,
-      message: "Cannot book an appointment in the past.",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.PAST_DATE);
+  }
+  const maxBookingDay = new Date(todayStart);
+  maxBookingDay.setMonth(maxBookingDay.getMonth() + 6);
+
+  if (apptDay.getTime() > maxBookingDay.getTime()) {
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.TOO_FAR_AHEAD);
   }
 
   if (apptDay.getTime() === todayStart.getTime()) {
@@ -59,11 +54,7 @@ const checkAppointmentValidity = async ({
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
     if (slotStartMinutes <= nowMinutes) {
-      return {
-        success: false,
-        status: 409,
-        message: "Cannot book an appointment for a time that has already passed.",
-      };
+      throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.PAST_TIME);
     }
   }
 
@@ -80,14 +71,12 @@ const checkAppointmentValidity = async ({
         month: "short",
         day: "numeric",
       });
-      return {
-        success: false,
-        status: 409,
-        message: `Doctor has not joined yet. Earliest appointment date is ${joinedOn}`,
-      };
+      throw new AppError(
+        STATUS.CONFLICT,
+        MESSAGES.APPOINTMENT.DOCTOR_NOT_JOINED(joinedOn)
+      );
     }
   }
-
   const appointmentDay = new Date(appointmentDate)
     .toLocaleDateString("en-US", {
       weekday: "long",
@@ -99,25 +88,16 @@ const checkAppointmentValidity = async ({
   );
 
   if (!matchingSlot) {
-    return {
-      success: false,
-      status: 409,
-      message: "Doctor is unavailable on the selected day",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.DOCTOR_UNAVAILABLE_DAY);
   }
 
   const [appointmentStartTime, appointmentEndTime] = timeSlot.split("-");
-
   const isValidTimeSlot =
     appointmentStartTime >= matchingSlot.startTime &&
     appointmentEndTime <= matchingSlot.endTime;
 
   if (!isValidTimeSlot) {
-    return {
-      success: false,
-      status: 409,
-      message: "Doctor is unavailable for the selected time slot",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.DOCTOR_UNAVAILABLE_SLOT);
   }
 
   const patientAppointment = await Appointment.findOne(
@@ -128,11 +108,7 @@ const checkAppointmentValidity = async ({
   );
 
   if (patientAppointment) {
-    return {
-      success: false,
-      status: 409,
-      message: "Patient already has an appointment for this time slot",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.PATIENT_SLOT_CONFLICT);
   }
 
   const doctorAppointment = await Appointment.findOne(
@@ -143,15 +119,10 @@ const checkAppointmentValidity = async ({
   );
 
   if (doctorAppointment) {
-    return {
-      success: false,
-      status: 409,
-      message: "Doctor already has an appointment for this time slot",
-    };
+    throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.DOCTOR_SLOT_CONFLICT);
   }
 
   return {
-    success: true,
     patient,
     doctor,
   };

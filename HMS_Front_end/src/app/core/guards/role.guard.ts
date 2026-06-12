@@ -6,7 +6,7 @@ import { Designation } from '../models/employee.model';
 export const designationGuard = (
   allowed: Designation[],
 ): CanActivateFn => {
-  return (route, state) => {
+  return (_route, state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
@@ -19,7 +19,6 @@ export const designationGuard = (
     if (authService.hasDesignation(allowed)) {
       return true;
     }
-
     return router.createUrlTree(['/dashboard/overview']);
   };
 };

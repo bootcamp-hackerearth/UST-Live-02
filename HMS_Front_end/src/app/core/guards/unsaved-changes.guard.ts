@@ -5,6 +5,7 @@ import { ConfirmModalService } from '../services/confirm-modal.service';
 export interface CanComponentDeactivate {
   hasUnsavedChanges: () => boolean;
 }
+
 export const unsavedChangesGuard: CanDeactivateFn<CanComponentDeactivate> = (
   component,
 ) => {
@@ -12,13 +13,10 @@ export const unsavedChangesGuard: CanDeactivateFn<CanComponentDeactivate> = (
   if (!component || typeof component.hasUnsavedChanges !== 'function') {
     return true;
   }
-
   if (!component.hasUnsavedChanges()) {
     return true;
   }
-
   const confirmModal = inject(ConfirmModalService);
-
   return confirmModal
     .open({
       title: 'Unsaved Changes',

@@ -11,6 +11,7 @@ import {
 } from '../models/user.model';
 import { Designation } from '../models/employee.model';
 import { FormDraftService } from './form-draft.service';
+import { NodeService } from './node.service';
 
 const TOKEN_KEY = 'hms_token';
 const USER_KEY = 'hms_user';
@@ -27,6 +28,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly formDraft = inject(FormDraftService);
+  private readonly nodeService = inject(NodeService);
 
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -48,8 +50,8 @@ export class AuthService {
       .post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(
         tap((response) => {
-          if (response?.token && response?.user) {
-            this.setSession(response.token, response.user);
+          if (response?.data?.token && response?.data?.user) {
+            this.setSession(response.data.token, response.data.user);
           }
         }),
       );
@@ -88,8 +90,8 @@ export class AuthService {
   refreshCurrentUser(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${this.apiUrl}/me`).pipe(
       tap((response) => {
-        if (response?.user) {
-          this.persistUser(response.user);
+        if (response?.data?.user) {
+          this.persistUser(response.data.user);
         }
       }),
     );
@@ -102,14 +104,15 @@ export class AuthService {
     }
 
     this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
-      next: () => { },
-      error: () => { },
+      next: () => {},
+      error: () => {},
     });
     this.clearSession();
     if (navigate) {
       this.router.navigate(['/login']);
     }
   }
+
   isPasswordChangeRequired(): boolean {
     return !!this.getCurrentUser()?.mustChangePassword;
   }
@@ -136,6 +139,7 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.formDraft.clearAll();
+    this.nodeService.clearCache();
     this.currentUserSubject.next(null);
     this.currentUserSignal.set(null);
   }
@@ -153,6 +157,7 @@ export class AuthService {
       this.clearSession();
     }
   }
+
   isAuthenticated(): boolean {
     return !!this.getToken();
   }

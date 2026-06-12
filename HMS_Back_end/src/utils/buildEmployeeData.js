@@ -1,5 +1,5 @@
 const sanitizeQualifications = require("./qualificationSanitizer");
-const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
+const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../constants/domain");
 
 const buildEmployeeData = (data) => {
   const {
@@ -25,7 +25,6 @@ const buildEmployeeData = (data) => {
     joiningDate,
     qualification: sanitizeQualifications(qualification),
   };
-
   if (MEDICAL_DESIGNATIONS_SET.has(designation)) {
     employeeData.medicalRegistrationNumber = medicalRegistrationNumber;
   }

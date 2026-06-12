@@ -1,8 +1,7 @@
 const sanitizeQualifications = require("./qualificationSanitizer");
-const { SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
+const { SPECIALIZATION_DESIGNATIONS_SET } = require("../constants/domain");
 
 const doctorOnlyFields = new Set(["consultationFee", "availabilitySlots"]);
-
 const updateEmployeeData = (employee, updateData) => {
   const allowedFields = [
     "name",
@@ -20,7 +19,6 @@ const updateEmployeeData = (employee, updateData) => {
   const updatedDesignation = updateData.designation || employee.designation;
   allowedFields.forEach((field) => {
     if (updateData[field] !== undefined) {
-
       if (field === "qualification") {
         employee[field] = sanitizeQualifications(updateData[field]);
 
@@ -33,7 +31,6 @@ const updateEmployeeData = (employee, updateData) => {
       ) {
         return;
       }
-
       if (doctorOnlyFields.has(field) && updatedDesignation !== "DOCTOR") {
         return;
       }
@@ -41,7 +38,6 @@ const updateEmployeeData = (employee, updateData) => {
       employee[field] = updateData[field];
     }
   });
-
   if (!SPECIALIZATION_DESIGNATIONS_SET.has(updatedDesignation)) {
     employee.specialization = undefined;
   }

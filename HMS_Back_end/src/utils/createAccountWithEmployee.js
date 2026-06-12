@@ -14,19 +14,14 @@ async function createAccountWithEmployee(
 ) {
     const { username, email } = req.body;
 
-    const uniquenessResult = await validateUniqueEmployeeFields(req.body);
-    if (!uniquenessResult.success) {
-        const err = new Error(uniquenessResult.message);
-        err.status = uniquenessResult.status;
-        throw err;
-    }
+    await validateUniqueEmployeeFields(req.body);
 
     const temporaryPassword = generateTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, 10);
     const employeeData = buildEmployeeData(req.body);
-
     const employee = new Employee(employeeData);
     await employee.save();
+
     const user = new User({
         username,
         email,
@@ -41,7 +36,6 @@ async function createAccountWithEmployee(
         createdBy: req.user.employeeCode,
     });
     await user.save();
-
     try {
         await sendEmail({
             to: user.email,
@@ -50,7 +44,6 @@ async function createAccountWithEmployee(
     } catch (emailError) {
         console.error("Email sending error:", emailError);
     }
-
     const actor = await resolveActor(req.user);
     await recordAudit({
         actor,

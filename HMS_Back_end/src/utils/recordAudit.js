@@ -1,5 +1,4 @@
 const AuditLog = require("../models/AuditLogs");
-
 const recordAudit = async ({
     actor = {},
     action,

@@ -1,10 +1,10 @@
 const { body } = require("express-validator");
 
-
 const NAME_REGEX = /^\p{L}[\p{L} .'-]*$/u;
 
 const NAME_MIN_LENGTH = 2;
 const NAME_MAX_LENGTH = 50;
+
 const nameValidator = (field = "name", label = "Name", { optional = false } = {}) => {
   const chain = body(field);
   if (optional) {
@@ -27,6 +27,7 @@ const PHONE_REGEX = /^(\+\d{1,3} )?\d{10}$/;
 
 const PHONE_DEFAULT_MESSAGE =
   "Phone must be 10 digits, optionally prefixed with a country code and a space (e.g. +91 1234567890 or 1234567890)";
+
 const phoneValidator = (
   field = "phone",
   { optional = false, message = PHONE_DEFAULT_MESSAGE } = {},

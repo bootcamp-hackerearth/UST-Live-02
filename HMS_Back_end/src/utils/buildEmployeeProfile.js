@@ -1,7 +1,6 @@
-const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../config/constants");
+const { MEDICAL_DESIGNATIONS_SET, SPECIALIZATION_DESIGNATIONS_SET } = require("../constants/domain");
 
 const buildEmployeeProfile = (employee) => {
-
     const profile = {
         employeeCode: employee.employeeCode,
         name: employee.name,
@@ -25,6 +24,7 @@ const buildEmployeeProfile = (employee) => {
         profile.consultationFee = employee.consultationFee;
         profile.availabilitySlots = employee.availabilitySlots;
     }
+
     return profile;
 };
 

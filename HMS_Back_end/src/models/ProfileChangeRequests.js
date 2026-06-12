@@ -31,7 +31,6 @@ const profileChangeRequestSchema = new mongoose.Schema(
             type: String,
             required: true
         },
-
         requestedChanges: {
             type: Map,
             of: changeValueSchema,
@@ -57,7 +56,6 @@ const profileChangeRequestSchema = new mongoose.Schema(
     }
 );
 
-// Pre-save hook to generate sequential profile change request id
 profileChangeRequestSchema.pre("save", async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(

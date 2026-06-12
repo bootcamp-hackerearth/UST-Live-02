@@ -2,15 +2,18 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiMessage } from '../models/api-response.model';
+import { ApiMessage, ApiResponse } from '../models/api-response.model';
 import { CreateEmployeePayload, EmployeeListItem, UpdateEmployeePayload } from '../models/employee.model';
 import { AuditLogsResponse } from '../models/audit.model';
 import { ProfileChangeRequestsResponse } from '../models/profile-change-request.model';
 
-export interface EmployeesResponse {
+
+export type EmployeesResponse = ApiResponse<{
   totalEmployees: number;
   employees: EmployeeListItem[];
-}
+}>;
+
+export type EmployeeResponse = ApiResponse<EmployeeListItem>;
 
 @Injectable({
   providedIn: 'root',
@@ -27,8 +30,8 @@ export class AdminService {
     return this.http.get<EmployeesResponse>(`${this.apiUrl}/employees`);
   }
 
-  getEmployee(employeeCode: string): Observable<EmployeeListItem> {
-    return this.http.get<EmployeeListItem>(`${this.apiUrl}/employees/${employeeCode}`);
+  getEmployee(employeeCode: string): Observable<EmployeeResponse> {
+    return this.http.get<EmployeeResponse>(`${this.apiUrl}/employees/${employeeCode}`);
   }
 
   getPendingEmployees(): Observable<EmployeesResponse> {
@@ -75,6 +78,7 @@ export class AdminService {
       params,
     });
   }
+
   getProfileChangeRequests(): Observable<ProfileChangeRequestsResponse> {
     return this.http.get<ProfileChangeRequestsResponse>(
       `${this.apiUrl}/profile-change-requests`,

@@ -1,13 +1,16 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
 import { OwnerService } from '../../../core/services/owner.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { EmployeeListItem } from '../../../core/models/employee.model';
 
+// Admin management list (OWNER only)
 @Component({
   selector: 'app-admins',
   standalone: true,
@@ -18,8 +21,8 @@ import { EmployeeListItem } from '../../../core/models/employee.model';
 export class AdminsComponent implements OnInit {
   private readonly ownerService = inject(OwnerService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
-  private readonly router = inject(Router);
 
   admins = signal<EmployeeListItem[]>([]);
   loading = signal(true);
@@ -33,12 +36,12 @@ export class AdminsComponent implements OnInit {
     this.loading.set(true);
     this.ownerService.getAdmins().subscribe({
       next: (res) => {
-        this.admins.set(res.admins || []);
+        this.admins.set(res.data.admins || []);
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
-        this.toast.error('Failed to load admins.');
+        this.toast.error(APP_MESSAGES.LOAD_ADMINS_FAILED);
       },
     });
   }
@@ -64,12 +67,12 @@ export class AdminsComponent implements OnInit {
     }
     this.ownerService.deleteAdmin(item.employee.employeeCode).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Admin deleted.');
+        this.toast.success(res.message || APP_MESSAGES.ADMIN_DELETED);
         this.close();
         this.load();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to delete admin.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.ADMIN_DELETE_FAILED));
       },
     });
   }

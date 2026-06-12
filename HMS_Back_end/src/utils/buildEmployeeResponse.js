@@ -1,7 +1,6 @@
 const buildEmployeeProfile = require("./buildEmployeeProfile");
 
 const buildEmployeeResponse = (employees, users) => {
-
     const userMap = new Map();
     users.forEach((user) => {
         userMap.set(
@@ -9,7 +8,6 @@ const buildEmployeeResponse = (employees, users) => {
             user
         );
     });
-
     return employees.map((employee) => {
         const matchedUser =
             userMap.get(

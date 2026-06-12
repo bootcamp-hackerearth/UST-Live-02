@@ -1,5 +1,8 @@
 const Employee = require("../models/Employees");
 const User = require("../models/Users");
+const AppError = require("../utils/AppError");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
 const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
 
@@ -8,11 +11,7 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
     });
 
     if (!employee) {
-        return {
-            success: false,
-            status: 404,
-            message: "Employee doesn't exist"
-        };
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.DOESNT_EXIST);
     }
 
     const user = await User.findOne({
@@ -20,32 +19,24 @@ const validateEmployeeStatus = async (employeeCode, expectedDesignation) => {
     });
 
     if (!user) {
-        return {
-            success: false,
-            status: 404,
-            message: "User doesn't exist"
-        };
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.USER_DOESNT_EXIST);
     }
 
     if (employee.designation !== expectedDesignation) {
-        return {
-            success: false,
-            status: 400,
-            message: "The selected employee is not a " + expectedDesignation
-        };
-    }
-    if (String(user.status) !== "ACTIVE") {
-        return {
-            success: false,
-            status: 403,
-            message: expectedDesignation + " account is inactive"
-        };
+        throw new AppError(
+            STATUS.BAD_REQUEST,
+            MESSAGES.EMPLOYEE.NOT_DESIGNATION(expectedDesignation)
+        );
     }
 
-    return {
-        success: true,
-        employee
-    };
-}
+    if (String(user.status) !== "ACTIVE") {
+        throw new AppError(
+            STATUS.FORBIDDEN,
+            MESSAGES.EMPLOYEE.DESIGNATION_INACTIVE(expectedDesignation)
+        );
+    }
+
+    return employee;
+};
 
 module.exports = validateEmployeeStatus;

@@ -1,3 +1,5 @@
+import { ApiResponse, PaginatedData } from './api-response.model';
+
 export type Gender = 'Male' | 'Female';
 export type PatientStatus = 'ACTIVE' | 'INACTIVE';
 
@@ -39,23 +41,19 @@ export interface CreatePatientPayload {
   status?: PatientStatus;
 }
 
-export interface PatientsResponse {
-  message: string;
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+export interface PatientsData extends PaginatedData {
   patients: Patient[];
 }
-export interface PatientSearchResponse {
-  message: string;
+export type PatientsResponse = ApiResponse<PatientsData>;
+
+export type PatientSearchResponse = ApiResponse<{
   total: number;
   patients: Patient[];
-}
-export interface PatientResponse {
-  message: string;
+}>;
+
+export type PatientResponse = ApiResponse<{
   patient: Patient;
-}
+}>;
 
 export const GENDERS: Gender[] = ['Male', 'Female'];
 export const PATIENT_STATUSES: PatientStatus[] = ['ACTIVE', 'INACTIVE'];

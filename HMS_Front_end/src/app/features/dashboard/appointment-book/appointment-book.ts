@@ -17,6 +17,8 @@ import { PatientService } from '../../../core/services/patient.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import { Patient } from '../../../core/models/patient.model';
@@ -64,6 +66,7 @@ export class AppointmentBookComponent
   private readonly employeeService = inject(EmployeeService);
   private readonly appointmentService = inject(AppointmentService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDraft = inject(FormDraftService);
   private readonly router = inject(Router);
@@ -82,6 +85,7 @@ export class AppointmentBookComponent
     if (!value || !joinIso) {
       return null;
     }
+    // yyyy-mm-dd strings compare correctly lexicographically
     return String(value) < joinIso ? { beforeJoining: true } : null;
   };
 
@@ -89,20 +93,31 @@ export class AppointmentBookComponent
   loading = false;
   submittedOk = false;
 
+  // 'create' | 'edit' — set from route data in ngOnInit
   mode: 'create' | 'edit' = 'create';
-
+  // appointmentId being edited (edit mode only)
   editAppointmentId: string | null = null;
+
+  // Slot to restore after async booked-slots load (edit mode only)
   private pendingTimeSlot: string | null = null;
+
+  // Date-picker minimum: today, raised to the doctor's joining date when later
   minDate = signal(this.todayIso);
+  // The selected doctor's joining date as yyyy-mm-dd (null if none/unset)
   private readonly doctorJoinIso = signal<string | null>(null);
+  // Friendly joining date for the error message (e.g. "Jun 25, 2026")
   doctorJoinDisplay = signal('');
+
+  // Searchable options + display fields
   patients = signal<Patient[]>([]);
   doctors = signal<DoctorOption[]>([]);
 
+  // Slot rendering
   availableSlots = signal<string[]>([]);
   bookedSlots = signal<string[]>([]);
   loadingSlots = signal(false);
 
+  // Adapter options exposing label/sublabel for SearchableSelectComponent
   patientOptions = signal<any[]>([]);
   doctorOptions = signal<any[]>([]);
 
@@ -123,7 +138,7 @@ export class AppointmentBookComponent
 
     this.employeeService.getDoctors().subscribe({
       next: (res) => {
-        const docs = res.doctors || [];
+        const docs = res.data.doctors || [];
         this.doctors.set(docs);
         this.doctorOptions.set(
           docs.map((d) => ({
@@ -139,32 +154,35 @@ export class AppointmentBookComponent
           this.loadForEdit(this.editAppointmentId);
         }
       },
-      error: () => this.toast.error('Failed to load doctors.'),
+      error: () => this.toast.error(APP_MESSAGES.LOAD_DOCTORS_FAILED),
     });
 
     this.patientService.getPatients(1, 25).subscribe({
       next: (res) => {
-        this.setPatientOptions(res.patients);
+        this.setPatientOptions(res.data.patients);
       },
-      error: () => this.toast.error('Failed to load patients.'),
+      error: () => this.toast.error(APP_MESSAGES.LOAD_PATIENTS_FAILED),
     });
 
+    // Debounced server-side patient search
     this.patientSearch$.pipe(debounceTime(300)).subscribe((term) => {
       if (!term || term.trim().length === 0) {
         this.patientService.getPatients(1, 25).subscribe({
-          next: (res) => this.setPatientOptions(res.patients),
+          next: (res) => this.setPatientOptions(res.data.patients),
         });
         return;
       }
       this.patientService.searchPatients(term).subscribe({
-        next: (res) => this.setPatientOptions(res.patients),
+        next: (res) => this.setPatientOptions(res.data.patients),
       });
     });
 
+    // Attach the joining-date validator to the date control
     this.form
       .get('appointmentDate')!
       .addValidators(this.beforeJoiningValidator);
 
+    // Recompute slots whenever the doctor or date changes
     this.form.get('doctorEmployeeId')!.valueChanges.subscribe(() => {
       this.updateDoctorJoining();
       this.refreshSlots();
@@ -173,6 +191,7 @@ export class AppointmentBookComponent
       this.refreshSlots(),
     );
 
+    // Draft restore + auto-save (create mode only)
     if (this.mode === 'create') {
       const draft = this.formDraft.get(DRAFT_KEY_CREATE);
       if (draft) {
@@ -186,11 +205,12 @@ export class AppointmentBookComponent
     }
   }
 
+  // Loads and patches the form for edit mode (after the doctors list is available)
   private loadForEdit(id: string): void {
     this.loading = true;
     this.appointmentService.getAppointmentById(id).subscribe({
       next: (res) => {
-        const a = res.appointment;
+        const a = res.data.appointment;
         if (a.status !== 'BOOKED') {
           this.loading = false;
           this.toast.error('Only BOOKED appointments can be edited.');
@@ -198,6 +218,7 @@ export class AppointmentBookComponent
           return;
         }
 
+        // Ensure the appointment's patient appears in the dropdown
         if (a.patient) {
           const alreadyListed = this.patientOptions().some(
             (o) => o.value === a.patientId,
@@ -213,6 +234,8 @@ export class AppointmentBookComponent
             ]);
           }
         }
+
+        // Set values without emitting to avoid racing valueChanges subscriptions
         this.form.get('patientId')!.setValue(a.patientId, { emitEvent: false });
         this.form.get('doctorEmployeeId')!.setValue(a.doctorEmployeeId, { emitEvent: false });
         this.form.get('appointmentDate')!.setValue(
@@ -222,13 +245,14 @@ export class AppointmentBookComponent
 
         this.updateDoctorJoining();
 
+        // refreshSlots clears the timeSlot; restore it once booked-slots loads
         this.pendingTimeSlot = a.timeSlot;
         this.refreshSlots();
         this.loading = false;
       },
       error: () => {
         this.loading = false;
-        this.toast.error('Failed to load appointment.');
+        this.toast.error(APP_MESSAGES.LOAD_APPOINTMENT_FAILED);
         this.router.navigate(['/dashboard/appointments']);
       },
     });
@@ -247,6 +271,7 @@ export class AppointmentBookComponent
 
   onPatientSearch = (term: string) => this.patientSearch$.next(term);
 
+  // Updates joining-date state (min date, display, validity) for the selected doctor
   private updateDoctorJoining(): void {
     const doctorId = this.form.get('doctorEmployeeId')!.value;
     const doctor = this.doctors().find((d) => d.employeeCode === doctorId);
@@ -280,9 +305,12 @@ export class AppointmentBookComponent
       this.doctorJoinDisplay.set('');
       this.minDate.set(this.todayIso);
     }
+
+    // Re-validate the date against the new doctor's joining date
     this.form.get('appointmentDate')!.updateValueAndValidity();
   }
 
+  // Formats a Date as yyyy-mm-dd in local time
   private toIso(d: Date): string {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
@@ -293,6 +321,7 @@ export class AppointmentBookComponent
     const doctorId = this.form.get('doctorEmployeeId')!.value;
     const date = this.form.get('appointmentDate')!.value;
 
+    // Reset slot when inputs change
     this.form.patchValue({ timeSlot: '' }, { emitEvent: false });
     this.availableSlots.set([]);
     this.bookedSlots.set([]);
@@ -300,6 +329,8 @@ export class AppointmentBookComponent
     if (!doctorId || !date) {
       return;
     }
+
+    // 1. Derive candidate slots from the doctor's availability for the weekday
     const doctor = this.doctors().find((d) => d.employeeCode === doctorId);
     if (!doctor) {
       return;
@@ -310,13 +341,14 @@ export class AppointmentBookComponent
     );
     const candidate = this.expandSlots(dayWindows);
 
+    // For today, hide slots whose start time has already passed
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const filtered =
       date === todayIsoDate()
         ? candidate.filter(
-            (slot) => this.toMinutes(slot.split('-')[0]) > nowMinutes,
-          )
+          (slot) => this.toMinutes(slot.split('-')[0]) > nowMinutes,
+        )
         : candidate;
 
     this.availableSlots.set(filtered);
@@ -325,6 +357,7 @@ export class AppointmentBookComponent
       return;
     }
 
+    // 2. Fetch booked slots for that doctor/date (excluding the current appointment in edit mode)
     this.loadingSlots.set(true);
     this.appointmentService
       .getBookedSlots(
@@ -334,8 +367,9 @@ export class AppointmentBookComponent
       )
       .subscribe({
         next: (res) => {
-          this.bookedSlots.set(res.bookedSlots || []);
+          this.bookedSlots.set(res.data.bookedSlots || []);
           this.loadingSlots.set(false);
+          // Restore the pre-selected slot after slots finish loading (edit mode)
           if (this.pendingTimeSlot) {
             this.form.patchValue(
               { timeSlot: this.pendingTimeSlot },
@@ -351,6 +385,7 @@ export class AppointmentBookComponent
       });
   }
 
+  // Expands availability windows into SLOT_MINUTES "HH:mm-HH:mm" chunks
   private expandSlots(windows: AvailabilitySlot[]): string[] {
     const out: string[] = [];
     for (const w of windows) {
@@ -379,6 +414,8 @@ export class AppointmentBookComponent
   hasUnsavedChanges(): boolean {
     return this.form.dirty && !this.submittedOk;
   }
+
+  // Selected doctor — used to show a fee summary
   get selectedDoctor(): DoctorOption | null {
     const id = this.form.get('doctorEmployeeId')!.value;
     return this.doctors().find((d) => d.employeeCode === id) || null;
@@ -402,7 +439,7 @@ export class AppointmentBookComponent
             this.loading = false;
             this.cdr.markForCheck();
             this.submittedOk = true;
-            this.toast.success(res.message || 'Appointment updated.');
+            this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_UPDATED);
             this.router.navigate([
               '/dashboard/appointments',
               this.editAppointmentId,
@@ -412,7 +449,7 @@ export class AppointmentBookComponent
             this.loading = false;
             this.cdr.markForCheck();
             this.toast.error(
-              err.error?.message || 'Failed to update appointment.',
+              this.apiError.message(err, APP_MESSAGES.APPOINTMENT_UPDATE_FAILED),
             );
             this.refreshSlots();
           },
@@ -424,19 +461,19 @@ export class AppointmentBookComponent
           this.cdr.markForCheck();
           this.submittedOk = true;
           this.formDraft.clear(DRAFT_KEY_CREATE);
-          this.toast.success(res.message || 'Appointment booked.');
+          this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_BOOKED);
           this.router.navigate([
             '/dashboard/appointments',
-            res.appointment.appointmentId,
+            res.data.appointment.appointmentId,
           ]);
         },
         error: (err) => {
           this.loading = false;
           this.cdr.markForCheck();
           this.toast.error(
-            err.error?.message || 'Failed to book appointment.',
+            this.apiError.message(err, APP_MESSAGES.APPOINTMENT_BOOK_FAILED),
           );
-
+          // Refresh slots in case a race produced the conflict
           this.refreshSlots();
         },
       });

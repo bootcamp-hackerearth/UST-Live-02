@@ -4,8 +4,8 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class FormDraftService {
-
   private readonly drafts = new Map<string, Record<string, any>>();
+
   private static readonly SENSITIVE_FRAGMENTS = [
     'password',
     'passwd',
@@ -25,10 +25,6 @@ export class FormDraftService {
     return draft ? this.clone(draft) : null;
   }
 
-  has(key: string): boolean {
-    return this.drafts.has(key);
-  }
-
   clear(key: string): void {
     this.drafts.delete(key);
   }
@@ -36,6 +32,7 @@ export class FormDraftService {
   clearAll(): void {
     this.drafts.clear();
   }
+
   private sanitize(value: any): any {
     if (Array.isArray(value)) {
       return value.map((item) => this.sanitize(item));
@@ -63,10 +60,6 @@ export class FormDraftService {
   }
 
   private clone(value: any): any {
-    try {
-      return structuredClone(value);
-    } catch {
-      return structuredClone(value);
-    }
+    return structuredClone(value);
   }
 }

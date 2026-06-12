@@ -4,8 +4,9 @@ import { designationGuard } from './core/guards/role.guard';
 import { mustChangePasswordGuard } from './core/guards/must-change-password.guard';
 import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 
+// Application routes (public, gated change-password, and the authenticated dashboard tree)
 export const routes: Routes = [
-
+  // Public routes
   {
     path: '',
     loadComponent: () =>
@@ -38,6 +39,7 @@ export const routes: Routes = [
       ),
   },
 
+  // Authenticated change-password (voluntary or forced first-login)
   {
     path: 'change-password',
     canActivate: [authGuard],
@@ -47,11 +49,14 @@ export const routes: Routes = [
       ),
   },
 
+  // Dashboard tree
   {
     path: 'dashboard',
     canActivate: [authGuard, mustChangePasswordGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'overview' },
+
+      // Available to every authenticated user (defaults rendered by sidebar)
       {
         path: 'overview',
         loadComponent: () =>
@@ -68,9 +73,10 @@ export const routes: Routes = [
           ),
       },
 
+      // Employees: OWNER + ADMIN (superusers always pass)
       {
         path: 'employees',
-        canActivate: [designationGuard([])], 
+        canActivate: [designationGuard([])], // empty list → only superusers
         loadComponent: () =>
           import('./features/dashboard/employees/employees').then(
             (m) => m.EmployeesListComponent,
@@ -97,6 +103,7 @@ export const routes: Routes = [
           ).then((m) => m.CreateEmployeeComponent),
       },
 
+      // Approvals: OWNER + ADMIN
       {
         path: 'approvals',
         canActivate: [designationGuard([])],
@@ -105,6 +112,8 @@ export const routes: Routes = [
             (m) => m.ApprovalsComponent,
           ),
       },
+
+      // Admins management: OWNER only (uses the dedicated ownerOnlyGuard below)
       {
         path: 'admins',
         canActivate: [ownerOnlyGuard()],
@@ -123,6 +132,8 @@ export const routes: Routes = [
             './features/dashboard/employees-create/employees-create'
           ).then((m) => m.CreateEmployeeComponent),
       },
+
+      // Patients: OWNER + ADMIN + RECEPTIONIST
       {
         path: 'patients',
         canActivate: [designationGuard(['RECEPTIONIST'])],
@@ -149,6 +160,8 @@ export const routes: Routes = [
             (m) => m.PatientDetailComponent,
           ),
       },
+
+      // Appointments: OWNER + ADMIN + RECEPTIONIST + DOCTOR (doctors auto-scoped to their own)
       {
         path: 'appointments',
         canActivate: [designationGuard(['RECEPTIONIST', 'DOCTOR'])],
@@ -187,14 +200,16 @@ export const routes: Routes = [
     ],
   },
 
+  // Wildcard
   { path: '**', redirectTo: '' },
 ];
 
+// Local OWNER-only guard (defined here to keep all routing in one file)
 import { inject } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
 
 function ownerOnlyGuard(): CanActivateFn {
-  return (route, state) => {
+  return (_route, state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
@@ -208,6 +223,7 @@ function ownerOnlyGuard(): CanActivateFn {
       return true;
     }
 
+    // Authenticated but not OWNER → bounce to overview
     return router.createUrlTree(['/dashboard/overview']);
   };
 }

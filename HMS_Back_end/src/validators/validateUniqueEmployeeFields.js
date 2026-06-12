@@ -1,8 +1,12 @@
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
-const { MEDICAL_DESIGNATIONS_SET } = require("../config/constants");
+const { MEDICAL_DESIGNATIONS_SET } = require("../constants/domain");
+const AppError = require("../utils/AppError");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
 const validateUniqueEmployeeFields = async (data) => {
+
     const {
         username,
         email,
@@ -15,52 +19,33 @@ const validateUniqueEmployeeFields = async (data) => {
     });
 
     if (existingUsername) {
-        return {
-            success: false,
-            status: 409,
-            message: "Username already exists"
-        };
+        throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.USERNAME_EXISTS);
     }
-
     const existingUserEmail = await User.findOne({
         email
     });
 
     if (existingUserEmail) {
-        return {
-            success: false,
-            status: 409,
-            message: "User with this email already exists"
-        };
+        throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.USER_EMAIL_EXISTS);
     }
+
     const existingEmployeeEmail = await Employee.findOne({
         email
     });
 
     if (existingEmployeeEmail) {
-        return {
-            success: false,
-            status: 409,
-            message: "Employee with this email already exists"
-        };
+        throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.EMAIL_EXISTS);
     }
+
     if (MEDICAL_DESIGNATIONS_SET.has(designation)) {
         const existingMedicalEmployee = await Employee.findOne({
             medicalRegistrationNumber
         });
 
         if (existingMedicalEmployee) {
-            return {
-                success: false,
-                status: 409,
-                message: "Employee with this medical registration number already exists"
-            };
+            throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.MED_REG_EXISTS);
         }
     }
-
-    return {
-        success: true
-    };
-}
+};
 
 module.exports = validateUniqueEmployeeFields;
