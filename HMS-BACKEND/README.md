@@ -1,152 +1,270 @@
-# HMS Front End
+# HMS Back End
 
-Angular 21 admin panel / dashboard for the **Hospital Management System (HMS)**.
-It consumes the [HMS Back End](../HMS_Back_end) REST API and provides role-aware
-screens for managing employees, admins, patients, appointments and approvals.
-
-Built with modern Angular: **standalone components**, **zoneless change
-detection**, **signals**, and **lazy-loaded routes**.
+REST API for a **Hospital Management System (HMS)**. Built with Express 5 and
+MongoDB (Mongoose), it provides authentication, role/designation-based access
+control, employee and patient management, appointment scheduling, an
+approval-driven profile-change workflow, audit logging and transactional email.
 
 ## Tech stack
 
-| Area              | Library                          |
-| ----------------- | -------------------------------- |
-| Framework         | Angular `^21.2`                  |
-| Language          | TypeScript `~5.9`                |
-| Reactive          | RxJS `~7.8` + Angular signals    |
-| Testing           | Vitest, jsdom                    |
-| Formatting        | Prettier                         |
-| Tooling           | Angular CLI / `@angular/build`   |
+| Area            | Library                                            |
+| --------------- | -------------------------------------------------- |
+| Runtime         | Node.js                                            |
+| Web framework   | Express `^5`                                        |
+| Database / ODM  | MongoDB + Mongoose `^9`                             |
+| Auth            | jsonwebtoken (JWT), bcryptjs                        |
+| Validation      | express-validator                                  |
+| Security / logs | helmet, cors, morgan                               |
+| Email           | @getbrevo/brevo, nodemailer                        |
+| API docs        | swagger-ui-express, yamljs                          |
+| Testing         | Jest, Supertest                                    |
 
 ## Prerequisites
 
 - Node.js and npm
-- Angular CLI (use `npx ng ...`, or install globally)
-- The HMS Back End running and reachable (default `http://localhost:5000/api`)
+- A reachable MongoDB instance — local (`mongodb://localhost:27017/hms`) or MongoDB Atlas
 
 ## Getting started
 
 ```bash
-# Install dependencies
+# 1. Install dependencies
+#    NOTE: the "postinstall" hook runs `npm run seed:all`, which needs a
+#    reachable MONGO_URI. Create your .env first (see below) or expect the
+#    seeding step to fail (install itself still completes).
 npm install
 
-# Start the dev server
-npm start            # = ng serve
+# 2. Create a .env file in the project root (see "Environment variables")
+
+# 3. Run the server
+npm run dev     # nodemon (auto-reload) — development
+npm start       # plain node — production-style
 ```
 
-Open `http://localhost:4200`. The app reloads on source changes.
+The server listens on `PORT` (default **5000**). Quick health checks:
 
-> **CORS:** the backend only accepts requests from its configured
-> `FRONTEND_URL`. Keep it set to `http://localhost:4200` during local
-> development.
+- `GET /` → `{ "message": "API running" }`
+- `GET /api/db-status` → MongoDB connection state
 
-## Environment configuration
+## Environment variables
 
-API endpoints are defined per build configuration in `src/environments/`:
+Create a `.env` file in the project root. **Use your own values — never commit
+real secrets.** A `.env.example` (placeholders only) is recommended; `.env` is
+already gitignored.
 
-| File                          | `production` | `apiUrl`                                  |
-| ----------------------------- | ------------ | ----------------------------------------- |
-| `environment.development.ts`  | `false`      | `http://localhost:5000/api`               |
-| `environment.ts`              | `true`       | `https://vanguard-hms-rho.vercel.app/api` |
+| Variable         | Description                                              | Example                              |
+| ---------------- | ------------------------------------------------------- | ------------------------------------ |
+| `MONGO_URI`      | MongoDB connection string                               | `mongodb://localhost:27017/hms`      |
+| `FRONTEND_URL`   | Allowed CORS origin (the Angular app)                   | `http://localhost:4200`              |
+| `PORT`           | Port the API listens on                                 | `5000`                               |
+| `JWT_SECRET`     | Secret used to sign/verify JWTs                          | `<long-random-string>`               |
+| `JWT_EXPIRES_IN` | JWT lifetime                                             | `1d`                                 |
+| `BREVO_API_KEY`  | Brevo (Sendinblue) API key for transactional email      | `<your-brevo-key>`                   |
+| `EMAIL_USER`     | Sender email address                                    | `no-reply@example.com`               |
+| `OWNER_PASS`     | Password for the auto-seeded OWNER account              | `<strong-password>`                  |
 
-`angular.json` performs a file replacement so production builds use
-`environment.ts` while `ng serve` / development builds use
-`environment.development.ts`. Import the API URL via
-`import { environment } from '.../environments/environment'`.
+> ⚠️ **Security note:** the committed `.env` in this repo contains live-looking
+> secrets. Rotate `JWT_SECRET`, `BREVO_API_KEY` and `OWNER_PASS`, and keep real
+> values out of version control.
 
-## Available scripts
+## Seeding & default login
 
-| Script          | Action                                   |
-| --------------- | ---------------------------------------- |
-| `npm start`     | `ng serve` (dev server on :4200)         |
-| `npm run build` | Production build to `dist/`              |
-| `npm run watch` | Rebuild on change (development config)    |
-| `npm test`      | Run unit tests with Vitest               |
-| `npm run ng`    | Raw Angular CLI passthrough              |
+Seeders run automatically in three places: on `postinstall`, on server startup
+(non-fatal — a seeding error won't stop the API), and manually:
 
-## Architecture
+```bash
+npm run seed:all
+```
+
+Seeding creates the sidebar navigation **nodes** and a single **OWNER** account:
+
+| Field    | Value                                |
+| -------- | ------------------------------------ |
+| Username | `owner`                              |
+| Email    | `owner@hospital.com`                 |
+| Password | value of `OWNER_PASS` in your `.env` |
+
+The OWNER is seeded with `mustChangePassword: false`. Staff/admin accounts
+created through the app are typically issued a temporary password and flagged to
+change it on first login.
+
+## Roles & designations
+
+Authorization is layered on **roles** and **designations**.
+
+- **Roles** (on the `User`): `OWNER`, `ADMIN`, `STAFF`.
+- **Staff designations**: `DOCTOR`, `RECEPTIONIST`, `CASHIER`, `NURSE`, `LAB_TECH`, `PHARMACIST`. `OWNER` and `ADMIN` are restricted designations created through dedicated flows (never self-registerable).
+
+Department → allowed designations (`src/config/constants.js`):
+
+| Department       | Designations        |
+| ---------------- | ------------------- |
+| `OPD`            | DOCTOR, NURSE       |
+| `IPD`            | DOCTOR, NURSE       |
+| `Lab`            | LAB_TECH            |
+| `Pharmacy`       | PHARMACIST          |
+| `Reception`      | RECEPTIONIST        |
+| `Billing`        | CASHIER             |
+| `Administration` | (admins/owner)      |
+
+Additional rules:
+
+- **Medical registration number** required for `DOCTOR`, `NURSE`, `PHARMACIST`.
+- **Specialization** field applies to `DOCTOR`, `LAB_TECH`.
+
+## Project structure
 
 ```
 src/
-├── app/
-│   ├── app.config.ts          # Providers: router, http client + auth interceptor, zoneless CD
-│   ├── app.routes.ts          # Route tree + route guards
-│   ├── core/
-│   │   ├── guards/            # auth, role/designation, must-change-password, unsaved-changes
-│   │   ├── interceptors/      # authInterceptor (bearer token + global error handling)
-│   │   ├── models/            # Typed API/domain models
-│   │   ├── services/          # AuthService, and one service per resource
-│   │   └── validators/        # Reusable reactive-form validators
-│   ├── features/
-│   │   ├── auth/              # login, register, forgot/reset/change-password
-│   │   ├── dashboard/         # overview, employees, admins, approvals, patients, appointments, profile
-│   │   └── home/              # public landing page
-│   └── shared/ui/             # Reusable UI: navbar, sidebar, modals, toast, slot pickers, inputs, etc.
-├── environments/              # Per-config API URLs
-├── index.html
-├── main.ts                    # Bootstraps AppComponent with appConfig
-└── styles.css
+├── api/
+│   └── index.js            # Vercel serverless handler (connects DB, delegates to app)
+├── app.js                  # Express app: middleware + route mounting
+├── server.js               # Local entrypoint: connect DB, seed, listen
+├── config/
+│   ├── constants.js        # Roles, designations, departments, mappings
+│   └── db.js               # Mongoose connection
+├── controllers/            # Route handlers (auth, admin, owner, patient, appointment, employee, node, dashboard)
+├── middlewares/
+│   ├── authMiddleware.js          # Verifies JWT, sets req.user
+│   ├── authorizeRolesMiddleware.js
+│   ├── authorizeDesignations.js
+│   └── validate.js                # express-validator result handler
+├── models/                 # Mongoose schemas
+├── routes/                 # Express routers, one per resource
+├── utils/                  # Seeders, email, audit, pagination, builders, helpers
+└── validators/             # express-validator rule sets
 ```
 
-## Routing & access control
+## Authentication
 
-Routes are declared in `src/app/app.routes.ts` and lazy-load each component.
+All protected routes expect a Bearer token:
 
-**Public:** `/` (home), `/login`, `/register`, `/forgot-password`,
-`/reset-password`.
+```
+Authorization: Bearer <jwt>
+```
 
-**Gated:** `/change-password` (authenticated; also the forced first-login flow).
+`authMiddleware` verifies the token with `JWT_SECRET` and populates `req.user`.
+Access is then narrowed by `authorizeRoles(...)` (role-based) or
+`authorizeDesignations(...)` (designation-based). `OWNER` and `ADMIN` are
+effectively superusers across most flows.
 
-**Dashboard tree** (`/dashboard/*`) — protected by `authGuard` +
-`mustChangePasswordGuard`:
+## API reference
 
-| Route                          | Allowed (besides OWNER/ADMIN superusers) |
-| ------------------------------ | ---------------------------------------- |
-| `overview`, `profile`          | any authenticated user                   |
-| `employees`, `employees/*`     | OWNER, ADMIN only                        |
-| `approvals`                    | OWNER, ADMIN only                        |
-| `admins`, `admins/create`      | **OWNER only** (`ownerOnlyGuard`)        |
-| `patients`, `patients/*`       | RECEPTIONIST                             |
-| `appointments` (list/detail)   | RECEPTIONIST, DOCTOR                     |
-| `appointments/book`, `.../edit`| RECEPTIONIST                             |
+Base paths are mounted in `src/app.js`. All paths below are relative to the
+server root (e.g. `POST /api/auth/login`).
 
-Guards (`src/app/core/guards/`):
+### Public / health
+| Method | Path             | Purpose                     |
+| ------ | ---------------- | --------------------------- |
+| GET    | `/`              | Liveness check              |
+| GET    | `/api/db-status` | MongoDB connection state    |
 
-- `authGuard` — requires a valid session, else redirects to `/login`.
-- `designationGuard([...])` — designation-based access; **OWNER and ADMIN always pass** (superusers).
-- `ownerOnlyGuard` — OWNER-only (defined alongside the routes).
-- `mustChangePasswordGuard` — forces first-login users to set a new password.
-- `unsavedChangesGuard` — `canDeactivate` guard warning on unsaved form changes.
+### `/api/auth`
+| Method | Path               | Auth   | Purpose                                   |
+| ------ | ------------------ | ------ | ----------------------------------------- |
+| POST   | `/login`           | —      | Authenticate, returns JWT + user          |
+| POST   | `/self-register`   | —      | Staff self-registration (pending approval)|
+| PUT    | `/change-password` | Bearer | Change own password                       |
+| POST   | `/forgot-password` | —      | Request a password-reset token via email  |
+| POST   | `/reset-password`  | —      | Reset password using the token            |
+| POST   | `/logout`          | Bearer | Logout (records last activity)            |
+| GET    | `/me`              | Bearer | Current authenticated user                |
 
-## Authentication & HTTP
+### `/api/admin` — OWNER, ADMIN
+| Method | Path                                  | Purpose                          |
+| ------ | ------------------------------------- | -------------------------------- |
+| POST   | `/create-employee`                    | Create a staff employee + account|
+| GET    | `/employees`                          | List employees                   |
+| GET    | `/employees/:employeeCode`            | Get one employee                 |
+| GET    | `/pending-employees`                  | List self-registered, pending    |
+| PUT    | `/approve-employee/:employeeCode`     | Approve a pending employee       |
+| PUT    | `/reject-employee/:employeeCode`      | Reject a pending employee        |
+| PUT    | `/update-employee/:employeeCode`      | Update an employee               |
+| DELETE | `/delete-employee/:employeeCode`      | Delete an employee + account     |
+| GET    | `/audit-logs`                         | Read audit log                   |
+| GET    | `/profile-change-requests`            | List pending profile changes     |
+| PUT    | `/approve-profile-change/:requestId`  | Approve a profile change         |
+| PUT    | `/reject-profile-change/:requestId`   | Reject a profile change          |
 
-- On login, the JWT and user object are stored in `localStorage` under
-  `hms_token` and `hms_user`.
-- `authInterceptor` (`src/app/core/interceptors/auth.interceptor.ts`) attaches
-  `Authorization: Bearer <token>` to every request and handles errors globally:
-  - **401** → toast + clear session (except on public auth calls)
-  - **403** → toast + redirect to `/dashboard/overview`
-  - **0** → "cannot reach server" toast
-- `AuthService` (`src/app/core/services/auth.service.ts`) owns all auth flows
-  (login, self-register, forgot/reset/change password, `me` refresh, logout) and
-  exposes both an observable (`currentUser$`) and a signal (`currentUserSignal`),
-  plus accessors like `isAuthenticated()`, `getDesignation()`, `isSuperUser()`
-  and `hasDesignation([...])`.
+### `/api/owner` — OWNER only
+| Method | Path                          | Purpose            |
+| ------ | ----------------------------- | ------------------ |
+| POST   | `/create-admin`               | Create an ADMIN    |
+| GET    | `/admins`                     | List admins        |
+| PUT    | `/update-admin/:employeeCode` | Update an admin    |
+| DELETE | `/delete-admin/:employeeCode` | Delete an admin    |
 
-## Features
+### `/api/patients` — OWNER, ADMIN, RECEPTIONIST
+| Method | Path               | Purpose                 |
+| ------ | ------------------ | ----------------------- |
+| POST   | `/create-patient`  | Register a patient      |
+| GET    | `/search`          | Search patients         |
+| GET    | `/`                | List patients           |
+| GET    | `/:UHID`           | Get a patient by UHID   |
+| PUT    | `/:UHID`           | Update a patient        |
 
-- **Overview** — role-specific dashboard landing.
-- **Employees** — list, create and edit staff (OWNER/ADMIN).
-- **Admins** — manage admin accounts (OWNER only).
-- **Approvals** — review pending self-registrations and profile-change requests.
-- **Patients** — register, search, view and edit patients (reception).
-- **Appointments** — book, list, view detail, edit, cancel, complete.
-- **Profile** — view and request changes to your own profile.
+### `/api/appointments`
+| Method | Path                       | Auth                                  | Purpose                       |
+| ------ | -------------------------- | ------------------------------------- | ----------------------------- |
+| POST   | `/create-appointment`      | OWNER, ADMIN, RECEPTIONIST            | Book an appointment           |
+| GET    | `/my`                      | DOCTOR                                | Doctor's own appointments     |
+| GET    | `/booked-slots`            | OWNER, ADMIN, RECEPTIONIST            | Slots already booked          |
+| GET    | `/`                        | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | List appointments             |
+| GET    | `/:appointmentId`          | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Appointment detail            |
+| PUT    | `/:appointmentId`          | OWNER, ADMIN, RECEPTIONIST            | Reschedule / update           |
+| PUT    | `/:appointmentId/cancel`   | OWNER, ADMIN, RECEPTIONIST            | Cancel (with reason)          |
+| PUT    | `/:appointmentId/complete` | DOCTOR                                | Mark completed                |
 
-## Build & deploy
+### `/api/employees` — authenticated
+| Method | Path              | Auth                       | Purpose                              |
+| ------ | ----------------- | -------------------------- | ------------------------------------ |
+| GET    | `/me`             | any                        | Current user + profile               |
+| GET    | `/doctors`        | OWNER, ADMIN, RECEPTIONIST | Active doctors (for booking)         |
+| PUT    | `/update-profile` | any                        | Submit a profile-change request      |
+
+### `/api/nodes` — authenticated
+| Method | Path                  | Auth        | Purpose                                  |
+| ------ | --------------------- | ----------- | ---------------------------------------- |
+| POST   | `/create-node`        | ADMIN, OWNER| Create a sidebar/navigation node         |
+| PUT    | `/update-node/:nodeId`| ADMIN, OWNER| Update a node                            |
+| DELETE | `/delete-node/:nodeId`| ADMIN, OWNER| Delete a node                            |
+| GET    | `/my-nodes`           | any         | Nodes visible to the user's designation  |
+
+> **Note:** `src/routes/dashboardRoutes.js` and `dashboardController.js` exist
+> (dashboard/statistics endpoints) but are **not currently mounted** in
+> `src/app.js`, so those routes are not reachable until wired up.
+
+## Data models
+
+Mongoose models live in `src/models/`. Several use a shared `Counter` to mint
+sequential, human-readable IDs:
+
+| Model                  | ID format / notes                          |
+| ---------------------- | ------------------------------------------ |
+| `Users`                | Login accounts; roles, status, password    |
+| `Employees`            | `EMP-000001` (sequential)                  |
+| `Patients`             | `UHID-000001` (sequential)                 |
+| `Appointments`         | `APT-000001` (sequential)                  |
+| `Nodes`                | Sidebar navigation entries                 |
+| `ProfileChangeRequests`| Pending profile edits awaiting approval    |
+| `AuditLogs`            | Recorded actions                           |
+| `Bills`, `Payments`, `MedicalRecords` | Supporting domain models    |
+| `Counter`              | Backs the sequential ID generators         |
+
+## Testing
 
 ```bash
-npm run build
+npm test               # all tests
+npm run test:unit      # tests/unit
+npm run test:integration   # tests/integration
+npm run test:coverage  # with coverage
 ```
 
-Outputs to `dist/`. The production build uses `environment.ts` (Vercel API URL).
+> The test scripts target a `tests/` directory which is not present in the repo
+> yet; add tests under `tests/unit` and `tests/integration` to use them.
+
+## Deployment
+
+Configured for **Vercel** serverless deployment via `vercel.json`, which routes
+all traffic to `src/api/index.js`. That handler establishes the MongoDB
+connection per invocation and delegates to the Express `app`. The production
+frontend is configured to call `https://vanguard-hms-rho.vercel.app/api`.

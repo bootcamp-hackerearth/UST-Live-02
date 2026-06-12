@@ -4,10 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
+import { SortAvailabilitySlotsPipe } from '../../../shared/pipes/sort-availability-slots.pipe';
 import { AdminService } from '../../../core/services/admin.service';
 import { OwnerService } from '../../../core/services/owner.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import {
   Designation,
@@ -15,6 +18,7 @@ import {
   STAFF_DESIGNATIONS,
 } from '../../../core/models/employee.model';
 
+// Active employees list with search and designation filter (OWNER/ADMIN)
 @Component({
   selector: 'app-employees-list',
   standalone: true,
@@ -25,6 +29,7 @@ import {
     DashboardLayoutComponent,
     DatePipe,
     LastLoginCellComponent,
+    SortAvailabilitySlotsPipe,
   ],
   templateUrl: './employees.html',
   styleUrl: './employees.css',
@@ -34,6 +39,7 @@ export class EmployeesListComponent implements OnInit {
   private readonly ownerService = inject(OwnerService);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly router = inject(Router);
 
@@ -50,12 +56,13 @@ export class EmployeesListComponent implements OnInit {
   ];
 
   selected = signal<EmployeeListItem | null>(null);
+  deleting = signal(false);
 
   isOwner = computed(
     () => this.authService.getDesignation() === 'OWNER',
   );
 
-  // Combined view = employees + admins (admins visible only to owner).
+  // Combined view = employees + admins (admins visible only to owner)
   rows = computed<EmployeeListItem[]>(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const filter = this.designationFilter();
@@ -84,11 +91,11 @@ export class EmployeesListComponent implements OnInit {
     this.loading.set(true);
     this.adminService.getEmployees().subscribe({
       next: (res) => {
-        this.employees.set(res.employees || []);
+        this.employees.set(res.data.employees || []);
         if (this.isOwner()) {
           this.ownerService.getAdmins().subscribe({
             next: (a) => {
-              this.admins.set(a.admins || []);
+              this.admins.set(a.data.admins || []);
               this.loading.set(false);
             },
             error: () => {
@@ -101,7 +108,7 @@ export class EmployeesListComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.error('Failed to load employees.');
+        this.toast.error(APP_MESSAGES.LOAD_EMPLOYEES_FAILED);
       },
     });
   }
@@ -126,8 +133,7 @@ export class EmployeesListComponent implements OnInit {
     this.router.navigate(['/dashboard/employees', item.employee.employeeCode, 'edit']);
   }
 
-  // Only staff designations can be edited via the update-employee endpoint.
-  // The backend rejects OWNER and ADMIN updates, so hide the button for those.
+  // Only staff designations are editable; OWNER/ADMIN updates are rejected by the backend
   canEdit(item: EmployeeListItem): boolean {
     return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
   }
@@ -149,14 +155,17 @@ export class EmployeesListComponent implements OnInit {
       ? this.ownerService.deleteAdmin(item.employee.employeeCode)
       : this.adminService.deleteEmployee(item.employee.employeeCode);
 
+    this.deleting.set(true);
     obs.subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Employee deleted.');
+        this.deleting.set(false);
+        this.toast.success(res.message || APP_MESSAGES.EMPLOYEE_DELETED);
         this.close();
         this.load();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to delete employee.');
+        this.deleting.set(false);
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.EMPLOYEE_DELETE_FAILED));
       },
     });
   }

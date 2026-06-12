@@ -10,6 +10,8 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import {
   STAFF_DESIGNATIONS,
@@ -32,13 +34,6 @@ import {
   notBlank,
   nameValidator,
   medicalRegistrationValidator,
-  usernameValidator,
-  strictEmailValidator,
-  joiningDateRangeValidator,
-  joiningDateLimits,
-  qualificationContentValidator,
-  specializationContentValidator,
-  consultationFeeValidator,
 } from '../../../core/validators/app-validators';
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 import { AvailabilitySlotsFormComponent } from '../../../shared/ui/availability-slots-form/availability-slots-form';
@@ -48,13 +43,7 @@ const DRAFT_KEY = 'draft:self-register';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    RouterLink,
-    PasswordInputComponent,
-    AvailabilitySlotsFormComponent,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, PasswordInputComponent, AvailabilitySlotsFormComponent],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
@@ -63,12 +52,14 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDraft = inject(FormDraftService);
 
   registerForm: FormGroup;
   loading = false;
   submitted = false;
+  // Gates password validation messages until the submit button is clicked
   attempted = false;
 
   designations: Designation[] = [...STAFF_DESIGNATIONS];
@@ -79,39 +70,22 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   showSpecialization = false;
   isDoctor = false;
 
-  // NEW: Joining date min/max limits for the date input
-  joiningLimits = joiningDateLimits();
-
   constructor() {
     this.registerForm = this.fb.group(
       {
-        username: ['', [Validators.required, usernameValidator]],
-
+        username: ['', Validators.required],
         name: ['', [Validators.required, notBlank, nameValidator]],
-
-        email: ['', [Validators.required, strictEmailValidator]],
-
+        email: ['', [Validators.required, Validators.email]],
         phone: ['', [Validators.required, phoneValidator]],
         department: ['', Validators.required],
         designation: ['', Validators.required],
-
-        joiningDate: ['', [Validators.required, joiningDateRangeValidator]],
-
-        qualification: [
-          '',
-          [Validators.required, qualificationContentValidator],
-        ],
-
+        joiningDate: ['', Validators.required],
+        qualification: ['', Validators.required],
         medicalRegistrationNumber: [''],
         specialization: [''],
-
-        consultationFee: [null, consultationFeeValidator],
-
+        consultationFee: [null, nonNegative],
         availabilitySlots: this.fb.array([], { validators: slotsNoConflict }),
-        password: [
-          '',
-          [Validators.required, Validators.minLength(8), passwordComplexity],
-        ],
+        password: ['', [Validators.required, Validators.minLength(8), passwordComplexity]],
         confirmPassword: ['', Validators.required],
       },
       { validators: passwordMatchValidator('password', 'confirmPassword') },
@@ -119,23 +93,24 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   }
 
   ngOnInit(): void {
+    // Restore a saved draft (password fields are never stored)
     const draft = this.formDraft.get(DRAFT_KEY);
     if (draft) {
+      // availabilitySlots is a FormArray; rebuild it before patching
       const slots = Array.isArray(draft['availabilitySlots'])
         ? draft['availabilitySlots']
         : [];
       slots.forEach(() => this.addSlot());
       this.registerForm.patchValue(draft);
+      // Rebuild the designation list and conditional fields for the restored values
       this.refreshDesignationsForDepartment(false);
       this.onDesignationChange();
     }
 
+    // Auto-save on every change (sanitized of password fields)
     this.registerForm.valueChanges.subscribe(() => {
       if (!this.submitted) {
-        // FIXED: Exclude password fields from draft to avoid storing credentials
-        const raw = this.registerForm.getRawValue();
-        const { password, confirmPassword, ...safeDraft } = raw;
-        this.formDraft.save(DRAFT_KEY, safeDraft);
+        this.formDraft.save(DRAFT_KEY, this.registerForm.getRawValue());
       }
     });
   }
@@ -161,11 +136,13 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     this.availabilitySlots.removeAt(index);
   }
 
+  // Narrows the Designation list to the chosen department and auto-fills a default
   onDepartmentChange(): void {
     this.refreshDesignationsForDepartment(true);
     this.onDesignationChange();
   }
 
+  // Rebuilds the Designation options for the selected department (ADMIN always excluded)
   private refreshDesignationsForDepartment(autoFill: boolean): void {
     const dept = this.registerForm.get('department')?.value as Department | '';
 
@@ -174,10 +151,12 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
       return;
     }
 
+    // Exclude ADMIN — never self-registerable
     let allowed: Designation[] = [
       ...(DEPARTMENT_DESIGNATIONS[dept] || STAFF_DESIGNATIONS),
     ].filter((d) => d !== 'ADMIN');
 
+    // Fallback so the dropdown is never empty (e.g. Administration)
     if (allowed.length === 0) {
       allowed = [...STAFF_DESIGNATIONS];
     }
@@ -185,8 +164,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     this.designations = allowed;
 
     if (autoFill) {
-      const current = this.registerForm.get('designation')
-        ?.value as Designation;
+      const current = this.registerForm.get('designation')?.value as Designation;
       if (!current || !allowed.includes(current)) {
         this.registerForm.patchValue({ designation: allowed[0] });
       }
@@ -202,6 +180,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
     this.showSpecialization =
       SPECIALIZATION_DESIGNATIONS.includes(designation);
 
+    // Apply/clear conditional validators
     const medReg = this.registerForm.get('medicalRegistrationNumber');
     const spec = this.registerForm.get('specialization');
     const fee = this.registerForm.get('consultationFee');
@@ -211,19 +190,12 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
         ? [Validators.required, medicalRegistrationValidator]
         : [],
     );
-
     spec?.setValidators(
-      this.showSpecialization
-        ? [Validators.required, specializationContentValidator]
-        : [],
+      this.showSpecialization ? [Validators.required] : [],
     );
+    fee?.setValidators(this.isDoctor ? [Validators.required] : []);
 
-    fee?.setValidators(
-      this.isDoctor
-        ? [Validators.required, consultationFeeValidator]
-        : [],
-    );
-
+    // Doctors need at least one availability slot
     if (this.isDoctor && this.availabilitySlots.length === 0) {
       this.addSlot();
     }
@@ -253,6 +225,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
 
     const raw = this.registerForm.getRawValue();
 
+    // Build the backend payload, omitting empty optional fields
     const payload: any = {
       username: raw.username,
       name: raw.name,
@@ -283,8 +256,7 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
         this.submitted = true;
         this.formDraft.clear(DRAFT_KEY);
         this.toast.success(
-          response?.message ||
-            'Registration request submitted. Await admin approval.',
+          response?.message || APP_MESSAGES.REGISTRATION_SUBMITTED,
         );
         setTimeout(() => this.router.navigate(['/login']), 2500);
       },
@@ -292,12 +264,13 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
         this.loading = false;
         this.cdr.markForCheck();
         this.toast.error(
-          error.error?.message || 'Registration failed. Please try again.',
+          this.apiError.message(error, APP_MESSAGES.REGISTRATION_FAILED),
         );
       },
     });
   }
 
+  // Accepts comma-separated text and converts to a trimmed string array
   private toQualificationArray(value: string | string[]): string[] {
     if (Array.isArray(value)) {
       return value;

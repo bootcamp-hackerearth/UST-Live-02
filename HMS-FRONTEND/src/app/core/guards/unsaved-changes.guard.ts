@@ -2,14 +2,16 @@ import { inject } from '@angular/core';
 import { CanDeactivateFn } from '@angular/router';
 import { ConfirmModalService } from '../services/confirm-modal.service';
 
+// Contract for form components that expose unsaved-changes state
 export interface CanComponentDeactivate {
   hasUnsavedChanges: () => boolean;
 }
 
+// Confirms before leaving a form with unsaved changes
 export const unsavedChangesGuard: CanDeactivateFn<CanComponentDeactivate> = (
   component,
 ) => {
-  // Defensive: components without the hook can always deactivate.
+  // Defensive: components without the hook can always deactivate
   if (!component || typeof component.hasUnsavedChanges !== 'function') {
     return true;
   }

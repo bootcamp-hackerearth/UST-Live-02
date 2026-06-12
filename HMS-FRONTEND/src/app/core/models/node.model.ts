@@ -1,4 +1,6 @@
 import { Designation } from './employee.model';
+import { ApiResponse } from './api-response.model';
+
 export interface SidebarNode {
   nodeId: string;
   name: string;
@@ -7,8 +9,8 @@ export interface SidebarNode {
   allowedDesignations: Designation[];
 }
 
-// GET /nodes/my-nodes response.
-export interface MyNodesResponse {
+// GET /nodes/my-nodes response
+export type MyNodesResponse = ApiResponse<{
   totalNodes: number;
   nodes: SidebarNode[];
-}
+}>;

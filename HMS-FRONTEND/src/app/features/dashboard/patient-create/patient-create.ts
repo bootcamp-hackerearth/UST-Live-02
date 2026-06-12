@@ -10,6 +10,8 @@ import { Router } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { PatientService } from '../../../core/services/patient.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import { GENDERS } from '../../../core/models/patient.model';
@@ -23,6 +25,7 @@ import {
 
 const DRAFT_KEY = 'draft:patient-create';
 
+// Patient creation form (OWNER/ADMIN/RECEPTIONIST); DOB cannot be a future date
 @Component({
   selector: 'app-patient-create',
   standalone: true,
@@ -36,6 +39,7 @@ export class PatientCreateComponent
   private readonly fb = inject(FormBuilder);
   private readonly patientService = inject(PatientService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDraft = inject(FormDraftService);
   private readonly router = inject(Router);
@@ -97,10 +101,10 @@ export class PatientCreateComponent
         this.cdr.markForCheck();
         this.submittedOk = true;
         this.formDraft.clear(DRAFT_KEY);
-        this.toast.success(res.message || 'Patient created.');
-        // Navigate to the new patient's detail page if UHID was returned.
-        if (res.patient?.UHID) {
-          this.router.navigate(['/dashboard/patients', res.patient.UHID]);
+        this.toast.success(res.message || APP_MESSAGES.PATIENT_CREATED);
+        // Navigate to the new patient's detail page if UHID was returned
+        if (res.data.patient?.UHID) {
+          this.router.navigate(['/dashboard/patients', res.data.patient.UHID]);
         } else {
           this.router.navigate(['/dashboard/patients']);
         }
@@ -108,7 +112,7 @@ export class PatientCreateComponent
       error: (err) => {
         this.loading = false;
         this.cdr.markForCheck();
-        this.toast.error(err.error?.message || 'Failed to create patient.');
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.PATIENT_CREATE_FAILED));
       },
     });
   }
@@ -117,7 +121,7 @@ export class PatientCreateComponent
     this.router.navigate(['/dashboard/patients']);
   }
 
-  // Template helpers for nested form access.
+  // Template helpers for nested form access
   addressCtrl(name: string) {
     return this.form.get(['address', name]);
   }

@@ -12,6 +12,10 @@ import { AuditLog } from '../../../core/models/audit.model';
 import { Appointment } from '../../../core/models/appointment.model';
 import { todayIsoDate } from '../../../core/validators/app-validators';
 
+// Audit feed page size on the overview
+const AUDIT_PAGE_SIZE = 15;
+
+// Dashboard landing; renders cards based on the user's designation
 @Component({
   selector: 'app-overview',
   standalone: true,
@@ -30,12 +34,15 @@ export class OverviewComponent implements OnInit {
   activeEmployees = signal<number | null>(null);
   pendingApprovals = signal<number | null>(null);
   totalPatients = signal<number | null>(null);
-  // All booked appointments (shown to owner/admin/receptionist).
+  // All booked appointments (shown to owner/admin/receptionist)
   bookedAppointments = signal<number | null>(null);
 
-  // Recent activity (audit log feed)
+  // Recent activity (audit log feed, paginated)
   auditLogs = signal<AuditLog[]>([]);
   loadingAudit = signal(false);
+  auditPage = signal(1);
+  auditTotalPages = signal(1);
+  auditTotal = signal(0);
 
   // Doctor-specific
   myAppointmentsToday = signal<number | null>(null);
@@ -71,66 +78,88 @@ export class OverviewComponent implements OnInit {
   }
 
   private loadAdminOverview(): void {
-    this.loadingAudit.set(true);
-
-    // The Employees page shows STAFF for admins, and STAFF + admins for the
-    // owner. Mirror that here so the "Active Employees" count matches the list
-    // exactly (and isn't undercounted when only an admin exists). Admins are
-    // only fetched for the owner; for a non-owner this resolves to an empty
-    // list so nothing is double-counted.
+    // Count STAFF for admins, STAFF + admins for the owner, to match the Employees list
     const adminsForOwner =
       this.designation === 'OWNER'
         ? this.ownerService
           .getAdmins()
-          .pipe(catchError(() => of({ totalAdmins: 0, admins: [] } as any)))
-        : of({ totalAdmins: 0, admins: [] } as any);
+          .pipe(catchError(() => of({ data: { totalAdmins: 0, admins: [] } } as any)))
+        : of({ data: { totalAdmins: 0, admins: [] } } as any);
 
     forkJoin({
       employees: this.adminService
         .getEmployees()
-        .pipe(catchError(() => of({ totalEmployees: 0, employees: [] }))),
+        .pipe(catchError(() => of({ data: { totalEmployees: 0, employees: [] } } as any))),
       admins: adminsForOwner,
       pending: this.adminService
         .getPendingEmployees()
-        .pipe(catchError(() => of({ totalEmployees: 0, employees: [] }))),
+        .pipe(catchError(() => of({ data: { totalEmployees: 0, employees: [] } } as any))),
       pendingChanges: this.adminService
         .getProfileChangeRequests()
-        .pipe(catchError(() => of({ total: 0, requests: [] } as any))),
+        .pipe(catchError(() => of({ data: { total: 0, requests: [] } } as any))),
       patients: this.patientService
         .getPatients(1, 1)
-        .pipe(catchError(() => of({ total: 0 } as any))),
+        .pipe(catchError(() => of({ data: { total: 0 } } as any))),
       appts: this.appointmentService
         .getAppointments(1, 1, { status: 'BOOKED' })
-        .pipe(catchError(() => of({ total: 0 } as any))),
-      logs: this.adminService
-        .getAuditLogs(1, 15)
-        .pipe(catchError(() => of({ logs: [] } as any))),
+        .pipe(catchError(() => of({ data: { total: 0 } } as any))),
     }).subscribe((res) => {
       this.activeEmployees.set(
-        (res.employees.totalEmployees || 0) + (res.admins.totalAdmins || 0),
+        (res.employees.data.totalEmployees || 0) + (res.admins.data.totalAdmins || 0),
       );
       this.pendingApprovals.set(
-        (res.pending.totalEmployees || 0) + (res.pendingChanges.total || 0),
+        (res.pending.data.totalEmployees || 0) + (res.pendingChanges.data.total || 0),
       );
-      this.totalPatients.set(res.patients.total || 0);
-      this.bookedAppointments.set(res.appts.total || 0);
-      this.auditLogs.set(res.logs.logs || []);
+      this.totalPatients.set(res.patients.data.total || 0);
+      this.bookedAppointments.set(res.appts.data.total || 0);
       this.loading.set(false);
-      this.loadingAudit.set(false);
     });
+
+    // Audit feed paginates independently of the stat cards
+    this.loadAuditLogs(1);
+  }
+
+  // Loads a page of the audit feed
+  private loadAuditLogs(page: number): void {
+    this.loadingAudit.set(true);
+    this.adminService.getAuditLogs(page, AUDIT_PAGE_SIZE).subscribe({
+      next: (res) => {
+        this.auditLogs.set(res.data.logs || []);
+        this.auditPage.set(res.data.page || page);
+        this.auditTotalPages.set(res.data.totalPages || 1);
+        this.auditTotal.set(res.data.total || 0);
+        this.loadingAudit.set(false);
+      },
+      error: () => {
+        this.auditLogs.set([]);
+        this.loadingAudit.set(false);
+      },
+    });
+  }
+
+  prevAuditPage(): void {
+    if (this.auditPage() > 1) {
+      this.loadAuditLogs(this.auditPage() - 1);
+    }
+  }
+
+  nextAuditPage(): void {
+    if (this.auditPage() < this.auditTotalPages()) {
+      this.loadAuditLogs(this.auditPage() + 1);
+    }
   }
 
   private loadReceptionistOverview(): void {
     forkJoin({
       patients: this.patientService
         .getPatients(1, 1)
-        .pipe(catchError(() => of({ total: 0 } as any))),
+        .pipe(catchError(() => of({ data: { total: 0 } } as any))),
       appts: this.appointmentService
         .getAppointments(1, 1, { status: 'BOOKED' })
-        .pipe(catchError(() => of({ total: 0 } as any))),
+        .pipe(catchError(() => of({ data: { total: 0 } } as any))),
     }).subscribe((res) => {
-      this.totalPatients.set(res.patients.total || 0);
-      this.bookedAppointments.set(res.appts.total || 0);
+      this.totalPatients.set(res.patients.data.total || 0);
+      this.bookedAppointments.set(res.appts.data.total || 0);
       this.loading.set(false);
     });
   }
@@ -140,15 +169,15 @@ export class OverviewComponent implements OnInit {
     forkJoin({
       todayList: this.appointmentService
         .getMyAppointments(1, 100, { date: today })
-        .pipe(catchError(() => of({ total: 0, appointments: [] } as any))),
+        .pipe(catchError(() => of({ data: { total: 0, appointments: [] } } as any))),
       all: this.appointmentService
         .getMyAppointments(1, 200, { status: 'BOOKED' })
-        .pipe(catchError(() => of({ total: 0, appointments: [] } as any))),
+        .pipe(catchError(() => of({ data: { total: 0, appointments: [] } } as any))),
     }).subscribe((res) => {
-      this.myAppointmentsToday.set(res.todayList.total || 0);
+      this.myAppointmentsToday.set(res.todayList.data.total || 0);
 
-      // Upcoming = booked AFTER today.
-      const upcoming = (res.all.appointments as Appointment[]).filter((a) => {
+      // Upcoming = booked AFTER today
+      const upcoming = (res.all.data.appointments as Appointment[]).filter((a) => {
         const d = new Date(a.appointmentDate);
         d.setHours(0, 0, 0, 0);
         const t = new Date();
@@ -162,7 +191,7 @@ export class OverviewComponent implements OnInit {
 
   trackByAudit = (_: number, log: AuditLog) => log.auditId;
 
-  // Short action label for the activity feed.
+  // Short action label for the activity feed
   actionLabel(action: string): string {
     return action
       .replaceAll('_', ' ')

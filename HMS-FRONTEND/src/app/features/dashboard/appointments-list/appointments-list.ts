@@ -6,6 +6,8 @@ import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/da
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import {
   Appointment,
@@ -15,6 +17,7 @@ import { todayIsoDate } from '../../../core/validators/app-validators';
 
 type DoctorTab = 'today' | 'upcoming' | 'completed';
 
+// Role-aware appointments list (reception sees all; doctor sees own by tab)
 @Component({
   selector: 'app-appointments-list',
   standalone: true,
@@ -32,12 +35,17 @@ export class AppointmentsListComponent implements OnInit {
   private readonly appointmentService = inject(AppointmentService);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   loading = signal(true);
   appointments = signal<Appointment[]>([]);
+
+  // Row action in flight; all row buttons disable while set
+  busyId = signal<string | null>(null);
+  busyAction = signal<'cancel' | 'complete' | null>(null);
 
   statuses = APPOINTMENT_STATUSES;
   statusFilter = signal<string>('');
@@ -61,7 +69,7 @@ export class AppointmentsListComponent implements OnInit {
     );
   });
 
-  // For the doctor view, slice the fetched list by tab.
+  // For the doctor view, slice the fetched list by tab
   visibleAppointments = computed<Appointment[]>(() => {
     if (!this.isDoctor()) {
       return this.appointments();
@@ -104,13 +112,12 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Allow the overview cards (and any deep link) to preselect a doctor tab
-    // via ?tab=today|upcoming|completed.
+    // Preselect a doctor tab from ?tab=today|upcoming|completed
     const tab = this.route.snapshot.queryParamMap.get('tab');
     if (tab === 'today' || tab === 'upcoming' || tab === 'completed') {
       this.doctorTab.set(tab);
     }
-    // Reception/admin status filter deep link via ?status=BOOKED etc.
+    // Reception/admin status filter deep link via ?status=BOOKED etc
     const status = this.route.snapshot.queryParamMap.get('status');
     if (status) {
       this.statusFilter.set(status);
@@ -122,15 +129,15 @@ export class AppointmentsListComponent implements OnInit {
     this.loading.set(true);
 
     if (this.isDoctor()) {
-      // Pull a large window of the doctor's appointments and slice client-side.
+      // Pull a large window of the doctor's appointments and slice client-side
       this.appointmentService.getMyAppointments(1, 200).subscribe({
         next: (res) => {
-          this.appointments.set(res.appointments || []);
+          this.appointments.set(res.data.appointments || []);
           this.loading.set(false);
         },
         error: () => {
           this.loading.set(false);
-          this.toast.error('Failed to load appointments.');
+          this.toast.error(APP_MESSAGES.LOAD_APPOINTMENTS_FAILED);
         },
       });
       return;
@@ -143,14 +150,14 @@ export class AppointmentsListComponent implements OnInit {
       })
       .subscribe({
         next: (res) => {
-          this.appointments.set(res.appointments || []);
-          this.totalPages.set(res.totalPages || 1);
-          this.total.set(res.total || 0);
+          this.appointments.set(res.data.appointments || []);
+          this.totalPages.set(res.data.totalPages || 1);
+          this.total.set(res.data.total || 0);
           this.loading.set(false);
         },
         error: () => {
           this.loading.set(false);
-          this.toast.error('Failed to load appointments.');
+          this.toast.error(APP_MESSAGES.LOAD_APPOINTMENTS_FAILED);
         },
       });
   }
@@ -159,13 +166,8 @@ export class AppointmentsListComponent implements OnInit {
     this.doctorTab.set(tab);
   }
 
-  // An appointment can only be completed once its scheduled start (day +
-  // slot start time) has passed. Mirrors the backend guard so the button
-  // doesn't appear for future appointments.
-  canComplete(a: Appointment): boolean {
-    if (a.status !== 'BOOKED') {
-      return false;
-    }
+  // Completable only once the scheduled start has passed (mirrors the backend guard)
+  isStartTimePassed(a: Appointment): boolean {
     const slotStart = (a.timeSlot || '').split('-')[0];
     const [h, m] = slotStart.split(':').map(Number);
     const scheduled = new Date(a.appointmentDate);
@@ -227,13 +229,17 @@ export class AppointmentsListComponent implements OnInit {
       return;
     }
     const reason = (result.inputValue ?? '').trim();
+    this.busyId.set(a.appointmentId);
+    this.busyAction.set('cancel');
     this.appointmentService.cancelAppointment(a.appointmentId, reason).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Appointment cancelled.');
+        this.clearBusy();
+        this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_CANCELLED);
         this.load();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to cancel.');
+        this.clearBusy();
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_CANCEL_FAILED));
       },
     });
   }
@@ -250,15 +256,24 @@ export class AppointmentsListComponent implements OnInit {
     if (!result.confirmed) {
       return;
     }
+    this.busyId.set(a.appointmentId);
+    this.busyAction.set('complete');
     this.appointmentService.completeAppointment(a.appointmentId).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Appointment marked completed.');
+        this.clearBusy();
+        this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_COMPLETED);
         this.load();
       },
       error: (err) => {
-        this.toast.error(err.error?.message || 'Failed to complete.');
+        this.clearBusy();
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_COMPLETE_FAILED));
       },
     });
+  }
+
+  private clearBusy(): void {
+    this.busyId.set(null);
+    this.busyAction.set(null);
   }
 
   trackById = (_: number, a: Appointment) => a.appointmentId;

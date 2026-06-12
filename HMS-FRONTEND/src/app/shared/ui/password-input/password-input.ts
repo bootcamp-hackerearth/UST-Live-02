@@ -7,6 +7,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
+// Password input with a show/hide toggle; used only for primary password fields
 @Component({
   selector: 'app-password-input',
   standalone: true,
@@ -33,7 +34,7 @@ export class PasswordInputComponent implements ControlValueAccessor {
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
 
-  // --- ControlValueAccessor ---
+  // ControlValueAccessor
   writeValue(value: string): void {
     this.value.set(value ?? '');
   }

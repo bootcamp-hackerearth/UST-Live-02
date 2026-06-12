@@ -9,6 +9,8 @@ import {
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import {
   passwordComplexity,
   passwordMatchValidator,
@@ -16,6 +18,7 @@ import {
 } from '../../../core/validators/app-validators';
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 
+// Change-password screen with forced (first-login) and voluntary modes
 @Component({
   selector: 'app-change-password',
   standalone: true,
@@ -28,6 +31,7 @@ export class ChangePasswordComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   changeForm: FormGroup;
@@ -72,10 +76,9 @@ export class ChangePasswordComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.toast.success(
-            response?.message || 'Password changed successfully.',
+            response?.message || APP_MESSAGES.PASSWORD_CHANGED,
           );
-          // Refresh the cached user so mustChangePassword becomes false, then
-          // proceed to the dashboard (already authenticated — no re-login).
+          // Refresh the cached user so mustChangePassword clears, then go to the dashboard
           this.authService.refreshCurrentUser().subscribe({
             next: () => {
               this.loading = false;
@@ -83,7 +86,7 @@ export class ChangePasswordComponent implements OnInit {
               this.router.navigate(['/dashboard/overview']);
             },
             error: () => {
-              // Even if the refresh fails, the password changed; continue.
+              // Even if the refresh fails, the password changed; continue
               this.loading = false;
               this.cdr.markForCheck();
               this.router.navigate(['/dashboard/overview']);
@@ -94,8 +97,7 @@ export class ChangePasswordComponent implements OnInit {
           this.loading = false;
           this.cdr.markForCheck();
           this.toast.error(
-            error.error?.message ||
-              'Failed to change password. Please try again.',
+            this.apiError.message(error, APP_MESSAGES.PASSWORD_CHANGE_FAILED),
           );
         },
       });

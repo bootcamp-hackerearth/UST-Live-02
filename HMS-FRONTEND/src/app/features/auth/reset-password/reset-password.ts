@@ -9,6 +9,8 @@ import {
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { APP_MESSAGES } from '../../../core/constants/messages';
 import {
   passwordComplexity,
   passwordMatchValidator,
@@ -27,6 +29,7 @@ export class ResetPasswordComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   resetPasswordForm: FormGroup;
@@ -34,7 +37,7 @@ export class ResetPasswordComponent implements OnInit {
   errorMessage = '';
   passwordReset = false;
   submitted = false;
-  // Set when the backend rejects because the new password equals the old one.
+  // Set when the backend rejects because the new password equals the old one
   sameAsCurrent = false;
   token = '';
 
@@ -47,6 +50,7 @@ export class ResetPasswordComponent implements OnInit {
       { validators: passwordMatchValidator('newPassword', 'confirmPassword') },
     );
 
+    // Clear the server-side "same as current" error once the user edits the password
     this.resetPasswordForm.get('newPassword')?.valueChanges.subscribe(() => {
       this.sameAsCurrent = false;
     });
@@ -74,7 +78,7 @@ export class ResetPasswordComponent implements OnInit {
 
     const { newPassword, confirmPassword } = this.resetPasswordForm.value;
 
-    // Backend expects { resetToken, newPassword, confirmPassword }.
+    // Backend expects { resetToken, newPassword, confirmPassword }
     this.authService
       .resetPassword(this.token, newPassword, confirmPassword)
       .subscribe({
@@ -83,16 +87,15 @@ export class ResetPasswordComponent implements OnInit {
           this.cdr.markForCheck();
           this.passwordReset = true;
           this.toast.success(
-            response?.message || 'Password reset successfully.',
+            response?.message || APP_MESSAGES.PASSWORD_RESET,
           );
         },
         error: (error) => {
           this.loading = false;
           this.cdr.markForCheck();
-          const msg = error.error?.message || '';
+          const msg = this.apiError.message(error, '');
 
-          // The backend rejects a new password equal to the current one; show
-          // it under the new-password field rather than just as a toast.
+          // Show the "same as current" rejection under the new-password field
           if (/same as current/i.test(msg)) {
             this.sameAsCurrent = true;
             this.toast.error(msg);

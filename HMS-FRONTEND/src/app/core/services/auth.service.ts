@@ -11,11 +11,12 @@ import {
 } from '../models/user.model';
 import { Designation } from '../models/employee.model';
 import { FormDraftService } from './form-draft.service';
+import { NodeService } from './node.service';
 
 const TOKEN_KEY = 'hms_token';
 const USER_KEY = 'hms_user';
 
-// Designations that are treated as superusers (access to everything).
+// Designations that are treated as superusers (access to everything)
 const SUPERUSER_DESIGNATIONS = new Set<Designation>([
   'OWNER',
   'ADMIN',
@@ -28,11 +29,12 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly formDraft = inject(FormDraftService);
+  private readonly nodeService = inject(NodeService);
 
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  // Signal mirror for components that prefer signals.
+  // Signal mirror for components that prefer signals
   currentUserSignal = signal<User | null>(null);
 
   private readonly apiUrl = `${environment.apiUrl}/auth`;
@@ -41,6 +43,7 @@ export class AuthService {
     this.loadUserFromStorage();
   }
 
+  // Auth flows
   selfRegister(data: any): Observable<ApiMessage> {
     return this.http.post<ApiMessage>(`${this.apiUrl}/self-register`, data);
   }
@@ -50,8 +53,8 @@ export class AuthService {
       .post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(
         tap((response) => {
-          if (response?.token && response?.user) {
-            this.setSession(response.token, response.user);
+          if (response?.data?.token && response?.data?.user) {
+            this.setSession(response.data.token, response.data.user);
           }
         }),
       );
@@ -63,7 +66,7 @@ export class AuthService {
     });
   }
 
-  // Backend expects { resetToken, newPassword, confirmPassword }.
+  // Backend expects { resetToken, newPassword, confirmPassword }
   resetPassword(
     resetToken: string,
     newPassword: string,
@@ -76,7 +79,7 @@ export class AuthService {
     });
   }
 
-  // Backend expects { currentPassword, newPassword, confirmPassword }.
+  // Backend expects { currentPassword, newPassword, confirmPassword }
   changePassword(
     currentPassword: string,
     newPassword: string,
@@ -89,25 +92,24 @@ export class AuthService {
     });
   }
 
-  // Refreshes the cached user after a page reload (token still in storage).
+  // Refreshes the cached user after a page reload (token still in storage)
   refreshCurrentUser(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${this.apiUrl}/me`).pipe(
       tap((response) => {
-        if (response?.user) {
-          this.persistUser(response.user);
+        if (response?.data?.user) {
+          this.persistUser(response.data.user);
         }
       }),
     );
   }
 
   logout(navigate = true): void {
-    // A first-login user must change their temporary password before doing
-    // anything — including logging out. Block logout while the flag is set.
+    // Block logout while a first-login user still must change their password
     if (this.isPasswordChangeRequired()) {
       return;
     }
 
-    // Best-effort server notification; ignore failures.
+    // Best-effort server notification; ignore failures
     this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
       next: () => {},
       error: () => {},
@@ -118,11 +120,12 @@ export class AuthService {
     }
   }
 
-  // True if the logged-in user must change their password before proceeding.
+  // True if the logged-in user must change their password before proceeding
   isPasswordChangeRequired(): boolean {
     return !!this.getCurrentUser()?.mustChangePassword;
   }
 
+  // Clears the session and redirects to login, bypassing the logout() guard (used on 401)
   forceClearSession(navigate = true): void {
     this.clearSession();
     if (navigate) {
@@ -130,6 +133,7 @@ export class AuthService {
     }
   }
 
+  // Session management
   private setSession(token: string, user: User): void {
     localStorage.setItem(TOKEN_KEY, token);
     this.persistUser(user);
@@ -145,6 +149,7 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.formDraft.clearAll();
+    this.nodeService.clearCache();
     this.currentUserSubject.next(null);
     this.currentUserSignal.set(null);
   }
@@ -163,6 +168,7 @@ export class AuthService {
     }
   }
 
+  // Accessors
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
@@ -179,12 +185,13 @@ export class AuthService {
     return this.getCurrentUser()?.profile?.designation ?? null;
   }
 
+  // True if the user is OWNER or ADMIN (full access)
   isSuperUser(): boolean {
     const designation = this.getDesignation();
     return !!designation && SUPERUSER_DESIGNATIONS.has(designation);
   }
 
-
+  // Access check by designation; OWNER and ADMIN always pass
   hasDesignation(allowed: Designation[]): boolean {
     const designation = this.getDesignation();
     if (!designation) {
