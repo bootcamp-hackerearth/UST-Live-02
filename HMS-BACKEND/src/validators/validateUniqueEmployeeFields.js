@@ -1,10 +1,14 @@
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
-const { MEDICAL_DESIGNATIONS_SET } = require("../config/constants");
+const { MEDICAL_DESIGNATIONS_SET } = require("../constants/domain");
+const AppError = require("../utils/AppError");
+const STATUS = require("../constants/statusCodes");
+const MESSAGES = require("../constants/messages");
 
+// Throws AppError 409 on any uniqueness violation, resolves silently otherwise
 const validateUniqueEmployeeFields = async (data) => {
 
-    const{
+    const {
         username,
         email,
         designation,
@@ -16,12 +20,8 @@ const validateUniqueEmployeeFields = async (data) => {
         username
     });
 
-    if (existingUsername){
-        return {
-            success: false,
-            status: 409,
-            message: "Username already exists"
-        };
+    if (existingUsername) {
+        throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.USERNAME_EXISTS);
     }
 
     // Check email uniqueness in the users collection
@@ -30,11 +30,7 @@ const validateUniqueEmployeeFields = async (data) => {
     });
 
     if (existingUserEmail) {
-        return {
-            success: false,
-            status: 409,
-            message: "User with this email already exists"
-        };
+        throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.USER_EMAIL_EXISTS);
     }
 
     // Check email uniqueness in the employees collection
@@ -43,31 +39,19 @@ const validateUniqueEmployeeFields = async (data) => {
     });
 
     if (existingEmployeeEmail) {
-        return {
-            success: false,
-            status: 409,
-            message: "Employee with this email already exists"
-        };
+        throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.EMAIL_EXISTS);
     }
 
     // Medical registration number uniqueness is only enforced for medical designations
-    if (MEDICAL_DESIGNATIONS_SET.has(designation)){
+    if (MEDICAL_DESIGNATIONS_SET.has(designation)) {
         const existingMedicalEmployee = await Employee.findOne({
             medicalRegistrationNumber
         });
 
-        if (existingMedicalEmployee){
-            return {
-                success: false,
-                status: 409,
-                message: "Employee with this medical registration number already exists"
-            };
+        if (existingMedicalEmployee) {
+            throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.MED_REG_EXISTS);
         }
     }
-
-    return {
-        success: true
-    };
-}
+};
 
 module.exports = validateUniqueEmployeeFields;
