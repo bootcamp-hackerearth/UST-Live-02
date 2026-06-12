@@ -1,0 +1,40 @@
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const connectDB = require("../hms-backend-pod-3/src/config/db");
+
+
+const app = express();
+// Used for secure http
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
+
+
+
+//middleware which logs requests
+app.use(morgan("dev"));
+// Read JSON data sent from frontend/Postman and make it available in req.body.
+app.use(express.json());
+
+
+
+const employeeRoutes = require("./src/routes/employeeRoutes");
+const appointmentRoutes=require("./src/routes/appointmentRoutes");
+const patientAppRoutes =require("./src/routes/patientAppRoutes");
+
+app.use("/api/patientApp",patientAppRoutes);
+app.use("/api/emp", employeeRoutes);
+app.use("/api/appointment",appointmentRoutes);
+
+app.get("/", (req, res) => res.json({ message: "API running" }));
+
+connectDB();
+
+module.exports = app;
