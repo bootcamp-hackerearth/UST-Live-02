@@ -42,7 +42,7 @@ const patientRoutes = require("./routes/patientRoutes");
 app.use("/api/patients", patientRoutes);
 
 const verifyEmailRoutes = require("./routes/emailVerificationRoutes");
-app.use("/api/email", verifyEmailRoutes)
+app.use("/api/email", verifyEmailRoutes);
 
 try {
   mongoose.connect(process.env.MONGO_URI);

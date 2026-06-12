@@ -47,15 +47,8 @@ const employeeSchema = new mongoose.Schema(
   {
     employeeCode: { type: String, unique: true },
     name: { type: String, required: true, trim: true },
-    phone: { type: String, required: true, unique:true, trim: true },
+    phone: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, unique: true },
-    department: {
-      type: String,
-      enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"],
-      required: true,
-    },
-
-    designation: { type: String, required: true },
     status: {
       type: String,
       enum: [
@@ -65,7 +58,14 @@ const employeeSchema = new mongoose.Schema(
         "ADMIN_APPROVAL_PENDING",
       ],
     },
+    department: {
+      type: String,
+      enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"],
+      required: true,
+    },
 
+    designation: { type: String, required: true },
+ 
     joiningDate: { type: Date, required: true },
 
     medicalRegistrationNo: {

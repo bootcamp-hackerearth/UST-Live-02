@@ -2,6 +2,7 @@ import { Component, OnInit, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ApiService, MenuNode } from '../../services/apiService/api-service';
+import { AppointmentService } from '../../services/appointmentService/appointment-service';
 
 @Component({
   selector: 'app-sidebar',
@@ -12,9 +13,11 @@ import { ApiService, MenuNode } from '../../services/apiService/api-service';
 })
 export class Sidebar implements OnInit {
   menus: MenuNode[] = [];
-
+  pendingAppointmentsCount: number = 0;
+  isAdmin: boolean = false;
   constructor(
     private readonly api: ApiService,
+    private readonly appointmentService: AppointmentService,
     @Inject(PLATFORM_ID) private readonly platformId: Object,
     private readonly cdr: ChangeDetectorRef,
   ) { }
@@ -22,6 +25,8 @@ export class Sidebar implements OnInit {
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       const userRole = this.getUserRoleFromToken();
+      this.isAdmin = (userRole?.toUpperCase() == "ADMIN");
+      this.fetchPendingAppointments();
 
       this.api.getMenus().subscribe({
         next: (response: any) => {
@@ -42,6 +47,18 @@ export class Sidebar implements OnInit {
         error: (err) => console.error('Failed to fetch menus.', err),
       });
     }
+  }
+
+  fetchPendingAppointments() {
+    this.appointmentService.getRecentAppointments().subscribe({
+      next: (data: any[]) => {
+        this.pendingAppointmentsCount = data.filter(
+          (apt) => apt.status?.toUpperCase() === 'PENDING'
+        ).length;
+        this.cdr.markForCheck();
+      },
+      error: (err) => console.error('Error fetching pending appointments for sidebar', err)
+    });
   }
 
   private getUserRoleFromToken(): string | null {

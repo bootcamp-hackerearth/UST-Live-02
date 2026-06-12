@@ -2,9 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
-
 const { authenticateToken } = require("../middlewares/authMiddleware");
-
 const appointmentController = require("../controllers/appointmentController");
 
 router.post("/create", authenticateToken, appointmentController.addAppointment);
@@ -30,5 +28,7 @@ router.delete(
   authenticateToken,
   appointmentController.deleteAppointment,
 );
+
+router.get("/my-appointments", authenticateToken, appointmentController.getPatientAppointments);
 
 module.exports = router;

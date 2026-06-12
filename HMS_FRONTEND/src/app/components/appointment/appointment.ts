@@ -14,7 +14,7 @@ import { ToastrService } from 'ngx-toastr';
 })
 export class Appointment implements OnInit {
   appointmentForm!: FormGroup;
-  stats: any = { total: 0, completed: 0, booked: 0, cancelled: 0 };
+  stats: any = { total: 0, completed: 0, booked: 0, cancelled: 0, pending: 0 };
   doctors: any[] = [];
   patients: any[] = [];
   recentAppointments: any[] = [];
@@ -24,7 +24,6 @@ export class Appointment implements OnInit {
   editingAptCode: string | null = null;
   userRole: string = '';
   timeSlots: string[] = [];
-
 
   isPatientDropdownOpen = false;
   displayPatients: any[] = [];
@@ -40,7 +39,6 @@ export class Appointment implements OnInit {
     private readonly appointmentService: AppointmentService,
     private readonly apiService: ApiService,
     private readonly cdr: ChangeDetectorRef,
-
     @Inject(PLATFORM_ID) private readonly platformId: Object
   ) {
     this.initForm();
@@ -48,15 +46,13 @@ export class Appointment implements OnInit {
 
   getMinDate(): string {
     const d = new Date();
-    if (this.userRole === 'ADMIN') {
-      d.setDate(d.getDate());
-    }
+    d.setDate(d.getDate());
     return d.toISOString().split('T')[0];
   }
 
   getMaxDate(): string {
     const d = new Date();
-      d.setMonth(d.getMonth()+6);
+    d.setMonth(d.getMonth() + 6);
     return d.toISOString().split('T')[0];
   }
 
@@ -69,15 +65,7 @@ export class Appointment implements OnInit {
     today.setHours(0, 0, 0, 0);
     selectedDate.setHours(0, 0, 0, 0);
 
-    if (this.userRole === 'ADMIN') {
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(today.getDate() - 2);
-      twoDaysAgo.setHours(0, 0, 0, 0);
-
-      if (selectedDate < twoDaysAgo) {
-        return { pastDateTooFar: true };
-      }
-    } else if (selectedDate < today) {
+    if (selectedDate < today) {
       return { pastDate: true };
     }
     return null;
@@ -110,7 +98,7 @@ export class Appointment implements OnInit {
   loadData() {
     if (this.userRole !== 'DOCTOR') {
       this.appointmentService.getStats().subscribe(data => {
-        this.stats = data;
+        this.stats = { ...this.stats, ...data };
         this.cdr.markForCheck();
       });
     }
@@ -146,10 +134,12 @@ export class Appointment implements OnInit {
           total: this.recentAppointments.length,
           completed: this.recentAppointments.filter((a: any) => a.status === 'Completed').length,
           booked: this.recentAppointments.filter((a: any) => a.status === 'Scheduled').length,
-          cancelled: this.recentAppointments.filter((a: any) => a.status === 'Cancelled').length
+          cancelled: this.recentAppointments.filter((a: any) => a.status === 'Cancelled').length,
+          pending: this.recentAppointments.filter((a: any) => a.status?.toUpperCase() === 'PENDING').length
         };
       } else {
         this.recentAppointments = data;
+        this.stats.pending = this.recentAppointments.filter((a: any) => a.status?.toUpperCase() === 'PENDING').length;
       }
       this.cdr.detectChanges();
     });
@@ -184,7 +174,6 @@ export class Appointment implements OnInit {
     this.isPatientDropdownOpen = false;
     this.displayPatients = [...this.patients];
   }
-
 
   closePatientDropdown() {
     setTimeout(() => {
@@ -426,6 +415,24 @@ export class Appointment implements OnInit {
         },
         error: (err) => {
           this.toast.error('Error updating status: ' + (err.error?.message || 'Unknown error'));
+        }
+      });
+    }
+  }
+
+  approveAppointment(apt: any) {
+    const isConfirmed = confirm(`Approve and schedule appointment ${apt.appointmentCode}?`);
+
+    if (isConfirmed) {
+      const payload = { ...apt, status: 'Scheduled' };
+
+      this.appointmentService.updateAppointment(apt.appointmentCode, payload).subscribe({
+        next: () => {
+          this.toast.success('Appointment approved and scheduled!');
+          this.loadData();
+        },
+        error: (err) => {
+          this.toast.error('Error approving appointment: ' + (err.error?.message || 'Unknown error'));
         }
       });
     }

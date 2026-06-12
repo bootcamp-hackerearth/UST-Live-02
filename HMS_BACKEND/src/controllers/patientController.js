@@ -15,14 +15,170 @@ exports.getAllPatients = async (req, res) => {
 
 exports.createPatient = async (req, res) => {
   try {
-    const existingPatient = await Patient.findOne({email: req.body.email });
-    if (existingPatient)
-      return res.status(409).json({ message: "Patient with this email already exists" });
-
     const newPatient = new Patient(req.body);
     await newPatient.save();
     res.status(201).json(newPatient);
   } catch (err) {
-    res.status(400).json({ message: err.message + "Please try again later" });
+    res
+      .status(400)
+      .json({ message: "Error creating patient", error: err.message });
+  }
+};
+
+const buildPatientUpdatePayload = (body, currentAddress) => {
+  const {
+    phone,
+    gender,
+    dob,
+    bloodGroup,
+    allergies,
+    emergencyContact,
+    address,
+  } = body;
+
+  const payload = {};
+
+  if (phone) payload.phone = phone.trim();
+  if (gender) payload.gender = gender;
+  if (dob) payload.dob = dob;
+  if (bloodGroup !== undefined) payload.bloodGroup = bloodGroup;
+  if (allergies !== undefined) payload.allergies = allergies;
+  
+  if (emergencyContact !== undefined) {
+    payload.emergencyContact = typeof emergencyContact === 'string' 
+      ? emergencyContact.trim() 
+      : emergencyContact;
+  }
+
+  if (address) {
+    payload.address = {
+      line1: address.line1?.trim() || currentAddress?.line1,
+      line2: address.line2?.trim() || currentAddress?.line2,
+      state: address.state?.trim() || currentAddress?.state,
+      pincode: address.pincode || currentAddress?.pincode,
+    };
+  }
+
+  return payload;
+};
+
+const buildStaffUpdatePayload = (body) => {
+  const payload = { ...body };
+  delete payload._id;
+  delete payload.UHID;
+  return payload;
+};
+
+exports.updatePatient = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, email } = req.user || {};
+
+    const targetPatient = await Patient.findOne({ UHID: id });
+    if (!targetPatient) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    const isPatientRole = role === "PATIENT";
+
+    if (isPatientRole && targetPatient.email !== email) {
+      return res.status(403).json({
+        message: "Access Denied: You are not authorized to mutate this profile record.",
+      });
+    }
+
+    const cleanUpdatePayload = isPatientRole
+      ? buildPatientUpdatePayload(req.body, targetPatient.address)
+      : buildStaffUpdatePayload(req.body);
+
+    const updated = await Patient.findOneAndUpdate(
+      { UHID: id },
+      { $set: cleanUpdatePayload },
+      { new: true, runValidators: true },
+    );
+
+    res.status(200).json(updated);
+  } catch (err) {
+    res
+      .status(400)
+      .json({ message: "Update operation failed", error: err.message });
+  }
+};
+
+exports.deletePatient = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Patient.findOneAndDelete({ UHID: id });
+    if (!deleted) return res.status(404).json({ message: "Patient not found" });
+    res.status(200).json({ message: "Patient deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Delete failed", error: err.message });
+  }
+};
+
+exports.createPatientFromMobile = async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      password,
+      email,
+      gender,
+      dob,
+      emergencyContact,
+      address,
+      bloodGroup,
+      allergies,
+    } = req.body;
+
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({ message: "Email already registered as a user." });
+    }
+
+    const existingPatient = await Patient.findOne({
+      email: email.toLowerCase(),
+    });
+    if (existingPatient) {
+      return res
+        .status(409)
+        .json({ message: "Patient profile with this email already exists." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const newPatient = await Patient.create({
+      name,
+      phone,
+      email: email.toLowerCase(),
+      gender,
+      dob,
+      emergencyContact,
+      address,
+      bloodGroup,
+      allergies,
+    });
+
+    const newUser = await User.create({
+      email: email.toLowerCase(),
+      passwordHash,
+      role: "PATIENT",
+      status: "ACTIVE",
+      patientID: newPatient.UHID,
+    });
+
+    return res.status(201).json({
+      message: "Patient registered successfully",
+      patientUHID: newUser.patientID,
+    });
+  } catch (err) {
+    console.error("Critical Registration Error:", err);
+    return res.status(400).json({
+      message: "Database insertion failed. Check schema validation limits.",
+      error: err.message,
+    });
   }
 };
