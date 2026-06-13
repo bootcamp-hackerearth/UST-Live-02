@@ -37,9 +37,9 @@ export default function LoginScreen() {
     }
 
     if (!password) {
-      error.password = "Password is required";
+      error.password = "Password is required";//NOSONAR
     } else if (password.length < 8) {
-      error.password = "Minimum 8 characters required";
+      error.password = "Minimum 8 characters required";//NOSONAR
     }
 
     setErrors(error);
