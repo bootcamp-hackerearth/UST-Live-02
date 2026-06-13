@@ -1,0 +1,131 @@
+
+
+.card-section {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+
+.card {
+  flex: 1;
+  background: #ffffff;
+  padding: 18px 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.card:hover {
+  background-color: #f8fafc;
+  transform: translateY(-3px);
+}
+
+.card.active {
+  border: 2px solid #0f172a;
+  background-color: #e2e8f0;
+  transform: translateY(-3px);
+}
+
+.card h3 {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+.card p {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+
+
+.table-section {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 36vh);
+}
+
+.table-section table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table-section thead {
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.table-section th {
+  text-align: left;
+  padding: 12px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: normal;
+  word-break: break-word;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.table-section td {
+  padding: 12px 10px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.table-section tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+
+
+.table-section td:last-child {
+  font-weight: 600;
+}
+
+
+
+.table-section::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-section::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.table-section::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+
+.table-section::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+
+
+@media (max-width: 768px) {
+  .card-section {
+    flex-direction: column;
+  }
+
+  .table-section {
+    max-height: none;
+  }
+}
