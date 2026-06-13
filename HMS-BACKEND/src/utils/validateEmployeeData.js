@@ -1,9 +1,9 @@
-const User = require("../../models/User");
-const Employee = require("../../models/Employee");
+const User = require("../models/User");
+const Employee = require("../models/Employee");
 
-const EMPLOYEE_PREFIX = require("../../constants/employee-prefix");
+const EMPLOYEE_PREFIX = require("../constants/employee-prefix");
 
-const generateSequentialId = require("../../utils/generateSequentialId");
+const generateSequentialId = require("../utils/generateSequentialId");
 
 const validateEmployeeData = async ({ email, phone, designation, medicalRegistrationNo }) => {
   const existingUser = await User.findOne({ email: email.toLowerCase() });
