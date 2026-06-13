@@ -1,27 +1,16 @@
 import React from "react";
 
-import {
-  Text,
-  View,
-  StyleSheet,
-} from "react-native";
+import { Text, View, StyleSheet } from "react-native";
 
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   status: string;
 }
 
-export default function StatusBadge({
-  status,
-}: Props) {
-
+export default function StatusBadge({ status }: Props) {
   const getConfig = () => {
-
     switch (status) {
-
       case "BOOKED":
         return {
           color: "#22C55E",
@@ -66,75 +55,55 @@ export default function StatusBadge({
     }
   };
 
-  const config =
-    getConfig();
+  const config = getConfig();
 
   return (
-
     <View
       style={[
         styles.badge,
         {
-          backgroundColor:
-            config.bg,
+          backgroundColor: config.bg,
         },
       ]}
     >
-
-      <Ionicons
-        name={
-          config.icon as any
-        }
-        size={14}
-        color={
-          config.color
-        }
-      />
+      <Ionicons name={config.icon as any} size={14} color={config.color} />
 
       <Text
         style={[
           styles.text,
           {
-            color:
-              config.color,
+            color: config.color,
           },
         ]}
       >
         {status}
       </Text>
-
     </View>
-
   );
 }
 
-const styles =
-StyleSheet.create({
+const styles = StyleSheet.create({
+  badge: {
+    flexDirection: "row",
 
-badge: {
+    alignItems: "center",
 
-flexDirection:"row",
+    paddingHorizontal: 12,
 
-alignItems:"center",
+    paddingVertical: 7,
 
-paddingHorizontal:12,
+    borderRadius: 999,
 
-paddingVertical:7,
+    alignSelf: "flex-start",
+  },
 
-borderRadius:999,
+  text: {
+    fontWeight: "700",
 
-alignSelf:"flex-start",
-},
+    fontSize: 12,
 
-text: {
+    marginLeft: 5,
 
-fontWeight:"700",
-
-fontSize:12,
-
-marginLeft:5,
-
-letterSpacing:0.3,
-},
-
+    letterSpacing: 0.3,
+  },
 });

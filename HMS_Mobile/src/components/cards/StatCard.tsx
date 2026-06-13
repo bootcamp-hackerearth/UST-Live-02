@@ -1,29 +1,17 @@
 import React from "react";
 
-import {
-  View,
-  Text,
-  StyleSheet,
-} from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   title: string;
   value: number;
 }
 
-export default function StatCard({
-  title,
-  value,
-}: Props) {
-
+export default function StatCard({ title, value }: Props) {
   const getConfig = () => {
-
     switch (title) {
-
       case "Pending":
         return {
           icon: "time",
@@ -54,125 +42,91 @@ export default function StatCard({
     }
   };
 
-  const config =
-    getConfig();
+  const config = getConfig();
 
   return (
-
-    <View
-      style={styles.card}
-    >
-
+    <View style={styles.card}>
       <View
         style={[
           styles.iconContainer,
           {
-            backgroundColor:
-              config.bg,
+            backgroundColor: config.bg,
           },
         ]}
       >
-
-        <Ionicons
-          name={
-            config.icon as any
-          }
-          size={20}
-          color={
-            config.color
-          }
-        />
-
+        <Ionicons name={config.icon as any} size={20} color={config.color} />
       </View>
 
-      <Text
-        style={styles.value}
-      >
-        {value}
-      </Text>
+      <Text style={styles.value}>{value}</Text>
 
-      <Text
-        style={styles.title}
-      >
-        {title}
-      </Text>
-
+      <Text style={styles.title}>{title}</Text>
     </View>
-
   );
 }
 
-const styles =
-StyleSheet.create({
+const styles = StyleSheet.create({
+  card: {
+    flex: 1,
 
-card:{
+    backgroundColor: "rgba(255,255,255,0.95)",
 
-flex:1,
+    borderRadius: 24,
 
-backgroundColor:
-"rgba(255,255,255,0.95)",
+    paddingVertical: 22,
 
-borderRadius:24,
+    paddingHorizontal: 10,
 
-paddingVertical:22,
+    borderWidth: 1,
 
-paddingHorizontal:10,
+    borderColor: "#E2E8F0",
 
-borderWidth:1,
+    alignItems: "center",
 
-borderColor:"#E2E8F0",
+    shadowColor: "#2563EB",
 
-alignItems:"center",
+    shadowOpacity: 0.08,
 
-shadowColor:"#2563EB",
+    shadowRadius: 16,
 
-shadowOpacity:0.08,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
 
-shadowRadius:16,
+    elevation: 4,
+  },
 
-shadowOffset:{
-width:0,
-height:8,
-},
+  iconContainer: {
+    width: 42,
 
-elevation:4,
-},
+    height: 42,
 
-iconContainer:{
+    borderRadius: 21,
 
-width:42,
+    justifyContent: "center",
 
-height:42,
+    alignItems: "center",
 
-borderRadius:21,
+    marginBottom: 12,
+  },
 
-justifyContent:"center",
+  value: {
+    fontSize: 30,
 
-alignItems:"center",
+    fontWeight: "800",
 
-marginBottom:12,
-},
+    color: "#0F172A",
+  },
 
-value:{
+  title: {
+    marginTop: 6,
 
-fontSize:30,
+    color: "#64748B",
 
-fontWeight:"800",
+    fontSize: 13,
 
-color:"#0F172A",
-},
+    fontWeight: "600",
 
-title:{
-
-marginTop:6,
-
-color:"#64748B",
-
-fontSize:13,
-
-fontWeight:"600",
-
-textAlign:"center",
-},
-
+    textAlign: "center",
+  },
 });

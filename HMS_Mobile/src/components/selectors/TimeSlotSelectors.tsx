@@ -1,22 +1,13 @@
 import React from "react";
 
-import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-} from "react-native";
+import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   slots: string[];
   selectedSlot: string;
-  onSelect: (
-    slot: string
-  ) => void;
+  onSelect: (slot: string) => void;
 }
 
 export default function TimeSlotSelector({
@@ -24,144 +15,101 @@ export default function TimeSlotSelector({
   selectedSlot,
   onSelect,
 }: Props) {
-
   return (
-
-    <View
-      style={styles.container}
-    >
-
-      {slots.map(slot => {
-
-        const isSelected =
-          selectedSlot === slot;
+    <View style={styles.container}>
+      {slots.map((slot) => {
+        const isSelected = selectedSlot === slot;
 
         return (
-
           <TouchableOpacity
             key={slot}
             activeOpacity={0.9}
-            style={[
-              styles.slot,
-              isSelected &&
-                styles.selectedSlot,
-            ]}
-            onPress={() =>
-              onSelect(slot)
-            }
+            style={[styles.slot, isSelected && styles.selectedSlot]}
+            onPress={() => onSelect(slot)}
           >
-
             <Ionicons
               name="time-outline"
               size={16}
-              color={
-                isSelected
-                  ? "#FFFFFF"
-                  : "#2563EB"
-              }
+              color={isSelected ? "#FFFFFF" : "#2563EB"}
             />
 
-            <Text
-              style={[
-                styles.text,
-                isSelected &&
-                  styles.selectedText,
-              ]}
-            >
+            <Text style={[styles.text, isSelected && styles.selectedText]}>
               {slot}
             </Text>
 
             {isSelected && (
-
-              <Ionicons
-                name="checkmark-circle"
-                size={18}
-                color="#FFFFFF"
-              />
-
+              <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
             )}
-
           </TouchableOpacity>
-
         );
       })}
-
     </View>
-
   );
 }
 
-const styles =
-StyleSheet.create({
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
 
-container: {
+    flexWrap: "wrap",
 
-flexDirection:"row",
+    gap: 12,
+  },
 
-flexWrap:"wrap",
+  slot: {
+    flexDirection: "row",
 
-gap:12,
-},
+    alignItems: "center",
 
-slot: {
+    paddingHorizontal: 16,
 
-flexDirection:"row",
+    paddingVertical: 12,
 
-alignItems:"center",
+    borderRadius: 18,
 
-paddingHorizontal:16,
+    backgroundColor: "#FFFFFF",
 
-paddingVertical:12,
+    borderWidth: 1,
 
-borderRadius:18,
+    borderColor: "#E2E8F0",
 
-backgroundColor:"#FFFFFF",
+    shadowColor: "#2563EB",
 
-borderWidth:1,
+    shadowOpacity: 0.05,
 
-borderColor:"#E2E8F0",
+    shadowRadius: 10,
 
-shadowColor:"#2563EB",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
 
-shadowOpacity:0.05,
+    elevation: 2,
+  },
 
-shadowRadius:10,
+  selectedSlot: {
+    backgroundColor: "#2563EB",
 
-shadowOffset:{
-width:0,
-height:4,
-},
+    borderColor: "#2563EB",
 
-elevation:2,
-},
+    shadowOpacity: 0.15,
+  },
 
-selectedSlot: {
+  text: {
+    marginLeft: 6,
 
-backgroundColor:"#2563EB",
+    color: "#334155",
 
-borderColor:"#2563EB",
+    fontWeight: "600",
 
-shadowOpacity:0.15,
-},
+    fontSize: 14,
+  },
 
-text: {
+  selectedText: {
+    color: "#FFFFFF",
 
-marginLeft:6,
+    fontWeight: "700",
 
-color:"#334155",
-
-fontWeight:"600",
-
-fontSize:14,
-},
-
-selectedText: {
-
-color:"#FFFFFF",
-
-fontWeight:"700",
-
-marginRight:6,
-},
-
+    marginRight: 6,
+  },
 });

@@ -1,329 +1,195 @@
 import React from "react";
 
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  StyleSheet,
-} from "react-native";
+import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
-import StatusBadge
-from "../badges/StatusBadge";
+import StatusBadge from "../badges/StatusBadge";
 
 interface Props {
   item: any;
   onPress: () => void;
 }
 
-export default function AppointmentCard({
-  item,
-  onPress,
-}: Props) {
+export default function AppointmentCard({ item, onPress }: Props) {
+  const doctorName = item?.doctorEmployeeId?.name || "Doctor";
 
-  const doctorName =
-    item?.doctorEmployeeId?.name ||
-    "Doctor";
+  const doctorInitial = doctorName.charAt(0);
 
-  const doctorInitial =
-    doctorName.charAt(0);
-
-  const appointmentDate =
-    item?.appointmentDate
-      ?.split("T")[0];
+  const appointmentDate = item?.appointmentDate?.split("T")[0];
 
   return (
-
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.9}
-      style={styles.card}
-    >
-
-      <View
-        style={styles.header}
-      >
-
-        <View
-          style={styles.leftSection}
-        >
-
-          <View
-            style={styles.avatar}
-          >
-
-            <Text
-              style={
-                styles.avatarText
-              }
-            >
-              {doctorInitial}
-            </Text>
-
+    <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.card}>
+      <View style={styles.header}>
+        <View style={styles.leftSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{doctorInitial}</Text>
           </View>
 
           <View>
+            <Text style={styles.doctorName}>Dr. {doctorName}</Text>
 
-            <Text
-              style={
-                styles.doctorName
-              }
-            >
-              Dr. {doctorName}
-            </Text>
-
-            <Text
-              style={
-                styles.speciality
-              }
-            >
-              Healthcare Specialist
-            </Text>
-
+            <Text style={styles.speciality}>Healthcare Specialist</Text>
           </View>
-
         </View>
 
-        <StatusBadge
-          status={
-            item.status
-          }
-        />
-
+        <StatusBadge status={item.status} />
       </View>
 
-      <View
-        style={styles.divider}
-      />
+      <View style={styles.divider} />
 
-      <View
-        style={styles.infoRow}
-      >
+      <View style={styles.infoRow}>
+        <View style={styles.infoItem}>
+          <Ionicons name="calendar-outline" size={18} color="#2563EB" />
 
-        <View
-          style={styles.infoItem}
-        >
-
-          <Ionicons
-            name="calendar-outline"
-            size={18}
-            color="#2563EB"
-          />
-
-          <Text
-            style={
-              styles.infoText
-            }
-          >
-            {appointmentDate}
-          </Text>
-
+          <Text style={styles.infoText}>{appointmentDate}</Text>
         </View>
 
-        <View
-          style={styles.infoItem}
-        >
+        <View style={styles.infoItem}>
+          <Ionicons name="time-outline" size={18} color="#2563EB" />
 
-          <Ionicons
-            name="time-outline"
-            size={18}
-            color="#2563EB"
-          />
-
-          <Text
-            style={
-              styles.infoText
-            }
-          >
-            {item.timeSlot}
-          </Text>
-
+          <Text style={styles.infoText}>{item.timeSlot}</Text>
         </View>
-
       </View>
 
-      <View
-        style={styles.footer}
-      >
+      <View style={styles.footer}>
+        <Text style={styles.viewDetails}>View Details</Text>
 
-        <Text
-          style={
-            styles.viewDetails
-          }
-        >
-          View Details
-        </Text>
-
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color="#2563EB"
-        />
-
+        <Ionicons name="chevron-forward" size={18} color="#2563EB" />
       </View>
-
     </TouchableOpacity>
-
   );
 }
 
-const styles =
-StyleSheet.create({
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: "rgba(255,255,255,0.92)",
 
-card: {
+    borderRadius: 24,
 
-backgroundColor:
-"rgba(255,255,255,0.92)",
+    padding: 18,
 
-borderRadius: 24,
+    marginBottom: 16,
 
-padding: 18,
+    borderWidth: 1,
 
-marginBottom: 16,
+    borderColor: "#E2E8F0",
 
-borderWidth: 1,
+    shadowColor: "#2563EB",
 
-borderColor: "#E2E8F0",
+    shadowOpacity: 0.08,
 
-shadowColor: "#2563EB",
+    shadowRadius: 18,
 
-shadowOpacity: 0.08,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
 
-shadowRadius: 18,
+    elevation: 6,
+  },
 
-shadowOffset: {
-width: 0,
-height: 8,
-},
+  header: {
+    flexDirection: "row",
 
-elevation: 6,
-},
+    justifyContent: "space-between",
 
-header: {
+    alignItems: "center",
+  },
 
-flexDirection: "row",
+  leftSection: {
+    flexDirection: "row",
 
-justifyContent:
-"space-between",
+    alignItems: "center",
+  },
 
-alignItems: "center",
-},
+  avatar: {
+    width: 52,
 
-leftSection: {
+    height: 52,
 
-flexDirection: "row",
+    borderRadius: 26,
 
-alignItems: "center",
-},
+    backgroundColor: "#2563EB",
 
-avatar: {
+    justifyContent: "center",
 
-width: 52,
+    alignItems: "center",
 
-height: 52,
+    marginRight: 12,
+  },
 
-borderRadius: 26,
+  avatarText: {
+    color: "#FFFFFF",
 
-backgroundColor:
-"#2563EB",
+    fontSize: 22,
 
-justifyContent:
-"center",
+    fontWeight: "800",
+  },
 
-alignItems:
-"center",
+  doctorName: {
+    fontSize: 17,
 
-marginRight: 12,
-},
+    fontWeight: "700",
 
-avatarText: {
+    color: "#0F172A",
+  },
 
-color: "#FFFFFF",
+  speciality: {
+    fontSize: 13,
 
-fontSize: 22,
+    color: "#64748B",
 
-fontWeight: "800",
-},
+    marginTop: 4,
+  },
 
-doctorName: {
+  divider: {
+    height: 1,
 
-fontSize: 17,
+    backgroundColor: "#EEF2FF",
 
-fontWeight: "700",
+    marginVertical: 16,
+  },
 
-color: "#0F172A",
-},
+  infoRow: {
+    flexDirection: "row",
 
-speciality: {
+    justifyContent: "space-between",
+  },
 
-fontSize: 13,
+  infoItem: {
+    flexDirection: "row",
 
-color: "#64748B",
+    alignItems: "center",
+  },
 
-marginTop: 4,
-},
+  infoText: {
+    marginLeft: 6,
 
-divider: {
+    fontSize: 14,
 
-height: 1,
+    fontWeight: "600",
 
-backgroundColor:
-"#EEF2FF",
+    color: "#334155",
+  },
 
-marginVertical: 16,
-},
+  footer: {
+    marginTop: 18,
 
-infoRow: {
+    flexDirection: "row",
 
-flexDirection: "row",
+    justifyContent: "flex-end",
 
-justifyContent:
-"space-between",
-},
+    alignItems: "center",
+  },
 
-infoItem: {
+  viewDetails: {
+    fontSize: 14,
 
-flexDirection: "row",
+    fontWeight: "700",
 
-alignItems: "center",
-},
+    color: "#2563EB",
 
-infoText: {
-
-marginLeft: 6,
-
-fontSize: 14,
-
-fontWeight: "600",
-
-color: "#334155",
-},
-
-footer: {
-
-marginTop: 18,
-
-flexDirection: "row",
-
-justifyContent:
-"flex-end",
-
-alignItems:
-"center",
-},
-
-viewDetails: {
-
-fontSize: 14,
-
-fontWeight: "700",
-
-color: "#2563EB",
-
-marginRight: 4,
-},
-
+    marginRight: 4,
+  },
 });

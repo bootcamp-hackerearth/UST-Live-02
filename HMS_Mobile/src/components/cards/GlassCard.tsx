@@ -1,60 +1,40 @@
 import React from "react";
 
-import {
-  View,
-  StyleSheet,
-} from "react-native";
+import { View, StyleSheet } from "react-native";
 
 interface Props {
   children: React.ReactNode;
 }
 
-export default function GlassCard({
-  children,
-}: Props) {
-
-  return (
-
-    <View
-      style={styles.card}
-    >
-      {children}
-    </View>
-
-  );
+export default function GlassCard({ children }: Props) {
+  return <View style={styles.card}>{children}</View>;
 }
 
-const styles =
-StyleSheet.create({
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: "rgba(255,255,255,0.88)",
 
-card:{
+    borderRadius: 28,
 
-backgroundColor:
-"rgba(255,255,255,0.88)",
+    padding: 22,
 
-borderRadius:28,
+    marginBottom: 18,
 
-padding:22,
+    borderWidth: 1,
 
-marginBottom:18,
+    borderColor: "rgba(255,255,255,0.95)",
 
-borderWidth:1,
+    shadowColor: "#2563EB",
 
-borderColor:
-"rgba(255,255,255,0.95)",
+    shadowOpacity: 0.08,
 
-shadowColor:"#2563EB",
+    shadowRadius: 24,
 
-shadowOpacity:0.08,
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
 
-shadowRadius:24,
-
-shadowOffset:{
-width:0,
-height:10,
-},
-
-elevation:6,
-},
-
+    elevation: 6,
+  },
 });

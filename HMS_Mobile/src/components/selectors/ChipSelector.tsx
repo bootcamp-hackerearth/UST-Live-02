@@ -1,19 +1,12 @@
 import React from "react";
 
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 interface Props {
   label: string;
   options: string[];
   selectedValue: string;
-  onSelect: (
-    value: string
-  ) => void;
+  onSelect: (value: string) => void;
 }
 
 export default function ChipSelector({
@@ -24,92 +17,74 @@ export default function ChipSelector({
 }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>
-        {label}
-      </Text>
+      <Text style={styles.label}>{label}</Text>
 
       <View style={styles.chipContainer}>
-        {options.map(
-          item => (
-            <TouchableOpacity
-              key={item}
-              onPress={() =>
-                onSelect(item)
-              }
+        {options.map((item) => (
+          <TouchableOpacity
+            key={item}
+            onPress={() => onSelect(item)}
+            style={[styles.chip, selectedValue === item && styles.activeChip]}
+          >
+            <Text
               style={[
-                styles.chip,
-                selectedValue ===
-                  item &&
-                  styles.activeChip,
+                styles.chipText,
+                selectedValue === item && styles.activeChipText,
               ]}
             >
-              <Text
-                style={[
-                  styles.chipText,
-                  selectedValue ===
-                    item &&
-                    styles.activeChipText,
-                ]}
-              >
-                {item}
-              </Text>
-            </TouchableOpacity>
-          )
-        )}
+              {item}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
 }
 
-const styles =
-  StyleSheet.create({
-    container: {
-      marginBottom: 20,
-    },
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 20,
+  },
 
-    label: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: "#334155",
-      marginBottom: 10,
-    },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#334155",
+    marginBottom: 10,
+  },
 
-    chipContainer: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 10,
-    },
+  chipContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
 
-    chip: {
-      paddingHorizontal: 14,
-      paddingVertical: 10,
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
 
-      borderRadius: 14,
+    borderRadius: 14,
 
-      backgroundColor:
-        "#FFFFFF",
+    backgroundColor: "#FFFFFF",
 
-      borderWidth: 1,
+    borderWidth: 1,
 
-      borderColor:
-        "#E2E8F0",
-    },
+    borderColor: "#E2E8F0",
+  },
 
-    activeChip: {
-      backgroundColor:
-        "#2563EB",
+  activeChip: {
+    backgroundColor: "#2563EB",
 
-      borderColor:
-        "#2563EB",
-    },
+    borderColor: "#2563EB",
+  },
 
-    chipText: {
-      color: "#334155",
-      fontWeight: "500",
-    },
+  chipText: {
+    color: "#334155",
+    fontWeight: "500",
+  },
 
-    activeChipText: {
-      color: "#FFFFFF",
-      fontWeight: "700",
-    },
-  });
+  activeChipText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+});

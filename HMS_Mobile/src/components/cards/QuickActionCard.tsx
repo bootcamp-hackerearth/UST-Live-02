@@ -1,30 +1,17 @@
 import React from "react";
 
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  View,
-} from "react-native";
+import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
 
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   title: string;
   onPress: () => void;
 }
 
-export default function QuickActionCard({
-  title,
-  onPress,
-}: Props) {
-
+export default function QuickActionCard({ title, onPress }: Props) {
   const getIcon = () => {
-
     switch (title) {
-
       case "Book":
         return "add-circle";
 
@@ -43,100 +30,71 @@ export default function QuickActionCard({
   };
 
   return (
-
-    <TouchableOpacity
-      activeOpacity={0.9}
-      style={styles.card}
-      onPress={onPress}
-    >
-
-      <View
-        style={styles.iconContainer}
-      >
-
-        <Ionicons
-          name={
-            getIcon() as any
-          }
-          size={24}
-          color="#2563EB"
-        />
-
+    <TouchableOpacity activeOpacity={0.9} style={styles.card} onPress={onPress}>
+      <View style={styles.iconContainer}>
+        <Ionicons name={getIcon() as any} size={24} color="#2563EB" />
       </View>
 
-      <Text
-        style={styles.title}
-      >
-        {title}
-      </Text>
-
+      <Text style={styles.title}>{title}</Text>
     </TouchableOpacity>
-
   );
 }
 
-const styles =
-StyleSheet.create({
+const styles = StyleSheet.create({
+  card: {
+    flex: 1,
 
-card: {
+    height: 120,
 
-flex:1,
+    backgroundColor: "rgba(255,255,255,0.95)",
 
-height:120,
+    borderRadius: 24,
 
-backgroundColor:
-"rgba(255,255,255,0.95)",
+    justifyContent: "center",
 
-borderRadius:24,
+    alignItems: "center",
 
-justifyContent:"center",
+    margin: 6,
 
-alignItems:"center",
+    borderWidth: 1,
 
-margin:6,
+    borderColor: "#E2E8F0",
 
-borderWidth:1,
+    shadowColor: "#2563EB",
 
-borderColor:"#E2E8F0",
+    shadowOpacity: 0.08,
 
-shadowColor:"#2563EB",
+    shadowRadius: 16,
 
-shadowOpacity:0.08,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
 
-shadowRadius:16,
+    elevation: 4,
+  },
 
-shadowOffset:{
-width:0,
-height:8,
-},
+  iconContainer: {
+    width: 52,
 
-elevation:4,
-},
+    height: 52,
 
-iconContainer:{
+    borderRadius: 26,
 
-width:52,
+    backgroundColor: "#DBEAFE",
 
-height:52,
+    justifyContent: "center",
 
-borderRadius:26,
+    alignItems: "center",
 
-backgroundColor:"#DBEAFE",
+    marginBottom: 12,
+  },
 
-justifyContent:"center",
+  title: {
+    fontWeight: "700",
 
-alignItems:"center",
+    fontSize: 14,
 
-marginBottom:12,
-},
-
-title:{
-
-fontWeight:"700",
-
-fontSize:14,
-
-color:"#0F172A",
-},
-
+    color: "#0F172A",
+  },
 });

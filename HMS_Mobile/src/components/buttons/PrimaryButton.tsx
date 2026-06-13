@@ -8,9 +8,7 @@ import {
   View,
 } from "react-native";
 
-import {
-  Ionicons,
-} from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   title: string;
@@ -23,131 +21,81 @@ export default function PrimaryButton({
   onPress,
   loading = false,
 }: Props) {
-
   return (
-
     <TouchableOpacity
       activeOpacity={0.9}
-      style={[
-        styles.button,
-        loading &&
-          styles.disabled,
-      ]}
+      style={[styles.button, loading && styles.disabled]}
       onPress={onPress}
       disabled={loading}
     >
+      {loading ? (
+        <View style={styles.loaderRow}>
+          <ActivityIndicator color="#FFFFFF" size="small" />
 
-      {
-        loading ? (
+          <Text style={styles.text}>Please Wait...</Text>
+        </View>
+      ) : (
+        <View style={styles.content}>
+          <Text style={styles.text}>{title}</Text>
 
-          <View
-            style={styles.loaderRow}
-          >
-
-            <ActivityIndicator
-              color="#FFFFFF"
-              size="small"
-            />
-
-            <Text
-              style={
-                styles.text
-              }
-            >
-              Please Wait...
-            </Text>
-
-          </View>
-
-        ) : (
-
-          <View
-            style={styles.content}
-          >
-
-            <Text
-              style={
-                styles.text
-              }
-            >
-              {title}
-            </Text>
-
-            <Ionicons
-              name="arrow-forward"
-              size={18}
-              color="#FFFFFF"
-            />
-
-          </View>
-
-        )
-      }
-
+          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+        </View>
+      )}
     </TouchableOpacity>
-
   );
 }
 
-const styles =
-StyleSheet.create({
+const styles = StyleSheet.create({
+  button: {
+    height: 58,
 
-button: {
+    borderRadius: 18,
 
-height:58,
+    backgroundColor: "#2563EB",
 
-borderRadius:18,
+    justifyContent: "center",
 
-backgroundColor:"#2563EB",
+    alignItems: "center",
 
-justifyContent:"center",
+    marginTop: 12,
 
-alignItems:"center",
+    shadowColor: "#2563EB",
 
-marginTop:12,
+    shadowOpacity: 0.25,
 
-shadowColor:"#2563EB",
+    shadowRadius: 18,
 
-shadowOpacity:0.25,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
 
-shadowRadius:18,
+    elevation: 6,
+  },
 
-shadowOffset:{
-width:0,
-height:8,
-},
+  disabled: {
+    opacity: 0.8,
+  },
 
-elevation:6,
-},
+  content: {
+    flexDirection: "row",
 
-disabled:{
+    alignItems: "center",
+  },
 
-opacity:0.8,
-},
+  loaderRow: {
+    flexDirection: "row",
 
-content:{
+    alignItems: "center",
+  },
 
-flexDirection:"row",
+  text: {
+    color: "#FFFFFF",
 
-alignItems:"center",
-},
+    fontWeight: "800",
 
-loaderRow:{
+    fontSize: 16,
 
-flexDirection:"row",
-
-alignItems:"center",
-},
-
-text:{
-
-color:"#FFFFFF",
-
-fontWeight:"800",
-
-fontSize:16,
-
-marginHorizontal:8,
-},
-
+    marginHorizontal: 8,
+  },
 });

@@ -1,175 +1,117 @@
-import { createBottomTabNavigator }
-from "@react-navigation/bottom-tabs";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
+import Dashboard from "../screens/DashboardScreen";
 
-import Dashboard
-from "../screens/DashboardScreen";
+import Appointments from "../screens/AppointmentScreen";
 
-import Appointments
-from "../screens/AppointmentScreen";
-
-import Profile
-from "../screens/ProfileScren";
+import Profile from "../screens/ProfileScren";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 
-const Tab =
-createBottomTabNavigator();
+const Tab = createBottomTabNavigator();
 
 export default function PatientTabs() {
-
   return (
-
     <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarHideOnKeyboard: true,
 
-      screenOptions={
+        tabBarShowLabel: true,
 
-        ({ route }) => ({
-headerShown: false,
-tabBarHideOnKeyboard: true,
+        tabBarActiveTintColor: "#2563EB",
 
-          tabBarShowLabel: true,
+        tabBarInactiveTintColor: "#94A3B8",
+        tabBarStyle: {
+          position: "absolute",
 
-          tabBarActiveTintColor:
-            "#2563EB",
+          left: 18,
 
-          tabBarInactiveTintColor:
-            "#94A3B8",
-tabBarStyle: {
+          right: 18,
 
-position: "absolute",
+          bottom: 18,
 
-left: 18,
+          height: 78,
 
-right: 18,
+          borderRadius: 28,
 
-bottom: 18,
+          backgroundColor: "rgba(255,255,255,0.92)",
 
-height: 78,
+          borderTopWidth: 0,
 
-borderRadius: 28,
+          elevation: 20,
 
-backgroundColor:
-"rgba(255,255,255,0.92)",
+          shadowColor: "#2563EB",
 
-borderTopWidth: 0,
+          shadowOpacity: 0.15,
 
-elevation: 20,
+          shadowRadius: 24,
 
-shadowColor: "#2563EB",
-
-shadowOpacity: 0.15,
-
-shadowRadius: 24,
-
-shadowOffset: {
-width: 0,
-height: 12,
-},
-
-paddingTop: 8,
-
-paddingBottom: 8,
-},
-
-          tabBarLabelStyle: {
-            tabBarItemStyle:{
-borderRadius:20,
-marginVertical:8,
-},
-tabBarActiveBackgroundColor:
-"rgba(37,99,235,0.08)",
-
-            fontSize: 11,
-
-            fontWeight: "700",
-
-            marginBottom: 8,
+          shadowOffset: {
+            width: 0,
+            height: 12,
           },
 
-          tabBarIcon: ({
-            focused,
-            color,
-            size,
-          }) => {
+          paddingTop: 8,
 
-            let iconName: React.ComponentProps<typeof Ionicons>["name"] =
-              "home";
+          paddingBottom: 8,
+        },
 
-            if (
-              route.name ===
-              "Dashboard"
-            ) {
-
-              iconName =
-                focused
-                  ? "home"
-                  : "home-outline";
-            }
-
-            if (
-              route.name ===
-              "Appointments"
-            ) {
-
-              iconName =
-                focused
-                  ? "calendar"
-                  : "calendar-outline";
-            }
-
-            if (
-              route.name ===
-              "Profile"
-            ) {
-
-              iconName =
-                focused
-                  ? "person"
-                  : "person-outline";
-            }
-
-            return (
-
-              <Ionicons
-                name={
-                  iconName
-                }
-                size={26}
-                color={color}
-              />
-
-            );
+        tabBarLabelStyle: {
+          tabBarItemStyle: {
+            borderRadius: 20,
+            marginVertical: 8,
           },
-        })
-      }
+          tabBarActiveBackgroundColor: "rgba(37,99,235,0.08)",
 
+          fontSize: 11,
+
+          fontWeight: "700",
+
+          marginBottom: 8,
+        },
+
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: React.ComponentProps<typeof Ionicons>["name"] = "home";
+
+          if (route.name === "Dashboard") {
+            iconName = focused ? "home" : "home-outline";
+          }
+
+          if (route.name === "Appointments") {
+            iconName = focused ? "calendar" : "calendar-outline";
+          }
+
+          if (route.name === "Profile") {
+            iconName = focused ? "person" : "person-outline";
+          }
+
+          return <Ionicons name={iconName} size={26} color={color} />;
+        },
+      })}
     >
+      <Tab.Screen
+        name="Dashboard"
+        component={Dashboard}
+        options={{
+          tabBarLabel: "Home",
+        }}
+      />
+      <Tab.Screen
+        name="Appointments"
+        component={Appointments}
+        options={{
+          tabBarLabel: "Appointments",
+        }}
+      />
 
-     <Tab.Screen
-name="Dashboard"
-component={Dashboard}
-options={{
-tabBarLabel:"Home",
-}}
-/>
-<Tab.Screen
-name="Appointments"
-component={Appointments}
-options={{
-tabBarLabel:"Appointments",
-}}
-/>
-
-     <Tab.Screen
-name="Profile"
-component={Profile}
-options={{
-tabBarLabel:"Profile",
-}}
-/>
-
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          tabBarLabel: "Profile",
+        }}
+      />
     </Tab.Navigator>
-
   );
 }
