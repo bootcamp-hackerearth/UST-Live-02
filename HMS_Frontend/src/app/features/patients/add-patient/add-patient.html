@@ -58,9 +58,13 @@
         <!-- Date of Birth -->
         <div class="form-field">
           <label class="field-label">Date of Birth</label>
-          <input type="date" formControlName="dateOfBirth" />
+          <input type="date" formControlName="dateOfBirth"  [max]="today" />
           @if(patientForm.get('dateOfBirth')?.invalid && patientForm.get('dateOfBirth')?.touched){
           <span class="error-text">Date of Birth is required</span>
+          @if (patientForm.get('dateOfBirth')?.errors?.['futureDate']) {
+<p class="error">Date of Birth cannot be in the future</p>
+
+}
           }
         </div>
 
@@ -152,6 +156,7 @@
           <input type="text" placeholder="Address" formControlName="address" />
           @if(patientForm.get('address')?.invalid && patientForm.get('address')?.touched){
           <span class="error-text">Address is required</span>
+          
           }
         </div>
 
@@ -160,6 +165,16 @@
           <input type="text" placeholder="City" formControlName="city" />
           @if(patientForm.get('city')?.invalid && patientForm.get('city')?.touched){
           <span class="error-text">City is required</span>
+          @if (
+  patientForm.get('city')?.touched &&
+  patientForm.get('city')?.invalid
+) {
+
+<div class="error-message">
+  City can contain only letters
+</div>
+
+}
           }
         </div>
 
@@ -168,6 +183,16 @@
           <input type="text" placeholder="State" formControlName="state" />
           @if(patientForm.get('state')?.invalid && patientForm.get('state')?.touched){
           <span class="error-text">State is required</span>
+          @if (
+  patientForm.get('state')?.touched &&
+  patientForm.get('state')?.invalid
+) {
+
+<div class="error-message">
+  State can contain only letters
+</div>
+
+}
           }
         </div>
 
@@ -214,6 +239,16 @@
             @if(patientForm.get('emergencyContactPhone')?.errors?.['required']){ Emergency Contact Phone is required }
             @else if(patientForm.get('emergencyContactPhone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
           </span>
+          @if (
+  patientForm.get('emergencyContactPhone')?.touched &&
+  patientForm.get('emergencyContactPhone')?.invalid
+) {
+
+<div class="error-message">
+  Emergency Contact Number must be 10 digits
+</div>
+
+}
           }
         </div>
       </div>

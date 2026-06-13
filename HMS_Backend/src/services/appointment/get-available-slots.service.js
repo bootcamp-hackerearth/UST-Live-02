@@ -48,7 +48,7 @@ const getAvailableSlots = async (doctorId, appointmentDate) => {
     doctor?.availability?.endTime,
     doctor?.availability?.slotDuration,
     doctor?.availability?.breakStartTime,
-    doctor?.availability?.breakEndTime
+    doctor?.availability?.breakEndTime,
   );
 
   // Normalize date for appointment search
@@ -73,11 +73,39 @@ const getAvailableSlots = async (doctorId, appointmentDate) => {
 
   // Create set of booked time slots
   const bookedSlots = new Set(
-    bookedAppointments.map((appointment) => appointment.timeSlot)
+    bookedAppointments.map((appointment) => appointment.timeSlot),
   );
+  let availableSlots = allSlots.filter((slot) => !bookedSlots.has(slot));
+
+  const currentDate = new Date();
+
+  const isToday = normalizedDate.toDateString() === currentDate.toDateString();
+
+  if (isToday) {
+    availableSlots = availableSlots.filter((slot) => {
+      const [time, period] = slot.split(" ");
+
+      let [hours, minutes] = time.split(":").map(Number);
+
+      if (period === "PM" && hours !== 12) {
+        hours += 12;
+      }
+
+      if (period === "AM" && hours === 12) {
+        hours = 0;
+      }
+
+      const slotDate = new Date();
+
+      slotDate.setHours(hours, minutes, 0, 0);
+
+      return slotDate > currentDate;
+    });
+  }
+
+  return availableSlots;
 
   // Return only available slots
-  return allSlots.filter((slot) => !bookedSlots.has(slot));
 };
 
 module.exports = getAvailableSlots;

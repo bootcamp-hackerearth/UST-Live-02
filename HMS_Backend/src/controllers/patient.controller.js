@@ -3,6 +3,11 @@ const mongoose = require("mongoose");
 const Patient = require("../models/Patient");
 const Appointment = require("../models/Appointment");
 const registerPatient = require("../services/patient/register-patient.service");
+const selfRegisterPatient = require( "../services/patient/self-register-patient.service");
+const getMyProfile =require("../services/patient/get-my-profile.service");
+const updateMyProfile =require("../services/patient/update-my-profile.service");
+const getPatientDashboardService =require("../services/patient/get-patient-dashboard.service");
+
 
 // Register a new patient
 const createPatient = async (req, res) => {
@@ -177,10 +182,149 @@ const updatePatient = async (req, res) => {
     });
   }
 };
+/*
+|--------------------------------------------------------------------------
+| Patient Self Registration
+|--------------------------------------------------------------------------
+*/
+const registerPatientMobile = async (req, res) => {
+  try {
+    const serviceResponse =
+      await selfRegisterPatient(
+        req.body
+      );
+
+    return res.status(201).json({
+      success: true,
+
+      message:
+        "Patient registered successfully",
+
+      data: serviceResponse,
+    });
+  } catch (error) {
+    console.error(
+      "PATIENT REGISTRATION ERROR:",
+      error
+    );
+
+    return res.status(400).json({
+      success: false,
+
+      message:
+        error.message ||
+        "Patient registration failed",
+    });
+  }
+};
+//Get my profile 
+const getProfile =
+async (
+  req,
+  res
+) => {
+
+  try {
+
+    const patient =
+      await getMyProfile(
+        req.user.patientId
+      );
+
+    return res.status(200).json({
+      success: true,
+
+      data: patient,
+    });
+
+  } catch (error) {
+
+    return res.status(400).json({
+      success: false,
+
+      message:
+        error.message,
+    });
+  }
+};
+// Update profile in mobile 
+const updateProfile =
+async (
+  req,
+  res
+) => {
+
+  try {
+
+    const patient =
+      await updateMyProfile(
+        req.user.patientId,
+
+        req.body
+      );
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Profile updated successfully",
+
+      data: patient,
+    });
+
+  } catch (error) {
+
+    return res.status(400).json({
+      success: false,
+
+      message:
+        error.message,
+    });
+  }
+};
+
+// PAtient Dashboard
+const getPatientDashboard =
+async (
+  req,
+  res
+) => {
+
+  try {
+
+    const dashboard =
+      await getPatientDashboardService(
+        req.user.patientId
+      );
+
+    return res.status(200).json({
+
+      success: true,
+
+      data:
+        dashboard,
+    });
+
+  } catch (error) {
+
+    return res.status(400).json({
+
+      success: false,
+
+      message:
+        error.message,
+    });
+  }
+};
 
 module.exports = {
   createPatient,
   getPatients,
   getPatientById,
   updatePatient,
+  registerPatientMobile,
+  getProfile,
+  updateProfile,
+  getPatientDashboard,
+
 };

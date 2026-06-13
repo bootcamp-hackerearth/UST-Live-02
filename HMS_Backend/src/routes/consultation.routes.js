@@ -1,72 +1,63 @@
 const express = require("express");
+const router = express.Router();
+const {
+  createConsultation,
+  getConsultationByAppointment,
+  updateConsultation,
+  getConsultations,
+  downloadPrescriptionPdf,
+  getConsultationById,
+} = require("../controllers/consultation.controller");
 
 const authMiddleware = require("../middleware/auth.middleware");
-const validateMiddleware = require("../middleware/validate.middleware");
+const roleMiddleware = require("../middleware/role.middleware");
 
-const {
-  loginValidation,
-  createPasswordValidation,
-  forgotPasswordValidation,
-  resetPasswordValidation,
-  registerValidation,
-} = require("../validations/auth.validation");
-
-const {
-  login,
-  createPassword,
-  getCurrentUser,
-  forgotPassword,
-  resetPassword,
-  register,
-} = require("../controllers/auth.controller");
-
-const router = express.Router();
-
-// Login user
+//CREATE CONSULTATION
 router.post(
-  "/login",
-  loginValidation,
-  validateMiddleware,
-  login
-);
-
-// Create password for first login
-router.post(
-  "/create-password",
-  createPasswordValidation,
-  validateMiddleware,
-  createPassword
-);
-
-// Get current user profile
-router.get(
-  "/me",
+  "/",
   authMiddleware,
-  getCurrentUser
+  roleMiddleware("DOCTOR"),
+  createConsultation,
 );
 
-// Register a new employee
-router.post(
-  "/register",
-  registerValidation,
-  validateMiddleware,
-  register
+//Get All Consultations
+
+router.get(
+  "/",
+  authMiddleware,
+  getConsultations,
 );
 
-// Get security question for password reset
-router.post(
-  "/forgot-password",
-  forgotPasswordValidation,
-  validateMiddleware,
-  forgotPassword
+//Download Prescription PDF
+
+router.get(
+  "/pdf/:consultationId",
+  authMiddleware,
+  downloadPrescriptionPdf,
 );
 
-// Reset password
-router.post(
-  "/reset-password",
-  resetPasswordValidation,
-  validateMiddleware,
-  resetPassword
+//Get Consultation By Appointment
+
+router.get(
+  "/appointment/:appointmentId",
+  authMiddleware,
+  getConsultationByAppointment,
 );
+
+//Update Consultation
+
+router.put(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("DOCTOR"),
+  updateConsultation,
+);
+
+router.get(
+  "/prescription/:consultationId",
+  downloadPrescriptionPdf,
+);
+
+router.get("/:id", getConsultationById);
 
 module.exports = router;

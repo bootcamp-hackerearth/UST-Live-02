@@ -40,20 +40,27 @@ const appointmentSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        STATUS.BOOKED,
-        STATUS.CANCELLED,
-        STATUS.COMPLETED,
-        STATUS.IN_CONSULTATION,
-        STATUS.NO_SHOW,
-      ],
+  STATUS.PENDING,
+  STATUS.BOOKED,
+  STATUS.REJECTED,
+  STATUS.CANCELLED,
+  STATUS.COMPLETED,
+  STATUS.IN_CONSULTATION,
+  STATUS.NO_SHOW,
+],
       default: STATUS.BOOKED,
     },
 
     createdByEmployeeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
-      required: true,
+      default: null,
     },
+    createdByPatientId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Patient",
+  default: null,
+},
 
     // Type of appointment
     appointmentType: {

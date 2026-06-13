@@ -21,13 +21,11 @@ const patientSchema = new mongoose.Schema(
 
     dateOfBirth: {
       type: Date,
-      required: true,
     },
 
     gender: {
       type: String,
       enum: ["MALE", "FEMALE", "OTHER"],
-      required: true,
     },
 
     bloodGroup: {

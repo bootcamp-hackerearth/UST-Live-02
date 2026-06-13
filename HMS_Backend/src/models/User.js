@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    
 
     passwordHash: {
       type: String,
@@ -33,6 +34,11 @@ const userSchema = new mongoose.Schema(
       ref: "Employee",
       default: null,
     },
+    patientId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Patient",
+  default: null,
+},
 
     // Tracks whether the user has completed first-time login setup
     isFirstLogin: {
@@ -50,6 +56,11 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    //refresh tokens 
+    refreshToken: {
+  type: String,
+  default: null,
+},
 
     // Password recovery question
     securityQuestion: {

@@ -1,207 +1,245 @@
 <div class="consultation-details-page">
+
   @if(isLoading){
 
-  <div class="loading-card">Loading Consultation...</div>
+  <div class="loading-card">
+    Loading Consultation...
+  </div>
 
   } @else {
 
   <!-- Header -->
 
-  <div class="details-header glass-card">
+  <div class="details-header glass-card no-print">
     <div>
       <p class="page-label">Consultation Details</p>
 
       <h1>Prescription & Medical Summary</h1>
 
-      <p class="page-subtitle">View diagnosis, medicines and consultation notes.</p>
+      <p class="page-subtitle">
+        View diagnosis, medicines and consultation notes.
+      </p>
     </div>
-
-    <!-- Actions -->
 
     <div class="header-actions">
-      <button class="print-btn" (click)="printPage()">🖨 Print</button>
+      <button
+        class="print-btn"
+        (click)="printPage()"
+      >
+        🖨 Print
+      </button>
 
-      <button class="pdf-btn" (click)="downloadPdf()">⬇ Download PDF</button>
+      <button
+        class="pdf-btn"
+        (click)="downloadPdf()"
+      >
+        ⬇ Download PDF
+      </button>
     </div>
   </div>
 
-  <!-- Main Card -->
+  <!-- PRINT SECTION START -->
 
-  <div class="consultation-card glass-card">
-    <!-- Top Info -->
+  <div id="print-section">
 
-    <div class="top-grid">
-      <!-- Patient -->
+    <div class="consultation-card glass-card">
 
-      <div class="info-box">
-        <h3>Patient Details</h3>
+      <!-- YAHAN SE TERA EXISTING CONTENT SAME RAHEGA -->
 
-        <p>
-          <strong>Name:</strong>
+      <!-- Top Info -->
 
-          {{ consultation ?.patientId ?.firstName }} {{ consultation ?.patientId ?.lastName }}
-        </p>
+      <div class="top-grid">
 
-        <p>
-          <strong>Gender:</strong>
+        <!-- Patient -->
 
-          {{ consultation ?.patientId ?.gender }}
-        </p>
+        <div class="info-box">
+          <h3>Patient Details</h3>
 
-        <p>
-          <strong>Blood Group:</strong>
+          <p>
+            <strong>Name:</strong>
+            {{ consultation?.patientId?.firstName }}
+            {{ consultation?.patientId?.lastName }}
+          </p>
 
-          {{ consultation ?.patientId ?.bloodGroup || 'N/A' }}
-        </p>
+          <p>
+            <strong>Gender:</strong>
+            {{ consultation?.patientId?.gender }}
+          </p>
 
-        <p>
-          <strong>Phone:</strong>
+          <p>
+            <strong>Blood Group:</strong>
+            {{ consultation?.patientId?.bloodGroup || 'N/A' }}
+          </p>
 
-          {{ consultation ?.patientId ?.countryCode }} {{ consultation ?.patientId ?.phone }}
-        </p>
-      </div>
-
-      <!-- Doctor -->
-
-      <div class="info-box">
-        <h3>Doctor Details</h3>
-
-        <p>
-          <strong>Doctor:</strong>
-
-          Dr. {{ consultation ?.doctorEmployeeId ?.name }}
-        </p>
-
-        <p>
-          <strong>Department:</strong>
-
-          {{ consultation ?.doctorEmployeeId ?.department }}
-        </p>
-
-        <p>
-          <strong>Specialization:</strong>
-
-          {{ consultation ?.doctorEmployeeId ?.specialization || 'General' }}
-        </p>
-
-        <p>
-          <strong>Consultation Date:</strong>
-
-          {{ consultation ?.createdAt | date : 'medium' }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Symptoms -->
-
-    <div class="section-box">
-      <h2>Symptoms</h2>
-
-      <p>{{ consultation ?.symptoms || 'No symptoms added' }}</p>
-    </div>
-
-    <!-- Diagnosis -->
-
-    <div class="section-box">
-      <h2>Diagnosis</h2>
-
-      <p>{{ consultation ?.diagnosis || 'No diagnosis added' }}</p>
-    </div>
-
-    <!-- Vitals -->
-
-    <div class="section-box">
-      <h2>Vitals</h2>
-
-      <div class="vitals-grid">
-        <div class="vital-card">
-          <span>Blood Pressure</span>
-
-          <h3>{{ consultation ?.vitals ?.bloodPressure || 'N/A' }}</h3>
+          <p>
+            <strong>Phone:</strong>
+            {{ consultation?.patientId?.countryCode }}
+            {{ consultation?.patientId?.phone }}
+          </p>
         </div>
 
-        <div class="vital-card">
-          <span>Temperature</span>
+        <!-- Doctor -->
 
-          <h3>{{ consultation ?.vitals ?.temperature || 'N/A' }}</h3>
+        <div class="info-box">
+          <h3>Doctor Details</h3>
+
+          <p>
+            <strong>Doctor:</strong>
+            Dr. {{ consultation?.doctorEmployeeId?.name }}
+          </p>
+
+          <p>
+            <strong>Department:</strong>
+            {{ consultation?.doctorEmployeeId?.department }}
+          </p>
+
+          <p>
+            <strong>Specialization:</strong>
+            {{ consultation?.doctorEmployeeId?.specialization || 'General' }}
+          </p>
+
+          <p>
+            <strong>Consultation Date:</strong>
+            {{ consultation?.createdAt | date:'medium' }}
+          </p>
         </div>
 
-        <div class="vital-card">
-          <span>Heart Rate</span>
+      </div>
 
-          <h3>{{ consultation ?.vitals ?.pulseRate || 'N/A' }}</h3>
+      <!-- Symptoms -->
+
+      <div class="section-box">
+        <h2>Symptoms</h2>
+
+        <p>
+          {{ consultation?.symptoms || 'No symptoms added' }}
+        </p>
+      </div>
+
+      <!-- Diagnosis -->
+
+      <div class="section-box">
+        <h2>Diagnosis</h2>
+
+        <p>
+          {{ consultation?.diagnosis || 'No diagnosis added' }}
+        </p>
+      </div>
+
+      <!-- Vitals -->
+
+      <div class="section-box">
+        <h2>Vitals</h2>
+
+        <div class="vitals-grid">
+
+          <div class="vital-card">
+            <span>Blood Pressure</span>
+            <h3>
+              {{ consultation?.vitals?.bloodPressure || 'N/A' }}
+            </h3>
+          </div>
+
+          <div class="vital-card">
+            <span>Temperature</span>
+            <h3>
+              {{ consultation?.vitals?.temperature || 'N/A' }}
+            </h3>
+          </div>
+
+          <div class="vital-card">
+            <span>Heart Rate</span>
+            <h3>
+              {{ consultation?.vitals?.pulseRate || 'N/A' }}
+            </h3>
+          </div>
+
+          <div class="vital-card">
+            <span>Weight</span>
+            <h3>
+              {{ consultation?.vitals?.weight || 'N/A' }}
+            </h3>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Prescriptions -->
+
+      <div class="section-box">
+        <h2>Prescriptions</h2>
+
+        <div class="table-wrapper">
+
+          <table class="medicine-table">
+
+            <thead>
+              <tr>
+                <th>Medicine</th>
+                <th>Dosage</th>
+                <th>Frequency</th>
+                <th>Duration</th>
+                <th>Instructions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              @for(medicine of consultation?.prescriptions; track $index){
+
+              <tr>
+                <td>{{ medicine?.medicineName }}</td>
+                <td>{{ medicine?.dosage }}</td>
+                <td>{{ medicine?.frequency }}</td>
+                <td>{{ medicine?.duration }}</td>
+                <td>{{ medicine?.instructions || 'N/A' }}</td>
+              </tr>
+
+              }
+
+            </tbody>
+
+          </table>
+
+        </div>
+      </div>
+
+      <!-- Doctor Notes -->
+
+      <div class="section-box">
+        <h2>Doctor Notes</h2>
+
+        <p>
+          {{ consultation?.doctorNotes || 'No notes added' }}
+        </p>
+      </div>
+
+      <!-- Signature -->
+
+      <div class="prescription-footer">
+
+        <div class="signature-section">
+
+          <div class="signature-line"></div>
+
+          <p>
+            Dr. {{ consultation?.doctorEmployeeId?.name }}
+          </p>
+
+          <span>
+            Authorized Signature
+          </span>
+
         </div>
 
-        <div class="vital-card">
-          <span>Weight</span>
-
-          <h3>{{ consultation ?.vitals ?.weight || 'N/A' }}</h3>
-        </div>
       </div>
+
     </div>
 
-    <!-- Prescriptions -->
-
-    <div class="section-box">
-      <h2>Prescriptions</h2>
-
-      <div class="table-wrapper">
-        <table class="medicine-table">
-          <thead>
-            <tr>
-              <th>Medicine</th>
-
-              <th>Dosage</th>
-
-              <th>Frequency</th>
-
-              <th>Duration</th>
-
-              <th>Instructions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            @for( medicine of consultation?.prescriptions; track $index ){
-
-            <tr>
-              <td>{{ medicine ?.medicineName }}</td>
-
-              <td>{{ medicine ?.dosage }}</td>
-
-              <td>{{ medicine ?.frequency }}</td>
-
-              <td>{{ medicine ?.duration }}</td>
-
-              <td>{{ medicine ?.instructions || 'N/A' }}</td>
-            </tr>
-
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Doctor Notes -->
-
-    <div class="section-box">
-      <h2>Doctor Notes</h2>
-
-      <p>{{ consultation ?.doctorNotes || 'No notes added' }}</p>
-    </div>
-
-    <!-- Prescription Footer -->
-
-    <div class="prescription-footer">
-      <div class="signature-section">
-        <div class="signature-line"></div>
-
-        <p>Dr. {{ consultation ?.doctorEmployeeId ?.name }}</p>
-
-        <span>Authorized Signature</span>
-      </div>
-    </div>
   </div>
+
+  <!-- PRINT SECTION END -->
 
   }
+
 </div>

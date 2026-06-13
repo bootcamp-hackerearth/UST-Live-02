@@ -52,6 +52,7 @@ export class ConsultationDetails implements OnInit {
 
   // Print consultation details
   printPage(): void {
+      document.title = 'Prescription';
     globalThis.print();
   }
 

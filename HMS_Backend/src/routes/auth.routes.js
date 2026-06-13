@@ -18,6 +18,7 @@ const {
   forgotPassword,
   resetPassword,
   register,
+  refreshToken,logout
 } = require("../controllers/auth.controller");
 
 const router = express.Router();
@@ -67,6 +68,15 @@ router.post(
   resetPasswordValidation,
   validateMiddleware,
   resetPassword
+);
+router.post(
+  "/refresh-token",
+  refreshToken
+);
+
+router.post(
+  "/logout",
+  logout
 );
 
 module.exports = router;

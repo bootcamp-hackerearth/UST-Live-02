@@ -1,7 +1,16 @@
 const Patient = require("../../models/Patient");
 
 const generatePatientId = require("../../utils/generatePatientId");
+const bcrypt = require("bcryptjs");
 
+const User = require("../../models/User");
+
+const ROLES = require("../../constants/roles");
+
+const STATUS = require("../../constants/status");
+const sendEmail =require("../../utils/sendEmail");
+const patientCreatedTemplate = require("../../templates/patient-created.template");
+const generateTemporaryPassword = require("../../utils/generateTemporaryPassword");
 const registerPatient = async (patientData) => {
   const {
     // Basic information
@@ -48,6 +57,24 @@ const registerPatient = async (patientData) => {
 
   // Generate unique patient ID
   const patientId = await generatePatientId();
+  if (
+  dateOfBirth &&
+  new Date(dateOfBirth) > new Date()
+) {
+
+  throw new Error(
+    "Date of Birth cannot be in the future"
+  );
+}
+
+  // check duplicate 
+  const existingUser = await User.findOne({
+  email: email.toLowerCase(),
+});
+
+if (existingUser) {
+  throw new Error("User with this email already exists");
+}
 
   // Create patient record
   const patient = await Patient.create({
@@ -88,6 +115,52 @@ const registerPatient = async (patientData) => {
     department,
     patientType,
   });
+
+const temporaryPassword =
+  generateTemporaryPassword();
+  const temporaryPasswordHash =
+  await bcrypt.hash(
+    temporaryPassword,
+    10,
+  );
+  
+  await User.create({
+  email: email.toLowerCase(),
+
+  temporaryPasswordHash,
+
+  patientId: patient._id,
+
+  roles: [ROLES.PATIENT],
+
+  isFirstLogin: true,
+
+  status: STATUS.ACTIVE,
+});
+if (patient.email) {
+
+  const htmlContent =
+    patientCreatedTemplate({
+
+      patientName:
+        `${patient.firstName} ${patient.lastName}`,
+
+      email:
+        patient.email,
+
+      temporaryPassword,
+    });
+
+  await sendEmail({
+
+    to: patient.email,
+
+    subject:
+      "Your HMS Account Credentials",
+
+    htmlContent,
+  });
+}
 
   return {
     message: "Patient registered successfully",

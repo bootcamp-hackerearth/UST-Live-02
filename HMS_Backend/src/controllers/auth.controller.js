@@ -4,6 +4,7 @@ const createEmployeePassword = require("../services/auth/create-password.service
 const registerEmployeeSelf = require("../services/auth/registerEmployeeSelf.service");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const login = async (req, res) => {
   try {
@@ -214,6 +215,100 @@ const resetPassword = async (req, res) => {
     });
   }
 };
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token is required",
+      });
+    }
+
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+
+    if (user.refreshToken !== refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+
+    const accessToken = jwt.sign(
+      {
+        userId: user._id,
+        employeeId: user.employeeId,
+        roles: user.roles,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "15m",
+      }
+    );
+
+    return res.status(200).json({
+  success: true,
+  message: "Access token refreshed successfully",
+  data: {
+    accessToken
+  }
+});
+  } catch (error) {
+    console.error("REFRESH TOKEN ERROR:", error);
+
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token expired or invalid",
+    });
+  }
+};
+const logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+      });
+    }
+
+    const user = await User.findOne({
+      refreshToken,
+    });
+
+    if (user) {
+      user.refreshToken = null;
+
+      await user.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("LOGOUT ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Logout failed",
+    });
+  }
+};
 
 module.exports = {
   login,
@@ -222,4 +317,6 @@ module.exports = {
   register,
   forgotPassword,
   resetPassword,
+  refreshToken,
+  logout
 };
