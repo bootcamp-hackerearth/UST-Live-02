@@ -11,7 +11,7 @@ const sendEmail = async (to, subject, html) => {
 
         const response = await axios.post(
             // "https://expert-tribble-6j95g54v9jvfxvg7-8080.app.github.dev/mail",
-            "https://laughing-fishstick-4q7j596xj49xh57rv-8080.app.github.dev/mail",
+            "https://mail-service-neon.vercel.app/mail",
             {
                 to,
                 subject,
@@ -32,3 +32,4 @@ const sendEmail = async (to, subject, html) => {
 };
 
 module.exports = sendEmail;
+ 

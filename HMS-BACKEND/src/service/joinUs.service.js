@@ -131,6 +131,7 @@ exports.getPendingJoinUsRequests = async () => {
 
     return requests;
 };
+
 exports.checkJoinUsEmail = async (email) => {
     const existingUser = await User.findOne({ email });
 
@@ -142,10 +143,16 @@ exports.checkJoinUsEmail = async (email) => {
 
     if (existingRequest) {
         if (!existingRequest.isVerified) {
-            throw new ApiError(409, 'Join request already exists but email is not verified. Please verify your email.');
+            return {
+                canContinue: false,
+                message: 'Join request already exists but email is not verified. Please verify your email.'
+            };
         }
 
-        throw new ApiError(409, 'Join request already exists with this email.');
+        return {
+            canContinue: false,
+            message: 'Join request already exists with this email.'
+        };
     }
 
     return {

@@ -188,7 +188,7 @@ getMaxDate(): string {
 
   openAddEmployeeModal() {
     this.isEditMode = false;
-    this.selectedEmployee = null;
+    this.selectedEmployee = null
 
     this.employeeForm.reset();
 

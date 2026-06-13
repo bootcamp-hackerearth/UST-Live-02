@@ -29,10 +29,12 @@ export class Profile implements OnInit {
   getProfile() {
     this.authService.getProfile().subscribe({
       next: (res) => {
+        console.log('Profile response:', res);
         this.profile = res.data;
         this.cd.detectChanges();
       },
       error: (err) => {
+        console.log('Profile fetch error:', err);
         this.errorMessage = err.error?.message || 'Failed to load profile';
       }
     });

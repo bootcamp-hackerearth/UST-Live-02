@@ -70,4 +70,19 @@ const validatePatientId = [
     param("id").isMongoId().withMessage("Invalid Patient ID")
 ];
 
-module.exports = { validateCreatePatient, validateUpdatePatient, validatePatientId };
+
+const validateRegisterPatient = [
+    body("email")
+        .trim()
+        .notEmpty().withMessage("Email is required")
+        .isEmail().withMessage("Enter a valid email address")
+        .normalizeEmail(),
+
+    body("password")
+        .notEmpty().withMessage("Password is required")
+        .isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
+
+    ...patientFields(false),
+];
+
+module.exports = { validateCreatePatient, validateUpdatePatient, validatePatientId , validateRegisterPatient};
