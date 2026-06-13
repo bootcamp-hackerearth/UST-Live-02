@@ -66,7 +66,7 @@ export class BookAppointment implements OnInit {
 
   ngOnInit(): void {
     // Prevent selecting previous dates
-    this.minDate = new Date().toISOString().split('T')[0];
+    this.minDate = new Date().toISOString().split('T')[0];//universal date-time format
 
     // Load initial data
     this.loadPatients();
@@ -123,7 +123,7 @@ export class BookAppointment implements OnInit {
       (doctor) => doctor.department === department
     );
 
-    // Reset doctor and slot selection
+    // Default doctor and slot selection
     this.appointmentForm.get('doctorId')?.setValue('');
     this.availableSlots = [];
     this.noSlotsError = false;

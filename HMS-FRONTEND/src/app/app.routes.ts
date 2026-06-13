@@ -52,251 +52,201 @@ import { Home } from './features/floater/home/home';
 
 export const routes: Routes = [
   /*
-    |--------------------------------------------------------------------------
-    | Home Route
-    |--------------------------------------------------------------------------
-    */
+  |--------------------------------------------------------------------------
+  | Home Route
+  |--------------------------------------------------------------------------
+  */
   {
     path: '',
-
     component: Home
   },
 
   /*
-    |--------------------------------------------------------------------------
-    | Auth Routes
-    |--------------------------------------------------------------------------
-    */
+  |--------------------------------------------------------------------------
+  | Auth Routes
+  |--------------------------------------------------------------------------
+  */
   {
     path: '',
-
     component: AuthLayout,
-
     children: [
-      {
-        path: 'login',
-
-        component: Login
-      },
-
-      {
-        path: 'register',
-
-        component: Register
-      },
-
-      {
-        path: 'create-password',
-
-        component: CreatePassword
-      },
-      {
-        path: 'forgot-password',
-
-        component: ForgotPassword
-      },
-
-      {
-        path: 'reset-password',
-
-        component: ResetPassword
-      }
+      { path: 'login', component: Login },
+      { path: 'register', component: Register },
+      { path: 'create-password', component: CreatePassword },
+      { path: 'forgot-password', component: ForgotPassword },
+      { path: 'reset-password', component: ResetPassword }
     ]
   },
 
   /*
-    |--------------------------------------------------------------------------
-    | Protected Dashboard Routes
-    |--------------------------------------------------------------------------
-    */
+  |--------------------------------------------------------------------------
+  | Protected Dashboard Routes
+  |--------------------------------------------------------------------------
+  */
   {
     path: '',
-
     component: DashboardLayout,
-
     canActivate: [authGuard],
-
     children: [
-      /*
-        |--------------------------------------------------------------------------
-        | Default Redirect
-        |--------------------------------------------------------------------------
-        */
       {
         path: '',
-
         redirectTo: 'dashboard',
-
         pathMatch: 'full'
       },
 
       /*
-  |--------------------------------------------------------------------------
-  | Admin Dashboard
-  |--------------------------------------------------------------------------
-  */
+      |--------------------------------------------------------------------------
+      | Dashboards
+      |--------------------------------------------------------------------------
+      */
       {
         path: 'dashboard/admin',
-
         component: AdminDashboard,
         canActivate: [adminGuard]
       },
-
-      /*
-        |--------------------------------------------------------------------------
-        | Doctor Dashboard
-        |--------------------------------------------------------------------------
-        */
       {
         path: 'dashboard/doctor',
-
         component: DoctorDashboard,
         canActivate: [doctorGuard]
       },
-
-      /*
-        |--------------------------------------------------------------------------
-        | Receptionist Dashboard
-        |--------------------------------------------------------------------------
-        */
       {
         path: 'dashboard/receptionist',
-
         component: ReceptionistDashboard,
         canActivate: [receptionistGuard]
       },
 
       /*
-        |--------------------------------------------------------------------------
-        | Employees
-        |--------------------------------------------------------------------------
-        */
+      |--------------------------------------------------------------------------
+      | Employees
+      |--------------------------------------------------------------------------
+      */
       {
         path: 'employees',
-
         component: EmployeeList,
-
         canActivate: [adminGuard]
       },
-
       {
         path: 'employees/create',
-
         component: AddEmployee,
-
         canActivate: [adminGuard]
       },
-
       {
         path: 'employees/pending',
-
         component: PendingEmployees,
-
         canActivate: [adminGuard]
       },
-
       {
         path: 'employees/:id',
-
         component: EmployeeDetails,
-
         canActivate: [adminGuard]
       },
-
       {
         path: 'employees/edit/:id',
-
         component: EditEmployee,
-
         canActivate: [adminGuard]
       },
 
       /*
-        |--------------------------------------------------------------------------
-        | Patients
-        |--------------------------------------------------------------------------
-        */
+      |--------------------------------------------------------------------------
+      | Patients
+      |--------------------------------------------------------------------------
+      */
       {
         path: 'patients/create',
-
         component: AddPatient
       },
       {
         path: 'patients',
-
         component: PatientList
       },
       {
         path: 'patients/edit/:id',
-
         component: EditPatient,
-
         canActivate: [roleGuard(['ADMIN', 'RECEPTIONIST'])]
       },
       {
         path: 'patients/:id',
-
         component: PatientDetails
       },
+
+      /*
+      |--------------------------------------------------------------------------
+      | Appointments
+      |--------------------------------------------------------------------------
+      */
       {
         path: 'appointments/book',
-
         component: BookAppointment
       },
       {
         path: 'appointments',
-
         component: AppointmentList
       },
       {
-        path: 'appointments/edit/:id',
-
-        component: EditAppointment
+        path: 'appointments/pending',                          // ✅ NEW ROUTE
+        loadComponent: () =>
+          import('./features/appointments/pending-appointments/pending-appointments')
+            .then(m => m.PendingAppointmentsComponent),
+        canActivate: [roleGuard(['ADMIN', 'RECEPTIONIST'])]   // ✅ correct guards
       },
       {
-        path: 'doctor-queue',
+        path: 'appointments/edit/:id',
+        component: EditAppointment
+      },
 
+      /*
+      |--------------------------------------------------------------------------
+      | Doctor
+      |--------------------------------------------------------------------------
+      */
+      {
+        path: 'doctor-queue',
         component: DoctorQueue
       },
       {
-        path: 'consultation/:appointmentId',
+        path: 'doctor-availability',
+        component: DoctorAvailability
+      },
 
+      /*
+      |--------------------------------------------------------------------------
+      | Consultations
+      |--------------------------------------------------------------------------
+      */
+      {
+        path: 'consultation/:appointmentId',
         component: ConsultationForm
       },
       {
         path: 'consultations',
-
         component: ConsultationList
       },
       {
-        path: 'doctor-availability',
-
-        component: DoctorAvailability
+        path: 'consultations/:id',
+        loadComponent: () =>
+          import('./features/consultations/consultation-details/consultation-details')
+            .then(m => m.ConsultationDetails)
       },
+
+      /*
+      |--------------------------------------------------------------------------
+      | Profile
+      |--------------------------------------------------------------------------
+      */
       {
         path: 'my-profile',
-
         component: MyProfile
-      },
-      {
-        path: 'consultations/:id',
-
-        loadComponent: () =>
-          import('./features/consultations/consultation-details/consultation-details').then(
-            (m) => m.ConsultationDetails
-          )
       }
     ]
   },
 
   /*
-    |--------------------------------------------------------------------------
-    | Wildcard Route
-    |--------------------------------------------------------------------------
-    */
+  |--------------------------------------------------------------------------
+  | Wildcard Route
+  |--------------------------------------------------------------------------
+  */
   {
     path: '**',
-
     redirectTo: 'login'
   }
 ];

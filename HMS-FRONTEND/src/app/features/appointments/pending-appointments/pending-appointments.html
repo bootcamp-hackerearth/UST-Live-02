@@ -1,0 +1,59 @@
+<div class="pending-container">
+  <div class="page-header">
+    <h2>Pending Appointments</h2>
+    <span class="badge" *ngIf="!isLoading">{{ appointments.length }} Pending</span>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading pending appointments...</p>
+  </div>
+
+  <!-- Empty -->
+  <div class="empty-state" *ngIf="!isLoading && appointments.length === 0">
+    <span class="empty-icon">📋</span>
+    <p>No pending appointments</p>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper" *ngIf="!isLoading && appointments.length > 0">
+    <table class="appointments-table">
+      <thead>
+        <tr>
+          <th>Appointment ID</th>
+          <th>Patient</th>
+          <th>Doctor</th>
+          <th>Date</th>
+          <th>Time Slot</th>
+          <th>Reason</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let appt of appointments">
+          <td class="appt-id">{{ appt.appointmentId }}</td>
+          <td>{{ getPatientName(appt) }}</td>
+          <td>{{ getDoctorName(appt) }}</td>
+          <td>{{ appt.appointmentDate | date: 'dd MMM yyyy' }}</td>
+          <td>{{ appt.timeSlot }}</td>
+          <td>{{ appt.reason || '—' }}</td>
+          <td class="action-cell">
+            <button
+              class="btn-approve"
+              (click)="approve(appt._id)"
+              [disabled]="actionLoadingId === appt._id">
+              {{ actionLoadingId === appt._id ? '...' : 'Approve' }}
+            </button>
+            <button
+              class="btn-reject"
+              (click)="reject(appt._id)"
+              [disabled]="actionLoadingId === appt._id">
+              {{ actionLoadingId === appt._id ? '...' : 'Reject' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

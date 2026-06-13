@@ -50,6 +50,19 @@ export class AppointmentService {
   ): Observable<any> {
     return this.http.put(`${this.apiUrl}/${id}`, appointmentData);
   }
+  
+ //http://localhost:5000/api/appointments/pending
+getPendingAppointments(): Observable<any> {
+  return this.http.get(`${this.apiUrl}/pending`);
+}
+
+approveAppointment(id: string): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/${id}/approve`, {});
+}
+
+rejectAppointment(id: string): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/${id}/reject`, {});
+}
 
   // Get today's queue for a doctor
   getDoctorQueue(doctorEmployeeId: string): Observable<any> {

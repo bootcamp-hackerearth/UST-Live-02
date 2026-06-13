@@ -1,63 +1,46 @@
 <div class="sidebar">
   <!-- Logo -->
-
   <div class="logo">HMS</div>
 
   <!-- Menu -->
-
   <div class="menu">
+
     <!-- ADMIN -->
-
     <ng-container *ngIf="isAdmin()">
-      <a routerLink="/dashboard">Dashboard</a>
-
-      <a routerLink="/employees">Employees</a>
-
-      <a routerLink="/add-employee">Add Employee</a>
-
-      <a routerLink="/pending-employees">Pending Requests</a>
+      <a routerLink="/dashboard/admin" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/employees" routerLinkActive="active">Employees</a>
+      <a routerLink="/employees/create" routerLinkActive="active">Add Employee</a>
+      <a routerLink="/employees/pending" routerLinkActive="active">Pending Requests</a>
+      <a routerLink="/appointments" routerLinkActive="active">Appointments</a>
+      <a routerLink="/appointments/pending" routerLinkActive="active">Pending Appointments</a>
+      <a routerLink="/patients" routerLinkActive="active">Patients</a>
     </ng-container>
 
     <!-- DOCTOR -->
-
     <ng-container *ngIf="isDoctor()">
-      <a routerLink="/dashboard">Dashboard</a>
-
-      <a routerLink="/appointments">Appointments</a>
-
-      <a routerLink="/patients">Patients</a>
-
-      <a routerLink="/availability">Availability</a>
+      <a routerLink="/dashboard/doctor" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/appointments" routerLinkActive="active">Appointments</a>
+      <a routerLink="/patients" routerLinkActive="active">Patients</a>
+      <a routerLink="/doctor-availability" routerLinkActive="active">Availability</a>
     </ng-container>
 
     <!-- NURSE -->
-
     <ng-container *ngIf="isNurse()">
-      <a routerLink="/dashboard">Dashboard</a>
-
-      <a routerLink="/assigned-patients">Assigned Patients</a>
-
-      <a routerLink="/vitals">Vitals</a>
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/assigned-patients" routerLinkActive="active">Assigned Patients</a>
+      <a routerLink="/vitals" routerLinkActive="active">Vitals</a>
     </ng-container>
 
     <!-- RECEPTIONIST -->
-
-    <ng-container
-      *ngIf="
-        isReceptionist()
-      "
-    >
-      <a routerLink="/dashboard">Dashboard</a>
-
-      <a routerLink="/patients">Patients</a>
-
-      <a routerLink="/appointments">Appointments</a>
-
-      <a routerLink="/billing">Billing</a>
+    <ng-container *ngIf="isReceptionist()">
+      <a routerLink="/dashboard/receptionist" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/patients" routerLinkActive="active">Patients</a>
+      <a routerLink="/appointments" routerLinkActive="active">Appointments</a>
+      <a routerLink="/appointments/pending" routerLinkActive="active">Pending Appointments</a>
     </ng-container>
+
   </div>
 
   <!-- Logout -->
-
   <button class="logout-btn" (click)="logout()">Logout</button>
 </div>

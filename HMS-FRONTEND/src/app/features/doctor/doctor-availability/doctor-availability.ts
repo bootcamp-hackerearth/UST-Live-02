@@ -83,11 +83,11 @@ export class DoctorAvailability implements OnInit {
   toggleDay(day: string): void {
     const currentDays = this.availabilityForm.value.workingDays;
 
-    const exists = currentDays.includes(day);
+    const exists = currentDays.includes(day);//check if clicked day exists
 
     if (exists) {
       this.availabilityForm.patchValue({
-        workingDays: currentDays.filter((d: string) => d !== day)
+        workingDays: currentDays.filter((d: string) => d !== day)//remove that day
       });
 
       return;

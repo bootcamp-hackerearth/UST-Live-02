@@ -173,14 +173,15 @@ export class AddPatient {
       error: (error) => {
         console.log('FULL ERROR =>', error);
         console.log('VALIDATION ERRORS =>', error?.error?.errors);
-
-        alert(
-          JSON.stringify(
-            error?.error?.errors,
-            null,
-            2
-          )
-        );
+         const message = error?.error?.message || 'Failed to register patient';
+  alert(message);
+        // alert(
+        //   JSON.stringify(
+        //     error?.error?.errors,
+        //     null,
+        //     2
+        //   )
+        // );
 
         this.isSubmitting = false;
       }
