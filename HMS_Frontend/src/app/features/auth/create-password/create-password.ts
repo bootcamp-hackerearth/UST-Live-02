@@ -71,7 +71,7 @@ export class CreatePassword {
       next: (response) => {
         console.log(response);
 
-        this.tokenService.removeToken();
+        this.tokenService.removeTokens();
         this.router.navigate(['/login']);
       },
 

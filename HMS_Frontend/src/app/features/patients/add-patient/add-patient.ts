@@ -15,7 +15,10 @@ import { PatientService } from '../../../core/services/patient';
 export class AddPatient {
   currentStep = 1;
   isSubmitting = false;
-
+today =
+  new Date()
+    .toISOString()
+    .split("T")[0];
   patientForm!: FormGroup;
 
   constructor(
@@ -27,7 +30,7 @@ export class AddPatient {
       // Basic Information
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
-      dateOfBirth: ['', Validators.required],
+      dateOfBirth: [ '', [Validators.required,this.futureDateValidator ]],
       gender: ['', Validators.required],
       bloodGroup: ['', Validators.required],
       maritalStatus: ['', Validators.required],
@@ -65,6 +68,24 @@ export class AddPatient {
       patientType: ['', Validators.required]
     });
   }
+  futureDateValidator = (
+  control: any
+) => {
+
+  if (!control.value) {
+    return null;
+  }
+
+  return new Date(
+    control.value
+  ) > new Date()
+
+    ? {
+        futureDate: true,
+      }
+
+    : null;
+};
 
   // Move to next step after validating current step
   nextStep(): void {

@@ -101,7 +101,29 @@ button {
 .book-btn:hover {
   transform: translateY(-3px);
 }
+.request-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px;
+  border-radius: 18px;
+ background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 15px 35px rgba(245, 158, 11, 0.25);
+}
 
+.request-btn:hover {
+  transform: translateY(-3px);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
 .filters-wrapper {
   display: flex;
   justify-content: space-between;

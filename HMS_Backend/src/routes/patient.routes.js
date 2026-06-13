@@ -7,6 +7,10 @@ const {
   getPatients,
   getPatientById,
   updatePatient,
+  registerPatientMobile,
+  getProfile,
+updateProfile,
+getPatientDashboard
 } = require("../controllers/patient.controller");
 
 const authMiddleware = require("../middleware/auth.middleware");
@@ -17,7 +21,11 @@ const {
   createPatientValidation,
   updatePatientValidation,
 } = require("../validations/patient.validation");
-
+const {
+  registerPatientMobileValidation,
+} = require(
+  "../validations/register-patient-mobile.validation"
+);
 // Register a new patient
 router.post(
   "/",
@@ -34,7 +42,30 @@ router.get(
   authMiddleware,
   getPatients
 );
+// get profile 
+router.get(
+  "/profile",
+  authMiddleware,
+  roleMiddleware("PATIENT"),
+  getProfile
+);
 
+// update profile 
+router.put(
+  "/profile",
+  authMiddleware,
+  roleMiddleware("PATIENT"),
+  updatePatientValidation,
+  updateProfile
+);
+
+// Patient dashboard
+router.get(
+  "/dashboard",
+authMiddleware,
+roleMiddleware( "PATIENT"),
+  getPatientDashboard
+);
 // Get patient details by ID
 router.get(
   "/:id",
@@ -51,5 +82,14 @@ router.put(
   validateMiddleware,
   updatePatient
 );
+// Mobile register
+router.post(
+  "/register",
+  registerPatientMobileValidation,
+  validateMiddleware,
+  registerPatientMobile
+);
+
+
 
 module.exports = router;

@@ -59,4 +59,30 @@ export class AppointmentService {
       }
     });
   }
+  // Get pending appointments
+getPendingAppointments(): Observable<any> {
+  return this.http.get(
+    `${this.apiUrl}/pending`
+  );
+}
+
+// Approve appointment
+approveAppointment(
+  id: string
+): Observable<any> {
+  return this.http.patch(
+    `${this.apiUrl}/${id}/approve`,
+    {}
+  );
+}
+
+// Reject appointment
+rejectAppointment(
+  id: string
+): Observable<any> {
+  return this.http.patch(
+    `${this.apiUrl}/${id}/reject`,
+    {}
+  );
+}
 }

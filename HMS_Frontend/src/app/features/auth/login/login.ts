@@ -49,16 +49,17 @@ export class Login {
         console.log('API SUCCESS');
         console.log(response);
 
-        const token = response?.data?.token;
+        const accessToken =response?.data?.accessToken;
 
-        console.log('TOKEN:', token);
+const refreshToken =response?.data?.refreshToken;
 
-        if (!token) {
-          console.log('Token missing');
-          return;
-        }
+       this.tokenService.setAccessToken(
+  accessToken
+);
 
-        this.tokenService.setToken(token);
+this.tokenService.setRefreshToken(
+  refreshToken
+);
         this.authService.currentUser.next(response.data.user);
 
         this.toastService.show('Login successful', 'success');

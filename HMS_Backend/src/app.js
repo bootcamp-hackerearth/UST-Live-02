@@ -46,6 +46,7 @@ app.use(
 
   patientRoutes,
 );
+
 app.use(
   "/api/consultations",
 
