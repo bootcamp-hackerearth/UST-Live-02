@@ -1,0 +1,28 @@
+<div class="navbar">
+
+    <div class="navbar-left-section">
+        HMS LOGO
+    </div>
+
+    <div class="navbar-right-section">
+
+        <div class="navbar-profile-wrapper">
+            <div class="navbar-profile-icon" (click)="toggleProfileDropdown()">
+                👤
+            </div>
+
+            @if (showProfileDropdown) {
+            <div class="navbar-profile-dropdown">
+                <button class="dropdown-btn" (click)="viewProfile()">
+                    View Profile
+                </button>
+                <button class="dropdown-btn logout-btn" (click)="logout()">
+                    Logout
+                </button>
+            </div>
+            }
+        </div>
+
+    </div>
+
+</div>

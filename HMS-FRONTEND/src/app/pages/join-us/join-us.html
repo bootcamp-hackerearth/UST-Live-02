@@ -1,0 +1,259 @@
+<div class="join-container">
+
+  <div class="join-card">
+
+    <div class="join-header">
+      <h2>Join Us</h2>
+      <p>Submit your employee request for admin approval</p>
+    </div>
+
+    @if (successMessage) {
+    <p class="success-message">{{ successMessage }}</p>
+    }
+
+    @if (errorMessage) {
+    <p class="error-message">{{ errorMessage }}</p>
+    }
+    @if (!emailChecked) {
+
+    <form class="email-check-form" [formGroup]="emailForm" (ngSubmit)="checkEmail()">
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" formControlName="email" placeholder="Enter your email">
+        @if (emailForm.get('email')?.invalid && emailForm.get('email')?.touched) {
+        @if (emailForm.get('email')?.errors?.['required']) {
+        <small class="error-text">Email is required.</small>
+        }
+        @if (emailForm.get('email')?.errors?.['pattern']) {
+        <small class="error-text">Enter a valid email address.</small>
+        }
+        }
+      </div>
+
+      <button type="submit" class="submit-btn" [disabled]="emailForm.invalid || isCheckingEmail">
+        {{ isCheckingEmail ? 'Checking...' : 'Check Email' }}
+      </button>
+
+    </form>
+
+    }
+    @if (emailChecked) {
+
+    <form [formGroup]="joinUsForm" (ngSubmit)="submitJoinUs()">
+
+      <div class="checked-email-box">
+        <span>Email verified for form:</span>
+        <strong>{{ joinUsForm.get('email')?.value }}</strong>
+        <button type="button" (click)="resetEmailCheck()">Change Email</button>
+      </div>
+
+      <div class="section-title">Basic Details</div>
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="firstName">First Name</label>
+          <input type="text" formControlName="firstName" placeholder="Enter first name">
+          @if (joinUsForm.get('firstName')?.invalid && joinUsForm.get('firstName')?.touched) {
+          @if (joinUsForm.get('firstName')?.errors?.['required']) {
+          <small class="error-text">First name is required.</small>
+          }
+          @if (joinUsForm.get('firstName')?.errors?.['minlength']) {
+          <small class="error-text">First name must be at least 2 characters.</small>
+          }
+          @if (joinUsForm.get('firstName')?.errors?.['pattern']) {
+          <small class="error-text">First name must contain only letters.</small>
+          }
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input type="text" formControlName="lastName" placeholder="Enter last name">
+          @if (joinUsForm.get('lastName')?.invalid && joinUsForm.get('lastName')?.touched) {
+          @if (joinUsForm.get('lastName')?.errors?.['required']) {
+          <small class="error-text">Last name is required.</small>
+          }
+          @if (joinUsForm.get('lastName')?.errors?.['pattern']) {
+          <small class="error-text">Last name must contain only letters.</small>
+          }
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" formControlName="password" placeholder="Create password">
+          @if (joinUsForm.get('password')?.invalid && joinUsForm.get('password')?.touched) {
+          @if (joinUsForm.get('password')?.errors?.['required']) {
+          <small class="error-text">Password is required.</small>
+          }
+          @if (joinUsForm.get('password')?.errors?.['minlength']) {
+          <small class="error-text">Password must be at least 8 characters.</small>
+          }
+          @if (joinUsForm.get('password')?.errors?.['pattern']) {
+          <small class="error-text">Password must contain uppercase, lowercase, number and special character.</small>
+          }
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input type="text" formControlName="phone" placeholder="Enter phone number">
+          @if (joinUsForm.get('phone')?.invalid && joinUsForm.get('phone')?.touched) {
+          @if (joinUsForm.get('phone')?.errors?.['required']) {
+          <small class="error-text">Phone number is required.</small>
+          }
+          @if (joinUsForm.get('phone')?.errors?.['pattern']) {
+          <small class="error-text">Enter a valid 10-digit Indian phone number.</small>
+          }
+          }
+        </div>
+
+      </div>
+
+      <div class="section-title">Employee Details</div>
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="role">Role</label>
+          <select formControlName="role">
+            <option value="">Select role</option>
+            <option value="Doctor">Doctor</option>
+            <option value="Receptionist">Receptionist</option>
+            <option value="Pharmacist">Pharmacist</option>
+            <option value="Lab Technician">Lab Technician</option>
+            <option value="Nurse">Nurse</option>
+          </select>
+          @if (joinUsForm.get('role')?.invalid && joinUsForm.get('role')?.touched) {
+          <small class="error-text">Role is required.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="department">Department</label>
+          <select formControlName="department">
+            <option value="">Select department</option>
+            @for (dept of departments; track dept) {
+            <option [value]="dept">{{ dept }}</option>
+            }
+          </select>
+          @if (joinUsForm.get('department')?.invalid && joinUsForm.get('department')?.touched) {
+          <small class="error-text">Department is required.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="designation">Designation</label>
+          <select formControlName="designation">
+            <option value="">Select designation</option>
+            @for (desig of designations; track desig) {
+            <option [value]="desig">{{ desig }}</option>
+            }
+          </select>
+          @if (joinUsForm.get('designation')?.invalid && joinUsForm.get('designation')?.touched) {
+          <small class="error-text">Designation is required.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="joiningDate">Joining Date</label>
+          <input type="date" formControlName="joiningDate" [min]="getTodayDate()" [max]="getMaxDate()">
+          @if (joinUsForm.get('joiningDate')?.invalid && joinUsForm.get('joiningDate')?.touched) {
+          @if (joinUsForm.get('joiningDate')?.errors?.['required']) {
+          <small class="error-text">Joining date is required.</small>
+          }
+          @if (joinUsForm.get('joiningDate')?.errors?.['dateOutOfRange']) {
+          <small class="error-text">Joining date must be within 2 months before or after today.</small>
+          }
+          }
+        </div>
+      </div>
+
+      @if (joinUsForm.get('role')?.value === 'Doctor') {
+
+      <div class="doctor-section">
+
+        <div class="section-title">Doctor Details</div>
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="specialization">Specialization</label>
+            <input type="text" formControlName="specialization" placeholder="Eg: Cardiology">
+            @if (joinUsForm.get('specialization')?.invalid && joinUsForm.get('specialization')?.touched) {
+            <small class="error-text">Specialization is required.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="qualification">Qualification</label>
+            <input type="text" formControlName="qualification" placeholder="Eg: MBBS MD">
+            @if (joinUsForm.get('qualification')?.invalid && joinUsForm.get('qualification')?.touched) {
+            <small class="error-text">Qualification is required.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="consultationFee">Consultation Fee</label>
+            <input type="number" formControlName="consultationFee" placeholder="Enter consultation fee">
+            @if (joinUsForm.get('consultationFee')?.invalid && joinUsForm.get('consultationFee')?.touched) {
+            <small class="error-text">Consultation fee is required.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="medicalRegistrationNo">Medical Registration No</label>
+            <input type="text" formControlName="medicalRegistrationNo" placeholder="Eg: KL-MED-12345">
+            @if (joinUsForm.get('medicalRegistrationNo')?.invalid && joinUsForm.get('medicalRegistrationNo')?.touched) {
+            <small class="error-text">Medical registration number is required.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="availabilityStartTime">Availability Start Time</label>
+            <input type="text" formControlName="availabilityStartTime" placeholder="Eg: 09:00 AM">
+            @if (joinUsForm.get('availabilityStartTime')?.invalid && joinUsForm.get('availabilityStartTime')?.touched) {
+            <small class="error-text">Availability start time is required.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="availabilityEndTime">Availability End Time</label>
+            <input type="text" formControlName="availabilityEndTime" placeholder="Eg: 04:00 PM">
+            @if (joinUsForm.get('availabilityEndTime')?.invalid && joinUsForm.get('availabilityEndTime')?.touched) {
+            <small class="error-text">Availability end time is required.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="experienceYears">Experience Years</label>
+            <input type="number" formControlName="experienceYears" placeholder="Enter experience years">
+            @if (joinUsForm.get('experienceYears')?.invalid && joinUsForm.get('experienceYears')?.touched) {
+            <small class="error-text">Experience years is required.</small>
+            }
+          </div>
+
+        </div>
+
+      </div>
+
+      }
+
+      <button type="submit" class="submit-btn" [disabled]="joinUsForm.invalid || isSubmitting">
+        {{ isSubmitting ? 'Submitting...' : 'Submit Join Request' }}
+      </button>
+
+    </form>
+
+    }
+
+    <p class="login-text">
+      Already approved?
+      <a routerLink="/login">Login here</a>
+    </p>
+
+  </div>
+
+</div>
