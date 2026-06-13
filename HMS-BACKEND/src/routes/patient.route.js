@@ -4,8 +4,8 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const authRoles = require('../middleware/authRoles');
 const permissions = require('../utils/permissions');
-const patientController=require('../controller/patient.controller');
-const {validateCreatePatient}=require('../validation/patient.validation')
+const patientController = require('../controller/patient.controller');
+const { validateCreatePatient, validateRegisterPatient } = require('../validation/patient.validation')
 
 
 router.post('/create',
@@ -18,6 +18,23 @@ router.post('/create',
 router.get('/list',
     authMiddleware,
     authRoles(permissions.VIEW_PATIENT),
-     patientController.getAllPatients);
+    patientController.getAllPatients);
+
+//for self registration by the patients 
+
+router.post('/register',
+    validateRegisterPatient,
+    patientController.registerPatient,
+)
+
+router.get("/profile",
+    authMiddleware,
+    patientController.getPatientProfile);
+
+router.put(
+    '/profile',
+    authMiddleware,
+    patientController.updatePatientProfile
+);
 
 module.exports = router;

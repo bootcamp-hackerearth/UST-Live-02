@@ -57,6 +57,8 @@ export class ChangePassword {
     this.http.post('http://localhost:5000/api/auth/change-password', body, { headers })
       .subscribe({
         next: (res: any) => {
+          console.log('Password changed:', res);
+
           this.message = 'Password changed successfully';
 
           const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -68,6 +70,7 @@ export class ChangePassword {
           }, 1000);
         },
         error: (err) => {
+          console.log('Change password error:', err);
           this.errorMessage = err.error?.message || 'Password change failed';
         }
       });

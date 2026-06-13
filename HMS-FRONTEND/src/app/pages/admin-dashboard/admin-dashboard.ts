@@ -41,6 +41,7 @@ export class AdminDashboard implements OnInit {
       .subscribe((res: any) => {
         this.stats = res.data;
         this.cd.detectChanges();
+        console.log('dashboard stats', this.stats);
       })
   }
 
@@ -50,10 +51,12 @@ export class AdminDashboard implements OnInit {
       .subscribe((res: any) => {
         this.employees = res.data;
         this.cd.detectChanges();
+        console.log('dashboard stats', this.employees);
       })
   }
 
   showPatients() {
+    console.log('patients', this.patients);
   this.selectedSection = 'patients';
 
   this.http.get(`${this.baseUrl}/patients/list`)
@@ -69,10 +72,13 @@ showPendingRequests() {
   this.http.get(`${this.baseUrl}/join-us/pending`)
     .subscribe({
       next: (res: any) => {
+        console.log('Pending API response:', res);
         this.pendingRequests = res.data;
+        console.log('Pending requests array:', this.pendingRequests);
         this.cd.detectChanges();
       },
       error: (err) => {
+        console.log('Pending API error:', err);
       }
     });
 }

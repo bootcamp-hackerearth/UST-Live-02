@@ -1,6 +1,18 @@
+// services/patient.service.js
+
+const User = require("../models/User.model");
+
+const Role = require("../models/Role.model");
+const bcrypt = require("bcrypt");
+
 const Patient = require('../models/Patient.model');
 const ApiError = require('../utils/ApiError');
+const { generateToken } = require('../utils/jwt')
 
+
+
+const mailService = require('../service/mail.service');
+const sendEmail = require('../service/mail.service');
 exports.createPatient = async (patientData, employeeId) => {
   const {
     firstName,
@@ -11,7 +23,7 @@ exports.createPatient = async (patientData, employeeId) => {
     bloodGroup,
     address,
     emergencyContactName,
-    emergencyContactPhone
+    emergencyContactPhone,
   } = patientData;
 
   const patient = await Patient.create({
@@ -24,13 +36,11 @@ exports.createPatient = async (patientData, employeeId) => {
     address,
     emergencyContactName,
     emergencyContactPhone,
-    createdBy: employeeId
+    createdBy: employeeId,
   });
 
   return patient;
 };
-
-
 
 exports.getAllPatients = async () => {
   const patients = await Patient.find()
@@ -39,8 +49,8 @@ exports.getAllPatients = async () => {
       select: "firstName lastName email roleId",
       populate: {
         path: "roleId",
-        select: "name roleCode"
-      }
+        select: "name roleCode",
+      },
     })
     .sort({ createdAt: -1 });
 
@@ -63,17 +73,187 @@ exports.getAllPatients = async () => {
     emergencyContactName: patient.emergencyContactName,
     emergencyContactPhone: patient.emergencyContactPhone,
 
-  createdByName:
-  (
-    `${patient.createdBy?.firstName || ""} ${patient.createdBy?.lastName || ""}`.trim()
-    || patient.createdBy?.email
-    || "Unknown User"
-  ),
+    createdByName:
+      `${patient.createdBy?.firstName || ""} ${patient.createdBy?.lastName || ""}`.trim() ||
+      patient.createdBy?.email ||
+      "Unknown User",
 
     createdByEmail: patient.createdBy?.email,
     createdByRole: patient.createdBy?.roleId?.name,
     createdByRoleCode: patient.createdBy?.roleId?.roleCode,
 
-    createdAt: patient.createdAt
+    createdAt: patient.createdAt,
   }));
+};
+
+exports.registerPatient = async (body) => {
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    phone,
+    gender,
+    dob,
+    bloodGroup,
+    address,
+    emergencyContactName,
+    emergencyContactPhone,
+  } = body;
+
+  const existing = await User.findOne({ email });
+  if (existing) throw new ApiError(409, "Email already registered");
+
+  const patientRole = await Role.findOne({ name: "Patient" });
+  if (!patientRole) throw new ApiError(500, "Patient role not configured");
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  const user = await User.create({
+    firstName,
+    lastName,
+    email,
+    passwordHash,
+    roleId: patientRole._id,
+    isVerified: false,//will later implement the email verification
+    status: "ACTIVE",
+    mustChangePassword: true
+
+  });
+  const userId = user._id;
+  const token = await generateToken({ userId });
+  const verifyLink = `http://localhost:5000/api/auth/verify-email/${token}`
+  const html = `
+    <h2>Welcome to HMS 👋</h2>
+
+    <p>Hi ${firstName},</p>
+
+    <p>Please verify your email to activate your account.</p>
+
+    <a href="${verifyLink}"
+       style="display:inline-block;padding:10px 20px;background:#4CAF50;color:#fff;text-decoration:none;border-radius:5px;">
+       Verify Email
+    </a>
+
+    <p>Or copy and paste this link:</p>
+    <p>${verifyLink}</p>
+
+    <p>This link will expire in 24 hours.</p>
+  `;
+  sendEmail(
+    email,
+    "Welcome to HMS 🎉",
+    html
+  );
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+  const patient = await Patient.create({
+    userId: user._id,
+    firstName,
+    lastName,
+    phone,
+    gender,
+    dob,
+    bloodGroup,
+    address,
+    emergencyContactName,
+    emergencyContactPhone,
+    createdBy: user._id,
+  });
+
+  return { message: "Registration successful", patientId: patient._id };
+};
+
+exports.getPatientProfile = async (userId) => {
+  const patientProfile = await Patient.findOne({ userId })
+    .populate({
+      path: "userId",
+      select: "-passwordHash",
+      populate: {
+        path: "roleId",
+        select: "name roleCode"
+      }
+    });
+
+  if (!patientProfile) {
+    throw new ApiError(404, "Patient profile not found");
+  }
+
+  return {
+    userId: patientProfile.userId._id,
+
+    firstName: patientProfile.userId.firstName,
+    lastName: patientProfile.userId.lastName,
+    email: patientProfile.userId.email,
+
+    role: patientProfile.userId.roleId.name,
+    roleCode: patientProfile.userId.roleId.roleCode,
+
+    isVerified: patientProfile.userId.isVerified,
+    status: patientProfile.userId.status,
+    mustChangePassword: patientProfile.userId.mustChangePassword,
+
+    patientId: patientProfile._id,
+    UHID: patientProfile.UHID,
+    phone: patientProfile.phone,
+    gender: patientProfile.gender,
+    dob: patientProfile.dob,
+    bloodGroup: patientProfile.bloodGroup,
+
+    address: patientProfile.address,
+
+    emergencyContactName: patientProfile.emergencyContactName,
+    emergencyContactPhone: patientProfile.emergencyContactPhone
+  };
+};
+
+exports.updatePatientProfile = async (userId, updateData) => {
+  const patient = await Patient.findOne({ userId });
+
+  if (!patient) {
+    throw new ApiError(404, 'Patient profile not found');
+  }
+
+  const patientAllowedFields = [
+    'phone',
+    'gender',
+    'dob',
+    'bloodGroup',
+    'address',
+    'emergencyContactName',
+    'emergencyContactPhone'
+  ];
+
+  patientAllowedFields.forEach((field) => {
+    if (updateData[field] !== undefined) {
+      patient[field] = updateData[field];
+    }
+  });
+
+  if (updateData.firstName !== undefined || updateData.lastName !== undefined) {
+    await User.findByIdAndUpdate(userId, {
+      ...(updateData.firstName !== undefined && {
+        firstName: updateData.firstName
+      }),
+      ...(updateData.lastName !== undefined && {
+        lastName: updateData.lastName
+      })
+    });
+  }
+
+  if (updateData.firstName !== undefined) {
+    patient.firstName = updateData.firstName;
+  }
+
+  if (updateData.lastName !== undefined) {
+    patient.lastName = updateData.lastName;
+  }
+
+  await patient.save();
+
+  return await Patient.findById(patient._id).populate(
+    'userId',
+    'firstName lastName email'
+  );
 };

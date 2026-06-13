@@ -263,7 +263,6 @@ exports.getAllEmployees = async () => {
         lastName: employee.userId.lastName,
         email: employee.userId.email,
 
-       
         role: employee.userId.roleId.name,
         roleCode: employee.userId.roleId.roleCode,
         isVerified: employee.userId.isVerified,

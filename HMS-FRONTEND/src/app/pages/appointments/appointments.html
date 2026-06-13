@@ -36,6 +36,9 @@
                     <th>Time Slot</th>
                     <th>Status</th>
                     <th>Reason</th>
+                    @if (canCreateAppointment) {
+                    <th>Actions</th>
+                    }
                 </tr>
             </thead>
 
@@ -73,6 +76,16 @@
                     </td>
 
                     <td>{{ appointment.reason }}</td>
+                    @if (canCreateAppointment) {
+                    <td class="appointment-actions-cell">
+                        @if (canCancelAppointment(appointment)) {
+                        <button type="button" class="appointment-cancel-btn"
+                            (click)="cancelAppointment(appointment._id)">
+                            Cancel
+                        </button>
+                        }
+                    </td>
+                    }
                 </tr>
                 }
             </tbody>

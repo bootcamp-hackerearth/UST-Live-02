@@ -105,6 +105,7 @@ export class Patients implements OnInit {
         next: (res) => {
           this.patients = res.data;
           this.filteredPatients = res.data;
+          console.log('Patients:', this.patients);
           this.cd.detectChanges();
         },
         error: (err) => {
@@ -203,9 +204,13 @@ get endRecord(): number {
 
     const payload = this.patientForm.value as CreatePatientPayload;
 
+
+    console.log('Patient form data:', payload);
+
     this.patientService.createPatient(payload)
       .subscribe({
         next: (res) => {
+          console.log('Patient created successfully:', res);
           alert('Patient created successfully!');
           this.closeAddPatientModal();
           this.getPatients();

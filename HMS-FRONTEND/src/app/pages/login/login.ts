@@ -65,13 +65,15 @@ export class Login {
 
     this.auth.login(loginData)
       .pipe(
-        timeout(5000),
+        timeout(1000),
         finalize(() => {
           this.isLoading = false;
         })
       )
       .subscribe({
         next: (res) => {
+          console.log('LOGIN RESPONSE:', res);
+
           const user = res.data.user;
           const basePath = user.roleId.basePath;
 
@@ -97,6 +99,8 @@ export class Login {
         },
 
         error: (err) => {
+          console.log('LOGIN ERROR:', err);
+
           if (err.name === 'TimeoutError') {
             this.errorMessage = 'Login is taking too long. Please try again.';
             return;

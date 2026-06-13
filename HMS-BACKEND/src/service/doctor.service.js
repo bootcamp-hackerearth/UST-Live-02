@@ -96,6 +96,7 @@ exports.updateDoctor = async (doctorId, data) => {
         designation,
         joiningDate,
         status,
+
         specialization,
         qualification,
         consultationFee,
@@ -106,89 +107,98 @@ exports.updateDoctor = async (doctorId, data) => {
     } = data;
 
     const doctor = await Doctor.findById(doctorId);
-    if (!doctor) throw new ApiError(404, 'Doctor not found');
+
+    if (!doctor) {
+        throw new ApiError(404, "Doctor not found");
+    }
 
     const employee = await Employee.findById(doctor.employeeId);
-    if (!employee) throw new ApiError(404, 'Employee record not found for this doctor');
+
+    if (!employee) {
+        throw new ApiError(404, "Employee record not found for this doctor");
+    }
 
     const user = await User.findById(employee.userId);
-    if (!user) throw new ApiError(404, 'User record not found for this doctor');
 
-    await updateUserEmail(user, email);
-    await updateMedicalRegNo(doctor, medicalRegistrationNo);
+    if (!user) {
+        throw new ApiError(404, "User record not found for this doctor");
+    }
 
-    updateUserFields(user, { firstName, lastName, status });
-    updateEmployeeFields(employee, { phone, department, designation, joiningDate, status });
-    updateDoctorFields(doctor, { specialization, qualification, consultationFee, availabilityStartTime, availabilityEndTime, experienceYears });
+    if (email && email !== user.email) {
+        const existingUser = await User.findOne({ email });
 
-    await user.save();
-    await employee.save();
-    await doctor.save();
+        if (existingUser) {
+            throw new ApiError(409, "Email already exists");
+        }
 
-    return buildDoctorResponse(doctor, employee, user);
-};
+        user.email = email;
+    }
 
+    if (
+        medicalRegistrationNo &&
+        medicalRegistrationNo !== doctor.medicalRegistrationNo
+    ) {
+        const existingDoctor = await Doctor.findOne({ medicalRegistrationNo });
 
-const updateUserEmail = async (user, email) => {
-    if (!email || email === user.email) return;
-    const existingUser = await User.findOne({ email });
-    if (existingUser) throw new ApiError(409, 'Email already exists');
-    user.email = email;
-};
+        if (existingDoctor) {
+            throw new ApiError(409, "Medical registration number already exists");
+        }
 
-const updateMedicalRegNo = async (doctor, medicalRegistrationNo) => {
-    if (!medicalRegistrationNo || medicalRegistrationNo === doctor.medicalRegistrationNo) return;
-    const existingDoctor = await Doctor.findOne({ medicalRegistrationNo });
-    if (existingDoctor) throw new ApiError(409, 'Medical registration number already exists');
-    doctor.medicalRegistrationNo = medicalRegistrationNo;
-};
+        doctor.medicalRegistrationNo = medicalRegistrationNo;
+    }
 
-
-const updateUserFields = (user, { firstName, lastName, status }) => {
     if (firstName !== undefined) user.firstName = firstName;
     if (lastName !== undefined) user.lastName = lastName;
-    if (status !== undefined) user.status = status;
-};
 
-const updateEmployeeFields = (employee, { phone, department, designation, joiningDate, status }) => {
+    if (status !== undefined) {
+        user.status = status;
+        employee.status = status;
+    }
+
     if (phone !== undefined) employee.phone = phone;
     if (department !== undefined) employee.department = department;
     if (designation !== undefined) employee.designation = designation;
     if (joiningDate !== undefined) employee.joiningDate = joiningDate;
-    if (status !== undefined) employee.status = status;
-};
 
-
-const updateDoctorFields = (doctor, { specialization, qualification, consultationFee, availabilityStartTime, availabilityEndTime, experienceYears }) => {
     if (specialization !== undefined) doctor.specialization = specialization;
     if (qualification !== undefined) doctor.qualification = qualification;
     if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
     if (availabilityStartTime !== undefined) doctor.availabilityStartTime = availabilityStartTime;
     if (availabilityEndTime !== undefined) doctor.availabilityEndTime = availabilityEndTime;
     if (experienceYears !== undefined) doctor.experienceYears = experienceYears;
+
+    await user.save();
+    await employee.save();
+    await doctor.save();
+
+    return {
+        doctorId: doctor._id,
+
+        employeeId: employee._id,
+        employeeCode: employee.employeeCode,
+
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+
+        phone: employee.phone,
+        department: employee.department,
+        designation: employee.designation,
+        joiningDate: employee.joiningDate,
+
+        specialization: doctor.specialization,
+        qualification: doctor.qualification,
+        consultationFee: doctor.consultationFee,
+        medicalRegistrationNo: doctor.medicalRegistrationNo,
+        availabilityStartTime: doctor.availabilityStartTime,
+        availabilityEndTime: doctor.availabilityEndTime,
+        experienceYears: doctor.experienceYears,
+
+        status: user.status,
+        isVerified: user.isVerified
+    };
 };
 
-const buildDoctorResponse = (doctor, employee, user) => ({
-    doctorId: doctor._id,
-    employeeId: employee._id,
-    employeeCode: employee.employeeCode,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    phone: employee.phone,
-    department: employee.department,
-    designation: employee.designation,
-    joiningDate: employee.joiningDate,
-    specialization: doctor.specialization,
-    qualification: doctor.qualification,
-    consultationFee: doctor.consultationFee,
-    medicalRegistrationNo: doctor.medicalRegistrationNo,
-    availabilityStartTime: doctor.availabilityStartTime,
-    availabilityEndTime: doctor.availabilityEndTime,
-    experienceYears: doctor.experienceYears,
-    status: user.status,
-    isVerified: user.isVerified
-});
 exports.getAllDoctors = async () => {
     const doctors = await Doctor.find()
         .populate({
@@ -211,10 +221,6 @@ exports.getAllDoctors = async () => {
         email: doctor.employeeId?.userId?.email,
         phone: doctor.employeeId?.phone,
 
-        department: doctor.employeeId?.department,
-        designation: doctor.employeeId?.designation,
-        joiningDate: doctor.employeeId?.joiningDate,
-
         specialization: doctor.specialization,
         qualification: doctor.qualification,
         consultationFee: doctor.consultationFee,
@@ -222,6 +228,8 @@ exports.getAllDoctors = async () => {
         availabilityStartTime: doctor.availabilityStartTime,
         availabilityEndTime: doctor.availabilityEndTime,
         experienceYears: doctor.experienceYears,
+
+        joiningDate: doctor.employeeId?.joiningDate,
 
         status: doctor.employeeId?.userId?.status,
         isVerified: doctor.employeeId?.userId?.isVerified

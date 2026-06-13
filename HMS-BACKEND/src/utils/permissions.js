@@ -19,7 +19,7 @@ const permissions = {
 
     ADD_APPOINTMENT:["Admin","Receptionist","Patient"],
     VIEW_APPOINTMENT:["Admin","Receptionist","Doctor","Patient"],
-
+    CANCEL_APPOINTMENT:["Admin","Receptionist","Patient"],
 
 
 
