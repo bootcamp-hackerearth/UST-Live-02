@@ -4,7 +4,7 @@ exports.createAppointment = async (req, res, next) => {
     try {
         const appointment = await appointmentService.createAppointment(
             req.body,
-            req.user?._id,
+            req.user?.userId,
             req.user?.role
         );
 
@@ -68,6 +68,22 @@ exports.getMyAppointments = async (req, res, next) => {
             success: true,
             message: "Doctor appointments fetched successfully",
             data: appointments
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.cancelAppointment = async (req, res, next) => {
+    try {
+        const appointment = await appointmentService.cancelAppointment(
+            req.params.appointmentId
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Appointment cancelled successfully',
+            data: appointment
         });
     } catch (error) {
         next(error);

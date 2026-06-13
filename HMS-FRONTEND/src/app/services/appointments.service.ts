@@ -45,4 +45,11 @@ export class AppointmentService {
     );
   }
 
+  cancelAppointment(appointmentId: string) {
+  return this.http.put(
+    `${this.baseUrl}/appointments/cancel/${appointmentId}`,
+    {}
+  );
+}
+
 }

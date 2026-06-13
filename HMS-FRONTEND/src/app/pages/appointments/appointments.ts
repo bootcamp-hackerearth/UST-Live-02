@@ -82,6 +82,13 @@ export class Appointments implements OnInit {
 
 
 
+canCancelAppointment(appointment: any): boolean {
+  return (
+    appointment.status === 'BOOKED' &&
+    this.userRole !== 'Doctor'
+  );
+}
+
 
 
   futureDateValidator(control: AbstractControl): ValidationErrors | null {
@@ -336,4 +343,25 @@ export class Appointments implements OnInit {
         }
       });
   }
+
+  cancelAppointment(appointmentId: string): void {
+  const confirmed = confirm('Are you sure you want to cancel this appointment?');
+
+  if (!confirmed) {
+    return;
+  }
+
+  this.appointmentService.cancelAppointment(appointmentId).subscribe({
+    next: (response: any) => {
+      alert(response.message || 'Appointment cancelled successfully');
+      this.getAppointments();
+    },
+    error: (error) => {
+      console.log('Cancel appointment error:', error);
+      alert(error.error?.message || 'Unable to cancel appointment');
+    }
+  });
 }
+}
+
+

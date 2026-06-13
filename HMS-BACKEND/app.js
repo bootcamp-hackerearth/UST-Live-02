@@ -10,6 +10,7 @@ const doctorRoutes=require('./src/routes/doctor.route')
 const patientRoutes=require('./src/routes/patient.route')
 const appointmentRoutes=require('./src/routes/appointment.route')
 const joinUsRoutes=require('./src/routes/joinUs.route')
+const errorMiddleware = require('./src/middleware/error.middleware');
 
 const app=new express();
 
@@ -36,5 +37,7 @@ app.use('/api/join-us',joinUsRoutes);
 app.use('/api/patients',patientRoutes);
 app.use('/api/appointments',appointmentRoutes);
 
+
+app.use(errorMiddleware);
 
 module.exports=app;

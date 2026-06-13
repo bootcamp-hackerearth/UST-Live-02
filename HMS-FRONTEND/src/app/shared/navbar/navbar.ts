@@ -48,6 +48,8 @@ export class Navbar {
 
 
     this.router.navigate(['/login']);
+
+    console.log('User logged out successfully');
   }
 
  
