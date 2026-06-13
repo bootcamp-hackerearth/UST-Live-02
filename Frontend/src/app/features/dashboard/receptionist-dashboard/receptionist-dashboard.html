@@ -1,0 +1,141 @@
+<div class="dashboard-wrapper">
+  <!-- Hero Section -->
+
+  <div class="hero-section glass-card">
+    <div>
+      <p class="hero-label">Reception Workspace</p>
+
+      @if( authService.currentUser | async; as user ){
+
+      <h1>Welcome, {{ user?.employeeId?.name || 'Receptionist' }} 👋</h1>
+
+      }
+
+      <p class="hero-subtitle">Manage patients, appointments and front desk operations.</p>
+    </div>
+
+    <div class="hero-badge">
+      <div class="pulse-dot"></div>
+
+      Front Desk Active
+    </div>
+  </div>
+
+  <!-- Stats -->
+
+  <div class="stats-grid">
+    <!-- Today's Appointments -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon blue">📅</div>
+
+      <div>
+        <h2>{{ stats?.todayAppointments || 0 }}</h2>
+
+        <p>Today's Appointments</p>
+      </div>
+    </div>
+
+    <!-- Total Patients -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon purple">🧑</div>
+
+      <div>
+        <h2>{{ stats?.totalPatients || 0 }}</h2>
+
+        <p>Total Patients</p>
+      </div>
+    </div>
+
+    <!-- Checked In -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon green">✅</div>
+
+      <div>
+        <h2>{{ stats?.checkedInPatients || 0 }}</h2>
+
+        <p>Checked In</p>
+      </div>
+    </div>
+
+    <!-- Pending -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon orange">⏳</div>
+
+      <div>
+        <h2>{{ stats?.pendingAppointments || 0 }}</h2>
+
+        <p>Pending Appointments</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Grid -->
+
+  <div class="bottom-grid">
+    <!-- Today's Appointments -->
+
+    <div class="recent-section glass-card">
+      <div class="section-header">
+        <h2>Today's Appointments</h2>
+
+        <span>Front Desk Queue</span>
+      </div>
+
+      <div class="employee-list">
+        @for( appointment of todayAppointments || []; track appointment._id ){
+
+        <div class="employee-card">
+          <div class="employee-avatar">{{ appointment ?.patientId ?.firstName ?.charAt(0) }}</div>
+
+          <div>
+            <h4>{{ appointment ?.patientId ?.firstName }} {{ appointment ?.patientId ?.lastName }}</h4>
+
+            <p>{{ appointment ?.timeSlot }}</p>
+          </div>
+        </div>
+
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+
+    <div class="quick-section glass-card">
+      <div class="section-header">
+        <h2>Quick Actions</h2>
+
+        <span>Fast Navigation</span>
+      </div>
+
+      <div class="quick-grid">
+        <a routerLink="/patients/create" class="quick-card">
+          <span>🧑</span>
+
+          Add Patient
+        </a>
+
+        <a routerLink="/appointments/book" class="quick-card">
+          <span>📅</span>
+
+          Book Appointment
+        </a>
+
+        <a routerLink="/appointments" class="quick-card">
+          <span>📋</span>
+
+          View Appointments
+        </a>
+
+        <a routerLink="/patients" class="quick-card">
+          <span>👨‍⚕️</span>
+
+          Patients
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

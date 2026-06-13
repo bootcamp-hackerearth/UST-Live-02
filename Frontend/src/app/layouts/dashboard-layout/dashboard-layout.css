@@ -1,0 +1,505 @@
+.dashboard-shell {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fbff, #eef4ff);
+}
+/* ── Global Font Scale ─────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 22px; /* base was 16px — increase this to scale everything */
+}
+
+body {
+  font-size: 3rem;
+  line-height: 1.7;
+}
+
+h1 {
+  font-size: 2.2rem;
+}
+h2 {
+  font-size: 1.8rem;
+}
+h3 {
+  font-size: 1.5rem;
+}
+h4 {
+  font-size: 1.25rem;
+}
+h5 {
+  font-size: 1.1rem;
+}
+h6 {
+  font-size: 1rem;
+}
+
+p,
+span,
+a,
+li,
+td,
+th,
+label {
+  font-size: 3rem;
+}
+#active {
+  font-size: 1.5rem;
+}
+
+input,
+select,
+textarea,
+button {
+  font-size: 3rem;
+}
+/* ── Global Toast ─────────────────────────────────────── */
+.global-toast-wrapper {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.global-toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 32px;
+  border-radius: 14px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  pointer-events: all;
+  animation: slideDown 0.3s ease;
+  white-space: nowrap;
+  min-width: 420px;
+  max-width: 660px;
+  justify-content: space-between;
+  border-width: 2px;
+  border-style: solid;
+}
+
+.global-toast.success {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #34d399;
+}
+
+.global-toast.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #f87171;
+}
+
+.toast-icon {
+  font-size: 1.4rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  font-size: 1.75rem;
+  font-weight: 700;
+  flex: 1;
+  text-align: center;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: inherit;
+  opacity: 0.6;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: 8px;
+}
+
+.toast.success {
+  background: #16a34a;
+  color: white;
+}
+
+.toast.error {
+  background: #dc2626;
+  color: white;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Sidebar
+|--------------------------------------------------------------------------
+*/
+.sidebar {
+  width: 320px; /* 280 → 320 */
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 36px 26px; /* 28/20 → 36/26 */
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Logo
+|--------------------------------------------------------------------------
+*/
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* 14 → 16 */
+  margin-bottom: 48px; /* 40 → 48 */
+}
+
+.logo-circle {
+  width: 62px; /* 52 → 62 */
+  height: 62px;
+  border-radius: 18px; /* 16 → 18 */
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px; /* 24 → 28 */
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.35);
+}
+
+.logo-section h2 {
+  color: white;
+  font-size: 22px; /* 20 → 22 */
+  margin-bottom: 5px;
+}
+
+.logo-section p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px; /* 13 → 14 */
+}
+
+/*
+|--------------------------------------------------------------------------
+| Sidebar Profile
+|--------------------------------------------------------------------------
+*/
+.profile-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px; /* 20 → 22 */
+  padding: 22px; /* 18 → 22 */
+  display: flex;
+  align-items: center;
+  gap: 16px; /* 14 → 16 */
+  margin-bottom: 28px; /* 24 → 28 */
+}
+
+.avatar {
+  width: 58px; /* 50 → 58 */
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 24px; /* 20 → 24 */
+}
+
+.profile-card h4 {
+  color: white;
+  font-size: 17px; /* 15 → 17 */
+  margin-bottom: 5px;
+}
+
+.profile-card span {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px; /* 12 → 13 */
+}
+
+/*
+|--------------------------------------------------------------------------
+| Navigation
+|--------------------------------------------------------------------------
+*/
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* 12 → 14 */
+  margin-top: 14px; /* 12 → 14 */
+}
+
+.nav-links a {
+  display: flex;
+  align-items: center;
+  gap: 14px; /* 12 → 14 */
+  padding: 17px 22px; /* 14/18 → 17/22 */
+  border-radius: 16px; /* 14 → 16 */
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 16px; /* added explicit size */
+}
+
+.nav-links a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  transform: translateX(4px);
+}
+
+.active-link {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.25));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: white !important;
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.18);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Main Content
+|--------------------------------------------------------------------------
+*/
+.main-content {
+  flex: 1;
+  padding: 30px; /* 24 → 30 */
+}
+
+/*
+|--------------------------------------------------------------------------
+| Topbar
+|--------------------------------------------------------------------------
+*/
+.topbar {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 28px; /* 24 → 28 */
+  padding: 28px 36px; /* 24/30 → 28/36 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
+  margin-bottom: 30px; /* 24 → 30 */
+  overflow: visible;
+  position: relative;
+  z-index: 100;
+}
+
+.topbar h1 {
+  font-size: 32px; /* 28 → 32 */
+  margin-bottom: 8px; /* 6 → 8 */
+  color: #0f172a;
+}
+
+.topbar p {
+  color: #64748b;
+  font-size: 15px; /* added explicit size */
+}
+
+/*
+|--------------------------------------------------------------------------
+| Topbar Right
+|--------------------------------------------------------------------------
+*/
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* 18 → 20 */
+}
+
+/*
+|--------------------------------------------------------------------------
+| System Status
+|--------------------------------------------------------------------------
+*/
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-weight: 500;
+  font-size: 15px; /* added explicit size */
+}
+
+.status-dot {
+  width: 12px; /* 10 → 12 */
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 12px #22c55e;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Top Profile
+|--------------------------------------------------------------------------
+*/
+.top-profile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px; /* 14 → 16 */
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 12px 18px; /* 10/14 → 12/18 */
+  border-radius: 20px; /* 18 → 20 */
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.top-profile:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Top Avatar
+|--------------------------------------------------------------------------
+*/
+.top-avatar {
+  width: 52px; /* 46 → 52 */
+  height: 52px;
+  border-radius: 16px; /* 14 → 16 */
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 20px; /* 18 → 20 */
+}
+
+/*
+|--------------------------------------------------------------------------
+| Top User Info
+|--------------------------------------------------------------------------
+*/
+.top-user-info h4 {
+  color: #0f172a;
+  font-size: 16px; /* 14 → 16 */
+  margin-bottom: 4px; /* 3 → 4 */
+}
+
+.top-user-info p {
+  color: #64748b;
+  font-size: 13px; /* 12 → 13 */
+}
+
+/*
+|--------------------------------------------------------------------------
+| Profile Dropdown
+|--------------------------------------------------------------------------
+*/
+.profile-dropdown {
+  position: absolute;
+  top: 86px; /* 78 → 86 */
+  right: 0;
+  width: 240px; /* 220 → 240 */
+  background: white;
+  border-radius: 20px; /* 18 → 20 */
+  padding: 12px; /* 10 → 12 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* 6 → 8 */
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+  z-index: 9999;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Dropdown Links
+|--------------------------------------------------------------------------
+*/
+.profile-dropdown a,
+.profile-dropdown button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 16px 18px; /* 14/16 → 16/18 */
+  border-radius: 14px; /* 12 → 14 */
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  color: #0f172a;
+  font-size: 15px; /* 14 → 15 */
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.profile-dropdown a:hover,
+.profile-dropdown button:hover {
+  background: #f1f5f9;
+}
+
+.profile-dropdown button {
+  color: #dc2626;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Page Content
+|--------------------------------------------------------------------------
+*/
+.page-content {
+  min-height: calc(100vh - 140px);
+  position: relative;
+  z-index: 1;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Responsive
+|--------------------------------------------------------------------------
+*/
+@media (max-width: 992px) {
+  .sidebar {
+    width: 100px; /* 90 → 100 */
+  }
+
+  .logo-section div,
+  .profile-card div,
+  .top-user-info {
+    display: none;
+  }
+
+  .nav-links a {
+    justify-content: center;
+  }
+
+  .topbar {
+    padding: 22px; /* 20 → 22 */
+  }
+
+  .topbar-right {
+    gap: 14px; /* 12 → 14 */
+  }
+}
