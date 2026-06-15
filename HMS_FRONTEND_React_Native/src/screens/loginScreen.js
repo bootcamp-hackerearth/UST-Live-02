@@ -58,11 +58,6 @@ const LoginScreen = ({ navigation }) => {
       console.log("STATUS:", error?.response?.status);
       console.log("DATA:", error?.response?.data);
       console.log("MESSAGE:", error?.message);
-
-      Alert.alert(
-        "Error",
-        JSON.stringify(error?.response?.data || error.message),
-      );
     } finally {
       setLoading(false);
     }

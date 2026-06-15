@@ -4,15 +4,16 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  FlatList,
 } from "react-native";
 
-
-import { getAllDoctors, getPatientAppointments  } from "../services/patientApi";
-import { getPatient, clearStorage  } from "../storage/authStorage";
+import { getAllDoctors, getPatientAppointments } from "../services/patientApi";
+import { getPatient, clearStorage } from "../storage/authStorage";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback,useState } from "react";
+import { useCallback, useState } from "react";
+import DoctorCard from "../components/DoctorCard";
+import AppointmentStatusCard from "../components/AppointmentStatusCard";
 import PropTypes from "prop-types";
-
 
 const HomeScreen = ({ navigation }) => {
   const [patient, setPatient] = useState(null);
@@ -49,25 +50,18 @@ const HomeScreen = ({ navigation }) => {
       setAppointments([]);
     }
   };
+  
+  const renderDoctor = useCallback(
+    ({ item }) => <DoctorCard doctor={item} />,
+    [],
+  );
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "BOOKED":
-        return "#10B981"; // Green
-
-      case "PENDING":
-        return "#F59E0B"; // Orange
-
-      case "CANCELLED":
-        return "#EF4444"; // Red
-
-      case "COMPLETED":
-        return "#3B82F6"; // Blue
-
-      default:
-        return "#6B7280";
-    }
-  };
+  const renderAppointment = useCallback(
+  ({ item }) => (
+    <AppointmentStatusCard appointment={item} />
+  ),
+  [],
+);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -104,63 +98,30 @@ const HomeScreen = ({ navigation }) => {
 
       <Text style={styles.sectionHeading}>📅 My Appointments</Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {appointments.length > 0 ? (
-          appointments.map((appointment) => (
-            <View
-              key={appointment._id}
-              style={[styles.glassCard, { width: 280, marginRight: 15 }]}
-            >
-              <Text style={styles.specialization}>
-                {appointment.appointmentId}
-              </Text>
-              <Text style={styles.doctorName}>
-                Dr. {appointment.doctorName}
-              </Text>
-
-              <Text style={styles.specialization}>
-                {appointment.specialization}
-              </Text>
-
-              <Text style={styles.appointmentDate}>
-                {new Date(appointment.date).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}
-                {" | "}
-                {appointment.timeSlot}
-              </Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  {
-                    backgroundColor: getStatusColor(appointment.status),
-                  },
-                ]}
-              >
-                <Text style={styles.statusText}>{appointment.status}</Text>
-              </View>
-            </View>
-          ))
-        ) : (
-          <View style={[styles.glassCard, { width: 280 }]}>
-            <Text style={styles.info}>No appointments found.</Text>
-          </View>
-        )}
-      </ScrollView>
+      {appointments.length > 0 ? (
+        <FlatList
+          horizontal
+          data={appointments}
+          keyExtractor={(item) => item.appointmentId}
+          renderItem={renderAppointment}
+          showsHorizontalScrollIndicator={false}
+        />
+      ) : (
+        <View style={[styles.glassCard, { width: 280 }]}>
+          <Text style={styles.info}>No appointments found.</Text>
+        </View>
+      )}
 
       {/* Top Doctors */}
 
       <Text style={styles.sectionHeading}>👨‍⚕️ Our Top Doctors</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-        {doctors.map((doctor) => (
-          <View key={doctor._id} style={styles.doctorCard}>
-            <Text style={styles.doctorCardName}>Dr. {doctor.name}</Text>
-            <Text style={styles.doctorCardSpec}>{doctor.specialization}</Text>
-          </View>
-        ))}
-      </ScrollView>
+      <FlatList
+        horizontal
+        data={doctors}
+        keyExtractor={(item) => item._id}
+        renderItem={renderDoctor}
+        showsHorizontalScrollIndicator={false}
+      />
 
       {/* Logout */}
 
@@ -176,7 +137,6 @@ HomeScreen.propTypes = {
     navigate: PropTypes.func.isRequired,
   }).isRequired,
 };
-
 
 export default HomeScreen;
 
@@ -265,31 +225,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginTop: 15,
-  },
-
-  doctorCard: {
-    backgroundColor: "#FFFFFF",
-    width: 220,
-    padding: 20,
-    borderRadius: 25,
-    marginRight: 15,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-
-  doctorCardName: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1C2143",
-  },
-
-  doctorCardSpec: {
-    marginTop: 10,
-    color: "#6B46C1",
-    fontWeight: "600",
   },
 
   logoutButton: {

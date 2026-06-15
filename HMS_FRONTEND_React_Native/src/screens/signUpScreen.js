@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { registerPatient } from "../services/patientApi";
+
 import PropTypes from "prop-types";
 
 const PRIMARY = "#5A1E96";
@@ -106,14 +107,18 @@ const SignupScreen = ({ navigation }) => {
       console.log("Signup Error:", error);
       console.log("Response:", error?.response?.data);
 
-      alert(
-        error?.response?.data?.message || error?.message || "Signup Failed",
-      );
     } finally {
       setLoading(false);
     }
   };
 
+  const handlePhoneInput = (field, value) => {
+    const number = value.replace(/\D/g, "");
+    if (number.length === 1 && !/[6-9]/.test(number)) {
+      return;
+    }
+    handleChange(field, number);
+  };
   return (
     <ImageBackground
       source={require("../../assets/images/loginpng.png")}
@@ -207,15 +212,7 @@ const SignupScreen = ({ navigation }) => {
               maxLength={10}
               style={styles.input}
               value={form.phone}
-              onChangeText={(v) => {
-                const number = v.replaceAll(/\D/g, "");
-
-                if (number.length === 1 && !/[6-9]/.test(number)) {
-                  return;
-                }
-
-                handleChange("phone", number);
-              }}
+              onChangeText={(v) => handlePhoneInput("phone", v)}
               onBlur={() =>
                 setErrors((prev) => ({
                   ...prev,
@@ -310,7 +307,9 @@ const SignupScreen = ({ navigation }) => {
               placeholder="Allergies"
               value={form.allergies}
               style={styles.input}
-              onChangeText={(v) => handleChange("allergies", v)}
+              onChangeText={(v) =>
+                handleChange("allergies", v.replace(/[^a-zA-Z\s]/g, ""))
+              }
             />
           </View>
 
@@ -381,15 +380,7 @@ const SignupScreen = ({ navigation }) => {
               maxLength={10}
               style={styles.input}
               value={form.emergencyContact}
-              onChangeText={(v) => {
-                const number = v.replaceAll(/\D/g, "");
-
-                if (number.length === 1 && !/[6-9]/.test(number)) {
-                  return;
-                }
-
-                handleChange("emergencyContact", number);
-              }}
+              onChangeText={(v) => handlePhoneInput("emergencyContact", v)}
               onBlur={() =>
                 setErrors((prev) => ({
                   ...prev,

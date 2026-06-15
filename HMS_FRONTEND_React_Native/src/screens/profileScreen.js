@@ -91,7 +91,6 @@ const ProfileScreen = () => {
     } catch (error) {
       console.log(error);
 
-      Alert.alert("Error", error.response?.data?.message || "Update Failed");
     } finally {
       setLoading(false);
     }

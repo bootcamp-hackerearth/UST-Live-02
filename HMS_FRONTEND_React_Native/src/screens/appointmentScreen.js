@@ -5,10 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   View,
+  FlatList,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import AppointmentCard from "../components/AppointmentCard";
 
 import {
   getAllDoctors,
@@ -96,17 +98,15 @@ const AppointmentScreen = () => {
   };
 
   //Cancel Appointment
-  const handleCancelAppointment = async (appointmentId) => {
+  const handleCancelAppointment = useCallback(async (appointmentId) => {
     try {
       const response = await cancelAppointment(appointmentId);
-
       alert(response.message);
-
       await loadAppointments();
     } catch (error) {
       alert(error.response?.data?.message || "Failed To Cancel");
     }
-  };
+  }, []);
 
   const handleBookAppointment = async () => {
     if (!form.doctorEmployeeId || !form.date || !form.timeSlot) {
@@ -167,6 +167,16 @@ const AppointmentScreen = () => {
     }
   };
 
+  const renderAppointment = useCallback(
+    ({ item }) => (
+      <AppointmentCard
+        item={item}
+        getStatusColor={getStatusColor}
+        onCancel={handleCancelAppointment}
+      />
+    ),
+    [],
+  );
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.heading}>Book</Text>
@@ -284,46 +294,13 @@ const AppointmentScreen = () => {
         My Appointments
       </Text>
 
-      {appointments.map((item) => (
-        <View key={item.appointmentId} style={styles.appointmentCard}>
-          <Text style={styles.doctorName}>Dr. {item.doctorName}</Text>
-
-          <Text style={styles.specialization}>{item.specialization}</Text>
-
-          <Text style={styles.detail}>
-            Date: {new Date(item.date).toLocaleDateString()}
-          </Text>
-
-          <Text style={styles.detail}>Time: {item.timeSlot}</Text>
-
-          <Text
-            style={[
-              styles.status,
-              {
-                color: getStatusColor(item.status),
-              },
-            ]}
-          >
-            {item.status}
-          </Text>
-
-          {item.status === "PENDING" && (
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => handleCancelAppointment(item.appointmentId)}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontWeight: "700",
-                }}
-              >
-                Cancel Appointment
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      ))}
+      <FlatList
+        data={appointments}
+        keyExtractor={(item) => item.appointmentId}
+        renderItem={renderAppointment}
+        scrollEnabled={false}
+      />
+      
     </ScrollView>
   );
 };
@@ -417,41 +394,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "700",
-  },
-  appointmentCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 15,
-    elevation: 3,
-  },
-
-  doctorName: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1C2143",
-  },
-
-  specialization: {
-    color: "#6B46C1",
-    marginBottom: 10,
-  },
-
-  detail: {
-    color: "#374151",
-    marginBottom: 4,
-  },
-
-  status: {
-    fontWeight: "700",
-    marginTop: 8,
-    marginBottom: 10,
-  },
-
-  cancelButton: {
-    backgroundColor: "#EF4444",
-    padding: 10,
-    borderRadius: 10,
-    alignItems: "center",
   },
 });
