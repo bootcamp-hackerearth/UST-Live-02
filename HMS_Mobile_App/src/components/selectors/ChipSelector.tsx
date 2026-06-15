@@ -3,10 +3,10 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 interface Props {
-  label: string;
-  options: string[];
-  selectedValue: string;
-  onSelect: (value: string) => void;
+    readonly label: string;
+    readonly options: string[];
+    readonly selectedValue: string;
+    readonly onSelect: (value: string) => void;
 }
 
 export default function ChipSelector({

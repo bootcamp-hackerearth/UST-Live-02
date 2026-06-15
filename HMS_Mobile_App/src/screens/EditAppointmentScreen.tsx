@@ -4,8 +4,10 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+   StyleSheet, View
 } from "react-native";
-import { SafeAreaView, StyleSheet, View } from "react-native";
+
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import GlassCard from "../../src/components/cards/GlassCard";
 
@@ -14,9 +16,9 @@ import PrimaryButton from "../../src/components/buttons/PrimaryButton";
 import TimeSlotSelector from "../../src/components/selectors/TimeSlotSelectors";
 import { useEffect, useState } from "react";
 
-import { useRoute } from "@react-navigation/native";
-import { useNavigation } from "@react-navigation/native";
-import { minLength } from "../../src/utils/validators";
+import { useRoute,useNavigation } from "@react-navigation/native";
+
+ 
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -80,29 +82,7 @@ export default function EditAppointment() {
       Alert.alert("Failed to load slots");
     }
   };
-  const validateForm = () => {
-    const newErrors: any = {};
-
-    if (!appointmentDate) {
-      newErrors.appointmentDate = "Appointment date is required";
-    }
-
-    if (!appointmentTime) {
-      newErrors.appointmentTime = "Please select a slot";
-    }
-
-    if (symptoms && !minLength(symptoms.trim(), 5)) {
-      newErrors.symptoms = "Symptoms must contain at least 5 characters";
-    }
-
-    if (symptoms.length > 500) {
-      newErrors.symptoms = "Maximum 500 characters allowed";
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  };
+ 
   const handleUpdate = async () => {
     try {
       await updateMyAppointment(

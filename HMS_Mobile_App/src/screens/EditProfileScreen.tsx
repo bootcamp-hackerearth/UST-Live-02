@@ -3,6 +3,7 @@ import {
   Text,
   TouchableOpacity,
   Alert,
+  StyleSheet,
   View,
 } from "react-native";
 import { useEffect, useState } from "react";
@@ -15,7 +16,7 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { getProfile, updateProfile } from "../../src/services/patient.service";
-import { StyleSheet } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import GlassCard from "../../src/components/cards/GlassCard";
 import PrimaryButton from "../../src/components/buttons/PrimaryButton";
@@ -94,11 +95,10 @@ export default function EditProfile() {
       Alert.alert("Failed to load profile");
     }
   };
-
-  // --- validateForm: complexity reduced by expressing rules as data ---
+ 
 
   const validateForm = (): boolean => {
-    // Each entry: [errorKey, value, rules[]]
+  
     const fieldRules: [string, string, FieldRule[]][] = [
       ["dateOfBirth", dateOfBirth, [
         { required: "Date of birth is required" },

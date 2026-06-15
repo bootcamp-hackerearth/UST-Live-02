@@ -5,7 +5,7 @@ import { Text, View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
-  status: string;
+  readonly status: string;
 }
 
 export default function StatusBadge({ status }: Props) {

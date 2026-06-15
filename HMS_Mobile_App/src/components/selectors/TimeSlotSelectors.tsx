@@ -5,9 +5,9 @@ import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
-  slots: string[];
-  selectedSlot: string;
-  onSelect: (slot: string) => void;
+  readonly  slots: string[];
+   readonly selectedSlot: string;
+   readonly onSelect: (slot: string) => void;
 }
 
 export default function TimeSlotSelector({

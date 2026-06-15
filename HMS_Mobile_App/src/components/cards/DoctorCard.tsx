@@ -2,9 +2,9 @@ import React from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 
 interface Props {
-  doctor: any;
-  selected: boolean;
-  onPress: () => void;
+  readonly doctor: any;
+  readonly selected: boolean;
+  readonly onPress: () => void;
 }
 
 export default function DoctorCard({ doctor, selected, onPress }: Props) {

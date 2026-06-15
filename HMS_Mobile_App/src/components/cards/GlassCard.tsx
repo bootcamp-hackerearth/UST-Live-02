@@ -3,7 +3,7 @@ import React from "react";
 import { View, StyleSheet } from "react-native";
 
 interface Props {
-  children: React.ReactNode;
+   readonly children: React.ReactNode;
 }
 
 export default function GlassCard({ children }: Props) {

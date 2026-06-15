@@ -2,5 +2,5 @@ projectKey=hmsmobile
 serverUrl=http://localhost:9000
 serverVersion=26.1.0.118079
 dashboardUrl=http://localhost:9000/dashboard?id=hmsmobile
-ceTaskId=1aa4ec70-578b-4bef-aaa4-c52a248e9c03
-ceTaskUrl=http://localhost:9000/api/ce/task?id=1aa4ec70-578b-4bef-aaa4-c52a248e9c03
+ceTaskId=8b609c3e-2d4b-483b-9392-6d306c580ed4
+ceTaskUrl=http://localhost:9000/api/ce/task?id=8b609c3e-2d4b-483b-9392-6d306c580ed4

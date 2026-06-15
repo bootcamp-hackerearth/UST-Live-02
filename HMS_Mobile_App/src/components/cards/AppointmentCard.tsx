@@ -7,8 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 import StatusBadge from "../badges/StatusBadge";
 
 interface Props {
-  item: any;
-  onPress: () => void;
+  readonly item: any;
+  readonly onPress: () => void;
 }
 
 export default function AppointmentCard({ item, onPress }: Props) {

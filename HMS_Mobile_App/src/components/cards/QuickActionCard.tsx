@@ -5,8 +5,8 @@ import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
-  title: string;
-  onPress: () => void;
+  readonly  title: string;
+   readonly onPress: () => void;
 }
 
 export default function QuickActionCard({ title, onPress }: Props) {

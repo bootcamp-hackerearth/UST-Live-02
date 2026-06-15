@@ -7,39 +7,31 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useEffect, useState } from "react";
-
 import { useRoute, useNavigation } from "@react-navigation/native";
-
 import {
   getAppointmentById,
   cancelAppointment,
 } from "../../src/services/appointment.service";
-
 import GlassCard from "../../src/components/cards/GlassCard";
 import StatusBadge from "../../src/components/badges/StatusBadge";
 import InfoRow from "../../src/components/cards/InfoRow";
 
 export default function AppointmentDetails() {
   const navigation = useNavigation<any>();
-
   const route = useRoute<any>();
-
   const { id } = route.params;
-  const [appointment, setAppointment] = useState<any>(null);
 
+  const [appointment, setAppointment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadAppointment();
   }, []);
+
   const loadAppointment = async () => {
     try {
-      setLoading(true);
-
       const response = await getAppointmentById(id as string);
-
       setAppointment(response.data.data);
     } catch (error) {
       console.log(error);
@@ -47,22 +39,19 @@ export default function AppointmentDetails() {
       setLoading(false);
     }
   };
+
   const handleCancel = async () => {
     try {
       await cancelAppointment(id as string);
-
       Alert.alert("Success", "Appointment cancelled", [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
+        { text: "OK", onPress: () => navigation.goBack() },
       ]);
     } catch {
       Alert.alert("Error", "Failed to cancel appointment");
     }
   };
 
-  if (!appointment) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <Text>Loading...</Text>
@@ -74,9 +63,7 @@ export default function AppointmentDetails() {
     <SafeAreaView style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: 120,
-        }}
+        contentContainerStyle={{ paddingBottom: 120 }}
       >
         <Text style={styles.title}>Appointment Details</Text>
 
@@ -95,86 +82,36 @@ export default function AppointmentDetails() {
             Dr. {appointment?.doctorEmployeeId?.name}
           </Text>
 
-          <Text
-            style={{
-              textAlign: "center",
-              color: "#64748B",
-              marginTop: 6,
-            }}
-          >
-            Healthcare Specialist
-          </Text>
+          <Text style={styles.specialistLabel}>Healthcare Specialist</Text>
 
-          <View
-            style={{
-              marginTop: 14,
-              alignSelf: "center",
-              backgroundColor: "#DBEAFE",
-              paddingHorizontal: 14,
-              paddingVertical: 7,
-              borderRadius: 999,
-            }}
-          >
-            <Text
-              style={{
-                color: "#2563EB",
-                fontWeight: "700",
-              }}
-            >
-              Consultation Scheduled
-            </Text>
+          <View style={styles.scheduledBadge}>
+            <Text style={styles.scheduledBadgeText}>Consultation Scheduled</Text>
           </View>
         </GlassCard>
 
         <GlassCard>
           <Text style={styles.sectionTitle}>Appointment Information</Text>
-
           <InfoRow
             label="Appointment Date"
             value={appointment?.appointmentDate?.split("T")[0]}
           />
-
           <InfoRow label="Time Slot" value={appointment?.timeSlot} />
-
           <InfoRow label="Current Status" value={appointment?.status} />
-
           <InfoRow label="Appointment ID" value={appointment?._id?.slice(-8)} />
         </GlassCard>
 
         {appointment?.symptoms?.length > 0 && (
           <GlassCard>
             <Text style={styles.sectionTitle}>Symptoms</Text>
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: 8,
-              }}
-            >
-              {appointment?.symptoms?.map((symptom: string) => (
-                <View
-                  key={symptom}
-                  style={{
-                    backgroundColor: "#DBEAFE",
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    marginBottom: 8,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#2563EB",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {symptom}
-                  </Text>
+            <View style={styles.symptomsRow}>
+              {appointment.symptoms.map((symptom: string) => (
+                <View key={symptom} style={styles.symptomChip}>
+                  <Text style={styles.symptomChipText}>{symptom}</Text>
                 </View>
               ))}
             </View>
             <Text style={styles.symptoms}>
-              {appointment?.symptoms?.join(", ")}
+              {appointment.symptoms.join(", ")}
             </Text>
           </GlassCard>
         )}
@@ -182,18 +119,13 @@ export default function AppointmentDetails() {
         {appointment?.status === "PENDING" && (
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() =>
-              navigation.navigate("EditAppointment", {
-                id: appointment._id,
-              })
-            }
+            onPress={() => navigation.navigate("EditAppointment", { id: appointment._id })}
           >
             <Text style={styles.buttonText}>Edit Appointment</Text>
           </TouchableOpacity>
         )}
 
-        {(appointment?.status === "PENDING" ||
-          appointment?.status === "BOOKED") && (
+        {(appointment?.status === "PENDING" || appointment?.status === "BOOKED") && (
           <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
             <Text style={styles.buttonText}>Cancel Appointment</Text>
           </TouchableOpacity>
@@ -209,18 +141,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F7FC",
     padding: 20,
   },
-
   title: {
     fontSize: 30,
     fontWeight: "800",
     color: "#0F172A",
     marginBottom: 20,
   },
-
   badgeContainer: {
     marginBottom: 20,
   },
-
   doctorAvatar: {
     width: 80,
     height: 80,
@@ -230,7 +159,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
   },
-
   avatarText: {
     color: "#fff",
     fontSize: 30,
@@ -243,19 +171,49 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#0F172A",
   },
-
+  specialistLabel: {
+    textAlign: "center",
+    color: "#64748B",
+    marginTop: 6,
+  },
+  scheduledBadge: {
+    marginTop: 14,
+    alignSelf: "center",
+    backgroundColor: "#DBEAFE",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+  },
+  scheduledBadgeText: {
+    color: "#2563EB",
+    fontWeight: "700",
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 20,
     color: "#0F172A",
   },
-
+  symptomsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  symptomChip: {
+    backgroundColor: "#DBEAFE",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  symptomChipText: {
+    color: "#2563EB",
+    fontWeight: "600",
+  },
   symptoms: {
     color: "#334155",
     lineHeight: 22,
   },
-
   editButton: {
     backgroundColor: "#2563EB",
     height: 56,
@@ -264,7 +222,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
   },
-
   cancelButton: {
     backgroundColor: "#EF4444",
     height: 56,
@@ -274,7 +231,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 40,
   },
-
   buttonText: {
     color: "#FFFFFF",
     fontWeight: "700",

@@ -1,15 +1,16 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
+
 import {
-  SafeAreaView,
   StyleSheet,
-  View,
   Text,
   ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { minLength } from "../../src/utils/validators";
 import GlassCard from "../../src/components/cards/GlassCard";
 import ChipSelector from "../../src/components/selectors/ChipSelector";

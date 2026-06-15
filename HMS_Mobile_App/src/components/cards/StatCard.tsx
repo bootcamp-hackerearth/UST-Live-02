@@ -5,8 +5,8 @@ import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
-  title: string;
-  value: number;
+   readonly title: string;
+   readonly value: number;
 }
 
 export default function StatCard({ title, value }: Props) {

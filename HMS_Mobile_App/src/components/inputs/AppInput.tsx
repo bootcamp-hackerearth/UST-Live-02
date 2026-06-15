@@ -8,8 +8,8 @@ import {
 } from "react-native";
 
 interface AppInputProps extends TextInputProps {
-  label: string;
-  error?: string;
+   readonly label: string;
+   readonly error?: string;
 }
 
 export default function AppInput({ label, error, ...props }: AppInputProps) {

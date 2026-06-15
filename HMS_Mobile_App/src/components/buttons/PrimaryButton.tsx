@@ -11,9 +11,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
-  title: string;
-  onPress: () => void;
-  loading?: boolean;
+ readonly title: string;
+  readonly onPress: () => void;
+  readonly loading?: boolean;
 }
 
 export default function PrimaryButton({

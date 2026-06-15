@@ -3,8 +3,8 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 interface Props {
-  label: string;
-  value: string;
+   readonly label: string;
+   readonly value: string;
 }
 
 export default function InfoRow({ label, value }: Props) {
