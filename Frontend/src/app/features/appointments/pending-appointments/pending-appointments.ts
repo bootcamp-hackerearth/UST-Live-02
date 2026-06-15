@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AppointmentService } from '../../../core/services/appointment';
 import { ToastService } from '../../../core/services/toast';
-import { ChangeDetectorRef } from '@angular/core';
 @Component({
   selector: 'app-pending-appointments',
   standalone: true,

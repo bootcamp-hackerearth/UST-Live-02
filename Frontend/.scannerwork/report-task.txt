@@ -1,0 +1,6 @@
+projectKey=HMS-SPRINT-3
+serverUrl=http://localhost:9000
+serverVersion=26.1.0.118079
+dashboardUrl=http://localhost:9000/dashboard?id=HMS-SPRINT-3
+ceTaskId=5d673ea7-5ec8-4ab3-8361-159b2b64f2a4
+ceTaskUrl=http://localhost:9000/api/ce/task?id=5d673ea7-5ec8-4ab3-8361-159b2b64f2a4
