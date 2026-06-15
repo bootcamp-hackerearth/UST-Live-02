@@ -17,12 +17,13 @@ import {
 } from "../utils/validation";
 import { colors, spacing } from "../theme";
 
-type SignupScreenProps = {
+type SignupScreenProps = Readonly<{
   navigation: AppNavigation;
-};
+}>;
 
 const TITLE_COLOR = "#2f4f83";
 const SECTION_TEXT_COLOR = "#6b7280";
+const VALID_GENDERS = new Set(["MALE", "FEMALE", "OTHER"]);
 
 export default function SignupScreen({ navigation }: SignupScreenProps) {
   const [form, setForm] = useState({
@@ -62,7 +63,7 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
       return;
     }
 
-    if (!["MALE", "FEMALE", "OTHER"].includes(form.gender.trim().toUpperCase())) {
+    if (!VALID_GENDERS.has(form.gender.trim().toUpperCase())) {
       Alert.alert("Invalid gender", "Gender must be MALE, FEMALE, or OTHER.");
       return;
     }
@@ -139,7 +140,11 @@ export default function SignupScreen({ navigation }: SignupScreenProps) {
   );
 }
 
-function SectionTitle({ title }: { title: string }) {
+type SectionTitleProps = Readonly<{
+  title: string;
+}>;
+
+function SectionTitle({ title }: SectionTitleProps) {
   return (
     <View style={styles.sectionWrapper}>
       <View style={styles.sectionLine} />

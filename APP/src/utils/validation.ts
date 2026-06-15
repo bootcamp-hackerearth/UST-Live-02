@@ -7,13 +7,13 @@ export const PASSWORD_REGEX =
   /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 export const onlyLetters = (value: string) =>
-  value.replace(/[^A-Za-z\s]/g, "");
+  value.replaceAll(/[^A-Za-z\s]/g, "");
 
 export const onlyNumbers = (value: string) =>
-  value.replace(/\D/g, "");
+  value.replaceAll(/\D/g, "");
 
 export const onlyTimeCharacters = (value: string) =>
-  value.replace(/[^\d:]/g, "").slice(0, 5);
+  value.replaceAll(/[^\d:]/g, "").slice(0, 5);
 
 export const isFutureDate = (value: string) => {
   const selectedDate = new Date(value);

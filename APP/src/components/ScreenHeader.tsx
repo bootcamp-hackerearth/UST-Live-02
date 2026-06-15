@@ -2,12 +2,12 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors, spacing } from "../theme";
 
-type ScreenHeaderProps = {
+type ScreenHeaderProps = Readonly<{
   title: string;
   onBack?: () => void;
   actionLabel?: string;
   onAction?: () => void;
-};
+}>;
 
 export default function ScreenHeader({
   title,

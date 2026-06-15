@@ -256,8 +256,8 @@ export default function AppointmentsScreen({ navigation }: any) {
                     minimumDate={new Date()}
                     accentColor="#2563eb"
                     themeVariant="light"
-                    onChange={(_e, selected) => {
-                      if (selected) setEditDate(selected);
+                    onValueChange={(_event, selected) => {
+                      setEditDate(selected);
                     }}
                   />
                 </>
@@ -269,10 +269,11 @@ export default function AppointmentsScreen({ navigation }: any) {
                   mode="date"
                   display="calendar"
                   minimumDate={new Date()}
-                  onChange={(_e, selected) => {
+                  onValueChange={(_event, selected) => {
                     setShowEditCalendar(false);
-                    if (selected) setEditDate(selected);
+                    setEditDate(selected);
                   }}
+                  onDismiss={() => setShowEditCalendar(false)}
                 />
               )}
 
@@ -322,7 +323,13 @@ const formatPatientName = (patient?: any) => {
 };
 
 // ─── InfoRow ─────────
-function InfoRow({ icon, label, value }: { icon: string; label: string; value?: string }) {
+type AppointmentInfoRowProps = Readonly<{
+  icon: string;
+  label: string;
+  value?: string;
+}>;
+
+function InfoRow({ icon, label, value }: AppointmentInfoRowProps) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoIcon}>{icon}</Text>

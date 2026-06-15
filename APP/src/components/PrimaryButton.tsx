@@ -3,13 +3,13 @@ import { StyleSheet } from "react-native";
 import { Button } from "react-native-paper";
 import { colors, radius } from "../theme";
 
-interface PrimaryButtonProps {
+type PrimaryButtonProps = Readonly<{
   title: string;
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
   color?: string;
-}
+}>;
 
 export default function PrimaryButton({
   title,

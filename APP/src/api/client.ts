@@ -4,7 +4,7 @@ import { getToken } from "../utils/storage";
 
 const API_BASE_URL =
   Platform.OS === "android"
-    ? "http://10.0.2.2:5000/api"
+    ? "http://10.0.2.2:5000/api"  //nosonar
     : "http://localhost:5000/api";
 
 const client = axios.create({
@@ -14,7 +14,6 @@ const client = axios.create({
   },
 });
 
-// attach token automatically
 client.interceptors.request.use(async (config) => {
   const token = await getToken();
   if (token) {

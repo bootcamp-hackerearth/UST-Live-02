@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getProfileApi, updateProfileApi } from "../api/patient.api";
 import ScreenHeader from "../components/ScreenHeader";
+import { AppNavigation } from "../navigation/routes";
 import { colors, radius, shadow, spacing } from "../theme";
 import {
   LETTERS_ONLY_REGEX,
@@ -20,7 +21,90 @@ import {
   onlyNumbers,
 } from "../utils/validation";
 
-export default function ProfileScreen({ navigation }: any) {
+type ProfileScreenProps = Readonly<{
+  navigation: AppNavigation;
+}>;
+
+type ProfileForm = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  address: string;
+  bloodGroup: string;
+  gender: string;
+  allergies: string;
+  insuranceProvider: string;
+};
+
+const createProfileForm = (profile: any): ProfileForm => ({
+  firstName:         profile.firstName         ?? "",
+  lastName:          profile.lastName          ?? "",
+  phone:             profile.phone             ?? "",
+  email:             profile.email             ?? "",
+  address:           profile.address           ?? "",
+  bloodGroup:        profile.bloodGroup        ?? "",
+  gender:            profile.gender            ?? "",
+  allergies:         Array.isArray(profile.allergies)
+                       ? profile.allergies.join(", ")
+                       : (profile.allergies ?? ""),
+  insuranceProvider: profile.insuranceProvider ?? "",
+});
+
+const formatDisplayDate = (value?: string) =>
+  value
+    ? new Date(value).toLocaleDateString("en-IN", {
+        day: "2-digit", month: "long", year: "numeric",
+      })
+    : undefined;
+
+const formatListValue = (value: unknown) =>
+  Array.isArray(value) && value.length > 0 ? value.join(", ") : undefined;
+
+const VALID_GENDERS = new Set(["MALE", "FEMALE", "OTHER"]);
+
+const getProfileFormError = (form: ProfileForm) => {
+  if (!form.firstName.trim()) {
+    return { title: "Required", message: "First name cannot be empty." };
+  }
+
+  if (
+    !LETTERS_ONLY_REGEX.test(form.firstName.trim()) ||
+    (form.lastName.trim() && !LETTERS_ONLY_REGEX.test(form.lastName.trim()))
+  ) {
+    return {
+      title: "Invalid name",
+      message: "First name and last name should contain only letters.",
+    };
+  }
+
+  if (form.gender.trim() && !VALID_GENDERS.has(form.gender.trim().toUpperCase())) {
+    return { title: "Invalid gender", message: "Gender must be MALE, FEMALE, or OTHER." };
+  }
+
+  if (form.phone.trim() && !PHONE_REGEX.test(form.phone.trim())) {
+    return { title: "Invalid phone", message: "Phone number must contain exactly 10 digits." };
+  }
+
+  return undefined;
+};
+
+const createProfilePayload = (form: ProfileForm) => ({
+  ...form,
+  allergies: form.allergies
+    ? form.allergies.split(",").map((a) => a.trim()).filter(Boolean)
+    : [],
+});
+
+const getHeaderActionLabel = (canEditProfile: boolean, editMode: boolean) => {
+  if (!canEditProfile) {
+    return undefined;
+  }
+
+  return editMode ? "Cancel" : "Edit";
+};
+
+export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -47,19 +131,7 @@ export default function ProfileScreen({ navigation }: any) {
       if (res.data.success) {
         const data = res.data.data;
         setProfile(data);
-        setForm({
-          firstName:         data.firstName         ?? "",
-          lastName:          data.lastName          ?? "",
-          phone:             data.phone             ?? "",
-          email:             data.email             ?? "",
-          address:           data.address           ?? "",
-          bloodGroup:        data.bloodGroup        ?? "",
-          gender:            data.gender            ?? "",
-          allergies:         Array.isArray(data.allergies)
-                               ? data.allergies.join(", ")
-                               : (data.allergies ?? ""),
-          insuranceProvider: data.insuranceProvider ?? "",
-        });
+        setForm(createProfileForm(data));
       } else {
         Alert.alert("Error", res.data.message || "Failed to load profile");
       }
@@ -76,38 +148,15 @@ export default function ProfileScreen({ navigation }: any) {
 
   // ── Save edits ─────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!form.firstName.trim()) {
-      Alert.alert("Required", "First name cannot be empty.");
-      return;
-    }
-
-    if (
-      !LETTERS_ONLY_REGEX.test(form.firstName.trim()) ||
-      (form.lastName.trim() && !LETTERS_ONLY_REGEX.test(form.lastName.trim()))
-    ) {
-      Alert.alert("Invalid name", "First name and last name should contain only letters.");
-      return;
-    }
-
-    if (form.gender.trim() && !["MALE", "FEMALE", "OTHER"].includes(form.gender.trim().toUpperCase())) {
-      Alert.alert("Invalid gender", "Gender must be MALE, FEMALE, or OTHER.");
-      return;
-    }
-
-    if (form.phone.trim() && !PHONE_REGEX.test(form.phone.trim())) {
-      Alert.alert("Invalid phone", "Phone number must contain exactly 10 digits.");
+    const formError = getProfileFormError(form);
+    if (formError) {
+      Alert.alert(formError.title, formError.message);
       return;
     }
 
     try {
       setSaving(true);
-      const payload = {
-        ...form,
-        allergies: form.allergies
-          ? form.allergies.split(",").map((a) => a.trim()).filter(Boolean)
-          : [],
-      };
-      const res = await updateProfileApi(payload);
+      const res = await updateProfileApi(createProfilePayload(form));
       if (res.data.success) {
         setProfile(res.data.data);
         setEditMode(false);
@@ -124,19 +173,7 @@ export default function ProfileScreen({ navigation }: any) {
 
   const handleCancelEdit = () => {
     if (profile) {
-      setForm({
-        firstName:         profile.firstName         ?? "",
-        lastName:          profile.lastName          ?? "",
-        phone:             profile.phone             ?? "",
-        email:             profile.email             ?? "",
-        address:           profile.address           ?? "",
-        bloodGroup:        profile.bloodGroup        ?? "",
-        gender:            profile.gender            ?? "",
-        allergies:         Array.isArray(profile.allergies)
-                             ? profile.allergies.join(", ")
-                             : (profile.allergies ?? ""),
-        insuranceProvider: profile.insuranceProvider ?? "",
-      });
+      setForm(createProfileForm(profile));
     }
     setEditMode(false);
   };
@@ -153,6 +190,19 @@ export default function ProfileScreen({ navigation }: any) {
     setForm((prev) => ({ ...prev, phone: onlyNumbers(value).slice(0, 10) }));
   };
 
+  const canEditProfile = !loading && Boolean(profile);
+  const headerActionLabel = getHeaderActionLabel(canEditProfile, editMode);
+  const handleHeaderAction = canEditProfile
+    ? () => {
+        if (editMode) {
+          handleCancelEdit();
+          return;
+        }
+
+        setEditMode(true);
+      }
+    : undefined;
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -160,18 +210,22 @@ export default function ProfileScreen({ navigation }: any) {
       <ScreenHeader
         title="My Profile"
         onBack={() => navigation.goBack()}
-        actionLabel={!loading && profile ? (editMode ? "Cancel" : "Edit") : undefined}
-        onAction={!loading && profile ? () => (editMode ? handleCancelEdit() : setEditMode(true)) : undefined}
+        actionLabel={headerActionLabel}
+        onAction={handleHeaderAction}
       />
 
-      {loading ? (
+      {loading && (
         <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
-      ) : !profile ? (
+      )}
+
+      {!loading && !profile && (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>Profile</Text>
           <Text style={styles.emptyText}>Profile not found.</Text>
         </View>
-      ) : editMode ? (
+      )}
+
+      {!loading && profile && editMode && (
 
         /* ── EDIT MODE ──────────────────────────────────────────────────── */
         <ScrollView
@@ -270,7 +324,9 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={{ height: 30 }} />
         </ScrollView>
 
-      ) : (
+      )}
+
+      {!loading && profile && !editMode && (
 
         /* ── VIEW MODE ──────────────────────────────────────────────────── */
         <ScrollView
@@ -295,13 +351,7 @@ export default function ProfileScreen({ navigation }: any) {
             <InfoRow label="Gender"        value={profile.gender} />
             <InfoRow
               label="Date of Birth"
-              value={
-                profile.dateOfBirth
-                  ? new Date(profile.dateOfBirth).toLocaleDateString("en-IN", {
-                      day: "2-digit", month: "long", year: "numeric",
-                    })
-                  : undefined
-              }
+              value={formatDisplayDate(profile.dateOfBirth)}
             />
             <InfoRow label="Blood Group"   value={profile.bloodGroup} />
           </SectionCard>
@@ -316,19 +366,11 @@ export default function ProfileScreen({ navigation }: any) {
             <InfoRow label="Assigned Doctor" value={profile.assignedDoctor?.name} />
             <InfoRow
               label="Allergies"
-              value={
-                Array.isArray(profile.allergies) && profile.allergies.length > 0
-                  ? profile.allergies.join(", ")
-                  : undefined
-              }
+              value={formatListValue(profile.allergies)}
             />
             <InfoRow
               label="Medical History"
-              value={
-                Array.isArray(profile.medicalHistory) && profile.medicalHistory.length > 0
-                  ? profile.medicalHistory.join(", ")
-                  : undefined
-              }
+              value={formatListValue(profile.medicalHistory)}
             />
             <InfoRow label="Insurance" value={profile.insuranceProvider} />
           </SectionCard>
@@ -337,13 +379,7 @@ export default function ProfileScreen({ navigation }: any) {
             <InfoRow label="Status" value={profile.status} />
             <InfoRow
               label="Joined"
-              value={
-                profile.createdAt
-                  ? new Date(profile.createdAt).toLocaleDateString("en-IN", {
-                      day: "2-digit", month: "long", year: "numeric",
-                    })
-                  : undefined
-              }
+              value={formatDisplayDate(profile.createdAt)}
             />
           </SectionCard>
 
@@ -359,7 +395,12 @@ const formatPatientName = (patient?: any) => {
   return name || "Patient";
 };
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+type SectionCardProps = Readonly<{
+  title: string;
+  children: React.ReactNode;
+}>;
+
+function SectionCard({ title, children }: SectionCardProps) {
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{title}</Text>
@@ -370,7 +411,12 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 // ─── View mode row ────────────────────────────────────────────────────────────
-function InfoRow({ label, value }: { label: string; value?: string }) {
+type ProfileInfoRowProps = Readonly<{
+  label: string;
+  value?: string;
+}>;
+
+function InfoRow({ label, value }: ProfileInfoRowProps) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
@@ -382,7 +428,7 @@ function InfoRow({ label, value }: { label: string; value?: string }) {
 // ─── Edit mode field ──────────────────────────────────────────────────────────
 function EditField({
   label, value, onChangeText, placeholder, keyboardType, autoCapitalize, multiline, maxLength,
-}: {
+}: Readonly<{
   label: string;
   value: string;
   onChangeText: (v: string) => void;
@@ -391,7 +437,7 @@ function EditField({
   autoCapitalize?: any;
   multiline?: boolean;
   maxLength?: number;
-}) {
+}>) {
   return (
     <View style={styles.editFieldWrapper}>
       <Text style={styles.editFieldLabel}>{label}</Text>

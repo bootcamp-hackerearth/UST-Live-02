@@ -7,9 +7,9 @@ import { AppNavigation, ROUTES } from "../navigation/routes";
 import { clearSession } from "../utils/storage";
 import { colors, radius, shadow, spacing } from "../theme";
 
-type DashboardScreenProps = {
+type DashboardScreenProps = Readonly<{
   navigation: AppNavigation;
-};
+}>;
 
 type PatientProfile = {
   firstName?: string;
@@ -64,18 +64,22 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogoutConfirm = async () => {
+    await clearSession();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: ROUTES.login }],
+    });
+  };
+
+  const handleLogout = () => {
     Alert.alert("Logout", "Do you want to end your current session?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Logout",
         style: "destructive",
-        onPress: async () => {
-          await clearSession();
-          navigation.reset({
-            index: 0,
-            routes: [{ name: ROUTES.login }],
-          });
+        onPress: () => {
+          void handleLogoutConfirm();
         },
       },
     ]);
@@ -83,8 +87,8 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
 
   const patientName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "Patient";
   const initials = [profile?.firstName, profile?.lastName]
-    .filter(isNonEmptyString)
-    .map((name: string) => name.charAt(0))
+    .filter(Boolean)
+    .map((name) => name?.charAt(0) ?? "")
     .join("")
     .slice(0, 2)
     .toUpperCase() || "P";
@@ -150,7 +154,13 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   );
 }
 
-function StatCard({ eyebrow, value, label }: { eyebrow: string; value: number; label: string }) {
+type StatCardProps = Readonly<{
+  eyebrow: string;
+  value: number;
+  label: string;
+}>;
+
+function StatCard({ eyebrow, value, label }: StatCardProps) {
   return (
     <View style={styles.statCard}>
       <Text style={styles.statIcon}>{eyebrow}</Text>
@@ -165,12 +175,12 @@ function ActionTile({
   title,
   color,
   onPress,
-}: {
+}: Readonly<{
   icon: string;
   title: string;
   color: string;
   onPress: () => void;
-}) {
+}>) {
   return (
     <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.85}>
       <View style={[styles.tileIcon, { backgroundColor: color }]}>
@@ -187,9 +197,6 @@ const toApiDate = (date: Date) => {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
-
-const isNonEmptyString = (value: string | undefined): value is string =>
-  Boolean(value);
 
 const styles = StyleSheet.create({
   safe: {

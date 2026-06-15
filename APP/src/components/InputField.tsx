@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { TextInput } from "react-native-paper";
 import { colors, radius } from "../theme";
 
-interface InputFieldProps {
+type InputFieldProps = Readonly<{
   label: string;
   value: string;
   onChangeText: (text: string) => void;
@@ -15,7 +15,7 @@ interface InputFieldProps {
   rightIcon?: string;
   onRightIconPress?: () => void;
   maxLength?: number;
-}
+}>;
 
 export default function InputField({
   label,

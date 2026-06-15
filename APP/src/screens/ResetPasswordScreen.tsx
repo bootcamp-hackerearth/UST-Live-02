@@ -10,15 +10,15 @@ import { getErrorMessage } from "../utils/error";
 import { validatePassword } from "../utils/validation";
 import { colors, radius, shadow, spacing } from "../theme";
 
-type ResetPasswordScreenProps = {
+type ResetPasswordScreenProps = Readonly<{
   navigation: AppNavigation;
-  route?: {
-    params?: {
+  route?: Readonly<{
+    params?: Readonly<{
       email?: string;
       fromTemporaryPassword?: boolean;
-    };
-  };
-};
+    }>;
+  }>;
+}>;
 
 export default function ResetPasswordScreen({ navigation, route }: ResetPasswordScreenProps) {
   const initialEmail = route?.params?.email ?? "";

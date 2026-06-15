@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
-
 import {
   getDoctorsApi,
   getAvailableSlotsApi,
@@ -20,7 +19,11 @@ import {
 } from "../api/appointment.api";
 import ScreenHeader from "../components/ScreenHeader";
 import { colors, radius, shadow, spacing } from "../theme";
+import { AppNavigation } from "../navigation/routes";
 
+type BookAppointmentScreenProps = Readonly<{
+  navigation: AppNavigation;
+}>;
 // ─── Types 
 type Doctor = {
   _id: string;
@@ -49,8 +52,7 @@ const DAY_ABBR: Record<string, string> = {
   Thursday: "Thu", Friday: "Fri", Saturday: "Sat", Sunday: "Sun",
 };
 
-// ─── Screen 
-export default function BookAppointmentScreen({ navigation }: any) {
+export default function BookAppointmentScreen({ navigation }: BookAppointmentScreenProps) {
   // Doctor
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -161,9 +163,55 @@ export default function BookAppointmentScreen({ navigation }: any) {
            d.getFullYear() === t.getFullYear();
   };
 
-  const onDateChange = (_event: any, selected?: Date) => {
-    if (Platform.OS === "android") setShowCalendar(false);
-    if (selected) setDate(selected);
+  const onDateValueChange = (_event: unknown, selected: Date) => {
+    if (Platform.OS === "android") {
+      setShowCalendar(false);
+    }
+    setDate(selected);
+  };
+
+  const renderSlots = () => {
+    if (selectedDoctor) {
+      if (loadingSlots) {
+        return (
+          <View style={s.loadingBox}>
+            <ActivityIndicator color="#2563eb" />
+            <Text style={s.loadingText}>Checking availability...</Text>
+          </View>
+        );
+      }
+
+      if (slots.length === 0) {
+        return (
+          <View style={s.hintBox}>
+            <Text style={s.hintText}>No slots available for this date. Try another day.</Text>
+          </View>
+        );
+      }
+
+      return (
+        <View style={s.slotsGrid}>
+          {slots.map((slot) => (
+            <TouchableOpacity
+              key={slot}
+              style={[s.slotChip, selectedSlot === slot && s.slotChipActive]}
+              onPress={() => setSelectedSlot(slot)}
+              activeOpacity={0.75}
+            >
+              <Text style={[s.slotText, selectedSlot === slot && s.slotTextActive]}>
+                {slot}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      );
+    }
+
+    return (
+      <View style={s.hintBox}>
+        <Text style={s.hintText}>Select a doctor first to see available slots.</Text>
+      </View>
+    );
   };
 
   return (
@@ -250,7 +298,7 @@ export default function BookAppointmentScreen({ navigation }: any) {
               mode="date"
               display="inline"
               minimumDate={new Date()}
-              onChange={onDateChange}
+              onValueChange={onDateValueChange}
               accentColor="#2563eb"
               themeVariant="light"
               style={s.iosPicker}
@@ -265,42 +313,15 @@ export default function BookAppointmentScreen({ navigation }: any) {
             mode="date"
             display="calendar"
             minimumDate={new Date()}
-            onChange={onDateChange}
+            onValueChange={onDateValueChange}
+            onDismiss={() => setShowCalendar(false)}
           />
         )}
 
         {/* ── Step 3: Time Slot ─────────────────────────────────────────── */}
         <StepLabel n="3" label="Pick a Time Slot" />
 
-        {!selectedDoctor ? (
-          <View style={s.hintBox}>
-            <Text style={s.hintText}>Select a doctor first to see available slots.</Text>
-          </View>
-        ) : loadingSlots ? (
-          <View style={s.loadingBox}>
-            <ActivityIndicator color="#2563eb" />
-            <Text style={s.loadingText}>Checking availability…</Text>
-          </View>
-        ) : slots.length === 0 ? (
-          <View style={s.hintBox}>
-            <Text style={s.hintText}>No slots available for this date. Try another day.</Text>
-          </View>
-        ) : (
-          <View style={s.slotsGrid}>
-            {slots.map((slot) => (
-              <TouchableOpacity
-                key={slot}
-                style={[s.slotChip, selectedSlot === slot && s.slotChipActive]}
-                onPress={() => setSelectedSlot(slot)}
-                activeOpacity={0.75}
-              >
-                <Text style={[s.slotText, selectedSlot === slot && s.slotTextActive]}>
-                  {slot}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+        {renderSlots()}
 
         {/* ── Step 4: Visit Mode ────────────────────────────────────────── */}
         <StepLabel n="4" label="Visit Mode" />
@@ -456,7 +477,12 @@ export default function BookAppointmentScreen({ navigation }: any) {
 }
 
 // ─── Small reusable components ────────────────────────────────────────────────
-function StepLabel({ n, label }: { n: string; label: string }) {
+type StepLabelProps = Readonly<{
+  n: string;
+  label: string;
+}>;
+
+function StepLabel({ n, label }: StepLabelProps) {
   return (
     <View style={s.stepRow}>
       <View style={s.stepBadge}><Text style={s.stepNum}>{n}</Text></View>
@@ -465,7 +491,12 @@ function StepLabel({ n, label }: { n: string; label: string }) {
   );
 }
 
-function Avatar({ name, active }: { name: string; active: boolean }) {
+type AvatarProps = Readonly<{
+  name: string;
+  active: boolean;
+}>;
+
+function Avatar({ name, active }: AvatarProps) {
   return (
     <View style={[s.avatar, active && s.avatarActive]}>
       <Text style={[s.avatarText, active && s.avatarTextActive]}>
@@ -475,7 +506,13 @@ function Avatar({ name, active }: { name: string; active: boolean }) {
   );
 }
 
-function SummaryRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+type SummaryRowProps = Readonly<{
+  label: string;
+  value: string;
+  highlight?: boolean;
+}>;
+
+function SummaryRow({ label, value, highlight }: SummaryRowProps) {
   return (
     <View style={s.summaryRow}>
       <Text style={s.summaryLabel}>{label}</Text>

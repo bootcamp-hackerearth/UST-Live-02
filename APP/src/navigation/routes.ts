@@ -1,7 +1,7 @@
 export const ROUTES = {
   login: "Login",
   signup: "Signup",
-  resetPassword: "ResetPassword",
+  resetPassword: "ResetPassword", //nosonar
   dashboard: "Dashboard",
   profile: "Profile",
   appointments: "Appointments",

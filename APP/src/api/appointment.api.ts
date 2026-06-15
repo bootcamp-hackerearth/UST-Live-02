@@ -15,7 +15,6 @@ export const updateAppointmentApi = (id: string, data: any) =>
 export const deleteAppointmentApi = (id: string) =>
   client.delete(`/appointments/${id}`);
 
-// ── New: fetch all active doctors (no auth required) ──────────────────────────
 export const getDoctorsApi = () =>
   client.get("/employees/doctors").catch((error) => {
     if (error?.response?.status === 404) {
@@ -25,7 +24,6 @@ export const getDoctorsApi = () =>
     throw error;
   });
 
-// ── New: fetch available slots for a doctor on a given date ──────────────────
 export const getAvailableSlotsApi = (doctorId: string, appointmentDate: string) =>
   client.get("/appointments/available-slots", {
     params: { doctorId, appointmentDate },

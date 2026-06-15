@@ -11,9 +11,9 @@ import { AppNavigation, ROUTES } from "../navigation/routes";
 import { getErrorMessage } from "../utils/error";
 import { colors, radius, shadow, spacing } from "../theme";
 
-type LoginScreenProps = {
+type LoginScreenProps = Readonly<{
   navigation: AppNavigation;
-};
+}>;
 
 type LoginTokenPayload = {
   patientId?: string;
