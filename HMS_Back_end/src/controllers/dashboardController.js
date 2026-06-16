@@ -2,7 +2,6 @@ const Patient = require("../models/Patients");
 const Appointment = require("../models/Appointments");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
-const autoCompleteDueAppointments = require("../utils/autoCompleteDueAppointments");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -10,8 +9,6 @@ const MESSAGES = require("../constants/messages");
 
 // Get Admin Dashboard Statistics
 exports.getAdminDashboardStats = async (req, res) => {
-
-    await autoCompleteDueAppointments();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -63,8 +60,6 @@ exports.getAdminDashboardStats = async (req, res) => {
 // Get Doctor Dashboard Statistics
 exports.getDoctorDashboardStats = async (req, res) => {
 
-    await autoCompleteDueAppointments();
-
     const doctorEmployeeCode = req.user.employeeCode;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -106,8 +101,6 @@ exports.getDoctorDashboardStats = async (req, res) => {
 
 // Get Receptionist Dashboard Statistics
 exports.getReceptionistDashboardStats = async (req, res) => {
-
-    await autoCompleteDueAppointments();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -160,8 +153,6 @@ exports.getDashboardStats = async (req, res) => {
 
 // Get Appointment Statistics
 exports.getAppointmentStats = async (req, res) => {
-
-    await autoCompleteDueAppointments();
 
     const { startDate, endDate } = req.query;
 

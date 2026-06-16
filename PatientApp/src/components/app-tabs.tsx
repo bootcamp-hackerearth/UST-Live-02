@@ -54,6 +54,13 @@ const APP_TABS = [
     href: "/explore",
   },
   {
+    name: "medical-records",
+    label: "Records",
+    icon: "document-text-outline" as const,
+    activeIcon: "document-text" as const,
+    href: "/medical-records",
+  },
+  {
     name: "profile",
     label: "Profile",
     icon: "person-outline" as const,
@@ -62,7 +69,13 @@ const APP_TABS = [
   },
 ];
 
-const PROTECTED_PREFIXES = ["/profile", "/explore"];
+const PROTECTED_PREFIXES = [
+  "/profile",
+  "/explore",
+  "/medical-records",
+  "/medical-record",
+  "/appointment-record",
+];
 
 export default function AppTabs() {
   const { isLoggedIn, checkLoginStatus } = useAuthStore();

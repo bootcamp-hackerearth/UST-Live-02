@@ -16,7 +16,15 @@
                 </span>
               </p>
             </div>
-            <button class="btn btn-primary" (click)="startEdit()">Edit</button>
+            <div class="header-actions">
+              <a
+                class="btn btn-secondary"
+                routerLink="/dashboard/medical-records"
+                [queryParams]="{ patientUHID: p.UHID }">
+                View Medical Records
+              </a>
+              <button class="btn btn-primary" (click)="startEdit()">Edit</button>
+            </div>
           </div>
 
           <div class="card-body">

@@ -84,11 +84,11 @@ router.put(
 );
 
 router.put(
-    "/:appointmentId/complete",
-    DOCTOR_LEVEL,
+    "/:appointmentId/unattended",
+    VIEW_LEVEL,
     appointmentIdValidation,
     validate,
-    controller.completeAppointment
+    controller.markUnattended
 );
 
 module.exports = router;

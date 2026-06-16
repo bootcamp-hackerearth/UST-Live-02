@@ -141,21 +141,6 @@
                 }
               </button>
               }
-
-              @if (isDoctor() && a.status === 'BOOKED') {
-              <button
-                type="button"
-                class="btn btn-sm btn-success-outline"
-                [disabled]="!isStartTimePassed(a) || busyId() !== null"
-                [title]="!isStartTimePassed(a) ? 'Available once the appointment starts' : ''"
-                (click)="complete(a, $event)">
-                @if (busyId() === a.appointmentId && busyAction() === 'complete') {
-                <span>Completing…</span>
-                } @else {
-                <span>Complete</span>
-                }
-              </button>
-              }
             </td>
 
           </tr>

@@ -10,6 +10,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const ownerRoutes = require("./routes/ownerRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
+const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const nodeRoutes = require("./routes/nodeRoutes");
 const patientAuthRoutes = require("./routes/patientAuthRoutes");
@@ -55,6 +56,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/owner", ownerRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/medical-records", medicalRecordRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/nodes", nodeRoutes);
 

@@ -41,7 +41,7 @@ export default function HomeScreen() {
     try {
       const [profile, appts] = await Promise.all([
         getMyProfile(),
-        getMyAppointments("BOOKED"),
+        getMyAppointments("BOOKED", 1, 100),
       ]);
       setUserName(profile.patient?.name || "Patient");
       const now = Date.now();

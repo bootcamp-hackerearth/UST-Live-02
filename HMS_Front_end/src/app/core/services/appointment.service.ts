@@ -97,9 +97,9 @@ export class AppointmentService {
     );
   }
 
-  completeAppointment(appointmentId: string): Observable<AppointmentResponse> {
+  markUnattended(appointmentId: string): Observable<AppointmentResponse> {
     return this.http.put<AppointmentResponse>(
-      `${this.apiUrl}/${appointmentId}/complete`,
+      `${this.apiUrl}/${appointmentId}/unattended`,
       {},
     );
   }

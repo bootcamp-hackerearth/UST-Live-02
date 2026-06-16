@@ -16,10 +16,22 @@ const medicalRecordSchema = new mongoose.Schema({
         required: true,
         ref: "Patients"
     },
+    patientUHID: {
+        type: String,
+        required: true
+    },
+    patientName: {
+        type: String,
+        required: true
+    },
     doctorEmployeeId: {
         type: String,
         required: true,
         ref: "Employees"
+    },
+    doctorName: {
+        type: String,
+        required: true
     },
     symptoms: {
         type: String,
@@ -36,8 +48,36 @@ const medicalRecordSchema = new mongoose.Schema({
     }],
     notes: {
         type: String
+    },
+    status: {
+        type: String,
+        enum: ["DRAFT", "FINALIZED"],
+        default: "DRAFT"
+    },
+    // Creator details retained for audit messaging (staff-created -> doctor-finalized)
+    createdByEmployeeId: {
+        type: String
+    },
+    createdByName: {
+        type: String
+    },
+    createdByDesignation: {
+        type: String
+    },
+    // Soft-delete fields: absent until a deletion occurs (never null, never set at creation)
+    isDeleted: {
+        type: Boolean,
+        default: undefined
+    },
+    deletedAt: {
+        type: Date,
+        default: undefined
+    },
+    deletedBy: {
+        type: String,
+        default: undefined
     }
-}, {timeStamps: { createdAt: "created_at" }}
+}, {timestamps: { createdAt: "created_at", updatedAt: "updated_at" }}
 );
 
 // Pre-save hook to generate sequential medical record id

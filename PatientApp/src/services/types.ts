@@ -49,7 +49,45 @@ export type Doctor = {
   joiningDate?: string;
 };
 
-export type AppointmentStatus = "BOOKED" | "CANCELED" | "COMPLETED";
+export type AppointmentStatus =
+  | "BOOKED"
+  | "CANCELED"
+  | "COMPLETED"
+  | "UNATTENDED";
+
+export type MedicalRecordStatus = "DRAFT" | "FINALIZED";
+
+export type PrescriptionItem = {
+  name: string;
+  dosage: string;
+  duration: string;
+};
+
+// Full medical record (detail responses)
+export type MedicalRecord = {
+  medicalRecordId: string;
+  appointmentId: string;
+  patientId: string;
+  patientUHID: string;
+  patientName: string;
+  doctorEmployeeId: string;
+  doctorName: string;
+  symptoms: string;
+  diagnosis: string;
+  prescriptionItems: PrescriptionItem[];
+  notes?: string;
+  status: MedicalRecordStatus;
+  created_at?: string;
+};
+
+// Summary row shown in the patient's medical records list
+export type MedicalRecordListItem = {
+  medicalRecordId: string;
+  appointmentId: string;
+  doctorName: string;
+  status: MedicalRecordStatus;
+  created_at?: string;
+};
 
 export type Appointment = {
   appointmentId: string;

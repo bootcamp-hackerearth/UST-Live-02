@@ -45,7 +45,7 @@ export class AppointmentsListComponent implements OnInit {
 
   // Row action in flight; all row buttons disable while set
   busyId = signal<string | null>(null);
-  busyAction = signal<'cancel' | 'complete' | null>(null);
+  busyAction = signal<'cancel' | null>(null);
 
   statuses = APPOINTMENT_STATUSES;
   statusFilter = signal<string>('');
@@ -166,17 +166,6 @@ export class AppointmentsListComponent implements OnInit {
     this.doctorTab.set(tab);
   }
 
-  // Completable only once the scheduled start has passed (mirrors the backend guard)
-  isStartTimePassed(a: Appointment): boolean {
-    const slotStart = (a.timeSlot || '').split('-')[0];
-    const [h, m] = slotStart.split(':').map(Number);
-    const scheduled = new Date(a.appointmentDate);
-    if (!Number.isNaN(h) && !Number.isNaN(m)) {
-      scheduled.setHours(h, m, 0, 0);
-    }
-    return scheduled.getTime() <= Date.now();
-  }
-
   onStatusChange(value: string): void {
     this.statusFilter.set(value);
     this.page.set(1);
@@ -240,33 +229,6 @@ export class AppointmentsListComponent implements OnInit {
       error: (err) => {
         this.clearBusy();
         this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_CANCEL_FAILED));
-      },
-    });
-  }
-
-  async complete(a: Appointment, event: Event): Promise<void> {
-    event.stopPropagation();
-    const result = await this.confirmModal.open({
-      title: 'Mark as Completed',
-      message: `Mark appointment ${a.appointmentId} as completed?`,
-      confirmText: 'Mark Completed',
-      cancelText: 'Cancel',
-      type: 'success',
-    });
-    if (!result.confirmed) {
-      return;
-    }
-    this.busyId.set(a.appointmentId);
-    this.busyAction.set('complete');
-    this.appointmentService.completeAppointment(a.appointmentId).subscribe({
-      next: (res) => {
-        this.clearBusy();
-        this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_COMPLETED);
-        this.load();
-      },
-      error: (err) => {
-        this.clearBusy();
-        this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_COMPLETE_FAILED));
       },
     });
   }

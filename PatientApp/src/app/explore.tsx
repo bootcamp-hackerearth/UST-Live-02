@@ -1,10 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { ReactNode, useCallback, useMemo, useState } from "react";
+import { ReactNode, useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,38 +28,35 @@ import {
 import type { Appointment, AppointmentStatus } from "@/services/types";
 
 const TEAL = "#2e9466";
+const PAGE_SIZE = 10;
+
 const STATUS_COLORS: Record<AppointmentStatus, string> = {
   BOOKED: "#2e9466",
   COMPLETED: "#6b7280",
   CANCELED: "#ef4444",
+  UNATTENDED: "#d97706",
 };
-
-// BOOKED first, CANCELED last; within a status nearest date and time slot on top
-const STATUS_PRIORITY: Record<AppointmentStatus, number> = {
-  BOOKED: 0,
-  COMPLETED: 1,
-  CANCELED: 2,
-};
-
-function sortAppointments(list: Appointment[]) {
-  return [...list].sort(
-    (a, b) =>
-      STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status] ||
-      new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime() ||
-      a.timeSlot.localeCompare(b.timeSlot),
-  );
-}
 
 type TopTab = "book" | "list";
 
 type Filter = "All" | AppointmentStatus;
-const FILTERS: Filter[] = ["All", "BOOKED", "COMPLETED", "CANCELED"];
+const FILTERS: Filter[] = [
+  "All",
+  "BOOKED",
+  "COMPLETED",
+  "CANCELED",
+  "UNATTENDED",
+];
 
 export default function AppointmentsScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<TopTab>("list");
-  const [all, setAll] = useState<Appointment[]>([]);
+  const [items, setItems] = useState<Appointment[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<Filter>("All");
 
   // Cancellation modal state
@@ -67,22 +66,67 @@ export default function AppointmentsScreen() {
 
   const confirmLeave = useNavGuard((s) => s.confirmLeave);
 
-  const load = useCallback(async () => {
+  const loadPage = useCallback(
+    async (nextPage: number, replace: boolean, filter: Filter) => {
+      const status = filter === "All" ? undefined : filter;
+      const data = await getMyAppointments(status, nextPage, PAGE_SIZE);
+      setTotalPages(data.totalPages || 1);
+      setPage(data.page || nextPage);
+      setItems((prev) =>
+        replace ? data.appointments : [...prev, ...data.appointments],
+      );
+    },
+    [],
+  );
+
+  // Reload page 1 for the active filter whenever the screen regains focus
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      loadPage(1, true, activeFilter)
+        .catch(showError)
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+      return () => {
+        active = false;
+      };
+    }, [loadPage, activeFilter]),
+  );
+
+  const changeFilter = (f: Filter) => {
+    if (f === activeFilter) return;
+    setActiveFilter(f);
+    setItems([]);
+    setLoading(true);
+    loadPage(1, true, f)
+      .catch(showError)
+      .finally(() => setLoading(false));
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
     try {
-      const data = await getMyAppointments();
-      setAll(sortAppointments(data.appointments));
+      await loadPage(1, true, activeFilter);
     } catch (err) {
       showError(err);
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
-  }, []);
+  }, [loadPage, activeFilter]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  const onEndReached = useCallback(async () => {
+    if (loadingMore || loading || page >= totalPages) return;
+    setLoadingMore(true);
+    try {
+      await loadPage(page + 1, false, activeFilter);
+    } catch (err) {
+      showError(err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, loading, page, totalPages, loadPage, activeFilter]);
 
   // Switching away from a dirty booking form prompts via the shared nav guard
   const switchTab = async (next: TopTab) => {
@@ -94,21 +138,12 @@ export default function AppointmentsScreen() {
   // After booking, jump to the list directly so submit never triggers the unsaved prompt
   const handleBooked = useCallback(() => {
     setTab("list");
-    load();
-  }, [load]);
-
-  const counts = useMemo(
-    () => ({
-      All: all.length,
-      BOOKED: all.filter((a) => a.status === "BOOKED").length,
-      COMPLETED: all.filter((a) => a.status === "COMPLETED").length,
-      CANCELED: all.filter((a) => a.status === "CANCELED").length,
-    }),
-    [all],
-  );
-
-  const filtered =
-    activeFilter === "All" ? all : all.filter((a) => a.status === activeFilter);
+    setActiveFilter("All");
+    setLoading(true);
+    loadPage(1, true, "All")
+      .catch(showError)
+      .finally(() => setLoading(false));
+  }, [loadPage]);
 
   const openCancel = (appt: Appointment) => {
     setCancelTarget(appt);
@@ -125,7 +160,7 @@ export default function AppointmentsScreen() {
     try {
       await cancelAppointment(cancelTarget.appointmentId, reason.trim());
       setCancelTarget(null);
-      await load();
+      await loadPage(1, true, activeFilter);
     } catch (err) {
       showError(err, ALERT_TITLES.CANCEL_FAILED);
     } finally {
@@ -145,20 +180,17 @@ export default function AppointmentsScreen() {
     });
   };
 
-  let listContent: ReactNode;
-  if (loading) {
-    listContent = <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />;
-  } else if (filtered.length === 0) {
-    listContent = (
-      <View style={styles.emptyState}>
-        <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
-        <Text style={styles.emptyText}>No appointments found</Text>
-      </View>
-    );
-  } else {
-    listContent = filtered.map((appt) => (
+  // Tapping a completed appointment opens its medical record (or in-progress text)
+  const openRecord = (appt: Appointment) => {
+    router.push({
+      pathname: "/appointment-record",
+      params: { appointmentId: appt.appointmentId },
+    });
+  };
+
+  const renderItem = ({ item: appt }: { item: Appointment }) => {
+    const card = (
       <AppointmentCard
-        key={appt.appointmentId}
         appointment={appt}
         statusColor={STATUS_COLORS[appt.status]}
       >
@@ -187,8 +219,43 @@ export default function AppointmentsScreen() {
           </Text>
         ) : null}
       </AppointmentCard>
-    ));
-  }
+    );
+
+    if (appt.status === "COMPLETED") {
+      return (
+        <TouchableOpacity activeOpacity={0.85} onPress={() => openRecord(appt)}>
+          {card}
+        </TouchableOpacity>
+      );
+    }
+    return card;
+  };
+
+  const filtersHeader: ReactNode = (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.filtersRow}
+    >
+      {FILTERS.map((f) => (
+        <TouchableOpacity
+          key={f}
+          style={[styles.filterPill, activeFilter === f && styles.filterPillActive]}
+          onPress={() => changeFilter(f)}
+          activeOpacity={0.75}
+        >
+          <Text
+            style={[
+              styles.filterPillText,
+              activeFilter === f && styles.filterPillTextActive,
+            ]}
+          >
+            {f}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
 
   return (
     <View style={styles.root}>
@@ -220,39 +287,36 @@ export default function AppointmentsScreen() {
 
       {tab === "book" ? (
         <AppointmentForm mode="book" embedded onDone={handleBooked} />
+      ) : loading ? (
+        <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />
       ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.container, { paddingBottom: BottomTabInset + 24 }]}
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.appointmentId}
+          renderItem={renderItem}
+          ListHeaderComponent={filtersHeader}
+          contentContainerStyle={[
+            styles.container,
+            { paddingBottom: BottomTabInset + 24 },
+          ]}
           showsVerticalScrollIndicator={false}
-        >
-          {/* Filter pills */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filtersRow}
-          >
-            {FILTERS.map((f) => (
-              <TouchableOpacity
-                key={f}
-                style={[styles.filterPill, activeFilter === f && styles.filterPillActive]}
-                onPress={() => setActiveFilter(f)}
-                activeOpacity={0.75}
-              >
-                <Text
-                  style={[
-                    styles.filterPillText,
-                    activeFilter === f && styles.filterPillTextActive,
-                  ]}
-                >
-                  {f} ({counts[f]})
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {listContent}
-        </ScrollView>
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={TEAL} />
+          }
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.4}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
+              <Text style={styles.emptyText}>No appointments found</Text>
+            </View>
+          }
+          ListFooterComponent={
+            loadingMore ? (
+              <ActivityIndicator color={TEAL} style={{ marginVertical: 16 }} />
+            ) : null
+          }
+        />
       )}
 
       {/* Cancellation reason modal */}
@@ -304,7 +368,6 @@ export default function AppointmentsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#fff" },
   header: { paddingHorizontal: 20, backgroundColor: "#fff" },
-  scrollView: { flex: 1, backgroundColor: "#fff" },
   container: { paddingHorizontal: 20, backgroundColor: "#fff" },
   screenTitle: {
     fontSize: 26,

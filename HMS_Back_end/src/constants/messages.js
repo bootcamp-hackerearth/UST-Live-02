@@ -128,6 +128,7 @@ const MESSAGES = Object.freeze({
         LIST_RETRIEVED: "Appointments retrieved successfully",
         NOT_FOUND: "Appointment not found",
         ONLY_BOOKED_EDITABLE: "Only BOOKED appointments can be edited",
+        ONLY_BOOKED_UNATTENDED: "Only BOOKED appointments can be marked as unattended",
         OWN_ONLY_CANCEL: "You can only cancel your own appointments",
         OWN_ONLY_COMPLETE: "You can only complete your own appointments",
         OWN_ONLY_MODIFY: "You can only modify your own appointments",
@@ -136,7 +137,24 @@ const MESSAGES = Object.freeze({
         PATIENT_SLOT_CONFLICT: "Patient already has an appointment for this time slot",
         RETRIEVED: "Appointment retrieved successfully",
         TOO_FAR_AHEAD: "Appointments can only be booked up to 6 months in advance.",
+        UNATTENDED: "Appointment marked as unattended",
         UPDATED: "Appointment updated successfully"
+    }),
+
+    // Medical records
+    MEDICAL_RECORD: Object.freeze({
+        ALREADY_EXISTS: "A medical record already exists for this appointment",
+        APPOINTMENT_NOT_ELIGIBLE: "A medical record cannot be created for a cancelled or unattended appointment",
+        CANNOT_BEFORE_START: "A medical record can only be generated after the appointment start time has passed",
+        CREATED: "Medical record created successfully",
+        DELETED: "Medical record deleted successfully",
+        LIST_RETRIEVED: "Medical records retrieved successfully",
+        NOT_FOUND: "Medical record not found",
+        ONLY_DRAFT_EDITABLE: "Only draft medical records can be edited",
+        OWN_ONLY: "You can only access medical records for your own appointments",
+        RETRIEVED: "Medical record retrieved successfully",
+        STAFF_CANNOT_FINALIZE: "Only the assigned doctor can finalize a medical record",
+        UPDATED: "Medical record updated successfully"
     }),
 
     // Organization nodes (hierarchy management)
@@ -165,14 +183,30 @@ const MESSAGES = Object.freeze({
         ADMIN_CREATED: (name, code) => `Admin account created for ${name} (${code})`,
         ADMIN_DELETED: (name, code) => `Admin ${name} (${code}) was deleted`,
         ADMIN_UPDATED: (name, code) => `Admin ${name} (${code}) was updated`,
-        APPOINTMENT_AUTO_COMPLETED: (id) => `Appointment ${id} was automatically marked completed after its scheduled end time`,
         APPOINTMENT_BOOKED: (id, patientName, doctorName) => `Appointment ${id} booked for ${patientName} with ${doctorName}`,
         APPOINTMENT_BOOKED_BY_PATIENT: (id, patientName, doctorName) => `Appointment ${id} booked by ${patientName} with ${doctorName}`,
         APPOINTMENT_CANCELLED: (id, reason) => `Appointment ${id} was cancelled. Reason: ${reason}`,
         APPOINTMENT_CANCELLED_BY_PATIENT: (id, reason) => `Appointment ${id} cancelled by patient. Reason: ${reason}`,
         APPOINTMENT_COMPLETED: (id) => `Appointment ${id} was marked completed`,
+        APPOINTMENT_MARKED_UNATTENDED: (role, userName) =>
+            `Appointment marked as UNATTENDED by ${role} ${userName}. No medical record generated. Patient notified via email.`,
         APPOINTMENT_RESCHEDULED_BY_PATIENT: (id, patientName) => `Appointment ${id} rescheduled by ${patientName}`,
         APPOINTMENT_UPDATED: (id) => `Appointment ${id} was updated`,
+        MEDICAL_RECORD_DELETED: (id, role, userName) => `Medical record ${id} was deleted by ${role} ${userName}`,
+        MEDICAL_RECORD_DOCTOR_CREATED_DRAFT: (doctorName) =>
+            `Medical record created by Doctor ${doctorName}. Current status: DRAFT. Waiting for finalization.`,
+        MEDICAL_RECORD_DOCTOR_CREATED_FINALIZED: (doctorName) =>
+            `Medical record created and finalized by Doctor ${doctorName}. Medical record status changed to FINALIZED. Appointment status changed to COMPLETED.`,
+        MEDICAL_RECORD_DOCTOR_UPDATED_DRAFT: (doctorName) =>
+            `Medical record updated by Doctor ${doctorName}. Current status: DRAFT. Waiting for finalization.`,
+        MEDICAL_RECORD_DOCTOR_UPDATED_FINALIZED: (doctorName) =>
+            `Medical record updated and finalized by Doctor ${doctorName}. Medical record status changed to FINALIZED. Appointment status changed to COMPLETED.`,
+        MEDICAL_RECORD_STAFF_CREATED_DRAFT: (role, userName, doctorEmployeeId, doctorName) =>
+            `Medical record created by ${role} ${userName}. Assigned doctor for verification: ${doctorEmployeeId} (${doctorName}). Current status: DRAFT. Waiting for doctor verification.`,
+        MEDICAL_RECORD_STAFF_UPDATED_DRAFT: (role, userName, doctorEmployeeId, doctorName) =>
+            `Medical record updated by ${role} ${userName}. Assigned doctor for verification: ${doctorEmployeeId} (${doctorName}). Current status: DRAFT. Waiting for doctor verification.`,
+        MEDICAL_RECORD_VERIFIED_FINALIZED: (creatorRole, creatorName, doctorName) =>
+            `Medical record created by ${creatorRole} ${creatorName}. Verified and finalized by Doctor ${doctorName}. Medical record status changed to FINALIZED. Appointment status changed to COMPLETED.`,
         DOCTOR_DELETED_CANCELLATION: (id, doctorName, code) =>
             `Appointment ${id} was cancelled due to deletion of doctor ${doctorName} (${code})`,
         DOCTOR_SCHEDULE_CHANGE_CANCELLATION: (id, doctorName, code) =>

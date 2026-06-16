@@ -3,12 +3,17 @@ import { ApiResponse, PaginatedData } from './api-response.model';
 
 // Appointment domain models aligned with the backend Appointments schema
 
-export type AppointmentStatus = 'BOOKED' | 'CANCELED' | 'COMPLETED';
+export type AppointmentStatus =
+  | 'BOOKED'
+  | 'CANCELED'
+  | 'COMPLETED'
+  | 'UNATTENDED';
 
 export const APPOINTMENT_STATUSES: AppointmentStatus[] = [
   'BOOKED',
   'CANCELED',
   'COMPLETED',
+  'UNATTENDED',
 ];
 
 // Lightweight patient info attached to an enriched appointment

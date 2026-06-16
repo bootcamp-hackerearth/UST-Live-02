@@ -31,6 +31,12 @@ const DEFAULT_NODES = [
         path: "/dashboard/appointments",
         icon: "calendar",
         allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST", "DOCTOR"]
+    },
+    {
+        name: "Medical Records",
+        path: "/dashboard/medical-records",
+        icon: "file-text",
+        allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST", "DOCTOR"]
     }
 ];
 

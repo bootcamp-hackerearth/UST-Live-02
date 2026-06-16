@@ -1,0 +1,113 @@
+<div class="mr-modal-backdrop" (click)="close()">
+  <div class="mr-modal-box" (click)="$event.stopPropagation()">
+    <div class="mr-modal-header">
+      <h3 class="mr-modal-title">
+        {{ existingRecord ? 'Edit Medical Record' : 'Generate Medical Record' }}
+      </h3>
+      <button type="button" class="mr-close" aria-label="Close" (click)="close()">×</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="mr-modal-body">
+      <!-- Auto-filled, read-only context -->
+      <div class="mr-grid">
+        <div class="mr-field">
+          <span class="mr-label">Patient UHID</span>
+          <span class="mr-readonly">{{ patientUHID }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Patient Name</span>
+          <span class="mr-readonly">{{ patientName }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Doctor ID</span>
+          <span class="mr-readonly">{{ doctorEmployeeId }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Doctor Name</span>
+          <span class="mr-readonly">{{ doctorName }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Appointment ID</span>
+          <span class="mr-readonly">{{ appointmentId }}</span>
+        </div>
+        <div class="mr-field">
+          <span class="mr-label">Status</span>
+          @if (isDoctor()) {
+            <select class="form-select" formControlName="status">
+              <option value="DRAFT">DRAFT</option>
+              <option value="FINALIZED">FINALIZED</option>
+            </select>
+          } @else {
+            <span class="mr-readonly">DRAFT</span>
+          }
+        </div>
+      </div>
+
+      <!-- Editable clinical fields -->
+      <div class="form-group">
+        <label class="form-label" for="mr-symptoms">Symptoms *</label>
+        <textarea id="mr-symptoms" rows="3" class="form-input" formControlName="symptoms"></textarea>
+        @if (form.get('symptoms')?.touched && form.get('symptoms')?.invalid) {
+          <p class="form-error">Symptoms are required</p>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="mr-diagnosis">Diagnosis *</label>
+        <textarea id="mr-diagnosis" rows="3" class="form-input" formControlName="diagnosis"></textarea>
+        @if (form.get('diagnosis')?.touched && form.get('diagnosis')?.invalid) {
+          <p class="form-error">Diagnosis is required</p>
+        }
+      </div>
+
+      <!-- Prescription items -->
+      <div class="mr-section-head">
+        <h4 class="section-title">Prescription</h4>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="addItem()">
+          + Add item
+        </button>
+      </div>
+
+      <div formArrayName="prescriptionItems">
+        @for (item of prescriptionItems.controls; track $index; let i = $index) {
+          <div class="mr-rx-row" [formGroupName]="i">
+            <div class="form-group">
+              <label class="form-label">Name *</label>
+              <input type="text" class="form-input" formControlName="name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Dosage *</label>
+              <input type="text" class="form-input" formControlName="dosage" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration *</label>
+              <input type="text" class="form-input" formControlName="duration" />
+            </div>
+            <button
+              type="button"
+              class="btn btn-danger-outline btn-sm mr-rx-remove"
+              (click)="removeItem(i)">
+              Remove
+            </button>
+          </div>
+        } @empty {
+          <p class="muted">No prescription items added.</p>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="mr-notes">Notes</label>
+        <textarea id="mr-notes" rows="2" class="form-input" formControlName="notes"></textarea>
+      </div>
+
+      <div class="mr-modal-actions">
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="close()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          @if (saving()) { <span>Saving…</span> } @else { <span>{{ primaryLabel() }}</span> }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
