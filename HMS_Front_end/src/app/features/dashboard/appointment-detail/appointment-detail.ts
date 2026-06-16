@@ -58,19 +58,30 @@ export class AppointmentDetailComponent implements OnInit {
     return d === 'OWNER' || d === 'ADMIN' || d === 'RECEPTIONIST';
   });
 
+  // Edit/cancel only make sense before the slot starts
   canEdit = computed(
-    () => this.hasReceptionAccess() && this.appointment()?.status === 'BOOKED',
+    () =>
+      this.hasReceptionAccess() &&
+      this.appointment()?.status === 'BOOKED' &&
+      !this.startTimePassed(),
   );
 
   canCancel = computed(
-    () => this.hasReceptionAccess() && this.appointment()?.status === 'BOOKED',
+    () =>
+      this.hasReceptionAccess() &&
+      this.appointment()?.status === 'BOOKED' &&
+      !this.startTimePassed(),
   );
 
   hasRecord = computed(() => this.medicalRecord() !== null);
 
-  // Mark unattended: any role with access, BOOKED, before a record exists
+  // Mark unattended: any role, BOOKED, no record, surfaced once the slot starts
+  // (the template keeps it disabled until the slot end time has passed)
   canMarkUnattended = computed(
-    () => this.appointment()?.status === 'BOOKED' && !this.hasRecord(),
+    () =>
+      this.appointment()?.status === 'BOOKED' &&
+      !this.hasRecord() &&
+      this.startTimePassed(),
   );
 
   // Generate record: BOOKED, no record yet, and the start time has passed
@@ -90,17 +101,23 @@ export class AppointmentDetailComponent implements OnInit {
   );
 
   // Completable only once the scheduled start (day + slot start) has passed (mirrors the backend guard)
-  startTimePassed = computed(() => {
+  startTimePassed = computed(() => this.slotEdgePassed(0));
+
+  // End of the slot; gates when "Mark Unattended" becomes actionable
+  endTimePassed = computed(() => this.slotEdgePassed(1));
+
+  // Whether the slot start (index 0) or end (index 1) has passed for the appointment day
+  private slotEdgePassed(edge: 0 | 1): boolean {
     const a = this.appointment();
     if (!a) return false;
-    const slotStart = (a.timeSlot || '').split('-')[0];
-    const [h, m] = slotStart.split(':').map(Number);
+    const time = (a.timeSlot || '').split('-')[edge];
+    const [h, m] = (time || '').split(':').map(Number);
     const scheduled = new Date(a.appointmentDate);
     if (!Number.isNaN(h) && !Number.isNaN(m)) {
       scheduled.setHours(h, m, 0, 0);
     }
     return scheduled.getTime() <= Date.now();
-  });
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('appointmentId');

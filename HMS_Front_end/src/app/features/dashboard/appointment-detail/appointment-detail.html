@@ -28,25 +28,22 @@
                 }
               </button>
             }
+            @if (canGenerateRecord()) {
+              <button class="btn btn-success" [disabled]="busy()" (click)="openCreateRecord()">
+                {{ isDoctor() ? 'Create Medical Record' : 'Generate Medical Record' }}
+              </button>
+            }
             @if (canMarkUnattended()) {
-              <button class="btn btn-warning" [disabled]="busy()" (click)="markUnattended()">
+              <button
+                class="btn btn-warning"
+                [disabled]="busy() || !endTimePassed()"
+                title="Available once the appointment end time has passed"
+                (click)="markUnattended()">
                 @if (busyAction() === 'unattended') {
                   <span>Marking…</span>
                 } @else {
                   <span>Mark Unattended</span>
                 }
-              </button>
-            }
-            @if (canGenerateRecord()) {
-              <button class="btn btn-success" [disabled]="busy()" (click)="openCreateRecord()">
-                {{ isDoctor() ? 'Create Medical Record' : 'Generate Medical Record' }}
-              </button>
-            } @else if (!hasRecord() && appointment()?.status === 'BOOKED') {
-              <button
-                class="btn btn-success"
-                disabled
-                title="Available once the appointment start time has passed">
-                {{ isDoctor() ? 'Create Medical Record' : 'Generate Medical Record' }}
               </button>
             }
             @if (canEditRecord()) {
