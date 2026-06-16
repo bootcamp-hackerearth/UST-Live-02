@@ -1,0 +1,109 @@
+.calendar {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  max-width: 340px;
+}
+
+.calendar--disabled {
+  opacity: 0.6;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.cal-month {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.cal-nav {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1;
+  color: #0f766e;
+  cursor: pointer;
+}
+
+.cal-nav:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.cal-weekdays {
+  margin-bottom: 0.25rem;
+}
+
+.cal-weekday {
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  padding: 0.25rem 0;
+}
+
+.cal-day {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+  font-size: 0.8125rem;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.cal-day:hover:not(:disabled) {
+  border-color: #0f766e;
+}
+
+.cal-day:disabled {
+  background: transparent;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.cal-day--empty {
+  background: transparent;
+  cursor: default;
+}
+
+.cal-day--today {
+  font-weight: 700;
+  color: #0f766e;
+}
+
+.cal-day--selected,
+.cal-day--selected:hover {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.cal-hint {
+  margin: 0.625rem 0 0.125rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+}

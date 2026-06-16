@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Counter = require("./Counter");
+const softDeletePlugin = require("../utils/softDeletePlugin");
 
 const employeeSchema = new mongoose.Schema({
   employeeCode: {
@@ -14,10 +15,10 @@ const employeeSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  // Uniqueness enforced in the app layer so a deleted employee's email can be reused
   email: {
     type: String,
     required: true,
-    unique: true,
   },
   department: {
     type: String,
@@ -50,13 +51,17 @@ const employeeSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  // Uniqueness enforced in the app layer (validateUniqueEmployeeFields) for reuse after delete
   medicalRegistrationNumber: {
     type: String,
-    unique: true,
-    sparse: true,
   },
   specialization: {
     type: String,
+  },
+  // Date on/after which this doctor accepts no new appointments (admin/owner-set)
+  bookingCutoffDate: {
+    type: Date,
+    default: undefined,
   },
   qualification: [
     {
@@ -108,5 +113,7 @@ employeeSchema.pre("save", async function () {
     this.employeeCode = `EMP-${String(counter.seq).padStart(6, "0")}`; // create 6 digit sequence number
   }
 });
+
+employeeSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model("Employee", employeeSchema);

@@ -41,12 +41,6 @@ export default function MedicalRecordDetails({ record }: Props) {
           <Text style={styles.muted}>No prescription items.</Text>
         )}
       </Section>
-
-      {record.notes ? (
-        <Section title="Notes">
-          <Text style={styles.bodyText}>{record.notes}</Text>
-        </Section>
-      ) : null}
     </View>
   );
 }

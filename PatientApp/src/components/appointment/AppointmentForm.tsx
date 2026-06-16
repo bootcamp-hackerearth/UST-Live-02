@@ -15,7 +15,7 @@ import { formatDate, isRealDate } from "@/utils/format";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomTabInset, KeyboardScrollPadding } from "@/constants/theme";
-import DatePickerSheet from "@/components/common/DatePickerSheet";
+import AvailabilityCalendar from "@/components/common/AvailabilityCalendar";
 import { useGuardedRouter } from "@/hooks/useGuardedRouter";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import {
@@ -342,7 +342,6 @@ export default function AppointmentForm({
   const [doctorCode, setDoctorCode] = useState(initialDoctorCode ?? "");
   const [date, setDate] = useState(initialDate ?? "");
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [datePickerDate, setDatePickerDate] = useState<Date>(() => new Date());
   const [selectedSlot, setSelectedSlot] = useState(initialTimeSlot ?? "");
   const bookedSlots = useBookedSlots(doctorCode, date);
   const [submitting, setSubmitting] = useState(false);
@@ -366,6 +365,16 @@ export default function AppointmentForm({
   const selectedDoctor = useMemo(
     () => doctors.find((d) => d.employeeCode === doctorCode),
     [doctors, doctorCode],
+  );
+
+  // Weekdays the doctor is available + their booking cutoff (drive the calendar)
+  const doctorDays = useMemo(
+    () => Array.from(new Set((selectedDoctor?.availabilitySlots ?? []).map((w) => w.day))),
+    [selectedDoctor],
+  );
+  const doctorCutoff = useMemo(
+    () => (selectedDoctor?.bookingCutoffDate ? new Date(selectedDoctor.bookingCutoffDate) : null),
+    [selectedDoctor],
   );
 
   const candidateSlots = useMemo(() => {
@@ -414,10 +423,6 @@ export default function AppointmentForm({
 
   const openDatePicker = () => {
     blurDoctor();
-    if (date && isRealDate(date)) {
-      const [y, m, d] = date.split("-").map(Number);
-      setDatePickerDate(new Date(y, m - 1, d));
-    }
     setShowDatePicker(true);
   };
 
@@ -558,15 +563,19 @@ export default function AppointmentForm({
           <Text style={styles.submitText}>{submitLabel(submitting, mode)}</Text>
         </TouchableOpacity>
 
-        <DatePickerSheet
+        <AvailabilityCalendar
           visible={showDatePicker}
-          value={datePickerDate}
+          value={date}
           title="Appointment date"
           minimumDate={MIN_DATE}
           maximumDate={MAX_DATE}
-          onChange={(selected) => {
-            setDatePickerDate(selected);
-            setDate(formatDate(selected));
+          availableDays={doctorDays}
+          cutoffDate={doctorCutoff}
+          onSelect={(iso) => {
+            setDate(iso);
+            setSelectedSlot("");
+            setShowDatePicker(false);
+            touch("date");
           }}
           onClose={() => {
             setShowDatePicker(false);

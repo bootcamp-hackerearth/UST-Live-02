@@ -92,7 +92,7 @@ exports.getDoctors = async (req, res) => {
         designation: "DOCTOR",
         employeeCode: { $in: activeCodes }
     }).select(
-        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate"
+        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate bookingCutoffDate"
     );
 
     return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.DOCTORS_RETRIEVED, {
@@ -295,7 +295,7 @@ exports.getMyMedicalRecordById = async (req, res) => {
         status: "FINALIZED",
         isDeleted: { $ne: true }
     })
-        .select("-__v")
+        .select("-__v -notes")
         .lean();
 
     if (!record) {
@@ -323,7 +323,7 @@ exports.getMyMedicalRecordByAppointment = async (req, res) => {
         appointmentId,
         isDeleted: { $ne: true }
     })
-        .select("-__v")
+        .select("-__v -notes")
         .lean();
 
     if (!record) {

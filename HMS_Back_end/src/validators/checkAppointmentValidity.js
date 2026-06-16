@@ -87,6 +87,27 @@ const checkAppointmentValidity = async ({
     }
   }
 
+  // Reject dates on or after the doctor's booking cutoff (when set)
+  if (doctor.bookingCutoffDate) {
+    const apptDay = new Date(appointmentDate);
+    apptDay.setHours(0, 0, 0, 0);
+
+    const cutoffDay = new Date(doctor.bookingCutoffDate);
+    cutoffDay.setHours(0, 0, 0, 0);
+
+    if (apptDay.getTime() >= cutoffDay.getTime()) {
+      const cutoffOn = cutoffDay.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      throw new AppError(
+        STATUS.CONFLICT,
+        MESSAGES.APPOINTMENT.AFTER_BOOKING_CUTOFF(cutoffOn)
+      );
+    }
+  }
+
   // Derive the day-of-week from the appointment date and match it against the doctor's schedule
   const appointmentDay = new Date(appointmentDate)
     .toLocaleDateString("en-US", {

@@ -1,5 +1,6 @@
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
+const Appointment = require("../models/Appointments");
 const AuditLog = require("../models/AuditLogs");
 const ProfileChangeRequest = require("../models/ProfileChangeRequests");
 const emailTemplates = require("../utils/emailTemplates");
@@ -10,7 +11,6 @@ const updateEmployeeData = require("../utils/updateEmployeeData");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
-const cancelDoctorAppointments = require("../utils/cancelDoctorAppointments");
 const cancelOutOfScheduleAppointments = require("../utils/cancelOutOfScheduleAppointments");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const parsePagination = require("../utils/parsePagination");
@@ -202,8 +202,8 @@ exports.rejectEmployee = async (req, res) => {
     message: MESSAGES.AUDIT.EMPLOYEE_REGISTRATION_REJECTED(employeeCode, user.username),
   });
 
-  // Delete the account from the database
-  await deleteEmployeeAccount(employeeCode);
+  // Soft-delete the account (marked REJECTED) so the email/username free up for re-registration
+  await deleteEmployeeAccount(employeeCode, actor.employeeCode, { userStatus: "REJECTED" });
 
   return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.REGISTRATION_REJECTED);
 };
@@ -259,7 +259,7 @@ exports.updateEmployee = async (req, res) => {
   });
 };
 
-// Delete a STAFF employee and their linked user account
+// Soft-delete a STAFF employee and their linked user account
 exports.deleteEmployee = async (req, res) => {
 
   const employeeCode = req.params.employeeCode;
@@ -276,6 +276,19 @@ exports.deleteEmployee = async (req, res) => {
     throw new AppError(STATUS.FORBIDDEN, MESSAGES.ADMIN.CANNOT_DELETE_PRIVILEGED);
   }
 
+  // A doctor with scheduled (BOOKED) appointments cannot be deleted. Set a booking
+  // cutoff date so bookings wind down, then delete once none remain BOOKED.
+  if (employee.designation === "DOCTOR") {
+    const bookedCount = await Appointment.countDocuments({
+      doctorEmployeeId: employeeCode,
+      status: "BOOKED",
+    });
+
+    if (bookedCount > 0) {
+      throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.DOCTOR_HAS_BOOKED_APPOINTMENTS);
+    }
+  }
+
   // Log before deletion so the record still exists for the message
   const actor = await resolveActor(req.user);
   await recordAudit({
@@ -286,8 +299,7 @@ exports.deleteEmployee = async (req, res) => {
     message: MESSAGES.AUDIT.EMPLOYEE_DELETED(employee.name, employeeCode)
   });
 
-  await cancelDoctorAppointments(employeeCode, employee.name, actor);
-  await deleteEmployeeAccount(employeeCode);
+  await deleteEmployeeAccount(employeeCode, actor.employeeCode);
 
   return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.EMPLOYEE_DELETED);
 };

@@ -57,6 +57,8 @@ export interface DoctorOption {
   availabilitySlots?: AvailabilitySlot[];
   qualification?: string[];
   joiningDate?: string;
+  // Date on/after which this doctor accepts no new appointments
+  bookingCutoffDate?: string;
 }
 
 // Payload to create an appointment

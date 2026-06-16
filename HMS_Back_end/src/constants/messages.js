@@ -46,6 +46,7 @@ const MESSAGES = Object.freeze({
         CHANGE_REQUEST_SUBMITTED: "Your profile change request has been submitted for approval",
         DESIGNATION_INACTIVE: (designation) => `${designation} account is inactive`,
         DOCTORS_RETRIEVED: "Doctors retrieved successfully",
+        DOCTOR_HAS_BOOKED_APPOINTMENTS: "This doctor still has booked appointments. Set a booking cutoff date and wait until all booked appointments are completed or cancelled before deleting.",
         DOESNT_EXIST: "Employee doesn't exist",
         EMAIL_EXISTS: "Employee with this email already exists",
         JOINING_DATE_LOCKED: "The joining date cannot be changed once it has been reached",
@@ -96,6 +97,7 @@ const MESSAGES = Object.freeze({
     PATIENT: Object.freeze({
         ALREADY_REGISTERED: "Patient with this email is already registered",
         CREATED: "Patient account created successfully. Login credentials have been sent via email.",
+        DELETED: "Patient deleted successfully",
         DOESNT_EXIST: "Patient doesn't exist",
         EMAIL_EXISTS: "Another patient with this email already exists",
         LIST_RETRIEVED: "Patients retrieved successfully",
@@ -111,6 +113,7 @@ const MESSAGES = Object.freeze({
 
     // Appointment booking and lifecycle
     APPOINTMENT: Object.freeze({
+        AFTER_BOOKING_CUTOFF: (date) => `The doctor is not accepting appointments on or after ${date}`,
         ALREADY_CANCELLED: "Appointment is already cancelled",
         ALREADY_COMPLETED: "Appointment is already completed",
         BOOKED_SLOTS_RETRIEVED: "Booked slots retrieved successfully",
@@ -207,8 +210,6 @@ const MESSAGES = Object.freeze({
             `Medical record updated by ${role} ${userName}. Assigned doctor for verification: ${doctorEmployeeId} (${doctorName}). Current status: DRAFT. Waiting for doctor verification.`,
         MEDICAL_RECORD_VERIFIED_FINALIZED: (creatorRole, creatorName, doctorName) =>
             `Medical record created by ${creatorRole} ${creatorName}. Verified and finalized by Doctor ${doctorName}. Medical record status changed to FINALIZED. Appointment status changed to COMPLETED.`,
-        DOCTOR_DELETED_CANCELLATION: (id, doctorName, code) =>
-            `Appointment ${id} was cancelled due to deletion of doctor ${doctorName} (${code})`,
         DOCTOR_SCHEDULE_CHANGE_CANCELLATION: (id, doctorName, code) =>
             `Appointment ${id} was cancelled due to a schedule change for doctor ${doctorName} (${code})`,
         EMPLOYEE_APPROVED: (code, username) => `Employee account ${code} (${username}) was approved`,
@@ -217,6 +218,7 @@ const MESSAGES = Object.freeze({
         EMPLOYEE_PROFILE_UPDATED: (name, code) => `${name} (${code}) updated their profile`,
         EMPLOYEE_REGISTRATION_REJECTED: (code, username) => `Employee registration ${code} (${username}) was rejected`,
         EMPLOYEE_UPDATED: (name, code) => `Employee ${name} (${code}) was updated`,
+        PATIENT_DELETED: (name, uhid) => `Patient ${name} (${uhid}) was deleted`,
         PATIENT_PROFILE_UPDATED: (name, uhid) => `Patient ${name} (${uhid}) updated their profile`,
         PATIENT_REGISTERED: (name, uhid) => `Patient ${name} (${uhid}) was registered`,
         PATIENT_UPDATED: (name, uhid) => `Patient ${name} (${uhid}) was updated`,

@@ -1,9 +1,10 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/Users");
 const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-const authenticateUser = (req, res, next) => {
+const authenticateUser = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith("Bearer ")) {
@@ -20,6 +21,14 @@ const authenticateUser = (req, res, next) => {
         );
     }
     catch {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    // Reject tokens whose account has since been soft-deleted or deactivated
+    // (the soft-delete query hook makes a deleted user's lookup return null)
+    const user = await User.findOne({ employeeCode: req.user.employeeCode }).select("status");
+
+    if (!user || String(user.status) !== "ACTIVE") {
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
     }
 

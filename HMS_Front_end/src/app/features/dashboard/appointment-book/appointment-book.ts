@@ -13,6 +13,7 @@ import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { SearchableSelectComponent } from '../../../shared/ui/searchable-select/searchable-select';
 import { SlotPickerComponent } from '../../../shared/ui/slot-picker/slot-picker';
+import { AvailabilityCalendarComponent } from '../../../shared/ui/availability-calendar/availability-calendar';
 import { PatientService } from '../../../core/services/patient.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AppointmentService } from '../../../core/services/appointment.service';
@@ -58,6 +59,7 @@ const DAY_MAP: Record<number, WeekDay> = {
     DashboardLayoutComponent,
     SearchableSelectComponent,
     SlotPickerComponent,
+    AvailabilityCalendarComponent,
   ],
   templateUrl: './appointment-book.html',
   styleUrl: './appointment-book.css',
@@ -94,6 +96,8 @@ export class AppointmentBookComponent
   };
 
   todayIso = todayIsoDate();
+  // Latest bookable date: 6 months ahead (mirrors the backend cap)
+  maxIso = this.sixMonthsAhead();
   loading = false;
   submittedOk = false;
 
@@ -434,6 +438,25 @@ export class AppointmentBookComponent
   get selectedDoctor(): DoctorOption | null {
     const id = this.form.get('doctorEmployeeId')!.value;
     return this.doctors().find((d) => d.employeeCode === id) || null;
+  }
+
+  // Weekdays the selected doctor is available on (drives the date calendar)
+  get doctorAvailableDays(): WeekDay[] {
+    const slots = this.selectedDoctor?.availabilitySlots || [];
+    return [...new Set(slots.map((s) => s.day))];
+  }
+
+  // Selected doctor's booking cutoff as yyyy-mm-dd (null if none)
+  get doctorCutoffIso(): string | null {
+    const cutoff = this.selectedDoctor?.bookingCutoffDate;
+    return cutoff ? cutoff.substring(0, 10) : null;
+  }
+
+  // yyyy-mm-dd six months from today
+  private sixMonthsAhead(): string {
+    const d = new Date(this.todayIso);
+    d.setMonth(d.getMonth() + 6);
+    return this.toIso(d);
   }
 
   onSubmit(): void {

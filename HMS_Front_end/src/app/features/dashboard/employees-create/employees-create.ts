@@ -92,6 +92,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       medicalRegistrationNumber: [''],
       specialization: [''],
       consultationFee: [null, nonNegative],
+      bookingCutoffDate: [''],
       availabilitySlots: this.fb.array([], { validators: slotsNoConflict }),
     });
   }
@@ -183,6 +184,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       medicalRegistrationNumber: emp.medicalRegistrationNumber ?? '',
       specialization: emp.specialization ?? '',
       consultationFee: emp.consultationFee ?? null,
+      bookingCutoffDate: emp.bookingCutoffDate ? emp.bookingCutoffDate.substring(0, 10) : '',
     });
 
     // Lock the joining date once reached, on or after the day itself (yyyy-mm-dd compares lexicographically)
@@ -329,6 +331,10 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       payload.consultationFee = Number(raw['consultationFee']);
       payload.availabilitySlots =
         raw['availabilitySlots'] as UpdateEmployeePayload['availabilitySlots'];
+      // Empty value clears the cutoff (null), so bookings reopen
+      payload.bookingCutoffDate = raw['bookingCutoffDate']
+        ? (raw['bookingCutoffDate'] as string)
+        : null;
     }
 
     return payload;

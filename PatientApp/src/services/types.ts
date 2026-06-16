@@ -47,6 +47,8 @@ export type Doctor = {
   availabilitySlots?: AvailabilitySlot[];
   qualification?: string[];
   joiningDate?: string;
+  // Date on/after which this doctor accepts no new appointments
+  bookingCutoffDate?: string;
 };
 
 export type AppointmentStatus =
@@ -75,7 +77,7 @@ export type MedicalRecord = {
   symptoms: string;
   diagnosis: string;
   prescriptionItems: PrescriptionItem[];
-  notes?: string;
+  // notes are internal/clinician-only and are never sent to the patient app
   status: MedicalRecordStatus;
   created_at?: string;
 };

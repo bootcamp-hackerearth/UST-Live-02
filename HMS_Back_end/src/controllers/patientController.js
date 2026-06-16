@@ -237,3 +237,34 @@ exports.updatePatient = async (req, res) => {
         patient: safePatient
     });
 };
+
+// Soft delete a patient (Admin/Owner only); record is never physically removed
+exports.deletePatient = async (req, res) => {
+
+    const { UHID } = req.params;
+
+    const patient = await Patient.findOne({ UHID });
+
+    if (!patient) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
+    }
+
+    const actor = await resolveActor(req.user);
+
+    patient.isDeleted = true;
+    patient.deletedAt = new Date();
+    patient.deletedBy = actor.employeeCode;
+    await patient.save();
+
+    await recordAudit({
+        actor,
+        action: "PATIENT_DELETED",
+        targetType: "PATIENT",
+        targetId: patient.UHID,
+        message: MESSAGES.AUDIT.PATIENT_DELETED(patient.name, patient.UHID)
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.PATIENT.DELETED, {
+        patient: { UHID: patient.UHID }
+    });
+};

@@ -7,7 +7,6 @@ const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
-const cancelDoctorAppointments = require("../utils/cancelDoctorAppointments");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -122,8 +121,7 @@ const deleteAdmin = async (req, res) => {
     message: MESSAGES.AUDIT.ADMIN_DELETED(employee.name, employeeCode)
   });
 
-  await cancelDoctorAppointments(employeeCode, employee.name, actor);
-  await deleteEmployeeAccount(employeeCode);
+  await deleteEmployeeAccount(employeeCode, actor.employeeCode);
 
   return sendSuccess(res, STATUS.OK, MESSAGES.OWNER.ADMIN_DELETED);
 };

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ApiMessage } from '../models/api-response.model';
 import {
   CreatePatientPayload,
   PatientResponse,
@@ -63,5 +64,10 @@ export class PatientService {
     data: Partial<CreatePatientPayload>,
   ): Observable<PatientResponse> {
     return this.http.put<PatientResponse>(`${this.apiUrl}/${uhid}`, data);
+  }
+
+  // Soft delete (admin/owner only)
+  deletePatient(uhid: string): Observable<ApiMessage> {
+    return this.http.delete<ApiMessage>(`${this.apiUrl}/${uhid}`);
   }
 }

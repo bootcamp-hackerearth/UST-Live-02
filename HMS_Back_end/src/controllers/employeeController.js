@@ -40,7 +40,7 @@ exports.getDoctors = async (req, res) => {
         designation: "DOCTOR",
         employeeCode: { $in: activeCodes }
     }).select(
-        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate"
+        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate bookingCutoffDate"
     );
 
     return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.DOCTORS_RETRIEVED, {

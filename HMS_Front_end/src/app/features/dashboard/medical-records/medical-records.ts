@@ -62,9 +62,13 @@ export class MedicalRecordsComponent implements OnInit {
 
   ngOnInit(): void {
     const uhid = this.route.snapshot.queryParamMap.get('patientUHID');
+    const name = this.route.snapshot.queryParamMap.get('patientName');
     if (uhid) {
       this.patientUHID.set(uhid);
       this.scopedToPatient.set(true);
+    }
+    if (name) {
+      this.patientName.set(name);
     }
     this.load();
   }
@@ -106,12 +110,13 @@ export class MedicalRecordsComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.patientName.set('');
     this.doctorEmployeeId.set('');
     this.doctorName.set('');
     this.appointmentId.set('');
+    // Keep the scoped patient UHID + name locked when opened from a patient profile
     if (!this.scopedToPatient()) {
       this.patientUHID.set('');
+      this.patientName.set('');
     }
     this.page.set(1);
     this.load();

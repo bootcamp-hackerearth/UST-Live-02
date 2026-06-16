@@ -25,7 +25,8 @@
           placeholder="Patient Name"
           [ngModel]="patientName()"
           (ngModelChange)="patientName.set($event)"
-          (keyup.enter)="search()" />
+          (keyup.enter)="search()"
+          [readonly]="scopedToPatient()" />
 
         @if (!isDoctor()) {
           <input

@@ -3,6 +3,7 @@ const router = express.Router();
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeDesignation = require("../middlewares/authorizeDesignations");
+const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/patientController");
 const {
     createPatientValidation,
@@ -44,6 +45,16 @@ router.put(
     updatePatientValidation,
     validate,
     controller.updatePatient
+);
+
+// Soft delete — restricted to admin/owner (receptionist passes the router-level
+// designation guard but not the role guard)
+router.delete(
+    "/:UHID",
+    authorizeRoles("OWNER", "ADMIN"),
+    uhidValidation,
+    validate,
+    controller.deletePatient
 );
 
 module.exports = router;

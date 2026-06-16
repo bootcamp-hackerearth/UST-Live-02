@@ -171,18 +171,20 @@
           <button type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="close()">
             Close
           </button>
-          <button
-            type="button"
-            class="btn btn-danger"
-            [disabled]="deleting()"
-            (click)="deleteEmployee(item)"
-          >
-            @if (deleting()) {
-              <span>Deleting…</span>
-            } @else {
-              <span>Delete</span>
-            }
-          </button>
+          @if (canDelete(item)) {
+            <button
+              type="button"
+              class="btn btn-danger"
+              [disabled]="deleting()"
+              (click)="deleteEmployee(item)"
+            >
+              @if (deleting()) {
+                <span>Deleting…</span>
+              } @else {
+                <span>Delete</span>
+              }
+            </button>
+          }
         </div>
       </div>
     </div>
