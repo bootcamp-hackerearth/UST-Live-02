@@ -38,15 +38,50 @@
 }
 
 .table-card {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
   overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  background-color: #f8fafc;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
 }
 
 .clickable {
   cursor: pointer;
+  transition: background-color 0.1s;
 }
 
 .clickable:hover {
-  background-color: #f9fafb;
+  background-color: #f8fafc;
 }
 
 .pagination {
@@ -64,7 +99,10 @@
 
 .loading-box,
 .empty-box {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  border: 1px dashed #e2e8f0;
   padding: 2rem;
   text-align: center;
-  color: #6b7280;
+  color: #475569;
 }

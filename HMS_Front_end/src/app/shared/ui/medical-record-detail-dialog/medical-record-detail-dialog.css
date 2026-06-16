@@ -73,6 +73,17 @@
   color: #1f2937;
 }
 
+.section-title {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
 .mr-text {
   margin: 0 0 0.5rem;
   color: #1f2937;
@@ -82,7 +93,40 @@
 
 .mr-rx-table {
   width: 100%;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.mr-rx-table th {
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  background-color: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mr-rx-table td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #1f2937;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.mr-rx-table tr:last-child td {
+  border-bottom: none;
+}
+
+.muted {
+  margin: 0.25rem 0 0;
+  color: #94a3b8;
+  font-size: 0.875rem;
 }
 
 .mr-modal-actions {
