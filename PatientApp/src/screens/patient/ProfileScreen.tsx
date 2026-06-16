@@ -237,10 +237,10 @@ const ProfileScreen = () => {
 
         {/* Save */}
         <TouchableOpacity
-          style={[styles.saveButton, saving && { opacity: 0.6 }]}
+          style={[styles.saveButton, (saving || !isDirty) && { opacity: 0.6 }]}
           activeOpacity={0.85}
           onPress={handleSave}
-          disabled={saving}
+          disabled={saving || !isDirty}
         >
           <Text style={styles.saveButtonText}>{saving ? "Saving…" : "Save changes"}</Text>
         </TouchableOpacity>

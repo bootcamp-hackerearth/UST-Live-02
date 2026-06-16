@@ -9,6 +9,7 @@ const paginateAppointments = require("../utils/paginateAppointments");
 const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -113,6 +114,12 @@ exports.getAppointmentById = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
+    // A doctor may only access their own appointments
+    const actor = await resolveActor(req.user);
+    if (actor.designation === "DOCTOR" && appointment.doctorEmployeeId !== req.user.employeeCode) {
+        throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
+    }
+
     const [enriched] = await enrichAppointments([appointment]);
 
     return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.RETRIEVED, {
@@ -135,10 +142,15 @@ exports.cancelAppointment = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
+    // A doctor may only cancel their own appointments
+    const actor = await resolveActor(req.user);
+    if (actor.designation === "DOCTOR" && appointment.doctorEmployeeId !== req.user.employeeCode) {
+        throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
+    }
+
     await cancelAppointmentRecord(appointment, cancellationReason);
 
-    // Log appointment cancellation
-    const actor = await resolveActor(req.user);
+    // Log appointment cancellation (actor resolved above)
     await recordAudit({
         actor,
         action: "APPOINTMENT_CANCELED",
@@ -176,17 +188,46 @@ exports.updateAppointment = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ONLY_BOOKED_EDITABLE);
     }
 
+    // A doctor may only reschedule (date/time) their own appointments; patient and
+    // doctor are forced to the existing values so they cannot be changed.
+    const actor = await resolveActor(req.user);
+    let effectivePatientId = patientId;
+    let effectiveDoctorId = doctorEmployeeId;
+    if (actor.designation === "DOCTOR") {
+        if (appointment.doctorEmployeeId !== req.user.employeeCode) {
+            throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
+        }
+        effectivePatientId = appointment.patientId;
+        effectiveDoctorId = appointment.doctorEmployeeId;
+    }
+
+    // Reject no-op updates so no false audit log is written
+    const hasChanges = hasFieldChanges(
+        appointment,
+        {
+            patientId: effectivePatientId,
+            doctorEmployeeId: effectiveDoctorId,
+            appointmentDate,
+            timeSlot
+        },
+        ["patientId", "doctorEmployeeId", "appointmentDate", "timeSlot"],
+        { dateFields: ["appointmentDate"] }
+    );
+    if (!hasChanges) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
+    }
+
     // Re-validates excluding this appointment from duplicate checks; throws on violation
     const { patient, doctor } = await checkAppointmentValidity({
-        patientId,
-        doctorId: doctorEmployeeId,
+        patientId: effectivePatientId,
+        doctorId: effectiveDoctorId,
         appointmentDate,
         timeSlot,
         excludeAppointmentId: appointmentId
     });
 
-    appointment.patientId = patientId;
-    appointment.doctorEmployeeId = doctorEmployeeId;
+    appointment.patientId = effectivePatientId;
+    appointment.doctorEmployeeId = effectiveDoctorId;
     appointment.appointmentDate = appointmentDate;
     appointment.timeSlot = timeSlot;
     await appointment.save();
@@ -198,8 +239,7 @@ exports.updateAppointment = async (req, res) => {
         timeSlot
     }));
 
-    // Log appointment updation
-    const actor = await resolveActor(req.user);
+    // Log appointment updation (actor resolved above)
     await recordAudit({
         actor,
         action: "APPOINTMENT_UPDATED",

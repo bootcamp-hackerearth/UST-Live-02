@@ -4,6 +4,7 @@ const sendEmail = require("../utils/sendEmail");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const emailTemplates = require("../utils/emailTemplates");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
@@ -197,6 +198,11 @@ exports.updatePatient = async (req, res) => {
         "emergencyContact",
         "status"
     ];
+
+    // Reject no-op updates so no false audit log is written (email is part of the set)
+    if (!hasFieldChanges(patient, req.body, [...allowedFields, "email"], { dateFields: ["dob"] })) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
+    }
 
     // If email is being changed, ensure it stays unique
     if (req.body.email && req.body.email !== patient.email) {

@@ -79,6 +79,18 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   // Joining date is locked in edit mode once it has passed
   joiningDateLocked = false;
 
+  // Snapshot of the loaded form value (edit mode) for no-op detection
+  private baseline = '';
+
+  // Edit mode: true only when the form differs from the loaded values
+  hasChanges(): boolean {
+    return JSON.stringify(this.form.getRawValue()) !== this.baseline;
+  }
+
+  private captureBaseline(): void {
+    this.baseline = JSON.stringify(this.form.getRawValue());
+  }
+
   constructor() {
     this.form = this.fb.group({
       username: ['', [Validators.required, notBlank]],
@@ -218,6 +230,9 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
         this.addSlot();
       }
     }
+
+    // Snapshot the populated form so the Update button enables only on real changes
+    this.captureBaseline();
   }
 
   addSlot(): void {

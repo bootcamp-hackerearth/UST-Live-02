@@ -104,7 +104,7 @@
         <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="close()">
           Cancel
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        <button type="submit" class="btn btn-primary" [disabled]="saving() || (!!existingRecord && !hasChanges())">
           @if (saving()) { <span>Saving…</span> } @else { <span>{{ primaryLabel() }}</span> }
         </button>
       </div>

@@ -133,6 +133,16 @@ export class EmployeesListComponent implements OnInit {
     this.router.navigate(['/dashboard/employees', item.employee.employeeCode, 'edit']);
   }
 
+  // Open Medical Records scoped to this doctor (records they created/verified)
+  viewDoctorRecords(item: EmployeeListItem): void {
+    this.router.navigate(['/dashboard/medical-records'], {
+      queryParams: {
+        doctorEmployeeId: item.employee.employeeCode,
+        doctorName: item.employee.name,
+      },
+    });
+  }
+
   // Admin rows are view-only here; admin create/update/delete lives on the Admins page.
   // Only staff designations may be edited/deleted from this tab.
   canEdit(item: EmployeeListItem): boolean {

@@ -58,17 +58,25 @@ export class AppointmentDetailComponent implements OnInit {
     return d === 'OWNER' || d === 'ADMIN' || d === 'RECEPTIONIST';
   });
 
-  // Edit/cancel only make sense before the slot starts
+  // A doctor may manage only their own appointments
+  isOwnDoctorAppointment = computed(
+    () =>
+      this.isDoctor() &&
+      this.appointment()?.doctorEmployeeId ===
+        this.authService.getCurrentUser()?.employeeCode,
+  );
+
+  // Reception staff and the assigned doctor can edit/cancel — only before the slot starts
   canEdit = computed(
     () =>
-      this.hasReceptionAccess() &&
+      (this.hasReceptionAccess() || this.isOwnDoctorAppointment()) &&
       this.appointment()?.status === 'BOOKED' &&
       !this.startTimePassed(),
   );
 
   canCancel = computed(
     () =>
-      this.hasReceptionAccess() &&
+      (this.hasReceptionAccess() || this.isOwnDoctorAppointment()) &&
       this.appointment()?.status === 'BOOKED' &&
       !this.startTimePassed(),
   );

@@ -10,6 +10,7 @@ const parsePagination = require("../utils/parsePagination");
 const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const recordAudit = require("../utils/recordAudit");
 const { toSafePatient, PATIENT_SAFE_PROJECTION } = require("../utils/toSafePatient");
 const AppError = require("../utils/AppError");
@@ -49,6 +50,11 @@ exports.updateMyProfile = async (req, res) => {
 
     if (!patient) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
+    }
+
+    // Reject no-op updates so no false audit log is written
+    if (!hasFieldChanges(patient, req.body, ["phone", "email", "address", "emergencyContact"])) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
     }
 
     // If email is changing, keep it unique across patients

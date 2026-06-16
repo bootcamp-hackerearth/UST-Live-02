@@ -181,7 +181,7 @@ export const routes: Routes = [
       },
       {
         path: 'appointments/:appointmentId/edit',
-        canActivate: [designationGuard(['RECEPTIONIST'])],
+        canActivate: [designationGuard(['RECEPTIONIST', 'DOCTOR'])],
         canDeactivate: [unsavedChangesGuard],
         data: { mode: 'edit' },
         loadComponent: () =>

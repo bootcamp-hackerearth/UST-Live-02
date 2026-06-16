@@ -59,16 +59,27 @@ export class MedicalRecordsComponent implements OnInit {
 
   // When opened from a patient profile, the list is pre-filtered to that patient
   scopedToPatient = signal(false);
+  // When opened from a doctor profile, the list is pre-filtered to that doctor
+  scopedToDoctor = signal(false);
 
   ngOnInit(): void {
     const uhid = this.route.snapshot.queryParamMap.get('patientUHID');
     const name = this.route.snapshot.queryParamMap.get('patientName');
+    const docId = this.route.snapshot.queryParamMap.get('doctorEmployeeId');
+    const docName = this.route.snapshot.queryParamMap.get('doctorName');
     if (uhid) {
       this.patientUHID.set(uhid);
       this.scopedToPatient.set(true);
     }
     if (name) {
       this.patientName.set(name);
+    }
+    if (docId) {
+      this.doctorEmployeeId.set(docId);
+      this.scopedToDoctor.set(true);
+    }
+    if (docName) {
+      this.doctorName.set(docName);
     }
     this.load();
   }
@@ -110,13 +121,16 @@ export class MedicalRecordsComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.doctorEmployeeId.set('');
-    this.doctorName.set('');
     this.appointmentId.set('');
     // Keep the scoped patient UHID + name locked when opened from a patient profile
     if (!this.scopedToPatient()) {
       this.patientUHID.set('');
       this.patientName.set('');
+    }
+    // Keep the scoped doctor ID + name locked when opened from a doctor profile
+    if (!this.scopedToDoctor()) {
+      this.doctorEmployeeId.set('');
+      this.doctorName.set('');
     }
     this.page.set(1);
     this.load();

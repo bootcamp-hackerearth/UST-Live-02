@@ -12,6 +12,7 @@ const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
 const cancelOutOfScheduleAppointments = require("../utils/cancelOutOfScheduleAppointments");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const parsePagination = require("../utils/parsePagination");
 const { RESTRICTED_ROLES_SET } = require("../constants/domain");
@@ -19,6 +20,25 @@ const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
+
+// Editable employee fields + how to compare them for no-op detection
+const EMPLOYEE_UPDATABLE_FIELDS = [
+  "name",
+  "phone",
+  "department",
+  "designation",
+  "joiningDate",
+  "qualification",
+  "medicalRegistrationNumber",
+  "specialization",
+  "consultationFee",
+  "availabilitySlots",
+  "bookingCutoffDate",
+];
+const EMPLOYEE_CHANGE_OPTIONS = {
+  dateFields: ["joiningDate", "bookingCutoffDate"],
+  arrayKeys: { availabilitySlots: ["day", "startTime", "endTime"] },
+};
 
 // Fetch all STAFF users with a given status and their linked employee records
 const getEmployeesByStatus = async (status, res) => {
@@ -226,6 +246,11 @@ exports.updateEmployee = async (req, res) => {
 
   if (RESTRICTED_ROLES_SET.has(employee.designation)) {
     throw new AppError(STATUS.FORBIDDEN, MESSAGES.ADMIN.CANNOT_UPDATE_PRIVILEGED);
+  }
+
+  // Reject no-op updates so no false audit log is written
+  if (!hasFieldChanges(employee, req.body, EMPLOYEE_UPDATABLE_FIELDS, EMPLOYEE_CHANGE_OPTIONS)) {
+    throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
   }
 
   const beforeAvailability = availabilityKey(employee.availabilitySlots);

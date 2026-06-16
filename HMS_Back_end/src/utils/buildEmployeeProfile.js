@@ -28,6 +28,7 @@ const buildEmployeeProfile = (employee) => {
     if (employee.designation === "DOCTOR") {
         profile.consultationFee = employee.consultationFee;
         profile.availabilitySlots = employee.availabilitySlots;
+        profile.bookingCutoffDate = employee.bookingCutoffDate;
     }
 
     return profile;

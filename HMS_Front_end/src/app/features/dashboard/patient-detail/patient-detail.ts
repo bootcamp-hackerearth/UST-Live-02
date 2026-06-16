@@ -116,6 +116,10 @@ export class PatientDetailComponent
           this.form.patchValue(draft);
           this.editing.set(true);
         }
+        // Opened straight into edit mode from the patient list modal
+        if (this.route.snapshot.queryParamMap.get('edit') === '1') {
+          this.editing.set(true);
+        }
         this.loading.set(false);
       },
       error: () => {
@@ -132,6 +136,14 @@ export class PatientDetailComponent
     });
   }
 
+  // Snapshot of the loaded form value for no-op detection
+  private baseline = '';
+
+  // True only when the form differs from the loaded patient values
+  hasChanges(): boolean {
+    return JSON.stringify(this.form.getRawValue()) !== this.baseline;
+  }
+
   private applyToForm(p: Patient): void {
     this.form.patchValue({
       name: p.name,
@@ -144,6 +156,7 @@ export class PatientDetailComponent
       emergencyContact: p.emergencyContact,
     });
     this.form.markAsPristine();
+    this.baseline = JSON.stringify(this.form.getRawValue());
   }
 
   startEdit(): void {

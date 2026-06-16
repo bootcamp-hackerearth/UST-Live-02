@@ -10,6 +10,7 @@ const MESSAGES = Object.freeze({
         DUPLICATE_KEY: "A record with the same unique value already exists",
         INTERNAL_ERROR: "Something went wrong. Please try again later.",
         INVALID_JSON: "Malformed JSON in request body",
+        NO_CHANGES: "No changes to update",
         ROUTE_NOT_FOUND: "The requested resource was not found",
         VALIDATION_FAILED: "Validation failed"
     }),

@@ -350,17 +350,16 @@ export default function AppointmentForm({
   const touch = (field: keyof typeof touched) =>
     setTouched((prev) => ({ ...prev, [field]: true }));
 
-  useUnsavedChanges(
-    isFormDirty(
-      mode,
-      { doctorCode, date, selectedSlot },
-      {
-        doctorCode: initialDoctorCode ?? "",
-        date: initialDate ?? "",
-        selectedSlot: initialTimeSlot ?? "",
-      },
-    ),
+  const dirty = isFormDirty(
+    mode,
+    { doctorCode, date, selectedSlot },
+    {
+      doctorCode: initialDoctorCode ?? "",
+      date: initialDate ?? "",
+      selectedSlot: initialTimeSlot ?? "",
+    },
   );
+  useUnsavedChanges(dirty);
 
   const selectedDoctor = useMemo(
     () => doctors.find((d) => d.employeeCode === doctorCode),
@@ -555,9 +554,12 @@ export default function AppointmentForm({
         />
 
         <TouchableOpacity
-          style={[styles.submitButton, submitting && styles.submitDisabled]}
+          style={[
+            styles.submitButton,
+            (submitting || (mode === "edit" && !dirty)) && styles.submitDisabled,
+          ]}
           onPress={handleSubmit}
-          disabled={submitting}
+          disabled={submitting || (mode === "edit" && !dirty)}
           activeOpacity={0.85}
         >
           <Text style={styles.submitText}>{submitLabel(submitting, mode)}</Text>

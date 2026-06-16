@@ -109,6 +109,17 @@ export class MedicalRecordFormDialogComponent implements OnInit {
       .valueChanges.subscribe((v) =>
         this.statusSig.set(v as MedicalRecordStatus),
       );
+
+    // Snapshot for no-op detection (edit only); a status change also counts as a change
+    this.baseline = JSON.stringify(this.form.getRawValue());
+  }
+
+  // Snapshot of the loaded record for no-op detection
+  private baseline = '';
+
+  // True only when editing and the form differs from the loaded record
+  hasChanges(): boolean {
+    return JSON.stringify(this.form.getRawValue()) !== this.baseline;
   }
 
   get prescriptionItems(): FormArray {

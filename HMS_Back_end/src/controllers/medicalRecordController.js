@@ -9,6 +9,7 @@ const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const slotInstantMs = require("../utils/slotInstantMs");
 const buildMedicalRecordFilter = require("../utils/buildMedicalRecordFilter");
 const paginateMedicalRecords = require("../utils/paginateMedicalRecords");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -207,6 +208,19 @@ exports.updateMedicalRecord = async (req, res) => {
             throw new AppError(STATUS.FORBIDDEN, MESSAGES.MEDICAL_RECORD.STAFF_CANNOT_FINALIZE);
         }
         willFinalize = true;
+    }
+
+    // Reject no-op updates (a DRAFT -> FINALIZED transition always counts as a change)
+    if (
+        !willFinalize &&
+        !hasFieldChanges(
+            record,
+            { symptoms, diagnosis, notes, prescriptionItems },
+            ["symptoms", "diagnosis", "notes", "prescriptionItems"],
+            { arrayKeys: { prescriptionItems: ["name", "dosage", "duration"] } }
+        )
+    ) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
     }
 
     // Apply editable fields

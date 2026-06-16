@@ -69,7 +69,7 @@ router.get(
 
 router.put(
     "/:appointmentId",
-    RECEPTION_LEVEL,
+    VIEW_LEVEL,
     [...appointmentIdValidation, ...createAppointmentValidation],
     validate,
     controller.updateAppointment
@@ -77,7 +77,7 @@ router.put(
 
 router.put(
     "/:appointmentId/cancel",
-    RECEPTION_LEVEL,
+    VIEW_LEVEL,
     cancelAppointmentValidation,
     validate,
     controller.cancelAppointment

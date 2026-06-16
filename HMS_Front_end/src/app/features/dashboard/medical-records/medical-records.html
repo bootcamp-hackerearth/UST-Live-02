@@ -7,6 +7,12 @@
       </div>
     }
 
+    @if (scopedToDoctor()) {
+      <div class="scope-note">
+        Showing medical records for doctor <strong>{{ doctorEmployeeId() }}</strong>.
+      </div>
+    }
+
     <!-- Search toolbar -->
     <div class="toolbar">
       <div class="search-grid">
@@ -35,7 +41,8 @@
             placeholder="Doctor ID"
             [ngModel]="doctorEmployeeId()"
             (ngModelChange)="doctorEmployeeId.set($event)"
-            (keyup.enter)="search()" />
+            (keyup.enter)="search()"
+            [disabled]="scopedToDoctor()" />
 
           <input
             type="text"
@@ -43,7 +50,8 @@
             placeholder="Doctor Name"
             [ngModel]="doctorName()"
             (ngModelChange)="doctorName.set($event)"
-            (keyup.enter)="search()" />
+            (keyup.enter)="search()"
+            [disabled]="scopedToDoctor()" />
         }
 
         <input

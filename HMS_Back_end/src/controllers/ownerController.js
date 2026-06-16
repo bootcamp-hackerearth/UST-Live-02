@@ -3,6 +3,7 @@ const User = require("../models/Users");
 const emailTemplates = require("../utils/emailTemplates");
 const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
 const updateEmployeeData = require("../utils/updateEmployeeData");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
@@ -69,6 +70,12 @@ const updateAdmin = async (req, res) => {
 
   if (!employee) {
     throw new AppError(STATUS.NOT_FOUND, MESSAGES.OWNER.ADMIN_NOT_FOUND);
+  }
+
+  // Reject no-op updates so no false audit log is written
+  const adminFields = ["name", "phone", "department", "designation", "joiningDate", "qualification"];
+  if (!hasFieldChanges(employee, req.body, adminFields, { dateFields: ["joiningDate"] })) {
+    throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
   }
 
   updateEmployeeData(employee, req.body);
