@@ -26,7 +26,7 @@
           [ngModel]="patientName()"
           (ngModelChange)="patientName.set($event)"
           (keyup.enter)="search()"
-          [readonly]="scopedToPatient()" />
+          [disabled]="scopedToPatient()" />
 
         @if (!isDoctor()) {
           <input
