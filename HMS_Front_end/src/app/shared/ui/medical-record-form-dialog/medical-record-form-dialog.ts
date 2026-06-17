@@ -55,7 +55,7 @@ export class MedicalRecordFormDialogComponent implements OnInit {
   isDoctor = computed(() => this.auth.getDesignation() === 'DOCTOR');
 
   // Mirror of the status control so the primary button label stays reactive
-  private statusSig = signal<MedicalRecordStatus>('DRAFT');
+  private readonly statusSig = signal<MedicalRecordStatus>('DRAFT');
 
   form!: FormGroup;
 

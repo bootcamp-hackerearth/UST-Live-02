@@ -41,6 +41,25 @@ export default function MedicalRecordScreen() {
     load();
   }, [load]);
 
+  // Loaded-state body: the record details, or an empty state when none was found
+  const recordBody = record ? (
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={[
+        styles.container,
+        { paddingBottom: BottomTabInset + 24 },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
+      <MedicalRecordDetails record={record} />
+    </ScrollView>
+  ) : (
+    <View style={styles.emptyState}>
+      <Ionicons name="document-text-outline" size={48} color="#d1d5db" />
+      <Text style={styles.emptyText}>Medical record not found</Text>
+    </View>
+  );
+
   return (
     <View style={styles.root}>
       <SafeAreaView edges={["top"]} style={styles.header}>
@@ -53,22 +72,8 @@ export default function MedicalRecordScreen() {
 
       {loading ? (
         <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />
-      ) : record ? (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[
-            styles.container,
-            { paddingBottom: BottomTabInset + 24 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          <MedicalRecordDetails record={record} />
-        </ScrollView>
       ) : (
-        <View style={styles.emptyState}>
-          <Ionicons name="document-text-outline" size={48} color="#d1d5db" />
-          <Text style={styles.emptyText}>Medical record not found</Text>
-        </View>
+        recordBody
       )}
     </View>
   );

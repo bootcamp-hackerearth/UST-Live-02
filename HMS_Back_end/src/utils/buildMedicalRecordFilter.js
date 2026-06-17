@@ -1,5 +1,5 @@
 // Escapes user input for safe use inside a RegExp (partial-match search)
-const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegex = (value) => String(value).replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
 // Builds a Mongo filter for medical record listing/search.
 // Soft-deleted records are always excluded. When doctorEmployeeId is provided

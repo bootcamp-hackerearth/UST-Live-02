@@ -47,6 +47,8 @@ export class OverviewComponent implements OnInit {
   // Doctor-specific
   myAppointmentsToday = signal<number | null>(null);
   myAppointmentsUpcoming = signal<number | null>(null);
+  // BOOKED appointments whose slot has ended but were never completed/unattended
+  myAppointmentsPastDue = signal<number | null>(null);
 
   loading = signal(true);
 
@@ -176,17 +178,40 @@ export class OverviewComponent implements OnInit {
     }).subscribe((res) => {
       this.myAppointmentsToday.set(res.todayList.data.total || 0);
 
+      const booked = res.all.data.appointments as Appointment[];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       // Upcoming = booked AFTER today
-      const upcoming = (res.all.data.appointments as Appointment[]).filter((a) => {
+      const upcoming = booked.filter((a) => {
         const d = new Date(a.appointmentDate);
         d.setHours(0, 0, 0, 0);
-        const t = new Date();
-        t.setHours(0, 0, 0, 0);
-        return d.getTime() > t.getTime();
+        return d.getTime() > today.getTime();
       });
       this.myAppointmentsUpcoming.set(upcoming.length);
+
+      // Past due = booked on an earlier day, or today's slot already ended
+      const pastDue = booked.filter((a) => {
+        const d = new Date(a.appointmentDate);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() < today.getTime() || this.hasEnded(a);
+      });
+      this.myAppointmentsPastDue.set(pastDue.length);
+
       this.loading.set(false);
     });
+  }
+
+  // True once the appointment's slot end time has passed (hospital local time)
+  private hasEnded(a: Appointment): boolean {
+    const end = (a.timeSlot || '').split('-')[1];
+    if (!end) {
+      return false;
+    }
+    const [hh, mm] = end.split(':').map(Number);
+    const endAt = new Date(a.appointmentDate);
+    endAt.setHours(hh || 0, mm || 0, 0, 0);
+    return endAt.getTime() < Date.now();
   }
 
   trackByAudit = (_: number, log: AuditLog) => log.auditId;

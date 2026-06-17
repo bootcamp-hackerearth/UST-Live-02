@@ -25,6 +25,15 @@
       <button
         type="button"
         class="tab-btn"
+        [class.active]="doctorTab() === 'past'"
+        (click)="switchTab('past')">
+        Past Due
+        <span class="tab-count">{{ doctorTabCount('past') }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
         [class.active]="doctorTab() === 'completed'"
         (click)="switchTab('completed')">
         Completed

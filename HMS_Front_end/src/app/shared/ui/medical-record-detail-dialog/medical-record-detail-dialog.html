@@ -1,5 +1,5 @@
-<div class="mr-modal-backdrop" (click)="close()">
-  <div class="mr-modal-box" (click)="$event.stopPropagation()">
+<div class="mr-modal-backdrop" (click)="close()" (keydown.escape)="close()">
+  <div class="mr-modal-box" (click)="$event.stopPropagation()" (keydown.escape)="$event.stopPropagation()">
     <div class="mr-modal-header">
       <div>
         <h3 class="mr-modal-title">{{ record.medicalRecordId }}</h3>

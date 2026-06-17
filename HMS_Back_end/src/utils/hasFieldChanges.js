@@ -1,8 +1,7 @@
 const deepEqual = require("./deepEqual");
 
 // Strips Mongoose internals and converts Dates to ISO strings
-const clone = (value) =>
-    value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+const clone = (value) => value === undefined ? undefined : JSON.parse(JSON.stringify(value)); // NOSONAR: structuredClone keeps Dates as objects and throws on Mongoose subdocuments
 
 // Day-granular form for date comparisons (Date -> ISO -> yyyy-mm-dd; "yyyy-mm-dd..." -> yyyy-mm-dd)
 const dayOf = (value) =>

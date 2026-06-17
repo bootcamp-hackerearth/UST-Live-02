@@ -59,6 +59,15 @@
             <span class="stat-label">Upcoming Appointments</span>
             <span class="stat-value">{{ myAppointmentsUpcoming() ?? '—' }}</span>
           </a>
+          <a
+            routerLink="/dashboard/appointments"
+            [queryParams]="{ tab: 'past' }"
+            class="stat-card stat-card--link"
+            [class.stat-card--warning]="(myAppointmentsPastDue() ?? 0) > 0"
+          >
+            <span class="stat-label">Past Due</span>
+            <span class="stat-value">{{ myAppointmentsPastDue() ?? '—' }}</span>
+          </a>
         }
       </div>
 

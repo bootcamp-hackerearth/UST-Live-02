@@ -59,7 +59,7 @@ export default function AvailabilityCalendar({
   onSelect,
   onClose,
 }: AvailabilityCalendarProps) {
-  const initial = value ? value : fromDate(minimumDate);
+  const initial = value || fromDate(minimumDate);
   const [view, setView] = useState(() => {
     const [y, m] = initial.split("-").map(Number);
     return { y, m: m - 1 };
@@ -141,11 +141,14 @@ export default function AvailabilityCalendar({
             ))}
           </View>
 
-          {weeks.map((week, wi) => (
-            <View key={`w-${wi}`} style={styles.weekRow}>
+          {weeks.map((week) => {
+            // Key each week by its first real day's ISO (stable, unlike the row index)
+            const weekKey = week.find(Boolean)?.iso ?? "week";
+            return (
+            <View key={weekKey} style={styles.weekRow}>
               {week.map((cell, ci) => {
                 if (!cell) {
-                  return <View key={`e-${wi}-${ci}`} style={[styles.cell, styles.cellEmpty]} />;
+                  return <View key={`${weekKey}-pad-${ci}`} style={[styles.cell, styles.cellEmpty]} />;
                 }
                 const selected = value === cell.iso;
                 return (
@@ -173,7 +176,8 @@ export default function AvailabilityCalendar({
                 );
               })}
             </View>
-          ))}
+            );
+          })}
 
           {dayset.size === 0 && (
             <Text style={styles.hint}>Select a doctor to see available dates.</Text>

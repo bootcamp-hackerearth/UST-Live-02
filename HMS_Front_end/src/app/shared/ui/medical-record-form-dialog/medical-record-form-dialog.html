@@ -1,5 +1,5 @@
-<div class="mr-modal-backdrop" (click)="close()">
-  <div class="mr-modal-box" (click)="$event.stopPropagation()">
+<div class="mr-modal-backdrop" (click)="close()" (keydown.escape)="close()">
+  <div class="mr-modal-box" (click)="$event.stopPropagation()" (keydown.escape)="$event.stopPropagation()">
     <div class="mr-modal-header">
       <h3 class="mr-modal-title">
         {{ existingRecord ? 'Edit Medical Record' : 'Generate Medical Record' }}
@@ -72,16 +72,16 @@
         @for (item of prescriptionItems.controls; track $index; let i = $index) {
           <div class="mr-rx-row" [formGroupName]="i">
             <div class="form-group">
-              <label class="form-label">Name *</label>
-              <input type="text" class="form-input" formControlName="name" />
+              <label class="form-label" for="rx-name-{{ i }}">Name *</label>
+              <input id="rx-name-{{ i }}" type="text" class="form-input" formControlName="name" />
             </div>
             <div class="form-group">
-              <label class="form-label">Dosage *</label>
-              <input type="text" class="form-input" formControlName="dosage" />
+              <label class="form-label" for="rx-dosage-{{ i }}">Dosage *</label>
+              <input id="rx-dosage-{{ i }}" type="text" class="form-input" formControlName="dosage" />
             </div>
             <div class="form-group">
-              <label class="form-label">Duration *</label>
-              <input type="text" class="form-input" formControlName="duration" />
+              <label class="form-label" for="rx-duration-{{ i }}">Duration *</label>
+              <input id="rx-duration-{{ i }}" type="text" class="form-input" formControlName="duration" />
             </div>
             <button
               type="button"

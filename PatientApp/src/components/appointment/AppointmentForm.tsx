@@ -87,6 +87,23 @@ function getDateError(date: string): string | undefined {
   return undefined;
 }
 
+// Per-field validation messages (undefined = valid)
+function getFormErrors(
+  doctorCode: string,
+  date: string,
+  availableSlots: readonly string[],
+  selectedSlot: string,
+) {
+  return {
+    doctor: doctorCode ? undefined : "Please select a doctor",
+    date: getDateError(date),
+    timeSlot:
+      availableSlots.length > 0 && !selectedSlot
+        ? "Please select a time slot"
+        : undefined,
+  };
+}
+
 function doctorLabel(doctor: Doctor | undefined): string {
   if (!doctor) return "Select a doctor";
   if (doctor.specialization) return `Dr. ${doctor.name} · ${doctor.specialization}`;
@@ -425,13 +442,7 @@ export default function AppointmentForm({
     setShowDatePicker(true);
   };
 
-  const errors = {
-    doctor: doctorCode ? undefined : "Please select a doctor",
-    date: getDateError(date),
-    timeSlot: availableSlots.length > 0 && !selectedSlot
-      ? "Please select a time slot"
-      : undefined,
-  };
+  const errors = getFormErrors(doctorCode, date, availableSlots, selectedSlot);
 
   const handleSubmit = async () => {
     blurDoctor();

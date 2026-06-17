@@ -18,6 +18,172 @@ const MESSAGES = require("../constants/messages");
 // Whether an actor's designation is a clinician (the only role that can finalize)
 const isDoctorActor = (actor) => actor.designation === "DOCTOR";
 
+// Post-create side effects: finalize (complete the appointment + notify the patient),
+// log a doctor draft, or email the assigned doctor to verify a staff draft.
+const applyCreateSideEffects = async ({ record, recordStatus, doctorRole, actor, appointment, patient, doctor }) => {
+    if (recordStatus === "FINALIZED") {
+        // Finalizing completes the appointment
+        appointment.status = "COMPLETED";
+        await appointment.save();
+
+        await sendAppointmentEmail(
+            patient.email,
+            emailTemplates.diagnosisReportAvailable({ patientName: patient.name })
+        );
+
+        await recordAudit({
+            actor,
+            action: "MEDICAL_RECORD_FINALIZED",
+            targetType: "MEDICAL_RECORD",
+            targetId: record.medicalRecordId,
+            message: MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_CREATED_FINALIZED(doctor.name)
+        });
+        return;
+    }
+
+    if (doctorRole) {
+        await recordAudit({
+            actor,
+            action: "MEDICAL_RECORD_CREATED",
+            targetType: "MEDICAL_RECORD",
+            targetId: record.medicalRecordId,
+            message: MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_CREATED_DRAFT(doctor.name)
+        });
+        return;
+    }
+
+    // Staff draft — assigned doctor must verify
+    if (doctor.email) {
+        await sendAppointmentEmail(
+            doctor.email,
+            emailTemplates.medicalRecordVerificationRequired({
+                doctorName: doctor.name,
+                patientName: patient.name,
+                patientUHID: patient.UHID,
+                appointmentId: appointment.appointmentId,
+                creatorRole: actor.designation,
+                creatorName: actor.name
+            })
+        );
+    }
+
+    await recordAudit({
+        actor,
+        action: "MEDICAL_RECORD_CREATED",
+        targetType: "MEDICAL_RECORD",
+        targetId: record.medicalRecordId,
+        message: MESSAGES.AUDIT.MEDICAL_RECORD_STAFF_CREATED_DRAFT(
+            actor.designation,
+            actor.name,
+            doctor.employeeCode,
+            doctor.name
+        )
+    });
+};
+
+// Copies provided (defined) editable fields onto the record
+const applyEditableFields = (record, { symptoms, diagnosis, prescriptionItems, notes }) => {
+    if (symptoms !== undefined) {
+        record.symptoms = symptoms;
+    }
+    if (diagnosis !== undefined) {
+        record.diagnosis = diagnosis;
+    }
+    if (prescriptionItems !== undefined) {
+        record.prescriptionItems = prescriptionItems;
+    }
+    if (notes !== undefined) {
+        record.notes = notes;
+    }
+};
+
+// Finalizes a draft: marks it FINALIZED, completes the appointment, notifies the
+// patient, and logs the verification/finalization audit.
+const applyFinalizeUpdate = async ({ record, actor }) => {
+    record.status = "FINALIZED";
+    await record.save();
+
+    const appointment = await Appointment.findOne({ appointmentId: record.appointmentId });
+    if (appointment) {
+        appointment.status = "COMPLETED";
+        await appointment.save();
+    }
+
+    const patient = await Patient.findOne({ UHID: record.patientId }).select("name email");
+    if (patient?.email) {
+        await sendAppointmentEmail(
+            patient.email,
+            emailTemplates.diagnosisReportAvailable({ patientName: patient.name })
+        );
+    }
+
+    const createdByStaff = record.createdByDesignation && record.createdByDesignation !== "DOCTOR";
+    const message = createdByStaff
+        ? MESSAGES.AUDIT.MEDICAL_RECORD_VERIFIED_FINALIZED(
+              record.createdByDesignation,
+              record.createdByName,
+              record.doctorName
+          )
+        : MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_UPDATED_FINALIZED(record.doctorName);
+
+    await recordAudit({
+        actor,
+        action: "MEDICAL_RECORD_FINALIZED",
+        targetType: "MEDICAL_RECORD",
+        targetId: record.medicalRecordId,
+        message
+    });
+};
+
+// Saves a draft edit: logs a doctor update, or emails the assigned doctor to
+// re-verify when staff made the change.
+const applyDraftUpdate = async ({ record, actor, doctorRole }) => {
+    await record.save();
+
+    if (doctorRole) {
+        await recordAudit({
+            actor,
+            action: "MEDICAL_RECORD_UPDATED",
+            targetType: "MEDICAL_RECORD",
+            targetId: record.medicalRecordId,
+            message: MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_UPDATED_DRAFT(record.doctorName)
+        });
+        return;
+    }
+
+    // Staff update — assigned doctor must verify again
+    const doctor = await Employee.findOne({
+        employeeCode: record.doctorEmployeeId
+    }).select("email");
+
+    if (doctor?.email) {
+        await sendAppointmentEmail(
+            doctor.email,
+            emailTemplates.medicalRecordVerificationUpdated({
+                doctorName: record.doctorName,
+                patientName: record.patientName,
+                patientUHID: record.patientUHID,
+                appointmentId: record.appointmentId,
+                creatorRole: actor.designation,
+                creatorName: actor.name
+            })
+        );
+    }
+
+    await recordAudit({
+        actor,
+        action: "MEDICAL_RECORD_UPDATED",
+        targetType: "MEDICAL_RECORD",
+        targetId: record.medicalRecordId,
+        message: MESSAGES.AUDIT.MEDICAL_RECORD_STAFF_UPDATED_DRAFT(
+            actor.designation,
+            actor.name,
+            record.doctorEmployeeId,
+            record.doctorName
+        )
+    });
+};
+
 // Create a medical record for an appointment.
 // Doctors may save as DRAFT or FINALIZED; Admin/Owner/Receptionist may only save DRAFT.
 exports.createMedicalRecord = async (req, res) => {
@@ -108,60 +274,15 @@ exports.createMedicalRecord = async (req, res) => {
 
     await record.save();
 
-    if (recordStatus === "FINALIZED") {
-        // Finalizing completes the appointment
-        appointment.status = "COMPLETED";
-        await appointment.save();
-
-        await sendAppointmentEmail(
-            patient.email,
-            emailTemplates.diagnosisReportAvailable({ patientName: patient.name })
-        );
-
-        await recordAudit({
-            actor,
-            action: "MEDICAL_RECORD_FINALIZED",
-            targetType: "MEDICAL_RECORD",
-            targetId: record.medicalRecordId,
-            message: MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_CREATED_FINALIZED(doctor.name)
-        });
-    } else if (doctorRole) {
-        await recordAudit({
-            actor,
-            action: "MEDICAL_RECORD_CREATED",
-            targetType: "MEDICAL_RECORD",
-            targetId: record.medicalRecordId,
-            message: MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_CREATED_DRAFT(doctor.name)
-        });
-    } else {
-        // Staff draft — assigned doctor must verify
-        if (doctor.email) {
-            await sendAppointmentEmail(
-                doctor.email,
-                emailTemplates.medicalRecordVerificationRequired({
-                    doctorName: doctor.name,
-                    patientName: patient.name,
-                    patientUHID: patient.UHID,
-                    appointmentId,
-                    creatorRole: actor.designation,
-                    creatorName: actor.name
-                })
-            );
-        }
-
-        await recordAudit({
-            actor,
-            action: "MEDICAL_RECORD_CREATED",
-            targetType: "MEDICAL_RECORD",
-            targetId: record.medicalRecordId,
-            message: MESSAGES.AUDIT.MEDICAL_RECORD_STAFF_CREATED_DRAFT(
-                actor.designation,
-                actor.name,
-                doctor.employeeCode,
-                doctor.name
-            )
-        });
-    }
+    await applyCreateSideEffects({
+        record,
+        recordStatus,
+        doctorRole,
+        actor,
+        appointment,
+        patient,
+        doctor
+    });
 
     return sendSuccess(res, STATUS.CREATED, MESSAGES.MEDICAL_RECORD.CREATED, {
         medicalRecord: record
@@ -223,99 +344,12 @@ exports.updateMedicalRecord = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
     }
 
-    // Apply editable fields
-    if (symptoms !== undefined) {
-        record.symptoms = symptoms;
-    }
-    if (diagnosis !== undefined) {
-        record.diagnosis = diagnosis;
-    }
-    if (prescriptionItems !== undefined) {
-        record.prescriptionItems = prescriptionItems;
-    }
-    if (notes !== undefined) {
-        record.notes = notes;
-    }
-
-    const createdByStaff = record.createdByDesignation && record.createdByDesignation !== "DOCTOR";
+    applyEditableFields(record, { symptoms, diagnosis, prescriptionItems, notes });
 
     if (willFinalize) {
-        record.status = "FINALIZED";
-        await record.save();
-
-        const appointment = await Appointment.findOne({ appointmentId: record.appointmentId });
-        if (appointment) {
-            appointment.status = "COMPLETED";
-            await appointment.save();
-        }
-
-        const patient = await Patient.findOne({ UHID: record.patientId }).select("name email");
-        if (patient?.email) {
-            await sendAppointmentEmail(
-                patient.email,
-                emailTemplates.diagnosisReportAvailable({ patientName: patient.name })
-            );
-        }
-
-        const message = createdByStaff
-            ? MESSAGES.AUDIT.MEDICAL_RECORD_VERIFIED_FINALIZED(
-                  record.createdByDesignation,
-                  record.createdByName,
-                  record.doctorName
-              )
-            : MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_UPDATED_FINALIZED(record.doctorName);
-
-        await recordAudit({
-            actor,
-            action: "MEDICAL_RECORD_FINALIZED",
-            targetType: "MEDICAL_RECORD",
-            targetId: record.medicalRecordId,
-            message
-        });
+        await applyFinalizeUpdate({ record, actor });
     } else {
-        await record.save();
-
-        if (doctorRole) {
-            await recordAudit({
-                actor,
-                action: "MEDICAL_RECORD_UPDATED",
-                targetType: "MEDICAL_RECORD",
-                targetId: record.medicalRecordId,
-                message: MESSAGES.AUDIT.MEDICAL_RECORD_DOCTOR_UPDATED_DRAFT(record.doctorName)
-            });
-        } else {
-            // Staff update — assigned doctor must verify again
-            const doctor = await Employee.findOne({
-                employeeCode: record.doctorEmployeeId
-            }).select("email");
-
-            if (doctor?.email) {
-                await sendAppointmentEmail(
-                    doctor.email,
-                    emailTemplates.medicalRecordVerificationUpdated({
-                        doctorName: record.doctorName,
-                        patientName: record.patientName,
-                        patientUHID: record.patientUHID,
-                        appointmentId: record.appointmentId,
-                        creatorRole: actor.designation,
-                        creatorName: actor.name
-                    })
-                );
-            }
-
-            await recordAudit({
-                actor,
-                action: "MEDICAL_RECORD_UPDATED",
-                targetType: "MEDICAL_RECORD",
-                targetId: record.medicalRecordId,
-                message: MESSAGES.AUDIT.MEDICAL_RECORD_STAFF_UPDATED_DRAFT(
-                    actor.designation,
-                    actor.name,
-                    record.doctorEmployeeId,
-                    record.doctorName
-                )
-            });
-        }
+        await applyDraftUpdate({ record, actor, doctorRole });
     }
 
     return sendSuccess(res, STATUS.OK, MESSAGES.MEDICAL_RECORD.UPDATED, {

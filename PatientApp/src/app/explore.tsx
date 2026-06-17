@@ -257,6 +257,39 @@ export default function AppointmentsScreen() {
     </ScrollView>
   );
 
+  // List-tab body: spinner on first load, otherwise the paginated list
+  const listView = loading ? (
+    <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />
+  ) : (
+    <FlatList
+      data={items}
+      keyExtractor={(item) => item.appointmentId}
+      renderItem={renderItem}
+      ListHeaderComponent={filtersHeader}
+      contentContainerStyle={[
+        styles.container,
+        { paddingBottom: BottomTabInset + 24 },
+      ]}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={TEAL} />
+      }
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.4}
+      ListEmptyComponent={
+        <View style={styles.emptyState}>
+          <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
+          <Text style={styles.emptyText}>No appointments found</Text>
+        </View>
+      }
+      ListFooterComponent={
+        loadingMore ? (
+          <ActivityIndicator color={TEAL} style={{ marginVertical: 16 }} />
+        ) : null
+      }
+    />
+  );
+
   return (
     <View style={styles.root}>
       <SafeAreaView edges={["top"]} style={styles.header}>
@@ -287,36 +320,8 @@ export default function AppointmentsScreen() {
 
       {tab === "book" ? (
         <AppointmentForm mode="book" embedded onDone={handleBooked} />
-      ) : loading ? (
-        <ActivityIndicator color={TEAL} style={{ marginTop: 40 }} />
       ) : (
-        <FlatList
-          data={items}
-          keyExtractor={(item) => item.appointmentId}
-          renderItem={renderItem}
-          ListHeaderComponent={filtersHeader}
-          contentContainerStyle={[
-            styles.container,
-            { paddingBottom: BottomTabInset + 24 },
-          ]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={TEAL} />
-          }
-          onEndReached={onEndReached}
-          onEndReachedThreshold={0.4}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="calendar-outline" size={48} color="#d1d5db" />
-              <Text style={styles.emptyText}>No appointments found</Text>
-            </View>
-          }
-          ListFooterComponent={
-            loadingMore ? (
-              <ActivityIndicator color={TEAL} style={{ marginVertical: 16 }} />
-            ) : null
-          }
-        />
+        listView
       )}
 
       {/* Cancellation reason modal */}
