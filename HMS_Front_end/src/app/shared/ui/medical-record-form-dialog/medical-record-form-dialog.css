@@ -76,6 +76,13 @@
   padding: 0.5rem 0.625rem;
 }
 
+/* Notes auto-grows with content; no manual resize handle */
+.mr-notes {
+  resize: none;
+  overflow-y: hidden;
+  min-height: 3.25rem;
+}
+
 .mr-section-head {
   display: flex;
   align-items: center;

@@ -1,12 +1,15 @@
 import {
+  AfterViewInit,
   Component,
   computed,
+  ElementRef,
   EventEmitter,
   inject,
   Input,
   OnInit,
   Output,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -19,6 +22,7 @@ import {
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { MedicalRecordService } from '../../../core/services/medical-record.service';
 import { Appointment } from '../../../core/models/appointment.model';
 import {
@@ -35,12 +39,16 @@ import {
   templateUrl: './medical-record-form-dialog.html',
   styleUrl: './medical-record-form-dialog.css',
 })
-export class MedicalRecordFormDialogComponent implements OnInit {
+export class MedicalRecordFormDialogComponent implements OnInit, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
+  private readonly confirm = inject(ConfirmModalService);
   private readonly service = inject(MedicalRecordService);
+
+  // Notes textarea, sized to its content (no manual resize handle)
+  @ViewChild('notesArea') private readonly notesArea?: ElementRef<HTMLTextAreaElement>;
 
   // Appointment context (provides the read-only auto-filled fields)
   @Input({ required: true }) appointment!: Appointment;
@@ -92,14 +100,19 @@ export class MedicalRecordFormDialogComponent implements OnInit {
 
   ngOnInit(): void {
     const r = this.existingRecord;
+
+    // Prescription is mandatory: always start with at least one row
+    const items = (r?.prescriptionItems ?? []).map((item) => this.newItem(item));
+    if (items.length === 0) {
+      items.push(this.newItem());
+    }
+
     this.form = this.fb.group({
       symptoms: [r?.symptoms ?? '', [Validators.required]],
       diagnosis: [r?.diagnosis ?? '', [Validators.required]],
       notes: [r?.notes ?? ''],
       status: [(r?.status as MedicalRecordStatus) ?? 'DRAFT'],
-      prescriptionItems: this.fb.array(
-        (r?.prescriptionItems ?? []).map((item) => this.newItem(item)),
-      ),
+      prescriptionItems: this.fb.array(items),
     });
 
     // Keep the status signal in sync so primaryLabel() recomputes on change
@@ -114,10 +127,24 @@ export class MedicalRecordFormDialogComponent implements OnInit {
     this.baseline = JSON.stringify(this.form.getRawValue());
   }
 
+  ngAfterViewInit(): void {
+    // Size the notes field to any pre-filled content
+    if (this.notesArea) {
+      this.autoGrow(this.notesArea.nativeElement);
+    }
+  }
+
+  // Grow/shrink a textarea to fit its content (notes field)
+  autoGrow(el: HTMLTextAreaElement): void {
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }
+
   // Snapshot of the loaded record for no-op detection
   private baseline = '';
 
-  // True only when editing and the form differs from the loaded record
+  // True when the form differs from its initial snapshot; drives both the
+  // edit-mode submit guard and the discard-on-close prompt
   hasChanges(): boolean {
     return JSON.stringify(this.form.getRawValue()) !== this.baseline;
   }
@@ -139,7 +166,17 @@ export class MedicalRecordFormDialogComponent implements OnInit {
   }
 
   removeItem(index: number): void {
+    // Keep at least one row — prescription is required
+    if (this.prescriptionItems.length <= 1) {
+      return;
+    }
     this.prescriptionItems.removeAt(index);
+  }
+
+  // True when a prescription field has been touched and left invalid (empty)
+  itemInvalid(index: number, field: string): boolean {
+    const control = this.prescriptionItems.at(index).get(field);
+    return !!control && control.touched && control.invalid;
   }
 
   // Primary button label adapts to role / edit-state / chosen status
@@ -157,6 +194,27 @@ export class MedicalRecordFormDialogComponent implements OnInit {
 
   close(): void {
     this.closed.emit();
+  }
+
+  // Guards against accidental data loss (e.g. clicking outside the dialog)
+  async requestClose(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    if (!this.hasChanges()) {
+      this.close();
+      return;
+    }
+    const result = await this.confirm.open({
+      title: 'Discard changes?',
+      message: 'You have unsaved changes. If you leave now, they will be lost.',
+      confirmText: 'Discard',
+      cancelText: 'Keep editing',
+      type: 'warning',
+    });
+    if (result.confirmed) {
+      this.close();
+    }
   }
 
   submit(): void {

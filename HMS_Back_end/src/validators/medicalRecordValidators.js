@@ -18,24 +18,20 @@ const createMedicalRecordValidation = [
         .withMessage("Diagnosis is required"),
 
     body("prescriptionItems")
-        .optional()
-        .isArray()
-        .withMessage("Prescription items must be an array"),
+        .isArray({ min: 1 })
+        .withMessage("At least one prescription item is required"),
 
     body("prescriptionItems.*.name")
-        .optional()
         .trim()
         .notEmpty()
         .withMessage("Prescription item name is required"),
 
     body("prescriptionItems.*.dosage")
-        .optional()
         .trim()
         .notEmpty()
         .withMessage("Prescription item dosage is required"),
 
     body("prescriptionItems.*.duration")
-        .optional()
         .trim()
         .notEmpty()
         .withMessage("Prescription item duration is required"),
@@ -70,23 +66,20 @@ const updateMedicalRecordValidation = [
 
     body("prescriptionItems")
         .optional()
-        .isArray()
-        .withMessage("Prescription items must be an array"),
+        .isArray({ min: 1 })
+        .withMessage("At least one prescription item is required"),
 
     body("prescriptionItems.*.name")
-        .optional()
         .trim()
         .notEmpty()
         .withMessage("Prescription item name is required"),
 
     body("prescriptionItems.*.dosage")
-        .optional()
         .trim()
         .notEmpty()
         .withMessage("Prescription item dosage is required"),
 
     body("prescriptionItems.*.duration")
-        .optional()
         .trim()
         .notEmpty()
         .withMessage("Prescription item duration is required"),

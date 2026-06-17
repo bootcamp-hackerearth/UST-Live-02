@@ -1,10 +1,10 @@
-<div class="mr-modal-backdrop" (click)="close()" (keydown.escape)="close()">
+<div class="mr-modal-backdrop" (click)="requestClose()" (keydown.escape)="requestClose()">
   <div class="mr-modal-box" (click)="$event.stopPropagation()" (keydown.escape)="$event.stopPropagation()">
     <div class="mr-modal-header">
       <h3 class="mr-modal-title">
         {{ existingRecord ? 'Edit Medical Record' : 'Generate Medical Record' }}
       </h3>
-      <button type="button" class="mr-close" aria-label="Close" (click)="close()">×</button>
+      <button type="button" class="mr-close" aria-label="Close" (click)="requestClose()">×</button>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="mr-modal-body">
@@ -74,34 +74,49 @@
             <div class="form-group">
               <label class="form-label" for="rx-name-{{ i }}">Name *</label>
               <input id="rx-name-{{ i }}" type="text" class="form-input" formControlName="name" />
+              @if (itemInvalid(i, 'name')) {
+                <p class="form-error">Required</p>
+              }
             </div>
             <div class="form-group">
               <label class="form-label" for="rx-dosage-{{ i }}">Dosage *</label>
               <input id="rx-dosage-{{ i }}" type="text" class="form-input" formControlName="dosage" />
+              @if (itemInvalid(i, 'dosage')) {
+                <p class="form-error">Required</p>
+              }
             </div>
             <div class="form-group">
               <label class="form-label" for="rx-duration-{{ i }}">Duration *</label>
               <input id="rx-duration-{{ i }}" type="text" class="form-input" formControlName="duration" />
+              @if (itemInvalid(i, 'duration')) {
+                <p class="form-error">Required</p>
+              }
             </div>
-            <button
-              type="button"
-              class="btn btn-danger-outline btn-sm mr-rx-remove"
-              (click)="removeItem(i)">
-              Remove
-            </button>
+            @if (prescriptionItems.length > 1) {
+              <button
+                type="button"
+                class="btn btn-danger-outline btn-sm mr-rx-remove"
+                (click)="removeItem(i)">
+                Remove
+              </button>
+            }
           </div>
-        } @empty {
-          <p class="muted">No prescription items added.</p>
         }
       </div>
 
       <div class="form-group">
         <label class="form-label" for="mr-notes">Notes</label>
-        <textarea id="mr-notes" rows="2" class="form-input" formControlName="notes"></textarea>
+        <textarea
+          id="mr-notes"
+          #notesArea
+          rows="2"
+          class="form-input mr-notes"
+          formControlName="notes"
+          (input)="autoGrow(notesArea)"></textarea>
       </div>
 
       <div class="mr-modal-actions">
-        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="close()">
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="requestClose()">
           Cancel
         </button>
         <button type="submit" class="btn btn-primary" [disabled]="saving() || (!!existingRecord && !hasChanges())">

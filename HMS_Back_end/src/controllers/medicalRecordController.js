@@ -97,6 +97,24 @@ const applyEditableFields = (record, { symptoms, diagnosis, prescriptionItems, n
     }
 };
 
+const isBlank = (value) => typeof value !== "string" || value.trim() === "";
+
+// Enforces the record invariant: every field except notes must hold a value, and
+// at least one complete prescription item must remain (cannot be emptied/nulled).
+const assertRecordComplete = (record) => {
+    if (isBlank(record.symptoms) || isBlank(record.diagnosis)) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.FIELDS_REQUIRED);
+    }
+
+    const items = record.prescriptionItems || [];
+    const hasIncomplete = items.some(
+        (item) => isBlank(item.name) || isBlank(item.dosage) || isBlank(item.duration)
+    );
+    if (items.length === 0 || hasIncomplete) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.PRESCRIPTION_REQUIRED);
+    }
+};
+
 // Finalizes a draft: marks it FINALIZED, completes the appointment, notifies the
 // patient, and logs the verification/finalization audit.
 const applyFinalizeUpdate = async ({ record, actor }) => {
@@ -345,6 +363,9 @@ exports.updateMedicalRecord = async (req, res) => {
     }
 
     applyEditableFields(record, { symptoms, diagnosis, prescriptionItems, notes });
+
+    // The resulting record must stay complete (prescription can never be emptied)
+    assertRecordComplete(record);
 
     if (willFinalize) {
         await applyFinalizeUpdate({ record, actor });

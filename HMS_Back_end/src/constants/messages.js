@@ -152,10 +152,12 @@ const MESSAGES = Object.freeze({
         CANNOT_BEFORE_START: "A medical record can only be generated after the appointment start time has passed",
         CREATED: "Medical record created successfully",
         DELETED: "Medical record deleted successfully",
+        FIELDS_REQUIRED: "Symptoms and diagnosis are required and cannot be empty",
         LIST_RETRIEVED: "Medical records retrieved successfully",
         NOT_FOUND: "Medical record not found",
         ONLY_DRAFT_EDITABLE: "Only draft medical records can be edited",
         OWN_ONLY: "You can only access medical records for your own appointments",
+        PRESCRIPTION_REQUIRED: "At least one prescription item with name, dosage and duration is required",
         RETRIEVED: "Medical record retrieved successfully",
         STAFF_CANNOT_FINALIZE: "Only the assigned doctor can finalize a medical record",
         UPDATED: "Medical record updated successfully"
