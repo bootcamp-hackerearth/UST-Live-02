@@ -69,7 +69,7 @@
       </div>
 
       <div formArrayName="prescriptionItems">
-        @for (item of prescriptionItems.controls; track $index; let i = $index) {
+        @for (item of prescriptionItems.controls; track item; let i = $index) {
           <div class="mr-rx-row" [formGroupName]="i">
             <div class="form-group">
               <label class="form-label" for="rx-name-{{ i }}">Name *</label>

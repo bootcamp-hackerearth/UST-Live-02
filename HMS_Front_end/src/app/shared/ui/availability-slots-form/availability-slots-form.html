@@ -4,7 +4,7 @@
     <button type="button" class="btn btn-secondary btn-sm" (click)="addSlot.emit()">+ Add Slot</button>
   </div>
 
-  @for (slot of formArray.controls; track $index; let i = $index) {
+  @for (slot of formArray.controls; track slot; let i = $index) {
   <div class="slot-row" [formGroup]="slotGroup(i)">
     <label class="slot-field slot-field-day">
       <span class="slot-field-name">Day</span>
