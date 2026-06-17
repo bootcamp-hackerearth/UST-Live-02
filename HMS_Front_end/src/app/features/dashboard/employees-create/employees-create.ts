@@ -249,6 +249,10 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   }
 
   removeSlot(i: number): void {
+    // Keep at least one slot — availability is required
+    if (this.availabilitySlots.length <= 1) {
+      return;
+    }
     this.availabilitySlots.removeAt(i);
   }
 

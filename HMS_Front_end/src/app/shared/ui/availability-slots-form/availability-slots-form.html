@@ -23,10 +23,12 @@
       <span class="slot-field-name">End time</span>
       <input type="time" formControlName="endTime" class="form-input" />
     </label>
+    @if (formArray.length > 1) {
     <button type="button" class="slot-remove" (click)="removeSlot.emit(i)">
       <span aria-hidden="true">✕</span>
       <span class="sr-only">Remove slot</span>
     </button>
+    }
   </div>
   @if (slot.hasError('slotTimeOrder')) {
   <p class="form-error slot-error">Start time must be before end time</p>

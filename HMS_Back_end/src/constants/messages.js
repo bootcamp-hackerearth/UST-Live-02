@@ -202,7 +202,7 @@ const MESSAGES = Object.freeze({
         MEDICAL_RECORD_DOCTOR_CREATED_DRAFT: (doctorName) =>
             `Medical record created by Doctor ${doctorName}. Current status: DRAFT. Waiting for finalization.`,
         MEDICAL_RECORD_DOCTOR_CREATED_FINALIZED: (doctorName) =>
-            `Medical record created and finalized by Doctor ${doctorName}. Medical record status changed to FINALIZED. Appointment status changed to COMPLETED.`,
+            `Medical record created and finalized by Doctor ${doctorName}. Appointment status changed to COMPLETED.`,
         MEDICAL_RECORD_DOCTOR_UPDATED_DRAFT: (doctorName) =>
             `Medical record updated by Doctor ${doctorName}. Current status: DRAFT. Waiting for finalization.`,
         MEDICAL_RECORD_DOCTOR_UPDATED_FINALIZED: (doctorName) =>
