@@ -2,7 +2,7 @@ import { apiFetch } from "./apiClient";
 import type { Appointment, AppointmentStatus, Doctor } from "./types";
 
 // Payload types describe the data field of the envelope that apiFetch resolves with
-type AppointmentsData = {
+export type AppointmentsData = {
   total: number;
   page: number;
   limit: number;

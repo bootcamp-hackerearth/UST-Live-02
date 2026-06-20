@@ -1,6 +1,13 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useRouter } from "expo-router";
-import { ReactNode, useCallback, useState } from "react";
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useRefetchOnFocusIfStale } from "@/hooks/useRefetchOnFocusIfStale";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,6 +29,7 @@ import AppointmentForm from "@/components/appointment/AppointmentForm";
 import AppointmentCard from "@/components/appointment/AppointmentCard";
 import { useNavGuard } from "@/store/navGuard";
 import {
+  AppointmentsData,
   cancelAppointment,
   getMyAppointments,
 } from "@/services/appointmentService";
@@ -48,85 +56,80 @@ const FILTERS: Filter[] = [
   "UNATTENDED",
 ];
 
+// Optimistically flip a single appointment to CANCELED across all cached pages.
+// Extracted so the mutation's onMutate stays shallow (avoids deep callback nesting).
+function markAppointmentCanceled(
+  data: InfiniteData<AppointmentsData> | undefined,
+  id: string,
+): InfiniteData<AppointmentsData> | undefined {
+  if (!data) return data;
+  return {
+    ...data,
+    pages: data.pages.map((pg) => ({
+      ...pg,
+      appointments: pg.appointments.map((a) =>
+        a.appointmentId === id
+          ? { ...a, status: "CANCELED" as AppointmentStatus }
+          : a,
+      ),
+    })),
+  };
+}
+
 export default function AppointmentsScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<TopTab>("list");
-  const [items, setItems] = useState<Appointment[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<Filter>("All");
 
   // Cancellation modal state
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [reason, setReason] = useState("");
-  const [cancelling, setCancelling] = useState(false);
 
   const confirmLeave = useNavGuard((s) => s.confirmLeave);
 
-  const loadPage = useCallback(
-    async (nextPage: number, replace: boolean, filter: Filter) => {
-      const status = filter === "All" ? undefined : filter;
-      const data = await getMyAppointments(status, nextPage, PAGE_SIZE);
-      setTotalPages(data.totalPages || 1);
-      setPage(data.page || nextPage);
-      setItems((prev) =>
-        replace ? data.appointments : [...prev, ...data.appointments],
-      );
-    },
-    [],
-  );
+  // Per-filter infinite query; React Query caches each filter independently
+  const status = activeFilter === "All" ? undefined : activeFilter;
+  const query = useInfiniteQuery({
+    queryKey: ["myAppointments", activeFilter],
+    queryFn: ({ pageParam }) => getMyAppointments(status, pageParam, PAGE_SIZE),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+  });
 
-  // Reload page 1 for the active filter whenever the screen regains focus
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      setLoading(true);
-      loadPage(1, true, activeFilter)
-        .catch(showError)
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-      return () => {
-        active = false;
-      };
-    }, [loadPage, activeFilter]),
-  );
+  const items = query.data?.pages.flatMap((p) => p.appointments) ?? [];
+  const loading = query.isLoading;
+  const loadingMore = query.isFetchingNextPage;
 
+  useEffect(() => {
+    if (query.error) showError(query.error);
+  }, [query.error]);
+
+  // Silent background refresh of the active filter on focus — only when stale,
+  // so switching away and back within the window reuses the cached list
+  useRefetchOnFocusIfStale(query);
+
+  // Switching filters just swaps the query key; cached data renders instantly
   const changeFilter = (f: Filter) => {
-    if (f === activeFilter) return;
-    setActiveFilter(f);
-    setItems([]);
-    setLoading(true);
-    loadPage(1, true, f)
-      .catch(showError)
-      .finally(() => setLoading(false));
+    if (f !== activeFilter) setActiveFilter(f);
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await loadPage(1, true, activeFilter);
-    } catch (err) {
-      showError(err);
+      await query.refetch();
     } finally {
       setRefreshing(false);
     }
-  }, [loadPage, activeFilter]);
+  }, [query.refetch]);
 
-  const onEndReached = useCallback(async () => {
-    if (loadingMore || loading || page >= totalPages) return;
-    setLoadingMore(true);
-    try {
-      await loadPage(page + 1, false, activeFilter);
-    } catch (err) {
-      showError(err);
-    } finally {
-      setLoadingMore(false);
+  const onEndReached = useCallback(() => {
+    if (query.hasNextPage && !query.isFetchingNextPage) {
+      query.fetchNextPage();
     }
-  }, [loadingMore, loading, page, totalPages, loadPage, activeFilter]);
+  }, [query.hasNextPage, query.isFetchingNextPage, query.fetchNextPage]);
 
   // Switching away from a dirty booking form prompts via the shared nav guard
   const switchTab = async (next: TopTab) => {
@@ -135,37 +138,53 @@ export default function AppointmentsScreen() {
     setTab(next);
   };
 
-  // After booking, jump to the list directly so submit never triggers the unsaved prompt
+  // After booking, jump to the list and refresh all cached appointment filters
   const handleBooked = useCallback(() => {
     setTab("list");
     setActiveFilter("All");
-    setLoading(true);
-    loadPage(1, true, "All")
-      .catch(showError)
-      .finally(() => setLoading(false));
-  }, [loadPage]);
+    queryClient.invalidateQueries({ queryKey: ["myAppointments"] });
+  }, [queryClient]);
 
   const openCancel = (appt: Appointment) => {
     setCancelTarget(appt);
     setReason("");
   };
 
-  const confirmCancel = async () => {
+  // Optimistic cancel: flip the row to CANCELED across cached filter pages,
+  // roll back on error, and reconcile with the server on settle.
+  const cancelMutation = useMutation({
+    mutationFn: ({ id, cancellationReason }: { id: string; cancellationReason: string }) =>
+      cancelAppointment(id, cancellationReason),
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: ["myAppointments"] });
+      const prev = queryClient.getQueriesData<InfiniteData<AppointmentsData>>({
+        queryKey: ["myAppointments"],
+      });
+      queryClient.setQueriesData<InfiniteData<AppointmentsData>>(
+        { queryKey: ["myAppointments"] },
+        (old) => markAppointmentCanceled(old, id),
+      );
+      return { prev };
+    },
+    onError: (err, _vars, ctx) => {
+      ctx?.prev?.forEach(([key, data]) => queryClient.setQueryData(key, data));
+      showError(err, ALERT_TITLES.CANCEL_FAILED);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["myAppointments"] }),
+  });
+  const cancelling = cancelMutation.isPending;
+
+  const confirmCancel = () => {
     if (!cancelTarget) return;
     if (!reason.trim()) {
       Alert.alert(ALERT_TITLES.REASON_REQUIRED, MESSAGES.CANCEL_REASON_REQUIRED);
       return;
     }
-    setCancelling(true);
-    try {
-      await cancelAppointment(cancelTarget.appointmentId, reason.trim());
-      setCancelTarget(null);
-      await loadPage(1, true, activeFilter);
-    } catch (err) {
-      showError(err, ALERT_TITLES.CANCEL_FAILED);
-    } finally {
-      setCancelling(false);
-    }
+    cancelMutation.mutate({
+      id: cancelTarget.appointmentId,
+      cancellationReason: reason.trim(),
+    });
+    setCancelTarget(null);
   };
 
   const reschedule = (appt: Appointment) => {
@@ -271,6 +290,10 @@ export default function AppointmentsScreen() {
         { paddingBottom: BottomTabInset + 24 },
       ]}
       showsVerticalScrollIndicator={false}
+      initialNumToRender={10}
+      maxToRenderPerBatch={10}
+      windowSize={7}
+      removeClippedSubviews
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={TEAL} />
       }

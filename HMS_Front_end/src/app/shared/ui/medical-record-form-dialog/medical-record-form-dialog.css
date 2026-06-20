@@ -90,7 +90,33 @@
   margin-top: 0.5rem;
 }
 
-.mr-rx-row {
+/* Each medication is a bordered card so its many fields read as one row */
+.mr-rx-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #fafafa;
+}
+
+.mr-rx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Food timing: relation dropdown + minutes input side by side */
+.mr-food {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mr-food-min {
+  max-width: 5.5rem;
+}
+
+/* Vitals/observation rows: metric, value, recorded time + remove */
+.mr-obs-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr auto;
   gap: 0.75rem;
@@ -99,7 +125,13 @@
 }
 
 .mr-rx-remove {
-  margin-bottom: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.muted {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  margin: 0.25rem 0 0.75rem;
 }
 
 .mr-modal-actions {
@@ -112,7 +144,7 @@
 }
 
 @media (max-width: 640px) {
-  .mr-rx-row {
+  .mr-obs-row {
     grid-template-columns: 1fr;
   }
 }

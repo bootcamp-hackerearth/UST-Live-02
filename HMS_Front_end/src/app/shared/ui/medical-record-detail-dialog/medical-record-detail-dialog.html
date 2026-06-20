@@ -38,30 +38,58 @@
         }
       </div>
 
+      <h4 class="section-title">Chief Complaint</h4>
+      <p class="mr-text">{{ record.chiefComplaint }}</p>
+
       <h4 class="section-title">Symptoms</h4>
       <p class="mr-text">{{ record.symptoms }}</p>
 
       <h4 class="section-title">Diagnosis</h4>
       <p class="mr-text">{{ record.diagnosis }}</p>
 
-      <h4 class="section-title">Prescription</h4>
-      @if (record.prescriptionItems.length) {
+      <h4 class="section-title">Advice</h4>
+      <p class="mr-text">{{ record.advice }}</p>
+
+      @if (record.prescriptionItems?.length) {
+        <h4 class="section-title">Prescription</h4>
         <table class="data-table mr-rx-table">
           <thead>
-            <tr><th>Name</th><th>Dosage</th><th>Duration</th></tr>
+            <tr>
+              <th>Name</th><th>Dosage</th><th>Frequency</th><th>Duration</th>
+              <th>Food timing</th><th>Administration</th>
+            </tr>
           </thead>
           <tbody>
             @for (item of record.prescriptionItems; track $index) {
               <tr>
                 <td>{{ item.name }}</td>
                 <td>{{ item.dosage }}</td>
+                <td>{{ item.frequency }}</td>
                 <td>{{ item.duration }}</td>
+                <td>{{ foodTimingText(item) || '—' }}</td>
+                <td>{{ methodLabels[item.administrationMethod] }} · {{ categoryLabels[item.administrationCategory] }}</td>
               </tr>
             }
           </tbody>
         </table>
-      } @else {
-        <p class="muted">No prescription items.</p>
+      }
+
+      @if (record.medicalObservations?.length) {
+        <h4 class="section-title">Vitals / Observations</h4>
+        <table class="data-table mr-rx-table">
+          <thead>
+            <tr><th>Metric</th><th>Value</th><th>Recorded time</th></tr>
+          </thead>
+          <tbody>
+            @for (obs of record.medicalObservations; track $index) {
+              <tr>
+                <td>{{ obs.metricName }}</td>
+                <td>{{ obs.metricValue }}</td>
+                <td>{{ obs.recordedTime | date: 'medium' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
       }
 
       @if (record.notes) {

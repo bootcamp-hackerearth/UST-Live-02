@@ -81,16 +81,31 @@ const applyCreateSideEffects = async ({ record, recordStatus, doctorRole, actor,
     });
 };
 
-// Copies provided (defined) editable fields onto the record
-const applyEditableFields = (record, { symptoms, diagnosis, prescriptionItems, notes }) => {
+// Optional arrays stay absent (undefined) when empty, so they are never persisted
+// as [] and never render as blank sections on the clients.
+const normalizeArray = (value) =>
+    Array.isArray(value) && value.length > 0 ? value : undefined;
+
+// Copies provided (defined) editable fields onto the record. Empty optional arrays
+// clear the field (set to undefined) so a doctor can remove all meds/observations.
+const applyEditableFields = (record, { chiefComplaint, symptoms, diagnosis, advice, prescriptionItems, medicalObservations, notes }) => {
+    if (chiefComplaint !== undefined) {
+        record.chiefComplaint = chiefComplaint;
+    }
     if (symptoms !== undefined) {
         record.symptoms = symptoms;
     }
     if (diagnosis !== undefined) {
         record.diagnosis = diagnosis;
     }
+    if (advice !== undefined) {
+        record.advice = advice;
+    }
     if (prescriptionItems !== undefined) {
-        record.prescriptionItems = prescriptionItems;
+        record.prescriptionItems = normalizeArray(prescriptionItems);
+    }
+    if (medicalObservations !== undefined) {
+        record.medicalObservations = normalizeArray(medicalObservations);
     }
     if (notes !== undefined) {
         record.notes = notes;
@@ -99,19 +114,38 @@ const applyEditableFields = (record, { symptoms, diagnosis, prescriptionItems, n
 
 const isBlank = (value) => typeof value !== "string" || value.trim() === "";
 
-// Enforces the record invariant: every field except notes must hold a value, and
-// at least one complete prescription item must remain (cannot be emptied/nulled).
+// Enforces the record invariant: the four clinical text fields must hold a value;
+// prescription and observations are optional, but any present row must be complete.
 const assertRecordComplete = (record) => {
-    if (isBlank(record.symptoms) || isBlank(record.diagnosis)) {
+    if (
+        isBlank(record.chiefComplaint) ||
+        isBlank(record.symptoms) ||
+        isBlank(record.diagnosis) ||
+        isBlank(record.advice)
+    ) {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.FIELDS_REQUIRED);
     }
 
     const items = record.prescriptionItems || [];
-    const hasIncomplete = items.some(
-        (item) => isBlank(item.name) || isBlank(item.dosage) || isBlank(item.duration)
+    const hasIncompleteItem = items.some(
+        (item) =>
+            isBlank(item.name) ||
+            isBlank(item.dosage) ||
+            isBlank(item.frequency) ||
+            isBlank(item.duration) ||
+            isBlank(item.administrationCategory) ||
+            isBlank(item.administrationMethod)
     );
-    if (items.length === 0 || hasIncomplete) {
+    if (hasIncompleteItem) {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.PRESCRIPTION_REQUIRED);
+    }
+
+    const observations = record.medicalObservations || [];
+    const hasIncompleteObservation = observations.some(
+        (obs) => isBlank(obs.metricName) || isBlank(obs.metricValue) || !obs.recordedTime
+    );
+    if (hasIncompleteObservation) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.OBSERVATION_INCOMPLETE);
     }
 };
 
@@ -208,9 +242,12 @@ exports.createMedicalRecord = async (req, res) => {
 
     const {
         appointmentId,
+        chiefComplaint,
         symptoms,
         diagnosis,
+        advice,
         prescriptionItems,
+        medicalObservations,
         notes,
         status
     } = req.body;
@@ -280,9 +317,12 @@ exports.createMedicalRecord = async (req, res) => {
         patientName: patient.name,
         doctorEmployeeId: doctor.employeeCode,
         doctorName: doctor.name,
+        chiefComplaint,
         symptoms,
         diagnosis,
-        prescriptionItems: prescriptionItems || [],
+        advice,
+        prescriptionItems: normalizeArray(prescriptionItems),
+        medicalObservations: normalizeArray(medicalObservations),
         notes,
         status: recordStatus,
         createdByEmployeeId: actor.employeeCode,
@@ -312,9 +352,12 @@ exports.updateMedicalRecord = async (req, res) => {
 
     const { medicalRecordId } = req.params;
     const {
+        chiefComplaint,
         symptoms,
         diagnosis,
+        advice,
         prescriptionItems,
+        medicalObservations,
         notes,
         status
     } = req.body;
@@ -354,15 +397,28 @@ exports.updateMedicalRecord = async (req, res) => {
         !willFinalize &&
         !hasFieldChanges(
             record,
-            { symptoms, diagnosis, notes, prescriptionItems },
-            ["symptoms", "diagnosis", "notes", "prescriptionItems"],
-            { arrayKeys: { prescriptionItems: ["name", "dosage", "duration"] } }
+            { chiefComplaint, symptoms, diagnosis, advice, notes, prescriptionItems, medicalObservations },
+            ["chiefComplaint", "symptoms", "diagnosis", "advice", "notes", "prescriptionItems", "medicalObservations"],
+            {
+                arrayKeys: {
+                    prescriptionItems: [
+                        "name",
+                        "dosage",
+                        "frequency",
+                        "duration",
+                        "foodTiming",
+                        "administrationCategory",
+                        "administrationMethod"
+                    ],
+                    medicalObservations: ["metricName", "metricValue", "recordedTime"]
+                }
+            }
         )
     ) {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
     }
 
-    applyEditableFields(record, { symptoms, diagnosis, prescriptionItems, notes });
+    applyEditableFields(record, { chiefComplaint, symptoms, diagnosis, advice, prescriptionItems, medicalObservations, notes });
 
     // The resulting record must stay complete (prescription can never be emptied)
     assertRecordComplete(record);

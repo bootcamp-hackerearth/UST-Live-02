@@ -1,6 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
-import type { MedicalRecord } from "@/services/types";
-import { formatApptDate } from "@/utils/format";
+import {
+  ADMINISTRATION_METHOD_LABELS,
+  type MedicalRecord,
+} from "@/services/types";
+import {
+  formatApptDate,
+  formatDateTime,
+  formatFoodTiming,
+} from "@/utils/format";
 
 const TEAL = "#2e9466";
 
@@ -19,6 +26,10 @@ export default function MedicalRecordDetails({ record }: Props) {
         </Text>
       </View>
 
+      <Section title="Chief Complaint">
+        <Text style={styles.bodyText}>{record.chiefComplaint}</Text>
+      </Section>
+
       <Section title="Symptoms">
         <Text style={styles.bodyText}>{record.symptoms}</Text>
       </Section>
@@ -27,20 +38,42 @@ export default function MedicalRecordDetails({ record }: Props) {
         <Text style={styles.bodyText}>{record.diagnosis}</Text>
       </Section>
 
-      <Section title="Prescription">
-        {record.prescriptionItems?.length ? (
-          record.prescriptionItems.map((item, i) => (
-            <View key={`${item.name}-${i}`} style={styles.rxRow}>
-              <Text style={styles.rxName}>{item.name}</Text>
+      <Section title="Advice">
+        <Text style={styles.bodyText}>{record.advice}</Text>
+      </Section>
+
+      {record.prescriptionItems?.length ? (
+        <Section title="Prescription">
+          {record.prescriptionItems.map((item, i) => {
+            const food = formatFoodTiming(item.foodTiming);
+            return (
+              <View key={`${item.name}-${i}`} style={styles.rxItem}>
+                <Text style={styles.rxName}>{item.name}</Text>
+                <Text style={styles.rxMeta}>
+                  {item.dosage} · {item.frequency} · {item.duration}
+                </Text>
+                <Text style={styles.rxMeta}>
+                  {ADMINISTRATION_METHOD_LABELS[item.administrationMethod]}
+                  {food ? ` · ${food}` : ""}
+                </Text>
+              </View>
+            );
+          })}
+        </Section>
+      ) : null}
+
+      {record.medicalObservations?.length ? (
+        <Section title="Vitals / Observations">
+          {record.medicalObservations.map((obs, i) => (
+            <View key={`${obs.metricName}-${i}`} style={styles.rxRow}>
+              <Text style={styles.rxName}>{obs.metricName}</Text>
               <Text style={styles.rxMeta}>
-                {item.dosage} · {item.duration}
+                {obs.metricValue} · {formatDateTime(obs.recordedTime)}
               </Text>
             </View>
-          ))
-        ) : (
-          <Text style={styles.muted}>No prescription items.</Text>
-        )}
-      </Section>
+          ))}
+        </Section>
+      ) : null}
     </View>
   );
 }
@@ -93,8 +126,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#f3f4f6",
   },
+  // Prescription rows stack name + meta lines (more fields than vitals rows)
+  rxItem: {
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#f3f4f6",
+  },
   rxName: { fontSize: 15, color: "#1f2937", fontWeight: "600", flex: 1 },
-  rxMeta: { fontSize: 13, color: "#6b7280" },
+  rxMeta: { fontSize: 13, color: "#6b7280", marginTop: 2 },
 
   muted: { fontSize: 14, color: "#9ca3af" },
 });

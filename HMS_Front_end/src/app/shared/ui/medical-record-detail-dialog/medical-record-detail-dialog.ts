@@ -13,7 +13,13 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { MedicalRecordService } from '../../../core/services/medical-record.service';
-import { MedicalRecord } from '../../../core/models/medical-record.model';
+import {
+  MedicalRecord,
+  PrescriptionItem,
+  ADMINISTRATION_CATEGORY_LABELS,
+  ADMINISTRATION_METHOD_LABELS,
+  formatFoodTiming,
+} from '../../../core/models/medical-record.model';
 
 // Read-only full view of a medical record. Admin/Owner can soft-delete from here.
 @Component({
@@ -33,6 +39,14 @@ export class MedicalRecordDetailDialogComponent {
   @Input({ required: true }) record!: MedicalRecord;
   @Output() closed = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<string>();
+
+  // Display label maps + food-timing phrase for the template
+  readonly categoryLabels = ADMINISTRATION_CATEGORY_LABELS;
+  readonly methodLabels = ADMINISTRATION_METHOD_LABELS;
+
+  foodTimingText(item: PrescriptionItem): string {
+    return formatFoodTiming(item.foodTiming);
+  }
 
   deleting = signal(false);
 

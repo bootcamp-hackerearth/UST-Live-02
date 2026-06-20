@@ -1,6 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useRefetchOnFocusIfStale } from "@/hooks/useRefetchOnFocusIfStale";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -22,52 +24,40 @@ const PAGE_SIZE = 10;
 
 export default function MedicalRecordsScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<MedicalRecordListItem[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadPage = useCallback(async (nextPage: number, replace: boolean) => {
-    try {
-      const data = await getMyMedicalRecords(nextPage, PAGE_SIZE);
-      setTotalPages(data.totalPages || 1);
-      setPage(data.page || nextPage);
-      setItems((prev) =>
-        replace ? data.medicalRecords : [...prev, ...data.medicalRecords],
-      );
-    } catch (err) {
-      showError(err);
-    }
-  }, []);
+  const query = useInfiniteQuery({
+    queryKey: ["medicalRecords"],
+    queryFn: ({ pageParam }) => getMyMedicalRecords(pageParam, PAGE_SIZE),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+  });
 
-  // Reload from the first page whenever the screen regains focus
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      setLoading(true);
-      loadPage(1, true).finally(() => {
-        if (active) setLoading(false);
-      });
-      return () => {
-        active = false;
-      };
-    }, [loadPage]),
-  );
+  const items = query.data?.pages.flatMap((p) => p.medicalRecords) ?? [];
+  const loading = query.isLoading;
+  const loadingMore = query.isFetchingNextPage;
+
+  // Surface fetch errors (parity with the previous showError path)
+  useEffect(() => {
+    if (query.error) showError(query.error);
+  }, [query.error]);
+
+  // Silent background refresh when the screen regains focus — only when stale,
+  // so a quick return reuses the cached list instead of refetching
+  useRefetchOnFocusIfStale(query);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadPage(1, true);
+    await query.refetch();
     setRefreshing(false);
-  }, [loadPage]);
+  }, [query.refetch]);
 
-  const onEndReached = useCallback(async () => {
-    if (loadingMore || loading || page >= totalPages) return;
-    setLoadingMore(true);
-    await loadPage(page + 1, false);
-    setLoadingMore(false);
-  }, [loadingMore, loading, page, totalPages, loadPage]);
+  const onEndReached = useCallback(() => {
+    if (query.hasNextPage && !query.isFetchingNextPage) {
+      query.fetchNextPage();
+    }
+  }, [query.hasNextPage, query.isFetchingNextPage, query.fetchNextPage]);
 
   const openRecord = (item: MedicalRecordListItem) => {
     router.push({
@@ -116,6 +106,10 @@ export default function MedicalRecordsScreen() {
             items.length === 0 && styles.listEmpty,
           ]}
           showsVerticalScrollIndicator={false}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={7}
+          removeClippedSubviews
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={TEAL} />
           }

@@ -9,11 +9,128 @@ export const MEDICAL_RECORD_STATUSES: MedicalRecordStatus[] = [
   'FINALIZED',
 ];
 
+// Administration routes, grouped by category. Codes mirror the backend domain.js;
+// keep these in sync with Unoptimized-Back-end/src/constants/domain.js and the RN app.
+export type AdministrationCategory =
+  | 'ENTERAL'
+  | 'PARENTERAL'
+  | 'TOPICAL_LOCALIZED'
+  | 'INHALATION_NASAL';
+
+export type AdministrationMethod =
+  | 'ORAL'
+  | 'SUBLINGUAL'
+  | 'BUCCAL'
+  | 'RECTAL'
+  | 'INTRAVENOUS'
+  | 'INTRAMUSCULAR'
+  | 'SUBCUTANEOUS'
+  | 'INTRADERMAL'
+  | 'TOPICAL_TRANSDERMAL'
+  | 'OPHTHALMIC'
+  | 'OTIC'
+  | 'VAGINAL'
+  | 'INHALATION'
+  | 'NASAL';
+
+export type FoodRelation = 'BEFORE_FOOD' | 'AFTER_FOOD';
+
+export const ADMINISTRATION_CATEGORIES: AdministrationCategory[] = [
+  'ENTERAL',
+  'PARENTERAL',
+  'TOPICAL_LOCALIZED',
+  'INHALATION_NASAL',
+];
+
+export const ADMINISTRATION_METHODS_BY_CATEGORY: Record<
+  AdministrationCategory,
+  AdministrationMethod[]
+> = {
+  ENTERAL: ['ORAL', 'SUBLINGUAL', 'BUCCAL', 'RECTAL'],
+  PARENTERAL: ['INTRAVENOUS', 'INTRAMUSCULAR', 'SUBCUTANEOUS', 'INTRADERMAL'],
+  TOPICAL_LOCALIZED: ['TOPICAL_TRANSDERMAL', 'OPHTHALMIC', 'OTIC', 'VAGINAL'],
+  INHALATION_NASAL: ['INHALATION', 'NASAL'],
+};
+
+export const ADMINISTRATION_CATEGORY_LABELS: Record<AdministrationCategory, string> = {
+  ENTERAL: 'Enteral (GI tract)',
+  PARENTERAL: 'Parenteral (Injection/Infusion)',
+  TOPICAL_LOCALIZED: 'Topical & Localized',
+  INHALATION_NASAL: 'Inhalation & Nasal',
+};
+
+export const ADMINISTRATION_METHOD_LABELS: Record<AdministrationMethod, string> = {
+  ORAL: 'Oral (PO)',
+  SUBLINGUAL: 'Sublingual',
+  BUCCAL: 'Buccal',
+  RECTAL: 'Rectal',
+  INTRAVENOUS: 'Intravenous (IV)',
+  INTRAMUSCULAR: 'Intramuscular (IM)',
+  SUBCUTANEOUS: 'Subcutaneous (SC)',
+  INTRADERMAL: 'Intradermal (ID)',
+  TOPICAL_TRANSDERMAL: 'Topical / Transdermal',
+  OPHTHALMIC: 'Ophthalmic',
+  OTIC: 'Otic',
+  VAGINAL: 'Vaginal',
+  INHALATION: 'Inhalation',
+  NASAL: 'Nasal',
+};
+
+export const FOOD_RELATIONS: FoodRelation[] = ['BEFORE_FOOD', 'AFTER_FOOD'];
+
+export const FOOD_RELATION_LABELS: Record<FoodRelation, string> = {
+  BEFORE_FOOD: 'Before food',
+  AFTER_FOOD: 'After food',
+};
+
+// When/how a medicine relates to meals (offset stored in minutes)
+export interface FoodTiming {
+  relation?: FoodRelation;
+  offsetMinutes?: number;
+}
+
 // A single prescription line item
 export interface PrescriptionItem {
   name: string;
   dosage: string;
+  frequency: string;
   duration: string;
+  foodTiming?: FoodTiming;
+  administrationCategory: AdministrationCategory;
+  administrationMethod: AdministrationMethod;
+}
+
+// A single recorded vital / lab test
+export interface MedicalObservation {
+  metricName: string;
+  metricValue: string;
+  recordedTime: string;
+}
+
+// Converts a food-timing offset (minutes) to an hours phrase for display:
+// 30 -> "half hour", 60 -> "1 hour", 90 -> "1.5 hours".
+export function formatFoodOffset(minutes?: number | null): string {
+  if (minutes == null || minutes <= 0) {
+    return '';
+  }
+  if (minutes === 30) {
+    return 'half hour';
+  }
+  const hours = minutes / 60;
+  if (Number.isInteger(hours)) {
+    return `${hours} hour${hours === 1 ? '' : 's'}`;
+  }
+  return `${hours} hours`;
+}
+
+// Full readable food-timing phrase, e.g. "half hour before food". Empty when absent.
+export function formatFoodTiming(timing?: FoodTiming | null): string {
+  if (!timing?.relation) {
+    return '';
+  }
+  const offset = formatFoodOffset(timing.offsetMinutes);
+  const relation = FOOD_RELATION_LABELS[timing.relation].toLowerCase();
+  return offset ? `${offset} ${relation}` : relation;
 }
 
 // Full medical record (detail / create / update responses)
@@ -25,9 +142,12 @@ export interface MedicalRecord {
   patientName: string;
   doctorEmployeeId: string;
   doctorName: string;
+  chiefComplaint: string;
   symptoms: string;
   diagnosis: string;
-  prescriptionItems: PrescriptionItem[];
+  advice: string;
+  prescriptionItems?: PrescriptionItem[];
+  medicalObservations?: MedicalObservation[];
   notes?: string;
   status: MedicalRecordStatus;
   createdByEmployeeId?: string;
@@ -62,18 +182,24 @@ export interface MedicalRecordFilters {
 // Payload to create a medical record
 export interface CreateMedicalRecordPayload {
   appointmentId: string;
+  chiefComplaint: string;
   symptoms: string;
   diagnosis: string;
-  prescriptionItems: PrescriptionItem[];
+  advice: string;
+  prescriptionItems?: PrescriptionItem[];
+  medicalObservations?: MedicalObservation[];
   notes?: string;
   status: MedicalRecordStatus;
 }
 
 // Payload to update a medical record (partial fields + optional status transition)
 export interface UpdateMedicalRecordPayload {
+  chiefComplaint?: string;
   symptoms?: string;
   diagnosis?: string;
+  advice?: string;
   prescriptionItems?: PrescriptionItem[];
+  medicalObservations?: MedicalObservation[];
   notes?: string;
   status?: MedicalRecordStatus;
 }

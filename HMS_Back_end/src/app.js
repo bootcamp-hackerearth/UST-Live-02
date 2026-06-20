@@ -12,6 +12,7 @@ const patientRoutes = require("./routes/patientRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 const nodeRoutes = require("./routes/nodeRoutes");
 const patientAuthRoutes = require("./routes/patientAuthRoutes");
 const patientSelfRoutes = require("./routes/patientSelfRoutes");
@@ -58,6 +59,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/medical-records", medicalRecordRoutes);
 app.use("/api/employees", employeeRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/nodes", nodeRoutes);
 
 // Patient-facing app (mobile) routes
