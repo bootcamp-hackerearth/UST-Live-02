@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import {
   FormBuilder,
@@ -6,13 +6,15 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { PatientService } from '../../../core/services/patient.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
 import { FormDraftService } from '../../../core/services/form-draft.service';
+import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import {
   GENDERS,
@@ -34,6 +36,7 @@ import {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterLink,
     DashboardLayoutComponent,
     DatePipe,
   ],
@@ -45,17 +48,26 @@ export class PatientDetailComponent
 {
   private readonly fb = inject(FormBuilder);
   private readonly patientService = inject(PatientService);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly formDraft = inject(FormDraftService);
+  private readonly confirmModal = inject(ConfirmModalService);
 
   patient = signal<Patient | null>(null);
   loading = signal(true);
   saving = signal(false);
   editing = signal(false);
+  deleting = signal(false);
   submittedOk = false;
+
+  // Only admin/owner may delete a patient
+  isPrivileged = computed(() => {
+    const d = this.authService.getDesignation();
+    return d === 'OWNER' || d === 'ADMIN';
+  });
 
   genders = GENDERS;
   statuses = PATIENT_STATUSES;
@@ -104,6 +116,10 @@ export class PatientDetailComponent
           this.form.patchValue(draft);
           this.editing.set(true);
         }
+        // Opened straight into edit mode from the patient list modal
+        if (this.route.snapshot.queryParamMap.get('edit') === '1') {
+          this.editing.set(true);
+        }
         this.loading.set(false);
       },
       error: () => {
@@ -120,6 +136,14 @@ export class PatientDetailComponent
     });
   }
 
+  // Snapshot of the loaded form value for no-op detection
+  private baseline = '';
+
+  // True only when the form differs from the loaded patient values
+  hasChanges(): boolean {
+    return JSON.stringify(this.form.getRawValue()) !== this.baseline;
+  }
+
   private applyToForm(p: Patient): void {
     this.form.patchValue({
       name: p.name,
@@ -132,6 +156,7 @@ export class PatientDetailComponent
       emergencyContact: p.emergencyContact,
     });
     this.form.markAsPristine();
+    this.baseline = JSON.stringify(this.form.getRawValue());
   }
 
   startEdit(): void {
@@ -177,6 +202,39 @@ export class PatientDetailComponent
       error: (err) => {
         this.saving.set(false);
         this.toast.error(this.apiError.message(err, APP_MESSAGES.PATIENT_UPDATE_FAILED));
+      },
+    });
+  }
+
+  async deletePatient(): Promise<void> {
+    const p = this.patient();
+    if (!p) {
+      return;
+    }
+
+    const result = await this.confirmModal.open({
+      title: 'Delete Patient',
+      message: `Are you sure you want to delete ${p.name} (${p.UHID})?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+    if (!result.confirmed) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.patientService.deletePatient(p.UHID).subscribe({
+      next: (res) => {
+        this.deleting.set(false);
+        this.formDraft.clear(this.draftKey);
+        this.submittedOk = true;
+        this.toast.success(res.message || APP_MESSAGES.PATIENT_DELETED);
+        this.router.navigate(['/dashboard/patients']);
+      },
+      error: (err) => {
+        this.deleting.set(false);
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.PATIENT_DELETE_FAILED));
       },
     });
   }

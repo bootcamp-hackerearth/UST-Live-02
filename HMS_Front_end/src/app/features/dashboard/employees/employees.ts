@@ -133,16 +133,30 @@ export class EmployeesListComponent implements OnInit {
     this.router.navigate(['/dashboard/employees', item.employee.employeeCode, 'edit']);
   }
 
-  // Only staff designations are editable; OWNER/ADMIN updates are rejected by the backend
+  // Open Medical Records scoped to this doctor (records they created/verified)
+  viewDoctorRecords(item: EmployeeListItem): void {
+    this.router.navigate(['/dashboard/medical-records'], {
+      queryParams: {
+        doctorEmployeeId: item.employee.employeeCode,
+        doctorName: item.employee.name,
+      },
+    });
+  }
+
+  // Admin rows are view-only here; admin create/update/delete lives on the Admins page.
+  // Only staff designations may be edited/deleted from this tab.
   canEdit(item: EmployeeListItem): boolean {
     return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
   }
 
+  canDelete(item: EmployeeListItem): boolean {
+    return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
+  }
+
   async deleteEmployee(item: EmployeeListItem): Promise<void> {
-    const isAdmin = item.employee.designation === 'ADMIN';
     const result = await this.confirmModal.open({
-      title: `Delete ${isAdmin ? 'Admin' : 'Employee'}`,
-      message: `Are you sure you want to delete ${item.employee.name} (${item.employee.employeeCode})? This cannot be undone.`,
+      title: 'Delete Employee',
+      message: `Are you sure you want to delete ${item.employee.name} (${item.employee.employeeCode})?`,
       confirmText: 'Delete',
       cancelText: 'Cancel',
       type: 'danger',
@@ -151,12 +165,8 @@ export class EmployeesListComponent implements OnInit {
       return;
     }
 
-    const obs = isAdmin
-      ? this.ownerService.deleteAdmin(item.employee.employeeCode)
-      : this.adminService.deleteEmployee(item.employee.employeeCode);
-
     this.deleting.set(true);
-    obs.subscribe({
+    this.adminService.deleteEmployee(item.employee.employeeCode).subscribe({
       next: (res) => {
         this.deleting.set(false);
         this.toast.success(res.message || APP_MESSAGES.EMPLOYEE_DELETED);

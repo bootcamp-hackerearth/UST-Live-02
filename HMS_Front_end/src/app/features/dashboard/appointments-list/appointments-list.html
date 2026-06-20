@@ -25,6 +25,15 @@
       <button
         type="button"
         class="tab-btn"
+        [class.active]="doctorTab() === 'past'"
+        (click)="switchTab('past')">
+        Past Due
+        <span class="tab-count">{{ doctorTabCount('past') }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
         [class.active]="doctorTab() === 'completed'"
         (click)="switchTab('completed')">
         Completed
@@ -138,21 +147,6 @@
                 <span>Cancelling…</span>
                 } @else {
                 <span>Cancel</span>
-                }
-              </button>
-              }
-
-              @if (isDoctor() && a.status === 'BOOKED') {
-              <button
-                type="button"
-                class="btn btn-sm btn-success-outline"
-                [disabled]="!isStartTimePassed(a) || busyId() !== null"
-                [title]="!isStartTimePassed(a) ? 'Available once the appointment starts' : ''"
-                (click)="complete(a, $event)">
-                @if (busyId() === a.appointmentId && busyAction() === 'complete') {
-                <span>Completing…</span>
-                } @else {
-                <span>Complete</span>
                 }
               </button>
               }

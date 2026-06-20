@@ -39,6 +39,31 @@ const DEPARTMENT_DESIGNATIONS = {
   Administration: [],
 };
 
+// Routes of drug administration, grouped by category. Stored as the UPPERCASE codes;
+// frontends carry a matching label map. Must stay in sync with the Angular/RN copies.
+const ADMINISTRATION_CATEGORIES = [
+  "ENTERAL",
+  "PARENTERAL",
+  "TOPICAL_LOCALIZED",
+  "INHALATION_NASAL",
+];
+
+// Valid administration methods per category (cascading dropdown source)
+const ADMINISTRATION_METHODS_BY_CATEGORY = {
+  ENTERAL: ["ORAL", "SUBLINGUAL", "BUCCAL", "RECTAL"],
+  PARENTERAL: ["INTRAVENOUS", "INTRAMUSCULAR", "SUBCUTANEOUS", "INTRADERMAL"],
+  TOPICAL_LOCALIZED: ["TOPICAL_TRANSDERMAL", "OPHTHALMIC", "OTIC", "VAGINAL"],
+  INHALATION_NASAL: ["INHALATION", "NASAL"],
+};
+
+// Flat list of every method (enum source for the prescription method field)
+const ADMINISTRATION_METHODS = Object.values(
+  ADMINISTRATION_METHODS_BY_CATEGORY
+).flat();
+
+// Whether a medicine is taken before or after food
+const FOOD_RELATIONS = ["BEFORE_FOOD", "AFTER_FOOD"];
+
 // Set variants for O(1) membership checks
 const STAFF_DESIGNATIONS_SET = new Set(STAFF_DESIGNATIONS);
 const DEPARTMENTS_SET = new Set(DEPARTMENTS);
@@ -53,6 +78,10 @@ module.exports = {
   SPECIALIZATION_DESIGNATIONS,
   RESTRICTED_ROLES,
   DEPARTMENT_DESIGNATIONS,
+  ADMINISTRATION_CATEGORIES,
+  ADMINISTRATION_METHODS_BY_CATEGORY,
+  ADMINISTRATION_METHODS,
+  FOOD_RELATIONS,
   STAFF_DESIGNATIONS_SET,
   DEPARTMENTS_SET,
   MEDICAL_DESIGNATIONS_SET,

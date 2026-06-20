@@ -1,11 +1,14 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { PatientService } from '../../../core/services/patient.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
+import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
 import {
   GENDERS,
@@ -21,15 +24,29 @@ import {
     CommonModule,
     FormsModule,
     RouterLink,
-    DashboardLayoutComponent
+    DashboardLayoutComponent,
+    DatePipe,
   ],
   templateUrl: './patients-list.html',
   styleUrl: './patients-list.css',
 })
 export class PatientsListComponent implements OnInit {
   private readonly patientService = inject(PatientService);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly apiError = inject(ApiErrorHandlerService);
+  private readonly confirmModal = inject(ConfirmModalService);
   private readonly router = inject(Router);
+
+  // Detail modal
+  selected = signal<Patient | null>(null);
+  deleting = signal(false);
+
+  // Only admin/owner may delete a patient
+  isPrivileged = computed(() => {
+    const d = this.authService.getDesignation();
+    return d === 'OWNER' || d === 'ADMIN';
+  });
 
   patients = signal<Patient[]>([]);
   loading = signal(true);
@@ -130,7 +147,50 @@ export class PatientsListComponent implements OnInit {
   }
 
   open(p: Patient): void {
-    this.router.navigate(['/dashboard/patients', p.UHID]);
+    this.selected.set(p);
+  }
+
+  close(): void {
+    this.selected.set(null);
+  }
+
+  viewMedicalRecords(p: Patient): void {
+    this.router.navigate(['/dashboard/medical-records'], {
+      queryParams: { patientUHID: p.UHID, patientName: p.name },
+    });
+  }
+
+  editPatient(p: Patient): void {
+    this.router.navigate(['/dashboard/patients', p.UHID], {
+      queryParams: { edit: '1' },
+    });
+  }
+
+  async deletePatient(p: Patient): Promise<void> {
+    const result = await this.confirmModal.open({
+      title: 'Delete Patient',
+      message: `Are you sure you want to delete ${p.name} (${p.UHID})?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+    if (!result.confirmed) {
+      return;
+    }
+
+    this.deleting.set(true);
+    this.patientService.deletePatient(p.UHID).subscribe({
+      next: (res) => {
+        this.deleting.set(false);
+        this.toast.success(res.message || APP_MESSAGES.PATIENT_DELETED);
+        this.close();
+        this.load();
+      },
+      error: (err) => {
+        this.deleting.set(false);
+        this.toast.error(this.apiError.message(err, APP_MESSAGES.PATIENT_DELETE_FAILED));
+      },
+    });
   }
 
   trackByUHID = (_: number, p: Patient) => p.UHID;

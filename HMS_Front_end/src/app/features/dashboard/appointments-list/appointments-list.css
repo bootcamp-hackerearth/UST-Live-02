@@ -156,6 +156,11 @@
   color: #15803d;
 }
 
+.status--unattended {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
 .pagination {
   display: flex;
   align-items: center;

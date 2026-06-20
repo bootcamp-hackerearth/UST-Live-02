@@ -212,7 +212,17 @@ server root (e.g. `POST /api/auth/login`).
 | GET    | `/:appointmentId`          | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Appointment detail            |
 | PUT    | `/:appointmentId`          | OWNER, ADMIN, RECEPTIONIST            | Reschedule / update           |
 | PUT    | `/:appointmentId/cancel`   | OWNER, ADMIN, RECEPTIONIST            | Cancel (with reason)          |
-| PUT    | `/:appointmentId/complete` | DOCTOR                                | Mark completed                |
+| PUT    | `/:appointmentId/unattended` | OWNER, ADMIN, RECEPTIONIST, DOCTOR  | Mark patient unattended       |
+
+### `/api/medical-records` — authenticated
+| Method | Path                              | Auth                                  | Purpose                              |
+| ------ | --------------------------------- | ------------------------------------- | ------------------------------------ |
+| POST   | `/`                               | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Create record (doctor may finalize)  |
+| GET    | `/`                               | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | List/search (doctor sees own only)   |
+| GET    | `/by-appointment/:appointmentId`  | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Existing record for an appointment   |
+| GET    | `/:medicalRecordId`               | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Record detail                        |
+| PUT    | `/:medicalRecordId`               | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Update draft (doctor may finalize)   |
+| DELETE | `/:medicalRecordId`               | OWNER, ADMIN                          | Soft delete                          |
 
 ### `/api/employees` — authenticated
 | Method | Path              | Auth                       | Purpose                              |

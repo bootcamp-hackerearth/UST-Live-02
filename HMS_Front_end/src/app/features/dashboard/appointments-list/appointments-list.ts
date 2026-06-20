@@ -15,7 +15,7 @@ import {
 } from '../../../core/models/appointment.model';
 import { todayIsoDate } from '../../../core/validators/app-validators';
 
-type DoctorTab = 'today' | 'upcoming' | 'completed';
+type DoctorTab = 'today' | 'upcoming' | 'past' | 'completed';
 
 // Role-aware appointments list (reception sees all; doctor sees own by tab)
 @Component({
@@ -45,7 +45,7 @@ export class AppointmentsListComponent implements OnInit {
 
   // Row action in flight; all row buttons disable while set
   busyId = signal<string | null>(null);
-  busyAction = signal<'cancel' | 'complete' | null>(null);
+  busyAction = signal<'cancel' | null>(null);
 
   statuses = APPOINTMENT_STATUSES;
   statusFilter = signal<string>('');
@@ -74,47 +74,60 @@ export class AppointmentsListComponent implements OnInit {
     if (!this.isDoctor()) {
       return this.appointments();
     }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return this.appointments().filter((a) => {
-      const apptDate = new Date(a.appointmentDate);
-      apptDate.setHours(0, 0, 0, 0);
-      const isToday = apptDate.getTime() === today.getTime();
-      const isUpcoming = apptDate.getTime() > today.getTime();
-
-      switch (this.doctorTab()) {
-        case 'today':
-          return isToday && a.status === 'BOOKED';
-        case 'upcoming':
-          return isUpcoming && a.status === 'BOOKED';
-        case 'completed':
-          return a.status === 'COMPLETED';
-      }
-    });
+    return this.appointments().filter((a) =>
+      this.matchesDoctorTab(a, this.doctorTab()),
+    );
   });
 
   doctorTabCount(tab: DoctorTab): number {
+    return this.appointments().filter((a) => this.matchesDoctorTab(a, tab))
+      .length;
+  }
+
+  // True once the appointment's slot end time has passed (hospital local time)
+  private hasEnded(a: Appointment): boolean {
+    const end = (a.timeSlot || '').split('-')[1];
+    if (!end) {
+      return false;
+    }
+    const [hh, mm] = end.split(':').map(Number);
+    const endAt = new Date(a.appointmentDate);
+    endAt.setHours(hh || 0, mm || 0, 0, 0);
+    return endAt.getTime() < Date.now();
+  }
+
+  // Single source of truth for which doctor tab an appointment belongs to.
+  // Tabs are mutually exclusive: a BOOKED slot moves to "Past Due" once it ends.
+  private matchesDoctorTab(a: Appointment, tab: DoctorTab): boolean {
+    const apptDate = new Date(a.appointmentDate);
+    apptDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return this.appointments().filter((a) => {
-      const d = new Date(a.appointmentDate);
-      d.setHours(0, 0, 0, 0);
-      switch (tab) {
-        case 'today':
-          return d.getTime() === today.getTime() && a.status === 'BOOKED';
-        case 'upcoming':
-          return d.getTime() > today.getTime() && a.status === 'BOOKED';
-        case 'completed':
-          return a.status === 'COMPLETED';
-      }
-    }).length;
+    const isToday = apptDate.getTime() === today.getTime();
+    const isFuture = apptDate.getTime() > today.getTime();
+    const isPastDay = apptDate.getTime() < today.getTime();
+
+    switch (tab) {
+      case 'today':
+        return isToday && a.status === 'BOOKED' && !this.hasEnded(a);
+      case 'upcoming':
+        return isFuture && a.status === 'BOOKED';
+      case 'past':
+        return a.status === 'BOOKED' && (isPastDay || this.hasEnded(a));
+      case 'completed':
+        return a.status === 'COMPLETED';
+    }
   }
 
   ngOnInit(): void {
     // Preselect a doctor tab from ?tab=today|upcoming|completed
     const tab = this.route.snapshot.queryParamMap.get('tab');
-    if (tab === 'today' || tab === 'upcoming' || tab === 'completed') {
+    if (
+      tab === 'today' ||
+      tab === 'upcoming' ||
+      tab === 'past' ||
+      tab === 'completed'
+    ) {
       this.doctorTab.set(tab);
     }
     // Reception/admin status filter deep link via ?status=BOOKED etc
@@ -164,17 +177,6 @@ export class AppointmentsListComponent implements OnInit {
 
   switchTab(tab: DoctorTab): void {
     this.doctorTab.set(tab);
-  }
-
-  // Completable only once the scheduled start has passed (mirrors the backend guard)
-  isStartTimePassed(a: Appointment): boolean {
-    const slotStart = (a.timeSlot || '').split('-')[0];
-    const [h, m] = slotStart.split(':').map(Number);
-    const scheduled = new Date(a.appointmentDate);
-    if (!Number.isNaN(h) && !Number.isNaN(m)) {
-      scheduled.setHours(h, m, 0, 0);
-    }
-    return scheduled.getTime() <= Date.now();
   }
 
   onStatusChange(value: string): void {
@@ -240,33 +242,6 @@ export class AppointmentsListComponent implements OnInit {
       error: (err) => {
         this.clearBusy();
         this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_CANCEL_FAILED));
-      },
-    });
-  }
-
-  async complete(a: Appointment, event: Event): Promise<void> {
-    event.stopPropagation();
-    const result = await this.confirmModal.open({
-      title: 'Mark as Completed',
-      message: `Mark appointment ${a.appointmentId} as completed?`,
-      confirmText: 'Mark Completed',
-      cancelText: 'Cancel',
-      type: 'success',
-    });
-    if (!result.confirmed) {
-      return;
-    }
-    this.busyId.set(a.appointmentId);
-    this.busyAction.set('complete');
-    this.appointmentService.completeAppointment(a.appointmentId).subscribe({
-      next: (res) => {
-        this.clearBusy();
-        this.toast.success(res.message || APP_MESSAGES.APPOINTMENT_COMPLETED);
-        this.load();
-      },
-      error: (err) => {
-        this.clearBusy();
-        this.toast.error(this.apiError.message(err, APP_MESSAGES.APPOINTMENT_COMPLETE_FAILED));
       },
     });
   }

@@ -79,6 +79,18 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   // Joining date is locked in edit mode once it has passed
   joiningDateLocked = false;
 
+  // Snapshot of the loaded form value (edit mode) for no-op detection
+  private baseline = '';
+
+  // Edit mode: true only when the form differs from the loaded values
+  hasChanges(): boolean {
+    return JSON.stringify(this.form.getRawValue()) !== this.baseline;
+  }
+
+  private captureBaseline(): void {
+    this.baseline = JSON.stringify(this.form.getRawValue());
+  }
+
   constructor() {
     this.form = this.fb.group({
       username: ['', [Validators.required, notBlank]],
@@ -92,6 +104,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       medicalRegistrationNumber: [''],
       specialization: [''],
       consultationFee: [null, nonNegative],
+      bookingCutoffDate: [''],
       availabilitySlots: this.fb.array([], { validators: slotsNoConflict }),
     });
   }
@@ -183,6 +196,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       medicalRegistrationNumber: emp.medicalRegistrationNumber ?? '',
       specialization: emp.specialization ?? '',
       consultationFee: emp.consultationFee ?? null,
+      bookingCutoffDate: emp.bookingCutoffDate ? emp.bookingCutoffDate.substring(0, 10) : '',
     });
 
     // Lock the joining date once reached, on or after the day itself (yyyy-mm-dd compares lexicographically)
@@ -216,6 +230,9 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
         this.addSlot();
       }
     }
+
+    // Snapshot the populated form so the Update button enables only on real changes
+    this.captureBaseline();
   }
 
   addSlot(): void {
@@ -232,6 +249,10 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   }
 
   removeSlot(i: number): void {
+    // Keep at least one slot — availability is required
+    if (this.availabilitySlots.length <= 1) {
+      return;
+    }
     this.availabilitySlots.removeAt(i);
   }
 
@@ -329,6 +350,10 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       payload.consultationFee = Number(raw['consultationFee']);
       payload.availabilitySlots =
         raw['availabilitySlots'] as UpdateEmployeePayload['availabilitySlots'];
+      // Empty value clears the cutoff (null), so bookings reopen
+      payload.bookingCutoffDate = raw['bookingCutoffDate']
+        ? (raw['bookingCutoffDate'] as string)
+        : null;
     }
 
     return payload;

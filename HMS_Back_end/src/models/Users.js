@@ -1,18 +1,18 @@
 const mongoose = require("mongoose");
+const softDeletePlugin = require("../utils/softDeletePlugin");
 
 const userSchema = new mongoose.Schema(
     {
+        // Uniqueness enforced in the app layer so a deleted user's username can be reused
         username: {
             type: String,
             required: true,
-            unique: true,
             lowercase: true,
             trim: true
         },
         email: {
             type: String,
             required: true,
-            unique: true,
             lowercase: true,
             trim: true
         },
@@ -73,5 +73,7 @@ const userSchema = new mongoose.Schema(
         }
     }
 );
+
+userSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model("User", userSchema);

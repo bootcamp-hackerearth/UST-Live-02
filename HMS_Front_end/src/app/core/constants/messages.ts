@@ -34,6 +34,8 @@ export const APP_MESSAGES = {
   PATIENT_CREATE_FAILED: 'Failed to create patient.',
   PATIENT_UPDATED: 'Patient updated.',
   PATIENT_UPDATE_FAILED: 'Failed to update patient.',
+  PATIENT_DELETED: 'Patient deleted.',
+  PATIENT_DELETE_FAILED: 'Failed to delete patient.',
 
   // Employees / admins
   EMPLOYEE_CREATED: 'Employee created. Credentials sent via email.',

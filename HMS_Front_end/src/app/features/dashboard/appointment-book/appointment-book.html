@@ -47,15 +47,16 @@
             }
           </div>
 
-          <!-- Date: no past dates, and not before the doctor has joined -->
+          <!-- Date: only the doctor's available weekdays, within joining/cutoff/6-month bounds -->
           <div class="form-group">
-            <label class="form-label" for="appointment-book-appointment-date-3">Appointment Date *</label>
-            <input id="appointment-book-appointment-date-3"
-              type="date"
+            <span class="form-label">Appointment Date *</span>
+            <app-availability-calendar
               formControlName="appointmentDate"
-              class="form-input"
-              [attr.min]="minDate()"
-            />
+              [availableDays]="doctorAvailableDays"
+              [minDate]="minDate()"
+              [maxDate]="maxIso"
+              [cutoffDate]="doctorCutoffIso"
+            ></app-availability-calendar>
             @if (form.get('appointmentDate')?.touched) {
               @if (form.get('appointmentDate')?.hasError('required')) {
                 <p class="form-error">Appointment date is required</p>
@@ -113,7 +114,7 @@
           <button type="button" class="btn btn-secondary" [disabled]="loading" (click)="onCancel()">
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary" [disabled]="loading">
+          <button type="submit" class="btn btn-primary" [disabled]="loading || (mode === 'edit' && !hasChanges())">
             @if (loading) {
               <span>{{ mode === 'edit' ? 'Saving…' : 'Booking…' }}</span>
             } @else {

@@ -84,4 +84,103 @@
     }
     }
   </div>
+
+  <!-- Detail modal -->
+  @if (selected(); as p) {
+    <div class="modal-backdrop" (click)="close()" (keydown.escape)="close()">
+      <div class="modal-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">{{ p.name }}</h3>
+            <p class="modal-sub">
+              {{ p.UHID }} ·
+              <span class="status status--{{ p.status.toLowerCase() }}">{{ p.status }}</span>
+            </p>
+          </div>
+          <div class="modal-header-actions">
+            <button type="button" class="btn btn-secondary btn-sm" [disabled]="deleting()" (click)="viewMedicalRecords(p)">
+              View Medical Records
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" [disabled]="deleting()" (click)="editPatient(p)">
+              Edit
+            </button>
+            <button type="button" class="modal-close" [disabled]="deleting()" (click)="close()">✕</button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <h4 class="detail-section">Personal Information</h4>
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">{{ p.email }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">{{ p.phone }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Gender</span>
+              <span class="detail-value">{{ p.gender }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Date of Birth</span>
+              <span class="detail-value">{{ p.dob | date: 'mediumDate' }}</span>
+            </div>
+          </div>
+
+          <h4 class="detail-section">Address</h4>
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">House Name</span>
+              <span class="detail-value">{{ p.address.houseName }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">House Number</span>
+              <span class="detail-value">{{ p.address.houseNumber }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">City</span>
+              <span class="detail-value">{{ p.address.city }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Post Code</span>
+              <span class="detail-value">{{ p.address.postCode }}</span>
+            </div>
+          </div>
+
+          <h4 class="detail-section">Emergency Contact</h4>
+          <div class="detail-grid">
+            <div class="detail">
+              <span class="detail-label">Name</span>
+              <span class="detail-value">{{ p.emergencyContact.contactName }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Relationship</span>
+              <span class="detail-value">{{ p.emergencyContact.relationship }}</span>
+            </div>
+            <div class="detail">
+              <span class="detail-label">Contact Number</span>
+              <span class="detail-value">{{ p.emergencyContact.contactNumber }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="close()">
+            Close
+          </button>
+          @if (isPrivileged()) {
+            <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="deletePatient(p)">
+              @if (deleting()) {
+                <span>Deleting…</span>
+              } @else {
+                <span>Delete</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
 </app-dashboard-layout>

@@ -133,6 +133,10 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   }
 
   removeSlot(index: number): void {
+    // Keep at least one slot — availability is required
+    if (this.availabilitySlots.length <= 1) {
+      return;
+    }
     this.availabilitySlots.removeAt(index);
   }
 

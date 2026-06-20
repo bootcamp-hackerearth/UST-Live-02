@@ -98,6 +98,14 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
     });
   }
 
+  // Snapshot of the loaded form value for no-op detection
+  private baseline = '';
+
+  // True only when the form differs from the loaded profile values
+  hasChanges(): boolean {
+    return JSON.stringify(this.profileForm.getRawValue()) !== this.baseline;
+  }
+
   private applyToForm(p: EmployeeProfile): void {
     // Only populate if the user hasn't already typed something (no draft)
     if (this.profileForm.dirty) {
@@ -108,6 +116,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
       qualification: (p.qualification ?? []).join(', '),
     });
     this.profileForm.markAsPristine();
+    this.baseline = JSON.stringify(this.profileForm.getRawValue());
   }
 
   hasUnsavedChanges(): boolean {
@@ -144,6 +153,7 @@ export class ProfileComponent implements OnInit, CanComponentDeactivate {
               : 'Profile change request submitted for admin approval.'),
         );
         this.profileForm.markAsPristine();
+        this.baseline = JSON.stringify(this.profileForm.getRawValue());
 
         // Owner/admin changes apply immediately, so refresh the displayed profile
         if (this.isPrivileged()) {

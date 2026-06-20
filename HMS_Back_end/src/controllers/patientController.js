@@ -4,6 +4,7 @@ const sendEmail = require("../utils/sendEmail");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const emailTemplates = require("../utils/emailTemplates");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
@@ -198,6 +199,11 @@ exports.updatePatient = async (req, res) => {
         "status"
     ];
 
+    // Reject no-op updates so no false audit log is written (email is part of the set)
+    if (!hasFieldChanges(patient, req.body, [...allowedFields, "email"], { dateFields: ["dob"] })) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
+    }
+
     // If email is being changed, ensure it stays unique
     if (req.body.email && req.body.email !== patient.email) {
         const existing = await Patient.findOne({
@@ -235,5 +241,36 @@ exports.updatePatient = async (req, res) => {
 
     return sendSuccess(res, STATUS.OK, MESSAGES.PATIENT.UPDATED, {
         patient: safePatient
+    });
+};
+
+// Soft delete a patient (Admin/Owner only); record is never physically removed
+exports.deletePatient = async (req, res) => {
+
+    const { UHID } = req.params;
+
+    const patient = await Patient.findOne({ UHID });
+
+    if (!patient) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
+    }
+
+    const actor = await resolveActor(req.user);
+
+    patient.isDeleted = true;
+    patient.deletedAt = new Date();
+    patient.deletedBy = actor.employeeCode;
+    await patient.save();
+
+    await recordAudit({
+        actor,
+        action: "PATIENT_DELETED",
+        targetType: "PATIENT",
+        targetId: patient.UHID,
+        message: MESSAGES.AUDIT.PATIENT_DELETED(patient.name, patient.UHID)
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.PATIENT.DELETED, {
+        patient: { UHID: patient.UHID }
     });
 };

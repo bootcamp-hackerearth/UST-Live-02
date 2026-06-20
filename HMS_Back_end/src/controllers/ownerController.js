@@ -3,11 +3,11 @@ const User = require("../models/Users");
 const emailTemplates = require("../utils/emailTemplates");
 const buildEmployeeResponse = require("../utils/buildEmployeeResponse");
 const updateEmployeeData = require("../utils/updateEmployeeData");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
-const cancelDoctorAppointments = require("../utils/cancelDoctorAppointments");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -72,6 +72,12 @@ const updateAdmin = async (req, res) => {
     throw new AppError(STATUS.NOT_FOUND, MESSAGES.OWNER.ADMIN_NOT_FOUND);
   }
 
+  // Reject no-op updates so no false audit log is written
+  const adminFields = ["name", "phone", "department", "designation", "joiningDate", "qualification"];
+  if (!hasFieldChanges(employee, req.body, adminFields, { dateFields: ["joiningDate"] })) {
+    throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
+  }
+
   updateEmployeeData(employee, req.body);
 
   await employee.save();
@@ -122,8 +128,7 @@ const deleteAdmin = async (req, res) => {
     message: MESSAGES.AUDIT.ADMIN_DELETED(employee.name, employeeCode)
   });
 
-  await cancelDoctorAppointments(employeeCode, employee.name, actor);
-  await deleteEmployeeAccount(employeeCode);
+  await deleteEmployeeAccount(employeeCode, actor.employeeCode);
 
   return sendSuccess(res, STATUS.OK, MESSAGES.OWNER.ADMIN_DELETED);
 };

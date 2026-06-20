@@ -181,7 +181,7 @@ export const routes: Routes = [
       },
       {
         path: 'appointments/:appointmentId/edit',
-        canActivate: [designationGuard(['RECEPTIONIST'])],
+        canActivate: [designationGuard(['RECEPTIONIST', 'DOCTOR'])],
         canDeactivate: [unsavedChangesGuard],
         data: { mode: 'edit' },
         loadComponent: () =>
@@ -196,6 +196,16 @@ export const routes: Routes = [
           import(
             './features/dashboard/appointment-detail/appointment-detail'
           ).then((m) => m.AppointmentDetailComponent),
+      },
+
+      // Medical Records: OWNER + ADMIN + RECEPTIONIST + DOCTOR (doctors auto-scoped to their own)
+      {
+        path: 'medical-records',
+        canActivate: [designationGuard(['RECEPTIONIST', 'DOCTOR'])],
+        loadComponent: () =>
+          import(
+            './features/dashboard/medical-records/medical-records'
+          ).then((m) => m.MedicalRecordsComponent),
       },
     ],
   },

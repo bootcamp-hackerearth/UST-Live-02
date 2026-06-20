@@ -1,4 +1,5 @@
 const Appointment = require("../models/Appointments");
+const Patient = require("../models/Patients");
 const checkAppointmentValidity = require("../validators/checkAppointmentValidity");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
@@ -8,8 +9,7 @@ const paginateAppointments = require("../utils/paginateAppointments");
 const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
-const autoCompleteDueAppointments = require("../utils/autoCompleteDueAppointments");
-const slotInstantMs = require("../utils/slotInstantMs");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -70,8 +70,6 @@ exports.createAppointment = async (req, res) => {
 // List all appointments with optional status/doctor/patient filters (paginated)
 exports.getAppointments = async (req, res) => {
 
-    await autoCompleteDueAppointments();
-
     const filter = {};
 
     if (req.query.status) {
@@ -92,8 +90,6 @@ exports.getAppointments = async (req, res) => {
 // List appointments belonging to the authenticated doctor
 exports.getMyAppointments = async (req, res) => {
 
-    await autoCompleteDueAppointments();
-
     const filter = { doctorEmployeeId: req.user.employeeCode };
 
     if (req.query.status) {
@@ -106,8 +102,6 @@ exports.getMyAppointments = async (req, res) => {
 // Fetch a single appointment
 exports.getAppointmentById = async (req, res) => {
 
-    await autoCompleteDueAppointments();
-
     const { appointmentId } = req.params;
 
     const appointment = await Appointment.findOne({
@@ -118,6 +112,12 @@ exports.getAppointmentById = async (req, res) => {
 
     if (!appointment) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
+    }
+
+    // A doctor may only access their own appointments
+    const actor = await resolveActor(req.user);
+    if (actor.designation === "DOCTOR" && appointment.doctorEmployeeId !== req.user.employeeCode) {
+        throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
     }
 
     const [enriched] = await enrichAppointments([appointment]);
@@ -142,10 +142,15 @@ exports.cancelAppointment = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
+    // A doctor may only cancel their own appointments
+    const actor = await resolveActor(req.user);
+    if (actor.designation === "DOCTOR" && appointment.doctorEmployeeId !== req.user.employeeCode) {
+        throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
+    }
+
     await cancelAppointmentRecord(appointment, cancellationReason);
 
-    // Log appointment cancellation
-    const actor = await resolveActor(req.user);
+    // Log appointment cancellation (actor resolved above)
     await recordAudit({
         actor,
         action: "APPOINTMENT_CANCELED",
@@ -183,17 +188,46 @@ exports.updateAppointment = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ONLY_BOOKED_EDITABLE);
     }
 
+    // A doctor may only reschedule (date/time) their own appointments; patient and
+    // doctor are forced to the existing values so they cannot be changed.
+    const actor = await resolveActor(req.user);
+    let effectivePatientId = patientId;
+    let effectiveDoctorId = doctorEmployeeId;
+    if (actor.designation === "DOCTOR") {
+        if (appointment.doctorEmployeeId !== req.user.employeeCode) {
+            throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
+        }
+        effectivePatientId = appointment.patientId;
+        effectiveDoctorId = appointment.doctorEmployeeId;
+    }
+
+    // Reject no-op updates so no false audit log is written
+    const hasChanges = hasFieldChanges(
+        appointment,
+        {
+            patientId: effectivePatientId,
+            doctorEmployeeId: effectiveDoctorId,
+            appointmentDate,
+            timeSlot
+        },
+        ["patientId", "doctorEmployeeId", "appointmentDate", "timeSlot"],
+        { dateFields: ["appointmentDate"] }
+    );
+    if (!hasChanges) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
+    }
+
     // Re-validates excluding this appointment from duplicate checks; throws on violation
     const { patient, doctor } = await checkAppointmentValidity({
-        patientId,
-        doctorId: doctorEmployeeId,
+        patientId: effectivePatientId,
+        doctorId: effectiveDoctorId,
         appointmentDate,
         timeSlot,
         excludeAppointmentId: appointmentId
     });
 
-    appointment.patientId = patientId;
-    appointment.doctorEmployeeId = doctorEmployeeId;
+    appointment.patientId = effectivePatientId;
+    appointment.doctorEmployeeId = effectiveDoctorId;
     appointment.appointmentDate = appointmentDate;
     appointment.timeSlot = timeSlot;
     await appointment.save();
@@ -205,8 +239,7 @@ exports.updateAppointment = async (req, res) => {
         timeSlot
     }));
 
-    // Log appointment updation
-    const actor = await resolveActor(req.user);
+    // Log appointment updation (actor resolved above)
     await recordAudit({
         actor,
         action: "APPOINTMENT_UPDATED",
@@ -220,8 +253,8 @@ exports.updateAppointment = async (req, res) => {
     });
 };
 
-// Mark an appointment COMPLETED
-exports.completeAppointment = async (req, res) => {
+// Mark an appointment UNATTENDED (patient did not show up); no medical record is generated
+exports.markUnattended = async (req, res) => {
 
     const { appointmentId } = req.params;
 
@@ -231,40 +264,38 @@ exports.completeAppointment = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
-    // Only the concerned doctor can mark an appointment as complete
-    if (appointment.doctorEmployeeId !== req.user.employeeCode) {
-        throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_COMPLETE);
+    const actor = await resolveActor(req.user);
+
+    // A doctor may only act on their own appointments
+    if (actor.designation === "DOCTOR" && appointment.doctorEmployeeId !== req.user.employeeCode) {
+        throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
     }
 
-    if (appointment.status === "CANCELED") {
-        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.CANCELLED_CANNOT_COMPLETE);
+    if (appointment.status !== "BOOKED") {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ONLY_BOOKED_UNATTENDED);
     }
 
-    if (appointment.status === "COMPLETED") {
-        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ALREADY_COMPLETED);
-    }
-
-    // Reject completion if the scheduled start time has not yet passed (hospital time)
-    const slotStart = (appointment.timeSlot || "").split("-")[0];
-    const scheduledStartMs = slotInstantMs(appointment.appointmentDate, slotStart);
-    if (!Number.isNaN(scheduledStartMs) && scheduledStartMs > Date.now()) {
-        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.CANNOT_COMPLETE_BEFORE_TIME);
-    }
-
-    appointment.status = "COMPLETED";
+    appointment.status = "UNATTENDED";
     await appointment.save();
 
-    // Log appointment completion
-    const actor = await resolveActor(req.user);
+    // Notify the patient
+    const patient = await Patient.findOne({ UHID: appointment.patientId }).select("name email");
+    if (patient?.email) {
+        await sendAppointmentEmail(patient.email, emailTemplates.appointmentUnattended({
+            patientName: patient.name
+        }));
+    }
+
+    // Log the action
     await recordAudit({
         actor,
-        action: "APPOINTMENT_COMPLETED",
+        action: "APPOINTMENT_UNATTENDED",
         targetType: "APPOINTMENT",
         targetId: appointment.appointmentId,
-        message: MESSAGES.AUDIT.APPOINTMENT_COMPLETED(appointment.appointmentId)
+        message: MESSAGES.AUDIT.APPOINTMENT_MARKED_UNATTENDED(actor.designation, actor.name)
     });
 
-    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.COMPLETED, {
+    return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.UNATTENDED, {
         appointment
     });
 };

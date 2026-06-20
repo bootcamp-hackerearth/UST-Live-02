@@ -53,4 +53,12 @@ router.put(
     controller.cancelMyAppointment
 );
 
+// Medical records (read-only, finalized records only)
+router.get("/medical-records", controller.getMyMedicalRecords);
+router.get(
+    "/medical-records/by-appointment/:appointmentId",
+    controller.getMyMedicalRecordByAppointment
+);
+router.get("/medical-records/:medicalRecordId", controller.getMyMedicalRecordById);
+
 module.exports = router;

@@ -161,6 +161,17 @@
                 }
               </div>
             }
+
+            @if (isDoctor && mode === 'edit') {
+              <div class="form-group">
+                <label class="form-label" for="emp-form-booking-cutoff">Booking Cutoff Date</label>
+                <input id="emp-form-booking-cutoff" type="date" formControlName="bookingCutoffDate"
+                  class="form-input" />
+                <p class="form-hint">
+                  No new appointments can be booked on or after this date. Leave empty for no cutoff.
+                </p>
+              </div>
+            }
           </div>
 
           @if (isDoctor) {
@@ -176,7 +187,7 @@
             <button type="button" class="btn btn-secondary" [disabled]="loading" (click)="onCancel()">
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <button type="submit" class="btn btn-primary" [disabled]="loading || (mode === 'edit' && !hasChanges())">
               @if (loading) {
                 <span>{{ mode === 'edit' ? 'Updating…' : 'Creating…' }}</span>
               } @else {

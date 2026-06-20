@@ -2,7 +2,7 @@ import { apiFetch } from "./apiClient";
 import type { Appointment, AppointmentStatus, Doctor } from "./types";
 
 // Payload types describe the data field of the envelope that apiFetch resolves with
-type AppointmentsData = {
+export type AppointmentsData = {
   total: number;
   page: number;
   limit: number;
@@ -14,9 +14,16 @@ type DoctorsData = { total: number; doctors: Doctor[] };
 type BookedSlotsData = { bookedSlots: string[] };
 type AppointmentData = { appointment: Appointment };
 
-export function getMyAppointments(status?: AppointmentStatus) {
-  const query = status ? `?status=${status}&limit=100` : "?limit=100";
-  return apiFetch<AppointmentsData>(`/patient/appointments${query}`);
+export function getMyAppointments(
+  status?: AppointmentStatus,
+  page = 1,
+  limit = 10,
+) {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  return apiFetch<AppointmentsData>(`/patient/appointments?${params.toString()}`);
 }
 
 export function getDoctors() {

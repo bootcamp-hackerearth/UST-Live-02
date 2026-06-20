@@ -2,13 +2,15 @@ const Patient = require("../models/Patients");
 const Employee = require("../models/Employees");
 const User = require("../models/Users");
 const Appointment = require("../models/Appointments");
+const MedicalRecord = require("../models/MedicalRecords");
 const emailTemplates = require("../utils/emailTemplates");
 const checkAppointmentValidity = require("../validators/checkAppointmentValidity");
 const paginateAppointments = require("../utils/paginateAppointments");
+const parsePagination = require("../utils/parsePagination");
 const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
-const autoCompleteDueAppointments = require("../utils/autoCompleteDueAppointments");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const recordAudit = require("../utils/recordAudit");
 const { toSafePatient, PATIENT_SAFE_PROJECTION } = require("../utils/toSafePatient");
 const AppError = require("../utils/AppError");
@@ -48,6 +50,11 @@ exports.updateMyProfile = async (req, res) => {
 
     if (!patient) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
+    }
+
+    // Reject no-op updates so no false audit log is written
+    if (!hasFieldChanges(patient, req.body, ["phone", "email", "address", "emergencyContact"])) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
     }
 
     // If email is changing, keep it unique across patients
@@ -91,7 +98,7 @@ exports.getDoctors = async (req, res) => {
         designation: "DOCTOR",
         employeeCode: { $in: activeCodes }
     }).select(
-        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate"
+        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate bookingCutoffDate"
     );
 
     return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.DOCTORS_RETRIEVED, {
@@ -105,8 +112,6 @@ exports.getBookedSlots = getBookedSlots;
 
 // List the authenticated patient's own appointments (paginated, enriched)
 exports.getMyAppointments = async (req, res) => {
-
-    await autoCompleteDueAppointments();
 
     const filter = { patientId: req.patient.patientId };
     if (req.query.status) {
@@ -252,5 +257,97 @@ exports.cancelMyAppointment = async (req, res) => {
 
     return sendSuccess(res, STATUS.OK, MESSAGES.APPOINTMENT.CANCELLED, {
         appointment
+    });
+};
+
+// List the authenticated patient's own FINALIZED medical records (paginated)
+exports.getMyMedicalRecords = async (req, res) => {
+
+    const { page, limit, skip } = parsePagination(req.query);
+
+    const filter = {
+        patientId: req.patient.patientId,
+        status: "FINALIZED",
+        isDeleted: { $ne: true }
+    };
+
+    const [medicalRecords, total] = await Promise.all([
+        MedicalRecord.find(filter)
+            .select("medicalRecordId appointmentId doctorName status created_at")
+            .sort({ created_at: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        MedicalRecord.countDocuments(filter)
+    ]);
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.MEDICAL_RECORD.LIST_RETRIEVED, {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        medicalRecords
+    });
+};
+
+// Fetch one of the patient's own FINALIZED medical records in full
+exports.getMyMedicalRecordById = async (req, res) => {
+
+    const { medicalRecordId } = req.params;
+
+    const record = await MedicalRecord.findOne({
+        medicalRecordId,
+        patientId: req.patient.patientId,
+        status: "FINALIZED",
+        isDeleted: { $ne: true }
+    })
+        .select("-__v -notes")
+        .lean();
+
+    if (!record) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.MEDICAL_RECORD.NOT_FOUND);
+    }
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.MEDICAL_RECORD.RETRIEVED, {
+        medicalRecord: record
+    });
+};
+
+// Resolve the medical record state for one of the patient's own appointments.
+// state: "FINALIZED" (record returned), "DRAFT" (in progress), or "NONE".
+exports.getMyMedicalRecordByAppointment = async (req, res) => {
+
+    const { appointmentId } = req.params;
+
+    const appointment = await Appointment.findOne({ appointmentId }).select("patientId");
+
+    if (!appointment || appointment.patientId !== req.patient.patientId) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
+    }
+
+    const record = await MedicalRecord.findOne({
+        appointmentId,
+        isDeleted: { $ne: true }
+    })
+        .select("-__v -notes")
+        .lean();
+
+    if (!record) {
+        return sendSuccess(res, STATUS.OK, MESSAGES.MEDICAL_RECORD.RETRIEVED, {
+            state: "NONE",
+            medicalRecord: null
+        });
+    }
+
+    if (record.status !== "FINALIZED") {
+        return sendSuccess(res, STATUS.OK, MESSAGES.MEDICAL_RECORD.RETRIEVED, {
+            state: "DRAFT",
+            medicalRecord: null
+        });
+    }
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.MEDICAL_RECORD.RETRIEVED, {
+        state: "FINALIZED",
+        medicalRecord: record
     });
 };
