@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
+const { loginLimiter, passwordResetLimiter } = require("../middlewares/rateLimiters");
 const controller = require("../controllers/authController");
 const {
   employeeBaseValidators,
@@ -56,7 +57,7 @@ const resetPasswordValidation = [
 ];
 
 // Auth routes
-router.post("/login", loginValidation, validate, controller.login);
+router.post("/login", loginLimiter, loginValidation, validate, controller.login);
 
 router.post(
   "/self-register",
@@ -75,6 +76,7 @@ router.put(
 
 router.post(
   "/forgot-password",
+  passwordResetLimiter,
   forgotPasswordValidation,
   validate,
   controller.forgotPassword,
@@ -82,6 +84,7 @@ router.post(
 
 router.post(
   "/reset-password",
+  passwordResetLimiter,
   resetPasswordValidation,
   validate,
   controller.resetPassword,

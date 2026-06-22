@@ -37,6 +37,8 @@ const MESSAGES = Object.freeze({
         RESET_CODE_SENT: "If the email exists, a reset code has been sent",
         RESET_LINK_SENT: "If the email exists, a reset link has been sent",
         SELF_REGISTER_SUCCESS: "Registration request successful. Wait for admin approval.",
+        TOO_MANY_ATTEMPTS: "Too many attempts. Please try again later.",
+        TOO_MANY_REQUESTS: "Too many requests. Please try again later.",
         UNAUTHORIZED: "Unauthorized access",
         USER_NOT_FOUND: "User not found",
         USER_RETRIEVED: "User retrieved successfully"

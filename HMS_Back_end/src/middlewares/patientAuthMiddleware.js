@@ -1,10 +1,11 @@
 const jwt = require("jsonwebtoken");
+const Patient = require("../models/Patients");
 const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
 // Authenticates a patient JWT; rejects employee tokens so the auth domains stay separate
-const authenticatePatient = (req, res, next) => {
+const authenticatePatient = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith("Bearer ")) {
@@ -17,13 +18,21 @@ const authenticatePatient = (req, res, next) => {
 
     // jwt.verify throwing is expected control flow for bad/expired tokens
     try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET);
+        decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] });
     }
     catch {
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
     }
 
     if (decoded.type !== "PATIENT" || !decoded.patientId) {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    // Reject tokens whose patient has since been soft-deleted or deactivated
+    // (the soft-delete query hook makes a deleted patient's lookup return null)
+    const patient = await Patient.findOne({ UHID: decoded.patientId }).select("status");
+
+    if (!patient || patient.status !== "ACTIVE") {
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
     }
 

@@ -17,7 +17,8 @@ const authenticateUser = async (req, res, next) => {
     try {
         req.user = jwt.verify(
             token,
-            process.env.JWT_SECRET
+            process.env.JWT_SECRET,
+            { algorithms: ["HS256"] }
         );
     }
     catch {
