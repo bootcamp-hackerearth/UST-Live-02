@@ -24,19 +24,19 @@ const authenticatePatient = async (req, res, next) => {
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
     }
 
-    if (decoded.type !== "PATIENT" || !decoded.patientId) {
+    if (decoded.type !== "PATIENT" || !decoded.patientUHID) {
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
     }
 
     // Reject tokens whose patient has since been soft-deleted or deactivated
     // (the soft-delete query hook makes a deleted patient's lookup return null)
-    const patient = await Patient.findOne({ UHID: decoded.patientId }).select("status");
+    const patient = await Patient.findOne({ UHID: decoded.patientUHID }).select("status");
 
     if (!patient || patient.status !== "ACTIVE") {
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
     }
 
-    req.patient = { patientId: decoded.patientId };
+    req.patient = { patientUHID: decoded.patientUHID };
 
     next();
 };

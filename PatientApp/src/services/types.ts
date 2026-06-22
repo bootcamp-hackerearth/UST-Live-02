@@ -133,7 +133,6 @@ export type MedicalObservation = {
 export type MedicalRecord = {
   medicalRecordId: string;
   appointmentId: string;
-  patientId: string;
   patientUHID: string;
   patientName: string;
   doctorEmployeeId: string;
@@ -160,7 +159,7 @@ export type MedicalRecordListItem = {
 
 export type Appointment = {
   appointmentId: string;
-  patientId: string;
+  patientUHID: string;
   doctorEmployeeId: string;
   appointmentDate: string;
   timeSlot: string;

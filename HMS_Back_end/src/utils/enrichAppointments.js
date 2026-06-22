@@ -8,15 +8,15 @@ const enrichAppointments = async (appointments) => {
     }
 
     // Collect unique IDs then fetch all patients and doctors in two parallel queries
-    const patientIds = [
-        ...new Set(appointments.map((a) => a.patientId))
+    const patientUHIDs = [
+        ...new Set(appointments.map((a) => a.patientUHID))
     ];
     const doctorIds = [
         ...new Set(appointments.map((a) => a.doctorEmployeeId))
     ];
 
     const [patients, doctors] = await Promise.all([
-        Patient.find({ UHID: { $in: patientIds } }).select(
+        Patient.find({ UHID: { $in: patientUHIDs } }).select(
             "UHID name phone email"
         ),
         Employee.find({ employeeCode: { $in: doctorIds } }).select(
@@ -32,7 +32,7 @@ const enrichAppointments = async (appointments) => {
     );
 
     return appointments.map((appointment) => {
-        const patient = patientMap.get(appointment.patientId);
+        const patient = patientMap.get(appointment.patientUHID);
         const doctor = doctorMap.get(appointment.doctorEmployeeId);
 
         return {

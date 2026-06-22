@@ -31,7 +31,7 @@ const generateResetCode = () =>
 const signPatientToken = (patient) =>
     jwt.sign(
         {
-            patientId: patient.UHID,
+            patientUHID: patient.UHID,
             type: "PATIENT"
         },
         process.env.JWT_SECRET,
@@ -112,10 +112,10 @@ exports.login = async (req, res) => {
 // Allow an authenticated patient to change their own password
 exports.changePassword = async (req, res) => {
 
-    const { patientId } = req.patient;
+    const { patientUHID } = req.patient;
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
-    const patient = await Patient.findOne({ UHID: patientId });
+    const patient = await Patient.findOne({ UHID: patientUHID });
     if (!patient) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
     }

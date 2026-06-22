@@ -14,9 +14,9 @@
         <div class="form-grid">
           <!-- Patient: searchable -->
           <div class="form-group">
-            <label class="form-label" for="appointment-book-patient-1">Patient *</label>
+            <label class="form-label" for="appointment-book-patient-1">Patient <span class="form-required">*</span></label>
             <app-searchable-select controlId="appointment-book-patient-1"
-              formControlName="patientId"
+              formControlName="patientUHID"
               [options]="patientOptions()"
               valueKey="value"
               labelKey="label"
@@ -25,14 +25,14 @@
               searchPlaceholder="Search by name, UHID, phone..."
               [onSearch]="onPatientSearch"
             ></app-searchable-select>
-            @if (form.get('patientId')?.touched && form.get('patientId')?.invalid) {
+            @if (form.get('patientUHID')?.touched && form.get('patientUHID')?.invalid) {
               <p class="form-error">Patient is required</p>
             }
           </div>
 
           <!-- Doctor: searchable -->
           <div class="form-group">
-            <label class="form-label" for="appointment-book-doctor-2">Doctor *</label>
+            <label class="form-label" for="appointment-book-doctor-2">Doctor <span class="form-required">*</span></label>
             <app-searchable-select controlId="appointment-book-doctor-2"
               formControlName="doctorEmployeeId"
               [options]="doctorOptions()"
@@ -49,7 +49,7 @@
 
           <!-- Date: only the doctor's available weekdays, within joining/cutoff/6-month bounds -->
           <div class="form-group">
-            <span class="form-label">Appointment Date *</span>
+            <span class="form-label">Appointment Date <span class="form-required">*</span></span>
             <app-availability-calendar
               formControlName="appointmentDate"
               [availableDays]="doctorAvailableDays"
@@ -90,7 +90,7 @@
         <!-- Slots -->
         <div class="slots-block">
           <div class="slots-header">
-            <span class="form-label">Time Slot *</span>
+            <span class="form-label">Time Slot <span class="form-required">*</span></span>
             @if (loadingSlots()) {
               <span class="muted">Checking availability…</span>
             }

@@ -74,13 +74,13 @@
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   padding: 0.5rem 0.625rem;
+  cursor: not-allowed;
 }
 
-/* Notes auto-grows with content; no manual resize handle */
-.mr-notes {
+/* Fixed-size textareas; content scrolls, no drag-resize */
+.mr-textarea {
   resize: none;
-  overflow-y: hidden;
-  min-height: 3.25rem;
+  overflow-y: auto;
 }
 
 .mr-section-head {
@@ -89,6 +89,9 @@
   justify-content: space-between;
   margin-top: 0.5rem;
 }
+
+/* Add-row button sits below the rows so it stays reachable as the list grows */
+.mr-add-row { margin: 0.25rem 0 0.75rem; }
 
 /* Each medication is a bordered card so its many fields read as one row */
 .mr-rx-card {
@@ -101,8 +104,13 @@
 
 .mr-rx-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+/* Medicine name spans the full card width on its own row */
+.mr-rx-grid .mr-rx-full {
+  grid-column: 1 / -1;
 }
 
 /* Food timing: relation dropdown + minutes input side by side */
@@ -145,6 +153,9 @@
 
 @media (max-width: 640px) {
   .mr-obs-row {
+    grid-template-columns: 1fr;
+  }
+  .mr-rx-grid {
     grid-template-columns: 1fr;
   }
 }

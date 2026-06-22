@@ -16,14 +16,10 @@ const medicalRecordSchema = new mongoose.Schema({
         required: true,
         ref: "Appointments"
     },
-    patientId: {
+    patientUHID: {
         type: String,
         required: true,
         ref: "Patients"
-    },
-    patientUHID: {
-        type: String,
-        required: true
     },
     patientName: {
         type: String,

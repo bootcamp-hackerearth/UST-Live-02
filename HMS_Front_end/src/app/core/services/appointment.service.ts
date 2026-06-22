@@ -14,7 +14,7 @@ export interface AppointmentFilters {
   status?: string;
   date?: string;
   doctorEmployeeId?: string;
-  patientId?: string;
+  patientUHID?: string;
 }
 
 @Injectable({
@@ -122,8 +122,8 @@ export class AppointmentService {
     if (filters?.doctorEmployeeId) {
       params = params.set('doctorEmployeeId', filters.doctorEmployeeId);
     }
-    if (filters?.patientId) {
-      params = params.set('patientId', filters.patientId);
+    if (filters?.patientUHID) {
+      params = params.set('patientUHID', filters.patientUHID);
     }
     return params;
   }

@@ -83,6 +83,12 @@ export const FOOD_RELATION_LABELS: Record<FoodRelation, string> = {
   AFTER_FOOD: 'After food',
 };
 
+// Short labels for the form dropdown (the "Food timing" heading supplies the context)
+export const FOOD_RELATION_SHORT_LABELS: Record<FoodRelation, string> = {
+  BEFORE_FOOD: 'Before',
+  AFTER_FOOD: 'After',
+};
+
 // When/how a medicine relates to meals (offset stored in minutes)
 export interface FoodTiming {
   relation?: FoodRelation;
@@ -137,7 +143,6 @@ export function formatFoodTiming(timing?: FoodTiming | null): string {
 export interface MedicalRecord {
   medicalRecordId: string;
   appointmentId: string;
-  patientId: string;
   patientUHID: string;
   patientName: string;
   doctorEmployeeId: string;

@@ -89,3 +89,8 @@
 .slot-error {
   margin: -0.25rem 0 0.625rem;
 }
+
+/* Add-slot button sits below the rows so it stays reachable as the list grows */
+.slots-add {
+  margin-top: 0.25rem;
+}

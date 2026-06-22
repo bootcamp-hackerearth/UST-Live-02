@@ -29,7 +29,7 @@ const patientActor = (patient) => ({
 exports.getMyProfile = async (req, res) => {
 
     const patient = await Patient.findOne({
-        UHID: req.patient.patientId
+        UHID: req.patient.patientUHID
     }).select(PATIENT_SAFE_PROJECTION);
 
     if (!patient) {
@@ -45,7 +45,7 @@ exports.getMyProfile = async (req, res) => {
 exports.updateMyProfile = async (req, res) => {
 
     const patient = await Patient.findOne({
-        UHID: req.patient.patientId
+        UHID: req.patient.patientUHID
     });
 
     if (!patient) {
@@ -113,7 +113,7 @@ exports.getBookedSlots = getBookedSlots;
 // List the authenticated patient's own appointments (paginated, enriched)
 exports.getMyAppointments = async (req, res) => {
 
-    const filter = { patientId: req.patient.patientId };
+    const filter = { patientUHID: req.patient.patientUHID };
     if (req.query.status) {
         filter.status = req.query.status;
     }
@@ -124,19 +124,19 @@ exports.getMyAppointments = async (req, res) => {
 // Book an appointment for the authenticated patient
 exports.bookAppointment = async (req, res) => {
 
-    const patientId = req.patient.patientId;
+    const patientUHID = req.patient.patientUHID;
     const { doctorEmployeeId, appointmentDate, timeSlot } = req.body;
 
     // Throws AppError when any booking rule is violated
     const { patient, doctor } = await checkAppointmentValidity({
-        patientId,
+        patientUHID,
         doctorId: doctorEmployeeId,
         appointmentDate,
         timeSlot
     });
 
     const appointment = await Appointment.create({
-        patientId,
+        patientUHID,
         doctorEmployeeId,
         appointmentDate,
         timeSlot
@@ -169,7 +169,7 @@ exports.bookAppointment = async (req, res) => {
 // Reschedule one of the patient's own BOOKED appointments
 exports.updateMyAppointment = async (req, res) => {
 
-    const patientId = req.patient.patientId;
+    const patientUHID = req.patient.patientUHID;
     const { appointmentId } = req.params;
     const { doctorEmployeeId, appointmentDate, timeSlot } = req.body;
 
@@ -180,7 +180,7 @@ exports.updateMyAppointment = async (req, res) => {
     }
 
     // A patient can only touch their own appointments
-    if (appointment.patientId !== patientId) {
+    if (appointment.patientUHID !== patientUHID) {
         throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
     }
 
@@ -190,7 +190,7 @@ exports.updateMyAppointment = async (req, res) => {
 
     // Throws AppError when any booking rule is violated
     const { patient, doctor } = await checkAppointmentValidity({
-        patientId,
+        patientUHID,
         doctorId: doctorEmployeeId,
         appointmentDate,
         timeSlot,
@@ -228,7 +228,7 @@ exports.updateMyAppointment = async (req, res) => {
 // Cancel one of the patient's own appointments
 exports.cancelMyAppointment = async (req, res) => {
 
-    const patientId = req.patient.patientId;
+    const patientUHID = req.patient.patientUHID;
     const { appointmentId } = req.params;
     const { cancellationReason } = req.body;
 
@@ -238,14 +238,14 @@ exports.cancelMyAppointment = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
-    if (appointment.patientId !== patientId) {
+    if (appointment.patientUHID !== patientUHID) {
         throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_CANCEL);
     }
 
     await cancelAppointmentRecord(appointment, cancellationReason);
 
     await recordAudit({
-        actor: { employeeCode: appointment.patientId, designation: "PATIENT" },
+        actor: { employeeCode: appointment.patientUHID, designation: "PATIENT" },
         action: "APPOINTMENT_CANCELED",
         targetType: "APPOINTMENT",
         targetId: appointment.appointmentId,
@@ -266,7 +266,7 @@ exports.getMyMedicalRecords = async (req, res) => {
     const { page, limit, skip } = parsePagination(req.query);
 
     const filter = {
-        patientId: req.patient.patientId,
+        patientUHID: req.patient.patientUHID,
         status: "FINALIZED",
         isDeleted: { $ne: true }
     };
@@ -297,7 +297,7 @@ exports.getMyMedicalRecordById = async (req, res) => {
 
     const record = await MedicalRecord.findOne({
         medicalRecordId,
-        patientId: req.patient.patientId,
+        patientUHID: req.patient.patientUHID,
         status: "FINALIZED",
         isDeleted: { $ne: true }
     })
@@ -319,9 +319,9 @@ exports.getMyMedicalRecordByAppointment = async (req, res) => {
 
     const { appointmentId } = req.params;
 
-    const appointment = await Appointment.findOne({ appointmentId }).select("patientId");
+    const appointment = await Appointment.findOne({ appointmentId }).select("patientUHID");
 
-    if (!appointment || appointment.patientId !== req.patient.patientId) {
+    if (!appointment || appointment.patientUHID !== req.patient.patientUHID) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 

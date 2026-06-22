@@ -1,15 +1,12 @@
 import {
-  AfterViewInit,
   Component,
   computed,
-  ElementRef,
   EventEmitter,
   inject,
   Input,
   OnInit,
   Output,
   signal,
-  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -37,7 +34,7 @@ import {
   ADMINISTRATION_CATEGORY_LABELS,
   ADMINISTRATION_METHOD_LABELS,
   FOOD_RELATIONS,
-  FOOD_RELATION_LABELS,
+  FOOD_RELATION_SHORT_LABELS,
 } from '../../../core/models/medical-record.model';
 
 // Create / edit dialog for a medical record. Doctors may finalize; staff are
@@ -49,16 +46,13 @@ import {
   templateUrl: './medical-record-form-dialog.html',
   styleUrl: './medical-record-form-dialog.css',
 })
-export class MedicalRecordFormDialogComponent implements OnInit, AfterViewInit {
+export class MedicalRecordFormDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirm = inject(ConfirmModalService);
   private readonly service = inject(MedicalRecordService);
-
-  // Notes textarea, sized to its content (no manual resize handle)
-  @ViewChild('notesArea') private readonly notesArea?: ElementRef<HTMLTextAreaElement>;
 
   // Appointment context (provides the read-only auto-filled fields)
   @Input({ required: true }) appointment!: Appointment;
@@ -77,7 +71,7 @@ export class MedicalRecordFormDialogComponent implements OnInit, AfterViewInit {
   readonly categoryLabels = ADMINISTRATION_CATEGORY_LABELS;
   readonly methodLabels = ADMINISTRATION_METHOD_LABELS;
   readonly foodRelations = FOOD_RELATIONS;
-  readonly foodRelationLabels = FOOD_RELATION_LABELS;
+  readonly foodRelationShortLabels = FOOD_RELATION_SHORT_LABELS;
 
   // Mirror of the status control so the primary button label stays reactive
   private readonly statusSig = signal<MedicalRecordStatus>('DRAFT');
@@ -89,14 +83,14 @@ export class MedicalRecordFormDialogComponent implements OnInit, AfterViewInit {
     return (
       this.existingRecord?.patientUHID ||
       this.appointment.patient?.UHID ||
-      this.appointment.patientId
+      this.appointment.patientUHID
     );
   }
   get patientName(): string {
     return (
       this.existingRecord?.patientName ||
       this.appointment.patient?.name ||
-      this.appointment.patientId
+      this.appointment.patientUHID
     );
   }
   get doctorEmployeeId(): string {
@@ -143,19 +137,6 @@ export class MedicalRecordFormDialogComponent implements OnInit, AfterViewInit {
 
     // Snapshot for no-op detection (edit only); a status change also counts as a change
     this.baseline = JSON.stringify(this.form.getRawValue());
-  }
-
-  ngAfterViewInit(): void {
-    // Size the notes field to any pre-filled content
-    if (this.notesArea) {
-      this.autoGrow(this.notesArea.nativeElement);
-    }
-  }
-
-  // Grow/shrink a textarea to fit its content (notes field)
-  autoGrow(el: HTMLTextAreaElement): void {
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
   }
 
   // Snapshot of the loaded record for no-op detection

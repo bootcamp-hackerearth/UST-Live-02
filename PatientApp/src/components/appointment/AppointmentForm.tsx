@@ -16,6 +16,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomTabInset, KeyboardScrollPadding } from "@/constants/theme";
 import AvailabilityCalendar from "@/components/common/AvailabilityCalendar";
+import { RequiredMark } from "@/components/common/RequiredMark";
 import { useGuardedRouter } from "@/hooks/useGuardedRouter";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import {
@@ -221,7 +222,7 @@ function DoctorDropdown({
 
   return (
     <>
-      <Text style={styles.fieldLabel}>Doctor</Text>
+      <Text style={styles.fieldLabel}>Doctor<RequiredMark /></Text>
       <TouchableOpacity
         style={[styles.dropdownTrigger, error ? styles.dropdownTriggerError : undefined]}
         onPress={onToggle}
@@ -532,7 +533,7 @@ export default function AppointmentForm({
         )}
 
         {/* Date — tapping opens the native date picker */}
-        <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Date</Text>
+        <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Date<RequiredMark /></Text>
         <TouchableOpacity
           style={[
             styles.dropdownTrigger,
@@ -550,7 +551,7 @@ export default function AppointmentForm({
           <Text style={styles.errorText}>{errors.date}</Text>
         ) : null}
 
-        <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Time slot</Text>
+        <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Time slot<RequiredMark /></Text>
         <SlotsSection
           selectedDoctor={selectedDoctor}
           dateValid={DATE_REGEX.test(date)}

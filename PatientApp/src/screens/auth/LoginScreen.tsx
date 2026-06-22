@@ -86,6 +86,7 @@ const LoginScreen = () => {
         <View style={styles.inputRow}>
           <Textbox
             label="Email address"
+            required
             placeholder="you@email.com"
             value={email}
             onChangeText={setEmail}
@@ -100,6 +101,7 @@ const LoginScreen = () => {
         <View style={styles.inputRow}>
           <Textbox
             label="Password"
+            required
             placeholder="••••••••"
             value={password}
             icon="lock-closed-outline"

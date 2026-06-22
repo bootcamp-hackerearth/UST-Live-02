@@ -6,7 +6,7 @@ const appointmentSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
-    patientId: {
+    patientUHID: {
         type: String,
         required: true,
         ref: "Patients"

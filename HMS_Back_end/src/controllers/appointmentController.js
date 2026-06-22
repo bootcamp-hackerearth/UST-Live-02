@@ -19,7 +19,7 @@ const MESSAGES = require("../constants/messages");
 exports.createAppointment = async (req, res) => {
 
     const {
-        patientId,
+        patientUHID,
         doctorEmployeeId,
         appointmentDate,
         timeSlot
@@ -27,14 +27,14 @@ exports.createAppointment = async (req, res) => {
 
     // Validates patient, doctor availability, and slot conflicts; throws on violation
     const { patient, doctor } = await checkAppointmentValidity({
-        patientId,
+        patientUHID,
         doctorId: doctorEmployeeId,
         appointmentDate,
         timeSlot
     });
 
     const appointment = await Appointment.create({
-        patientId,
+        patientUHID,
         doctorEmployeeId,
         appointmentDate,
         timeSlot,
@@ -80,8 +80,8 @@ exports.getAppointments = async (req, res) => {
         filter.doctorEmployeeId = req.query.doctorEmployeeId;
     }
 
-    if (req.query.patientId) {
-        filter.patientId = req.query.patientId;
+    if (req.query.patientUHID) {
+        filter.patientUHID = req.query.patientUHID;
     }
 
     return paginateAppointments(filter, req.query, res);
@@ -172,7 +172,7 @@ exports.updateAppointment = async (req, res) => {
 
     const { appointmentId } = req.params;
     const {
-        patientId,
+        patientUHID,
         doctorEmployeeId,
         appointmentDate,
         timeSlot
@@ -191,13 +191,13 @@ exports.updateAppointment = async (req, res) => {
     // A doctor may only reschedule (date/time) their own appointments; patient and
     // doctor are forced to the existing values so they cannot be changed.
     const actor = await resolveActor(req.user);
-    let effectivePatientId = patientId;
+    let effectivePatientUHID = patientUHID;
     let effectiveDoctorId = doctorEmployeeId;
     if (actor.designation === "DOCTOR") {
         if (appointment.doctorEmployeeId !== req.user.employeeCode) {
             throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
         }
-        effectivePatientId = appointment.patientId;
+        effectivePatientUHID = appointment.patientUHID;
         effectiveDoctorId = appointment.doctorEmployeeId;
     }
 
@@ -205,12 +205,12 @@ exports.updateAppointment = async (req, res) => {
     const hasChanges = hasFieldChanges(
         appointment,
         {
-            patientId: effectivePatientId,
+            patientUHID: effectivePatientUHID,
             doctorEmployeeId: effectiveDoctorId,
             appointmentDate,
             timeSlot
         },
-        ["patientId", "doctorEmployeeId", "appointmentDate", "timeSlot"],
+        ["patientUHID", "doctorEmployeeId", "appointmentDate", "timeSlot"],
         { dateFields: ["appointmentDate"] }
     );
     if (!hasChanges) {
@@ -219,14 +219,14 @@ exports.updateAppointment = async (req, res) => {
 
     // Re-validates excluding this appointment from duplicate checks; throws on violation
     const { patient, doctor } = await checkAppointmentValidity({
-        patientId: effectivePatientId,
+        patientUHID: effectivePatientUHID,
         doctorId: effectiveDoctorId,
         appointmentDate,
         timeSlot,
         excludeAppointmentId: appointmentId
     });
 
-    appointment.patientId = effectivePatientId;
+    appointment.patientUHID = effectivePatientUHID;
     appointment.doctorEmployeeId = effectiveDoctorId;
     appointment.appointmentDate = appointmentDate;
     appointment.timeSlot = timeSlot;
@@ -279,7 +279,7 @@ exports.markUnattended = async (req, res) => {
     await appointment.save();
 
     // Notify the patient
-    const patient = await Patient.findOne({ UHID: appointment.patientId }).select("name email");
+    const patient = await Patient.findOne({ UHID: appointment.patientUHID }).select("name email");
     if (patient?.email) {
         await sendAppointmentEmail(patient.email, emailTemplates.appointmentUnattended({
             patientName: patient.name

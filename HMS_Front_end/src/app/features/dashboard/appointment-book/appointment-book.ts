@@ -83,7 +83,7 @@ export class AppointmentBookComponent
   isDoctor = false;
 
   form: FormGroup = this.fb.group({
-    patientId: ['', Validators.required],
+    patientUHID: ['', Validators.required],
     doctorEmployeeId: ['', Validators.required],
     appointmentDate: ['', [Validators.required, noPastDate]],
     timeSlot: ['', Validators.required],
@@ -229,7 +229,7 @@ export class AppointmentBookComponent
   // Doctor reschedule: lock patient + doctor; load own profile for availability/cutoff.
   // The patient option is injected from the loaded appointment in loadForEdit.
   private loadSelfDoctor(): void {
-    this.form.get('patientId')!.disable();
+    this.form.get('patientUHID')!.disable();
     this.form.get('doctorEmployeeId')!.disable();
 
     this.employeeService.getMe().subscribe({
@@ -280,14 +280,14 @@ export class AppointmentBookComponent
         // Ensure the appointment's patient appears in the dropdown
         if (a.patient) {
           const alreadyListed = this.patientOptions().some(
-            (o) => o.value === a.patientId,
+            (o) => o.value === a.patientUHID,
           );
           if (!alreadyListed) {
             this.patientOptions.set([
               {
-                value: a.patientId,
+                value: a.patientUHID,
                 label: a.patient.name,
-                sublabel: `${a.patientId} · ${a.patient.phone}`,
+                sublabel: `${a.patientUHID} · ${a.patient.phone}`,
               },
               ...this.patientOptions(),
             ]);
@@ -295,7 +295,7 @@ export class AppointmentBookComponent
         }
 
         // Set values without emitting to avoid racing valueChanges subscriptions
-        this.form.get('patientId')!.setValue(a.patientId, { emitEvent: false });
+        this.form.get('patientUHID')!.setValue(a.patientUHID, { emitEvent: false });
         this.form.get('doctorEmployeeId')!.setValue(a.doctorEmployeeId, { emitEvent: false });
         this.form.get('appointmentDate')!.setValue(
           this.toIso(new Date(a.appointmentDate)),
@@ -310,7 +310,7 @@ export class AppointmentBookComponent
 
         // Baseline from the appointment's canonical values (matches the form once the slot restores)
         this.baseline = JSON.stringify({
-          patientId: a.patientId,
+          patientUHID: a.patientUHID,
           doctorEmployeeId: a.doctorEmployeeId,
           appointmentDate: this.toIso(new Date(a.appointmentDate)),
           timeSlot: a.timeSlot,
@@ -500,7 +500,7 @@ export class AppointmentBookComponent
   private schedulingSnapshot(): string {
     const v = this.form.getRawValue();
     return JSON.stringify({
-      patientId: v.patientId,
+      patientUHID: v.patientUHID,
       doctorEmployeeId: v.doctorEmployeeId,
       appointmentDate: v.appointmentDate,
       timeSlot: v.timeSlot,

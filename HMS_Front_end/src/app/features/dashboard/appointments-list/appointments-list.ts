@@ -96,6 +96,17 @@ export class AppointmentsListComponent implements OnInit {
     return endAt.getTime() < Date.now();
   }
 
+  // True once the slot start time has passed (mirrors detail view + backend guard)
+  startTimePassed(a: Appointment): boolean {
+    const start = (a.timeSlot || '').split('-')[0];
+    const [hh, mm] = (start || '').split(':').map(Number);
+    const startAt = new Date(a.appointmentDate);
+    if (!Number.isNaN(hh) && !Number.isNaN(mm)) {
+      startAt.setHours(hh, mm, 0, 0);
+    }
+    return startAt.getTime() <= Date.now();
+  }
+
   // Single source of truth for which doctor tab an appointment belongs to.
   // Tabs are mutually exclusive: a BOOKED slot moves to "Past Due" once it ends.
   private matchesDoctorTab(a: Appointment, tab: DoctorTab): boolean {

@@ -35,7 +35,7 @@ export interface AppointmentDoctorRef {
 
 export interface Appointment {
   appointmentId: string;
-  patientId: string;
+  patientUHID: string;
   doctorEmployeeId: string;
   appointmentDate: string;
   timeSlot: string;
@@ -63,7 +63,7 @@ export interface DoctorOption {
 
 // Payload to create an appointment
 export interface CreateAppointmentPayload {
-  patientId: string;
+  patientUHID: string;
   doctorEmployeeId: string;
   appointmentDate: string;
   timeSlot: string;

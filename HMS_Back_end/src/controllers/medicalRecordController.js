@@ -161,7 +161,7 @@ const applyFinalizeUpdate = async ({ record, actor }) => {
         await appointment.save();
     }
 
-    const patient = await Patient.findOne({ UHID: record.patientId }).select("name email");
+    const patient = await Patient.findOne({ UHID: record.patientUHID }).select("name email");
     if (patient?.email) {
         await sendAppointmentEmail(
             patient.email,
@@ -290,7 +290,7 @@ exports.createMedicalRecord = async (req, res) => {
 
     // Resolve denormalized display details
     const [patient, doctor] = await Promise.all([
-        Patient.findOne({ UHID: appointment.patientId }).select("UHID name email"),
+        Patient.findOne({ UHID: appointment.patientUHID }).select("UHID name email"),
         Employee.findOne({ employeeCode: appointment.doctorEmployeeId }).select("employeeCode name email")
     ]);
 
@@ -312,7 +312,6 @@ exports.createMedicalRecord = async (req, res) => {
 
     const record = new MedicalRecord({
         appointmentId,
-        patientId: patient.UHID,
         patientUHID: patient.UHID,
         patientName: patient.name,
         doctorEmployeeId: doctor.employeeCode,

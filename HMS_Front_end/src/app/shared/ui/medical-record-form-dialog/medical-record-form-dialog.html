@@ -45,8 +45,8 @@
 
       <!-- Editable clinical fields -->
       <div class="form-group">
-        <label class="form-label" for="mr-complaint">Chief Complaint *</label>
-        <textarea id="mr-complaint" rows="2" class="form-input" formControlName="chiefComplaint"
+        <label class="form-label" for="mr-complaint">Chief Complaint <span class="form-required">*</span></label>
+        <textarea id="mr-complaint" rows="2" class="form-input mr-textarea" formControlName="chiefComplaint"
           placeholder="What the patient reports (their own words)"></textarea>
         @if (form.get('chiefComplaint')?.touched && form.get('chiefComplaint')?.invalid) {
           <p class="form-error">Chief complaint is required</p>
@@ -54,8 +54,8 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="mr-symptoms">Symptoms *</label>
-        <textarea id="mr-symptoms" rows="3" class="form-input" formControlName="symptoms"
+        <label class="form-label" for="mr-symptoms">Symptoms <span class="form-required">*</span></label>
+        <textarea id="mr-symptoms" rows="3" class="form-input mr-textarea" formControlName="symptoms"
           placeholder="Doctor's findings from examination / questioning"></textarea>
         @if (form.get('symptoms')?.touched && form.get('symptoms')?.invalid) {
           <p class="form-error">Symptoms are required</p>
@@ -63,16 +63,16 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="mr-diagnosis">Diagnosis *</label>
-        <textarea id="mr-diagnosis" rows="3" class="form-input" formControlName="diagnosis"></textarea>
+        <label class="form-label" for="mr-diagnosis">Diagnosis <span class="form-required">*</span></label>
+        <textarea id="mr-diagnosis" rows="3" class="form-input mr-textarea" formControlName="diagnosis"></textarea>
         @if (form.get('diagnosis')?.touched && form.get('diagnosis')?.invalid) {
           <p class="form-error">Diagnosis is required</p>
         }
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="mr-advice">Advice *</label>
-        <textarea id="mr-advice" rows="3" class="form-input" formControlName="advice"
+        <label class="form-label" for="mr-advice">Advice <span class="form-required">*</span></label>
+        <textarea id="mr-advice" rows="3" class="form-input mr-textarea" formControlName="advice"
           placeholder="Guidance shown to the patient (e.g. take rest, nebulize at home)"></textarea>
         @if (form.get('advice')?.touched && form.get('advice')?.invalid) {
           <p class="form-error">Advice is required</p>
@@ -82,24 +82,21 @@
       <!-- Prescription items (optional) -->
       <div class="mr-section-head">
         <h4 class="section-title">Prescription</h4>
-        <button type="button" class="btn btn-secondary btn-sm" (click)="addItem()">
-          + Add medication
-        </button>
       </div>
 
       <div formArrayName="prescriptionItems">
         @for (item of prescriptionItems.controls; track item; let i = $index) {
           <div class="mr-rx-card" [formGroupName]="i">
             <div class="mr-rx-grid">
-              <div class="form-group">
-                <label class="form-label" for="rx-name-{{ i }}">Name *</label>
+              <div class="form-group mr-rx-full">
+                <label class="form-label" for="rx-name-{{ i }}">Name <span class="form-required">*</span></label>
                 <input id="rx-name-{{ i }}" type="text" class="form-input" formControlName="name" />
                 @if (itemInvalid(i, 'name')) {
                   <p class="form-error">Required</p>
                 }
               </div>
               <div class="form-group">
-                <label class="form-label" for="rx-dosage-{{ i }}">Dosage *</label>
+                <label class="form-label" for="rx-dosage-{{ i }}">Dosage <span class="form-required">*</span></label>
                 <input id="rx-dosage-{{ i }}" type="text" class="form-input" formControlName="dosage"
                   placeholder="e.g. 1 tablet, 5 ml" />
                 @if (itemInvalid(i, 'dosage')) {
@@ -107,7 +104,7 @@
                 }
               </div>
               <div class="form-group">
-                <label class="form-label" for="rx-frequency-{{ i }}">Frequency *</label>
+                <label class="form-label" for="rx-frequency-{{ i }}">Frequency <span class="form-required">*</span></label>
                 <input id="rx-frequency-{{ i }}" type="text" class="form-input" formControlName="frequency"
                   placeholder="e.g. 3 times a day" />
                 @if (itemInvalid(i, 'frequency')) {
@@ -115,7 +112,7 @@
                 }
               </div>
               <div class="form-group">
-                <label class="form-label" for="rx-duration-{{ i }}">Duration *</label>
+                <label class="form-label" for="rx-duration-{{ i }}">Duration <span class="form-required">*</span></label>
                 <input id="rx-duration-{{ i }}" type="text" class="form-input" formControlName="duration"
                   placeholder="e.g. 5 days" />
                 @if (itemInvalid(i, 'duration')) {
@@ -125,7 +122,7 @@
 
               <!-- Cascading administration route: category filters the method list -->
               <div class="form-group">
-                <label class="form-label" for="rx-cat-{{ i }}">Administration *</label>
+                <label class="form-label" for="rx-cat-{{ i }}">Administration Category <span class="form-required">*</span></label>
                 <select id="rx-cat-{{ i }}" class="form-select" formControlName="administrationCategory"
                   (change)="onCategoryChange(i)">
                   <option value="">Select category</option>
@@ -138,7 +135,7 @@
                 }
               </div>
               <div class="form-group">
-                <label class="form-label" for="rx-method-{{ i }}">Method *</label>
+                <label class="form-label" for="rx-method-{{ i }}">Administration Method <span class="form-required">*</span></label>
                 <select id="rx-method-{{ i }}" class="form-select" formControlName="administrationMethod"
                   [disabled]="!methodsFor(i).length">
                   <option value="">Select method</option>
@@ -158,7 +155,7 @@
                   <select id="rx-food-{{ i }}" class="form-select" formControlName="relation">
                     <option value="">—</option>
                     @for (fr of foodRelations; track fr) {
-                      <option [value]="fr">{{ foodRelationLabels[fr] }}</option>
+                      <option [value]="fr">{{ foodRelationShortLabels[fr] }}</option>
                     }
                   </select>
                   <input type="number" min="0" class="form-input mr-food-min" formControlName="offsetMinutes"
@@ -177,19 +174,20 @@
         }
       </div>
 
+      <button type="button" class="btn btn-secondary btn-sm mr-add-row" (click)="addItem()">
+        + Add medication
+      </button>
+
       <!-- Vitals / observations (optional) -->
       <div class="mr-section-head">
         <h4 class="section-title">Vitals / Observations</h4>
-        <button type="button" class="btn btn-secondary btn-sm" (click)="addObs()">
-          + Add observation
-        </button>
       </div>
 
       <div formArrayName="medicalObservations">
         @for (o of observations.controls; track o; let i = $index) {
           <div class="mr-obs-row" [formGroupName]="i">
             <div class="form-group">
-              <label class="form-label" for="obs-name-{{ i }}">Metric *</label>
+              <label class="form-label" for="obs-name-{{ i }}">Metric <span class="form-required">*</span></label>
               <input id="obs-name-{{ i }}" type="text" class="form-input" formControlName="metricName"
                 placeholder="e.g. BP, Heart rate" />
               @if (obsInvalid(i, 'metricName')) {
@@ -197,7 +195,7 @@
               }
             </div>
             <div class="form-group">
-              <label class="form-label" for="obs-value-{{ i }}">Value *</label>
+              <label class="form-label" for="obs-value-{{ i }}">Value <span class="form-required">*</span></label>
               <input id="obs-value-{{ i }}" type="text" class="form-input" formControlName="metricValue"
                 placeholder="e.g. 120/80, 72 bpm" />
               @if (obsInvalid(i, 'metricValue')) {
@@ -205,7 +203,7 @@
               }
             </div>
             <div class="form-group">
-              <label class="form-label" for="obs-time-{{ i }}">Recorded time *</label>
+              <label class="form-label" for="obs-time-{{ i }}">Recorded time <span class="form-required">*</span></label>
               <input id="obs-time-{{ i }}" type="datetime-local" class="form-input" formControlName="recordedTime" />
               @if (obsInvalid(i, 'recordedTime')) {
                 <p class="form-error">Required</p>
@@ -221,15 +219,17 @@
         }
       </div>
 
+      <button type="button" class="btn btn-secondary btn-sm mr-add-row" (click)="addObs()">
+        + Add observation
+      </button>
+
       <div class="form-group">
         <label class="form-label" for="mr-notes">Notes (internal)</label>
         <textarea
           id="mr-notes"
-          #notesArea
           rows="2"
-          class="form-input mr-notes"
-          formControlName="notes"
-          (input)="autoGrow(notesArea)"></textarea>
+          class="form-input mr-textarea"
+          formControlName="notes"></textarea>
       </div>
 
       <div class="mr-modal-actions">

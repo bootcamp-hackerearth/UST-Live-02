@@ -125,7 +125,7 @@
             (keydown.space)="open(a)">
 
             <td>{{ a.appointmentId }}</td>
-            <td>{{ a.patient?.name || a.patientId }}</td>
+            <td>{{ a.patient?.name || a.patientUHID }}</td>
             <td>{{ a.doctor?.name || a.doctorEmployeeId }}</td>
             <td>{{ a.appointmentDate | date:'mediumDate' }}</td>
             <td>{{ a.timeSlot }}</td>
@@ -137,7 +137,7 @@
             </td>
 
             <td class="row-actions">
-              @if (hasReceptionAccess() && a.status === 'BOOKED') {
+              @if (hasReceptionAccess() && a.status === 'BOOKED' && !startTimePassed(a)) {
               <button
                 type="button"
                 class="btn btn-sm btn-danger-outline"

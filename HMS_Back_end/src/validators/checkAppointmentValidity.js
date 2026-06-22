@@ -47,7 +47,7 @@ const assertDoctorDateBounds = (doctor, apptDay) => {
 
 // Validates all booking rules; throws on the first violation, returns patient and doctor
 const checkAppointmentValidity = async ({
-  patientId,
+  patientUHID,
   doctorId,
   appointmentDate,
   timeSlot,
@@ -56,7 +56,7 @@ const checkAppointmentValidity = async ({
 
   // Verify the patient exists
   const patient = await Patient.findOne({
-    UHID: patientId,
+    UHID: patientUHID,
   });
 
   if (!patient) {
@@ -131,7 +131,7 @@ const checkAppointmentValidity = async ({
   // Ensure the patient does not already have a non-cancelled appointment at this slot
   const patientAppointment = await Appointment.findOne(
     withExclusion(
-      { patientId, appointmentDate, timeSlot, status: { $ne: "CANCELED" } },
+      { patientUHID, appointmentDate, timeSlot, status: { $ne: "CANCELED" } },
       excludeAppointmentId,
     ),
   );
