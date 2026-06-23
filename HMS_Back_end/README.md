@@ -55,6 +55,7 @@ already gitignored.
 | ---------------- | ------------------------------------------------------- | ------------------------------------ |
 | `MONGO_URI`      | MongoDB connection string                               | `mongodb://localhost:27017/hms`      |
 | `FRONTEND_URL`   | Allowed CORS origin (the Angular app)                   | `http://localhost:4200`              |
+| `PATIENT_APP_URL`| Patient app deep-link base for login links in emails    | `hmsapp://`                          |
 | `PORT`           | Port the API listens on                                 | `5000`                               |
 | `JWT_SECRET`     | Secret used to sign/verify JWTs                          | `<long-random-string>`               |
 | `JWT_EXPIRES_IN` | JWT lifetime                                             | `1d`                                 |
