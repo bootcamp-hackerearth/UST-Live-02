@@ -10,6 +10,13 @@ import { AuditLog } from '../../../core/models/audit.model';
 // Audit feed page size on the overview
 const AUDIT_PAGE_SIZE = 15;
 
+// Audit actions that record a failed or adverse outcome; shown in red, while
+// every successful operation keeps the default green chip
+const FAILURE_AUDIT_ACTIONS = new Set<string>([
+  'USER_LOGIN_FAILED',
+  'REFRESH_REUSE_DETECTED',
+]);
+
 // Dashboard landing; renders cards based on the user's designation
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,5 +137,10 @@ export class OverviewComponent implements OnInit {
       .replaceAll('_', ' ')
       .toLowerCase()
       .replaceAll(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  // True for failed/adverse events, so the chip can be flagged red instead of green
+  isFailureAction(action: string): boolean {
+    return FAILURE_AUDIT_ACTIONS.has(action);
   }
 }

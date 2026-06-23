@@ -318,20 +318,22 @@ exports.logout = async (req, res) => {
     const tokenHash = refreshToken ? hashToken(refreshToken) : null;
 
     // This route has no auth middleware, so identity comes from the token itself.
-    // Look it up regardless of revocation state so an already-dead token still
-    // attributes the logout to its owner.
+    // Look it up regardless of revocation state so an already-revoked token still
+    // names its owner.
     const record = tokenHash ? await findByHash(tokenHash) : null;
-    const subjectId = record?.subjectId;
 
-    // Audit the logout intent unconditionally — decoupled from whether a live
-    // token actually existed to revoke, so every logout attempt leaves a trail
-    await recordAudit({
-        actorType: subjectId ? "EMPLOYEE" : "ANONYMOUS",
-        actorId: subjectId,
-        action: "USER_LOGOUT",
-        ipAddress: req.ip,
-        message: MESSAGES.AUDIT.USER_LOGOUT(subjectId ?? "unknown subject")
-    });
+    // Audit only when we can attribute the logout to a subject; an absent or
+    // unknown token tells us nothing about who left, so we skip the entry rather
+    // than record a meaningless "unknown" logout. Revocation stays decoupled below.
+    if (record) {
+        await recordAudit({
+            actorType: "EMPLOYEE",
+            actorId: record.subjectId,
+            action: "USER_LOGOUT",
+            ipAddress: req.ip,
+            message: MESSAGES.AUDIT.USER_LOGOUT(record.subjectId)
+        });
+    }
 
     // Revoke separately; a no-op when the token is absent or already revoked
     if (tokenHash) {

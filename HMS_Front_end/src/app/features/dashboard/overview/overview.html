@@ -87,7 +87,10 @@
                 @for (log of auditLogs(); track trackByAudit($index, log)) {
                   <li class="activity-item">
                     <div class="activity-main">
-                      <span class="activity-action">{{ actionLabel(log.action) }}</span>
+                      <span
+                        class="activity-action"
+                        [class.activity-action--danger]="isFailureAction(log.action)"
+                      >{{ actionLabel(log.action) }}</span>
                       <span class="activity-message">{{ log.message }}</span>
                     </div>
                     <div class="activity-meta">

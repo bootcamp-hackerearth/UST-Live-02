@@ -162,6 +162,12 @@
   flex-shrink: 0;
 }
 
+/* Failed/adverse events stand out in red; success keeps the default green */
+.activity-action--danger {
+  color: #b91c1c;
+  background-color: #fef2f2;
+}
+
 .activity-message {
   font-size: 0.875rem;
   color: #1e293b;
