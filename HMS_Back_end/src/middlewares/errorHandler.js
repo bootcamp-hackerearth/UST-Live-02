@@ -3,7 +3,7 @@ const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
 // Single point of truth for the error wire envelope
-const sendError = (res, statusCode, message, errors) => {
+const sendError = (res, statusCode, message, errors, code) => {
     const body = {
         success: false,
         statusCode,
@@ -11,6 +11,9 @@ const sendError = (res, statusCode, message, errors) => {
     };
     if (errors?.length) {
         body.errors = errors;
+    }
+    if (code) {
+        body.code = code;
     }
     return res.status(statusCode).json(body);
 };
@@ -24,7 +27,7 @@ const errorHandler = (err, req, res, next) => {
 
     // Operational errors thrown by our own code
     if (err instanceof AppError) {
-        return sendError(res, err.statusCode, err.message, err.errors);
+        return sendError(res, err.statusCode, err.message, err.errors, err.code);
     }
 
     // Malformed JSON body rejected by express.json()

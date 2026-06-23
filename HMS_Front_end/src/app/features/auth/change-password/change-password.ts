@@ -76,23 +76,14 @@ export class ChangePasswordComponent implements OnInit {
       .changePassword(currentPassword, newPassword, confirmPassword)
       .subscribe({
         next: (response) => {
+          this.loading = false;
+          this.cdr.markForCheck();
           this.toast.success(
             response?.message || APP_MESSAGES.PASSWORD_CHANGED,
           );
-          // Refresh the cached user so mustChangePassword clears, then go to the dashboard
-          this.authService.refreshCurrentUser().subscribe({
-            next: () => {
-              this.loading = false;
-              this.cdr.markForCheck();
-              this.router.navigate(['/dashboard/overview']);
-            },
-            error: () => {
-              // Even if the refresh fails, the password changed; continue
-              this.loading = false;
-              this.cdr.markForCheck();
-              this.router.navigate(['/dashboard/overview']);
-            },
-          });
+          // Changing the password invalidates every session server-side, so send
+          // the user back to login to sign in with their new password
+          this.authService.forceClearSession();
         },
         error: (error) => {
           this.loading = false;

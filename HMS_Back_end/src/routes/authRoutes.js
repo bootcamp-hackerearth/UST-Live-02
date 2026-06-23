@@ -90,7 +90,11 @@ router.post(
   controller.resetPassword,
 );
 
-router.post("/logout", auth, controller.logout);
+// Logout/refresh take the refresh token in the body, so they must work even
+// after the short-lived access token has already expired (no auth middleware)
+router.post("/logout", controller.logout);
+
+router.post("/refresh", controller.refresh);
 
 router.get("/me", auth, controller.me);
 

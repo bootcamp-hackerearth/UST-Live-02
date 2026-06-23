@@ -1,6 +1,6 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { Router } from '@angular/router';
@@ -11,6 +11,8 @@ const PUBLIC_AUTH_PATHS = [
   '/auth/forgot-password',
   '/auth/reset-password',
   '/auth/self-register',
+  '/auth/refresh',
+  '/auth/logout',
 ];
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
@@ -18,30 +20,37 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const toastService = inject(ToastService);
   const router = inject(Router);
 
-  // Attach the bearer token to every outgoing request
+  // Attach the in-memory access token to every outgoing request
   const token = authService.getToken();
-  if (token) {
-    req = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  }
+  const authReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
 
   const isPublicAuthCall = PUBLIC_AUTH_PATHS.some((p) => req.url.includes(p));
 
-  // Only cross-cutting statuses are toasted here; other errors surface via ApiErrorHandlerService
-  return next(req).pipe(
+  return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      switch (error.status) {
-        case 401:
-
-          if (!isPublicAuthCall) {
+      // A protected call rejected with 401: try one silent refresh, then retry it.
+      // Public auth calls (incl. /refresh itself) are excluded to avoid loops.
+      if (error.status === 401 && !isPublicAuthCall) {
+        return authService.refreshAccessToken().pipe(
+          switchMap((newToken) =>
+            next(
+              req.clone({
+                setHeaders: { Authorization: `Bearer ${newToken}` },
+              }),
+            ),
+          ),
+          catchError((refreshError) => {
             toastService.error(APP_MESSAGES.SESSION_EXPIRED);
             authService.forceClearSession();
-          }
-          break;
+            return throwError(() => refreshError);
+          }),
+        );
+      }
 
+      // Other cross-cutting statuses are toasted here; the rest surface via ApiErrorHandlerService
+      switch (error.status) {
         case 403:
           toastService.error(APP_MESSAGES.ACCESS_DENIED);
           router.navigate(['/dashboard/overview']);

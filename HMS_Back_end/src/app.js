@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
@@ -26,6 +27,10 @@ const MESSAGES = require("./constants/messages");
 
 const app = express();
 
+// Behind a single reverse proxy (e.g. Vercel) so req.ip and rate limiting read
+// the real client IP from X-Forwarded-For rather than the proxy address
+app.set("trust proxy", 1);
+
 // Used for secure HTTP headers
 app.use(helmet());
 
@@ -42,6 +47,9 @@ app.use(morgan("dev"));
 
 // Read JSON data sent from frontend/Postman
 app.use(express.json());
+
+// Parse cookies (httpOnly refresh token for the staff web app)
+app.use(cookieParser());
 
 app.get("/api/db-status", (req, res) =>
   sendSuccess(res, STATUS.OK, MESSAGES.COMMON.DB_STATUS_RETRIEVED, {

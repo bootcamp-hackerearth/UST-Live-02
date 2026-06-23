@@ -1,6 +1,14 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
+const {
+    signAccessToken,
+    issueRefreshToken,
+    rotateRefreshToken,
+    revokeByHash,
+    revokeAllForSubject,
+    hashToken
+} = require("../utils/tokenService");
+const { setRefreshCookie, clearRefreshCookie } = require("../utils/refreshCookie");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const sendEmail = require("../utils/sendEmail");
@@ -9,6 +17,7 @@ const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const validateUniqueEmployeeFields = require("../validators/validateUniqueEmployeeFields");
 const getCurrentUser = require("../utils/getCurrentUser");
+const recordAudit = require("../utils/recordAudit");
 const { RESTRICTED_ROLES_SET } = require("../constants/domain");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
@@ -21,13 +30,25 @@ exports.login = async (req, res) => {
 
     const { email, password } = req.body;
 
+    // Records a failed attempt before the request is rejected
+    const auditFailedLogin = (actorType, actorId) =>
+        recordAudit({
+            actorType,
+            actorId,
+            action: "USER_LOGIN_FAILED",
+            ipAddress: req.ip,
+            message: MESSAGES.AUDIT.USER_LOGIN_FAILED(email)
+        });
+
     const user = await User.findOne({ email });
     if (!user) {
+        await auditFailedLogin("ANONYMOUS", email);
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
     const isMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
     if (!isMatch) {
+        await auditFailedLogin("ANONYMOUS", email);
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
@@ -41,6 +62,7 @@ exports.login = async (req, res) => {
     const blockedMessage = blockedStatuses[user.status];
 
     if (blockedMessage) {
+        await auditFailedLogin("EMPLOYEE", user.employeeCode);
         throw new AppError(STATUS.FORBIDDEN, blockedMessage);
     }
 
@@ -58,20 +80,33 @@ exports.login = async (req, res) => {
 
     const profile = buildEmployeeProfile(employee);
 
-    // Sign a JWT containing the employee code and roles
-    const token = jwt.sign(
-        {
-            employeeCode: user.employeeCode,
-            roles: user.roles
-        },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: process.env.JWT_EXPIRES_IN
-        }
-    );
+    // Short-lived access token; the EMPLOYEE marker blocks use on patient routes
+    const accessToken = signAccessToken({
+        employeeCode: user.employeeCode,
+        roles: user.roles,
+        tokenVersion: user.tokenVersion,
+        type: "EMPLOYEE"
+    });
+
+    const refreshToken = await issueRefreshToken({
+        subjectType: "EMPLOYEE",
+        subjectId: user.employeeCode,
+        req
+    });
+
+    // Staff web client: refresh token rides in an httpOnly cookie, never the body
+    setRefreshCookie(res, refreshToken);
+
+    await recordAudit({
+        actorType: "EMPLOYEE",
+        actorId: user.employeeCode,
+        action: "USER_LOGIN",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.USER_LOGIN(user.employeeCode)
+    });
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGIN_SUCCESS, {
-        token,
+        accessToken,
         user: {
             employeeCode: user.employeeCode,
             username: user.username,
@@ -122,8 +157,24 @@ exports.changePassword = async (req, res) => {
 
     user.passwordHash = newPassHash;
     user.mustChangePassword = false;
+    // Invalidate every existing session: the version bump kills live access tokens
+    // and revoking refresh tokens stops them being renewed, forcing a fresh login
+    user.tokenVersion += 1;
 
     await user.save();
+
+    await revokeAllForSubject("EMPLOYEE", user.employeeCode);
+
+    // The current session is now invalid too; drop its refresh cookie
+    clearRefreshCookie(res);
+
+    await recordAudit({
+        actorType: "EMPLOYEE",
+        actorId: user.employeeCode,
+        action: "PASSWORD_CHANGED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_CHANGED(user.employeeCode)
+    });
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_CHANGED);
 };
@@ -135,6 +186,15 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await User.findOne({
         email
+    });
+
+    // Logged internally regardless of whether the email matched (the response stays neutral)
+    await recordAudit({
+        actorType: user ? "EMPLOYEE" : "ANONYMOUS",
+        actorId: user ? user.employeeCode : email,
+        action: "PASSWORD_RESET_REQUESTED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_RESET_REQUESTED(email)
     });
 
     // Same neutral response always, so registered emails are not leaked
@@ -233,15 +293,97 @@ exports.resetPassword = async (req, res) => {
     user.resetPasswordTokenHash = null;
     user.resetPasswordTokenExpiry = null;
     user.mustChangePassword = false;
+    // Likely-compromised account: kill all live access and refresh tokens
+    user.tokenVersion += 1;
 
     await user.save();
+
+    await revokeAllForSubject("EMPLOYEE", user.employeeCode);
+
+    await recordAudit({
+        actorType: "EMPLOYEE",
+        actorId: user.employeeCode,
+        action: "PASSWORD_RESET_COMPLETED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_RESET_COMPLETED(user.employeeCode)
+    });
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_RESET_SUCCESS);
 };
 
-// Stateless logout — JWT invalidation is handled client-side
-exports.logout = (req, res) =>
-    sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGOUT_SUCCESS);
+// Revoke the cookie's refresh token so the session cannot be refreshed again
+exports.logout = async (req, res) => {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (refreshToken) {
+        const revoked = await revokeByHash(hashToken(refreshToken));
+        if (revoked) {
+            await recordAudit({
+                actorType: "EMPLOYEE",
+                actorId: revoked.subjectId,
+                action: "USER_LOGOUT",
+                ipAddress: req.ip,
+                message: MESSAGES.AUDIT.USER_LOGOUT(revoked.subjectId)
+            });
+        }
+    }
+
+    clearRefreshCookie(res);
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGOUT_SUCCESS);
+};
+
+// Exchange the cookie's refresh token for a new access token, rotating the cookie
+exports.refresh = async (req, res) => {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    const result = await rotateRefreshToken({
+        rawToken: refreshToken,
+        subjectType: "EMPLOYEE",
+        req
+    });
+
+    if (result.status !== "OK") {
+        if (result.status === "REUSE_DETECTED") {
+            await recordAudit({
+                actorType: "EMPLOYEE",
+                actorId: result.subjectId,
+                action: "REFRESH_REUSE_DETECTED",
+                ipAddress: req.ip,
+                message: MESSAGES.AUDIT.REFRESH_REUSE_DETECTED(result.subjectId)
+            });
+        }
+        clearRefreshCookie(res);
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    const user = await User.findOne({ employeeCode: result.subjectId })
+        .select("employeeCode roles status tokenVersion");
+
+    // Subject vanished or was deactivated since the refresh token was issued
+    if (!user || String(user.status) !== "ACTIVE") {
+        await revokeAllForSubject("EMPLOYEE", result.subjectId);
+        clearRefreshCookie(res);
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    setRefreshCookie(res, result.newRefreshToken);
+
+    const accessToken = signAccessToken({
+        employeeCode: user.employeeCode,
+        roles: user.roles,
+        tokenVersion: user.tokenVersion,
+        type: "EMPLOYEE"
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.TOKEN_REFRESHED, {
+        accessToken
+    });
+};
 
 // Return the current user's account and profile (used on page refresh)
 exports.me = async (req, res) => {

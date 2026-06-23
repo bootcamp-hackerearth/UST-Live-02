@@ -1,19 +1,29 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  finalize,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { ApiMessage } from '../models/api-response.model';
 import {
   LoginResponse,
   MeResponse,
+  RefreshResponse,
   User,
 } from '../models/user.model';
 import { Designation } from '../models/employee.model';
 import { FormDraftService } from './form-draft.service';
 import { NodeService } from './node.service';
 
-const TOKEN_KEY = 'hms_token';
 const USER_KEY = 'hms_user';
 
 // Designations that are treated as superusers (access to everything)
@@ -37,6 +47,12 @@ export class AuthService {
   // Signal mirror for components that prefer signals
   currentUserSignal = signal<User | null>(null);
 
+  // Access token lives only in memory; the refresh token is an httpOnly cookie
+  private accessToken: string | null = null;
+
+  // Shared in-flight refresh so concurrent 401s trigger only one /refresh call
+  private refresh$: Observable<string> | null = null;
+
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
   constructor() {
@@ -50,11 +66,15 @@ export class AuthService {
 
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
+      .post<LoginResponse>(
+        `${this.apiUrl}/login`,
+        { email, password },
+        { withCredentials: true }, // accept the httpOnly refresh cookie
+      )
       .pipe(
         tap((response) => {
-          if (response?.data?.token && response?.data?.user) {
-            this.setSession(response.data.token, response.data.user);
+          if (response?.data?.accessToken && response?.data?.user) {
+            this.setSession(response.data.accessToken, response.data.user);
           }
         }),
       );
@@ -92,7 +112,7 @@ export class AuthService {
     });
   }
 
-  // Refreshes the cached user after a page reload (token still in storage)
+  // Refreshes the cached user after a page reload (access token already in memory)
   refreshCurrentUser(): Observable<MeResponse> {
     return this.http.get<MeResponse>(`${this.apiUrl}/me`).pipe(
       tap((response) => {
@@ -103,17 +123,58 @@ export class AuthService {
     );
   }
 
+  // Swaps the httpOnly refresh cookie for a fresh access token. The in-flight
+  // request is shared so a burst of 401s only triggers a single /refresh call.
+  refreshAccessToken(): Observable<string> {
+    this.refresh$ ??= this.http
+      .post<RefreshResponse>(
+        `${this.apiUrl}/refresh`,
+        {},
+        { withCredentials: true },
+      )
+      .pipe(
+        map((response) => response.data.accessToken),
+        tap((token) => {
+          this.accessToken = token;
+        }),
+        finalize(() => {
+          this.refresh$ = null;
+        }),
+        shareReplay(1),
+      );
+
+    return this.refresh$;
+  }
+
+  // Runs at startup: restore a session from the refresh cookie if one exists
+  bootstrapSession(): Observable<unknown> {
+    // No previously stored user means there is no session worth restoring
+    if (!localStorage.getItem(USER_KEY)) {
+      return of(null);
+    }
+
+    return this.refreshAccessToken().pipe(
+      switchMap(() => this.refreshCurrentUser()),
+      catchError(() => {
+        this.clearSession();
+        return of(null);
+      }),
+    );
+  }
+
   logout(navigate = true): void {
     // Block logout while a first-login user still must change their password
     if (this.isPasswordChangeRequired()) {
       return;
     }
 
-    // Best-effort server notification; ignore failures
-    this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
-      next: () => {},
-      error: () => {},
-    });
+    // Best-effort server notification revokes the refresh token + clears the cookie
+    this.http
+      .post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
+      .subscribe({
+        next: () => {},
+        error: () => {},
+      });
     this.clearSession();
     if (navigate) {
       this.router.navigate(['/login']);
@@ -135,7 +196,7 @@ export class AuthService {
 
   // Session management
   private setSession(token: string, user: User): void {
-    localStorage.setItem(TOKEN_KEY, token);
+    this.accessToken = token;
     this.persistUser(user);
   }
 
@@ -146,7 +207,7 @@ export class AuthService {
   }
 
   private clearSession(): void {
-    localStorage.removeItem(TOKEN_KEY);
+    this.accessToken = null;
     localStorage.removeItem(USER_KEY);
     this.formDraft.clearAll();
     this.nodeService.clearCache();
@@ -170,11 +231,11 @@ export class AuthService {
 
   // Accessors
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    return !!this.accessToken;
   }
 
   getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    return this.accessToken;
   }
 
   getCurrentUser(): User | null {

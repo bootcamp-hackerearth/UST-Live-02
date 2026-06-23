@@ -24,7 +24,14 @@ const auditActions = [
     "PROFILE_CHANGE_REQUESTED",
     "PROFILE_CHANGE_APPROVED",
     "PROFILE_CHANGE_REJECTED",
-    "PROFILE_UPDATED"
+    "PROFILE_UPDATED",
+    "USER_LOGIN",
+    "USER_LOGIN_FAILED",
+    "USER_LOGOUT",
+    "PASSWORD_CHANGED",
+    "PASSWORD_RESET_REQUESTED",
+    "PASSWORD_RESET_COMPLETED",
+    "REFRESH_REUSE_DETECTED"
 ];
 
 const auditLogSchema = new mongoose.Schema(
@@ -40,6 +47,18 @@ const auditLogSchema = new mongoose.Schema(
             type: String
         },
         actorDesignation: {
+            type: String
+        },
+        // Generalized actor fields so auth events can attribute to a patient (UHID)
+        // or an unauthenticated attempt (email), not just an employee
+        actorType: {
+            type: String,
+            enum: ["EMPLOYEE", "PATIENT", "ANONYMOUS", "SYSTEM"]
+        },
+        actorId: {
+            type: String
+        },
+        ipAddress: {
             type: String
         },
         action: {

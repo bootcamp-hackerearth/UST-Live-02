@@ -57,7 +57,7 @@ export class LoginComponent {
         this.loading = false;
         this.cdr.markForCheck();
         const user = response?.data?.user;
-        if (response?.data?.token && user) {
+        if (response?.data?.accessToken && user) {
           this.toast.success(
             `Welcome back, ${user.profile?.name || user.username}!`,
           );

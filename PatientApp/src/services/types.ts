@@ -23,6 +23,8 @@ export type Patient = {
   address: Address;
   emergencyContact: EmergencyContact;
   status: "ACTIVE" | "INACTIVE";
+  // Admin-provisioned accounts start with a temporary password they must change
+  mustChangePassword?: boolean;
 };
 
 export type AvailabilitySlot = {

@@ -11,10 +11,15 @@ export interface User {
   profile: EmployeeProfile;
 }
 
-// POST /auth/login response
+// POST /auth/login response (refresh token is delivered as an httpOnly cookie)
 export type LoginResponse = ApiResponse<{
-  token: string;
+  accessToken: string;
   user: User;
+}>;
+
+// POST /auth/refresh response
+export type RefreshResponse = ApiResponse<{
+  accessToken: string;
 }>;
 
 // GET /auth/me and GET /employees/me response

@@ -53,4 +53,10 @@ router.put(
     controller.changePassword
 );
 
+// Session lifecycle; both carry the refresh token in the body, so no access-token
+// auth is required (they must work after the access token has expired)
+router.post("/refresh", controller.refresh);
+
+router.post("/logout", controller.logout);
+
 module.exports = router;

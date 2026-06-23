@@ -52,6 +52,11 @@ const patientSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    // Bumped on password change/reset to instantly invalidate live access tokens
+    tokenVersion: {
+        type: Number,
+        default: 0
+    },
     // Reset token stored only as a hash; absent until a reset is requested
     resetPasswordTokenHash: {
         type: String,

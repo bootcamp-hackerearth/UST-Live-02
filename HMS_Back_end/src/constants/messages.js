@@ -31,12 +31,14 @@ const MESSAGES = Object.freeze({
         NO_TOKEN: "No token provided",
         PASSWORDS_DO_NOT_MATCH: "Passwords do not match", // NOSONAR not a credential
         PASSWORD_CHANGED: "Password changed successfully", // NOSONAR not a credential
+        PASSWORD_CHANGE_REQUIRED: "You must change your password before continuing", // NOSONAR not a credential
         PASSWORD_RESET_SUCCESS: "Password reset successful", // NOSONAR not a credential
         PASSWORD_SAME_AS_CURRENT: "New password cannot be the same as current password", // NOSONAR not a credential
         REGISTRATION_REJECTED: "Registration request is rejected",
         RESET_CODE_SENT: "If the email exists, a reset code has been sent",
         RESET_LINK_SENT: "If the email exists, a reset link has been sent",
         SELF_REGISTER_SUCCESS: "Registration request successful. Wait for admin approval.",
+        TOKEN_REFRESHED: "Token refreshed successfully",
         TOO_MANY_ATTEMPTS: "Too many attempts. Please try again later.",
         TOO_MANY_REQUESTS: "Too many requests. Please try again later.",
         UNAUTHORIZED: "Unauthorized access",
@@ -190,6 +192,13 @@ const MESSAGES = Object.freeze({
 
     // Audit-trail entries written via recordAudit (not sent to clients)
     AUDIT: Object.freeze({
+        USER_LOGIN: (id) => `Login successful for ${id}`,
+        USER_LOGIN_FAILED: (email) => `Failed login attempt for ${email}`,
+        USER_LOGOUT: (id) => `Logout for ${id}`,
+        PASSWORD_CHANGED: (id) => `Password changed for ${id}`, // NOSONAR not a credential
+        PASSWORD_RESET_REQUESTED: (id) => `Password reset requested for ${id}`, // NOSONAR not a credential
+        PASSWORD_RESET_COMPLETED: (id) => `Password reset completed for ${id}`, // NOSONAR not a credential
+        REFRESH_REUSE_DETECTED: (id) => `Refresh token reuse detected for ${id}; all sessions revoked`,
         ADMIN_CREATED: (name, code) => `Admin account created for ${name} (${code})`,
         ADMIN_DELETED: (name, code) => `Admin ${name} (${code}) was deleted`,
         ADMIN_UPDATED: (name, code) => `Admin ${name} (${code}) was updated`,

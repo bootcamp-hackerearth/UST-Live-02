@@ -38,6 +38,11 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        // Bumped on password change/reset to instantly invalidate live access tokens
+        tokenVersion: {
+            type: Number,
+            default: 0
+        },
         createdByAdmin: {
             type: Boolean,
             default: false
