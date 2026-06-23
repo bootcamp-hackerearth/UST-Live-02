@@ -67,8 +67,9 @@ export default function MedicalRecordDetails({ record }: Props) {
           {record.medicalObservations.map((obs, i) => (
             <View key={`${obs.metricName}-${i}`} style={styles.rxItem}>
               <Text style={styles.rxName}>{obs.metricName}</Text>
+              <Text style={styles.rxMeta}>{obs.metricValue}</Text>
               <Text style={styles.rxMeta}>
-                {obs.metricValue} · {formatDateTime(obs.recordedTime)}
+                {formatDateTime(obs.recordedTime)}
               </Text>
             </View>
           ))}
