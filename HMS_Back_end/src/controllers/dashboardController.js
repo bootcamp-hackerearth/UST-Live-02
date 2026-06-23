@@ -8,15 +8,62 @@ const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
+const { istDayStart, TZ_OFFSET_MS } = require("../utils/slotInstantMs");
 
-// Today's [start, end) window in hospital-local time
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Today's [start, end) window in hospital time (Asia/Kolkata). appointmentDate
+// is stored as the UTC-midnight of its IST calendar day, so the window is built
+// the same way to bucket rows by IST day regardless of the host server's zone.
 const todayRange = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const today = istDayStart();
+    const tomorrow = new Date(today.getTime() + DAY_MS);
     return { today, tomorrow };
 };
+
+// Pipeline stages that add slotEndInstant (epoch ms of the slot's end time),
+// derived from appointmentDate + the "HH:mm-HH:mm" timeSlot end. The IST offset
+// is subtracted so the instant matches slotInstantMs() and the Angular tabs.
+// Shared by the today / pastDue counts so both apply the same end-of-slot cutoff.
+const withSlotEndInstant = [
+    {
+        $addFields: {
+            slotEndMinutes: {
+                $let: {
+                    vars: {
+                        hm: {
+                            $split: [
+                                { $arrayElemAt: [{ $split: ["$timeSlot", "-"] }, 1] },
+                                ":",
+                            ],
+                        },
+                    },
+                    in: {
+                        $add: [
+                            { $multiply: [{ $toInt: { $arrayElemAt: ["$$hm", 0] } }, 60] },
+                            { $toInt: { $arrayElemAt: ["$$hm", 1] } },
+                        ],
+                    },
+                },
+            },
+        },
+    },
+    {
+        $addFields: {
+            slotEndInstant: {
+                $subtract: [
+                    {
+                        $add: [
+                            { $toLong: "$appointmentDate" },
+                            { $multiply: ["$slotEndMinutes", 60000] },
+                        ],
+                    },
+                    TZ_OFFSET_MS,
+                ],
+            },
+        },
+    },
+];
 
 // Admin/Owner overview stats. Fields mirror exactly what the Angular overview
 // renders (active employees, pending approvals, total patients, booked
@@ -58,8 +105,9 @@ exports.getReceptionistDashboardStats = async (req, res) => {
     });
 };
 
-// Doctor overview stats for the authenticated doctor:
-//   today    = appointments on today's date
+// Doctor overview stats for the authenticated doctor. Each count mirrors the
+// matching tab on the appointments list so the cards and tabs never disagree:
+//   today    = BOOKED appointments on today's date whose slot has NOT yet ended
 //   upcoming = BOOKED appointments after today
 //   pastDue  = BOOKED appointments before today, OR today whose slot end time
 //              has already passed (computed via the timeSlot end instant)
@@ -68,11 +116,19 @@ exports.getDoctorDashboardStats = async (req, res) => {
     const { today: dayStart, tomorrow: dayEnd } = todayRange();
     const nowMs = Date.now();
 
-    const [todayCount, upcomingCount, pastDueAgg] = await Promise.all([
-        Appointment.countDocuments({
-            doctorEmployeeId,
-            appointmentDate: { $gte: dayStart, $lt: dayEnd },
-        }),
+    const [todayAgg, upcomingCount, pastDueAgg] = await Promise.all([
+        Appointment.aggregate([
+            {
+                $match: {
+                    doctorEmployeeId,
+                    status: "BOOKED",
+                    appointmentDate: { $gte: dayStart, $lt: dayEnd },
+                },
+            },
+            ...withSlotEndInstant,
+            { $match: { $expr: { $gte: ["$slotEndInstant", nowMs] } } },
+            { $count: "count" },
+        ]),
         Appointment.countDocuments({
             doctorEmployeeId,
             status: "BOOKED",
@@ -80,39 +136,7 @@ exports.getDoctorDashboardStats = async (req, res) => {
         }),
         Appointment.aggregate([
             { $match: { doctorEmployeeId, status: "BOOKED" } },
-            {
-                $addFields: {
-                    // minutes-into-day of the slot end time ("HH:mm-HH:mm" -> end "HH:mm")
-                    slotEndMinutes: {
-                        $let: {
-                            vars: {
-                                hm: {
-                                    $split: [
-                                        { $arrayElemAt: [{ $split: ["$timeSlot", "-"] }, 1] },
-                                        ":",
-                                    ],
-                                },
-                            },
-                            in: {
-                                $add: [
-                                    { $multiply: [{ $toInt: { $arrayElemAt: ["$$hm", 0] } }, 60] },
-                                    { $toInt: { $arrayElemAt: ["$$hm", 1] } },
-                                ],
-                            },
-                        },
-                    },
-                },
-            },
-            {
-                $addFields: {
-                    slotEndInstant: {
-                        $add: [
-                            { $toLong: "$appointmentDate" },
-                            { $multiply: ["$slotEndMinutes", 60000] },
-                        ],
-                    },
-                },
-            },
+            ...withSlotEndInstant,
             {
                 $match: {
                     $expr: {
@@ -135,7 +159,7 @@ exports.getDoctorDashboardStats = async (req, res) => {
 
     return sendSuccess(res, STATUS.OK, MESSAGES.DASHBOARD.DOCTOR_STATS_RETRIEVED, {
         stats: {
-            today: todayCount,
+            today: todayAgg[0]?.count || 0,
             upcoming: upcomingCount,
             pastDue: pastDueAgg[0]?.count || 0,
         },

@@ -26,3 +26,4 @@ const istDayStart = (whenMs = Date.now()) => {
 
 module.exports = slotInstantMs;
 module.exports.istDayStart = istDayStart;
+module.exports.TZ_OFFSET_MS = TZ_OFFSET_MS;

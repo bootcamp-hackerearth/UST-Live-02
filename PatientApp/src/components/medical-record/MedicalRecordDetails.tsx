@@ -65,7 +65,7 @@ export default function MedicalRecordDetails({ record }: Props) {
       {record.medicalObservations?.length ? (
         <Section title="Vitals / Observations">
           {record.medicalObservations.map((obs, i) => (
-            <View key={`${obs.metricName}-${i}`} style={styles.rxRow}>
+            <View key={`${obs.metricName}-${i}`} style={styles.rxItem}>
               <Text style={styles.rxName}>{obs.metricName}</Text>
               <Text style={styles.rxMeta}>
                 {obs.metricValue} · {formatDateTime(obs.recordedTime)}
@@ -119,14 +119,7 @@ const styles = StyleSheet.create({
   },
   bodyText: { fontSize: 15, color: "#1f2937", lineHeight: 21 },
 
-  rxRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#f3f4f6",
-  },
-  // Prescription rows stack name + meta lines (more fields than vitals rows)
+  // Prescription + vitals rows stack a bold name over meta lines
   rxItem: {
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
