@@ -1,4 +1,4 @@
-import { Component, computed, forwardRef, Input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, Input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ControlValueAccessor,
@@ -27,6 +27,7 @@ interface DayCell {
 // Month-grid date picker that only enables the doctor's available weekdays and
 // hides dates before `minDate`, after `maxDate`, or on/after `cutoffDate`.
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-availability-calendar',
   standalone: true,
   imports: [CommonModule],

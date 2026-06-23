@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   EventEmitter,
@@ -23,6 +24,7 @@ import {
 
 // Read-only full view of a medical record. Admin/Owner can soft-delete from here.
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-medical-record-detail-dialog',
   standalone: true,
   imports: [CommonModule, DatePipe],

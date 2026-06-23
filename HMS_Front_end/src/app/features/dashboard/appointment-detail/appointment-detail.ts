@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
@@ -17,6 +17,7 @@ import { MedicalRecord } from '../../../core/models/medical-record.model';
 // Appointment detail. Reception can edit/cancel BOOKED; any staff/doctor can mark
 // unattended; medical records are generated here (completion is a side effect of finalizing).
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-appointment-detail',
   standalone: true,
   imports: [

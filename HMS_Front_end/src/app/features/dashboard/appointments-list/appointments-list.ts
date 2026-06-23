@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -19,6 +19,7 @@ type DoctorTab = 'today' | 'upcoming' | 'past' | 'completed';
 
 // Role-aware appointments list (reception sees all; doctor sees own by tab)
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-appointments-list',
   standalone: true,
   imports: [

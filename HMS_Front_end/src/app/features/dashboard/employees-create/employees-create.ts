@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormArray,
@@ -44,6 +44,7 @@ import {
 
 // Reusable employee form for create (staff/admin) and edit modes
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-create-employee',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, DashboardLayoutComponent, AvailabilitySlotsFormComponent],

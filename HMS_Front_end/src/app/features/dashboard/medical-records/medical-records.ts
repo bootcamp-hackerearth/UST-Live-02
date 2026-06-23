@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -17,6 +17,7 @@ import {
 // Role-aware medical records list. Doctors are auto-scoped to their own records
 // (the doctor search fields are hidden). A row opens the full-detail dialog.
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-medical-records',
   standalone: true,
   imports: [

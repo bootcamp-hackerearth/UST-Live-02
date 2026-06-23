@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -52,6 +52,7 @@ const DAY_MAP: Record<number, WeekDay> = {
 
 // Appointment booking/editing (OWNER/ADMIN/RECEPTIONIST) with create and edit modes
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-appointment-book',
   standalone: true,
   imports: [

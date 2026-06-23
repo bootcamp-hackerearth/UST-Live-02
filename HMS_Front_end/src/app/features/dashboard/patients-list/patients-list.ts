@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -18,6 +18,7 @@ import {
 
 // Patients list (OWNER/ADMIN/RECEPTIONIST) with filters and debounced search
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-patients-list',
   standalone: true,
   imports: [

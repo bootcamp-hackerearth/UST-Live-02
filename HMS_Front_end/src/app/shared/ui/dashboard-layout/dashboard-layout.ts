@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   HostListener,
   OnInit,
@@ -13,6 +14,7 @@ const MOBILE_BREAKPOINT = 768;
 
 // Dashboard shell with a collapsible sidebar, sticky top bar, and projected content
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-dashboard-layout',
   standalone: true,
   imports: [CommonModule, SidebarComponent],

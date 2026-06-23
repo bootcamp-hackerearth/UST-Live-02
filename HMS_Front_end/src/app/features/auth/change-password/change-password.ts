@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -20,6 +20,7 @@ import { PasswordInputComponent } from '../../../shared/ui/password-input/passwo
 
 // Change-password screen with forced (first-login) and voluntary modes
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-change-password',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, PasswordInputComponent],

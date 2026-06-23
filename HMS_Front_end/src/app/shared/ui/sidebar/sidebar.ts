@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   EventEmitter,
@@ -15,6 +16,7 @@ import { SidebarNode } from '../../../core/models/node.model';
 
 // Dynamic sidebar; menu items load from /nodes/my-nodes with Overview and Profile as defaults
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],

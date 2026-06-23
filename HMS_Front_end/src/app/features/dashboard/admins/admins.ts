@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
@@ -12,6 +12,7 @@ import { EmployeeListItem } from '../../../core/models/employee.model';
 
 // Admin management list (OWNER only)
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-admins',
   standalone: true,
   imports: [CommonModule, RouterLink, DashboardLayoutComponent, DatePipe, LastLoginCellComponent],

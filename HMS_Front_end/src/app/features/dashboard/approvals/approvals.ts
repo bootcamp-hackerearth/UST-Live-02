@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { AdminService } from '../../../core/services/admin.service';
@@ -16,6 +16,7 @@ type Tab = 'registrations' | 'profileChanges';
 
 // Approvals page (OWNER/ADMIN) with registration and profile-change tabs
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-approvals',
   standalone: true,
   imports: [CommonModule, DatePipe, DashboardLayoutComponent],

@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   forwardRef,
   Input,
@@ -12,6 +13,7 @@ import {
 
 // Time-slot picker; renders slot chips, disabling those in bookedSlots
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-slot-picker',
   standalone: true,
   imports: [CommonModule],

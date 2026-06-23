@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   EventEmitter,
@@ -40,6 +41,7 @@ import {
 // Create / edit dialog for a medical record. Doctors may finalize; staff are
 // locked to DRAFT (the status field is read-only and the payload always sends DRAFT).
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-medical-record-form-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],

@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import {
   FormBuilder,
@@ -31,6 +31,7 @@ import {
 
 // Patient detail; read-only by default, Edit reveals the create form pre-filled
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-patient-detail',
   standalone: true,
   imports: [

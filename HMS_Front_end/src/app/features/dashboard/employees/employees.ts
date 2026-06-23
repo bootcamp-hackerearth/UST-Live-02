@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -20,6 +20,7 @@ import {
 
 // Active employees list with search and designation filter (OWNER/ADMIN)
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-employees-list',
   standalone: true,
   imports: [

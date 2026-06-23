@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
@@ -12,6 +12,7 @@ const AUDIT_PAGE_SIZE = 15;
 
 // Dashboard landing; renders cards based on the user's designation
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-overview',
   standalone: true,
   imports: [CommonModule, RouterLink, DashboardLayoutComponent, DatePipe],
