@@ -42,6 +42,11 @@ const issueRefreshToken = async ({ subjectType, subjectId, familyId, req }) => {
     return raw;
 };
 
+// Look up a token by hash regardless of revocation state, so callers can attribute
+// an action (e.g. logout) to its owner even after the token is already dead
+const findByHash = (tokenHash) =>
+    RefreshToken.findOne({ tokenHash });
+
 // Returns the matched (pre-update) document so callers can audit who logged out
 const revokeByHash = (tokenHash, replacedByHash = null) =>
     RefreshToken.findOneAndUpdate(
@@ -109,6 +114,7 @@ module.exports = {
     hashToken,
     signAccessToken,
     issueRefreshToken,
+    findByHash,
     revokeByHash,
     revokeFamily,
     revokeAllForSubject,

@@ -5,6 +5,7 @@ const {
     signAccessToken,
     issueRefreshToken,
     rotateRefreshToken,
+    findByHash,
     revokeByHash,
     revokeAllForSubject,
     hashToken
@@ -335,18 +336,27 @@ exports.refresh = async (req, res) => {
 // Revoke the presented refresh token so the session cannot be refreshed again
 exports.logout = async (req, res) => {
     const { refreshToken } = req.body || {};
+    const tokenHash = refreshToken ? hashToken(refreshToken) : null;
 
-    if (refreshToken) {
-        const revoked = await revokeByHash(hashToken(refreshToken));
-        if (revoked) {
-            await recordAudit({
-                actorType: "PATIENT",
-                actorId: revoked.subjectId,
-                action: "USER_LOGOUT",
-                ipAddress: req.ip,
-                message: MESSAGES.AUDIT.USER_LOGOUT(revoked.subjectId)
-            });
-        }
+    // This route has no auth middleware, so identity comes from the token itself.
+    // Look it up regardless of revocation state so an already-dead token still
+    // attributes the logout to its owner.
+    const record = tokenHash ? await findByHash(tokenHash) : null;
+    const subjectId = record?.subjectId;
+
+    // Audit the logout intent unconditionally — decoupled from whether a live
+    // token actually existed to revoke, so every logout attempt leaves a trail
+    await recordAudit({
+        actorType: subjectId ? "PATIENT" : "ANONYMOUS",
+        actorId: subjectId,
+        action: "USER_LOGOUT",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.USER_LOGOUT(subjectId ?? "unknown subject")
+    });
+
+    // Revoke separately; a no-op when the token is absent or already revoked
+    if (tokenHash) {
+        await revokeByHash(tokenHash);
     }
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGOUT_SUCCESS);
