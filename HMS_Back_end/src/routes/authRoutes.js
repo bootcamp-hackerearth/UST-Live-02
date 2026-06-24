@@ -91,10 +91,7 @@ router.post(
   controller.resetPassword,
 );
 
-// Logout must work even after the access token expires (refresh token in the
-// cookie), so auth is optional — when an access token is present it gives the
-// reliable employee identity for the audit, since the cookie can be dropped by
-// the browser's SameSite rules on cross-site requests
+// Logout uses optional auth so it still works after the access token expires while preferring the token identity for the audit
 router.post("/logout", authOptional, controller.logout);
 
 router.post("/refresh", controller.refresh);

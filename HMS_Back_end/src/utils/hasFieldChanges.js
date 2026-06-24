@@ -18,10 +18,7 @@ const pickKeys = (value, keys) =>
           )
         : value;
 
-// Returns true when any provided field differs from the current document value.
-// Only fields present in `incoming` (not undefined) are considered.
-// options.dateFields: compared by calendar day. options.arrayKeys: { field: [keys] }
-// to compare array items by a projection (e.g. ignore subdocument _id).
+// Returns true when any defined incoming field differs from the current document with optional date and array comparison rules
 const hasFieldChanges = (current, incoming, fields, options = {}) => {
     const dateFields = new Set(options.dateFields || []);
     const arrayKeys = options.arrayKeys || {};

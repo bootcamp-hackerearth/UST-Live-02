@@ -49,8 +49,6 @@ const auditLogSchema = new mongoose.Schema(
         actorDesignation: {
             type: String
         },
-        // Generalized actor fields so auth events can attribute to a patient (UHID)
-        // or an unauthenticated attempt (email), not just an employee
         actorType: {
             type: String,
             enum: ["EMPLOYEE", "PATIENT", "ANONYMOUS", "SYSTEM"]
@@ -85,7 +83,6 @@ const auditLogSchema = new mongoose.Schema(
     }
 );
 
-// Pre-save hook to generate sequential audit record id
 auditLogSchema.pre("save", async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(

@@ -7,7 +7,7 @@ const REQUIRED_VARS = [
     "REFRESH_TOKEN_EXPIRES_DAYS"
 ];
 
-// HS256 needs a high-entropy secret; reject anything trivially brute-forceable
+// reject anything trivially brute-forceable
 const MIN_JWT_SECRET_LENGTH = 32;
 const SECRET_VARS = ["JWT_SECRET", "JWT_PATIENT_SECRET"];
 

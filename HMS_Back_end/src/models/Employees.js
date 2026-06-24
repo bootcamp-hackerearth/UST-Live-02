@@ -15,7 +15,6 @@ const employeeSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // Uniqueness enforced in the app layer so a deleted employee's email can be reused
   email: {
     type: String,
     required: true,
@@ -51,14 +50,12 @@ const employeeSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  // Uniqueness enforced in the app layer (validateUniqueEmployeeFields) for reuse after delete
   medicalRegistrationNumber: {
     type: String,
   },
   specialization: {
     type: String,
   },
-  // Date on/after which this doctor accepts no new appointments (admin/owner-set)
   bookingCutoffDate: {
     type: Date,
     default: undefined,
@@ -102,15 +99,14 @@ const employeeSchema = new mongoose.Schema({
   },
 });
 
-// Pre-save hook to generate sequential employee code
 employeeSchema.pre("save", async function () {
   if (this.isNew && !this.employeeCode) {
     const counter = await Counter.findOneAndUpdate(
       { name: "employees" },
-      { $inc: { seq: 1 } }, // Creates sequence
-      { new: true, upsert: true }, // upsert is update and insert
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
     );
-    this.employeeCode = `EMP-${String(counter.seq).padStart(6, "0")}`; // create 6 digit sequence number
+    this.employeeCode = `EMP-${String(counter.seq).padStart(6, "0")}`;
   }
 });
 

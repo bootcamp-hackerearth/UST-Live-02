@@ -227,8 +227,7 @@ export class AppointmentBookComponent
     });
   }
 
-  // Doctor reschedule: lock patient + doctor; load own profile for availability/cutoff.
-  // The patient option is injected from the loaded appointment in loadForEdit.
+  // Doctor reschedule locks patient and doctor and loads the own profile while the patient option comes from the loaded appointment
   private loadSelfDoctor(): void {
     this.form.get('patientUHID')!.disable();
     this.form.get('doctorEmployeeId')!.disable();

@@ -15,11 +15,10 @@ const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Whether an actor's designation is a clinician (the only role that can finalize)
+// Checks whether the actor is a doctor
 const isDoctorActor = (actor) => actor.designation === "DOCTOR";
 
-// Post-create side effects: finalize (complete the appointment + notify the patient),
-// log a doctor draft, or email the assigned doctor to verify a staff draft.
+// Handles post-create actions based on record status and creator role
 const applyCreateSideEffects = async ({ record, recordStatus, doctorRole, actor, appointment, patient, doctor }) => {
     if (recordStatus === "FINALIZED") {
         // Finalizing completes the appointment
@@ -81,13 +80,11 @@ const applyCreateSideEffects = async ({ record, recordStatus, doctorRole, actor,
     });
 };
 
-// Optional arrays stay absent (undefined) when empty, so they are never persisted
-// as [] and never render as blank sections on the clients.
+// Keeps empty arrays undefined instead of persisting []
 const normalizeArray = (value) =>
     Array.isArray(value) && value.length > 0 ? value : undefined;
 
-// Copies provided (defined) editable fields onto the record. Empty optional arrays
-// clear the field (set to undefined) so a doctor can remove all meds/observations.
+// Applies editable fields and clears empty optional arrays
 const applyEditableFields = (record, { chiefComplaint, symptoms, diagnosis, advice, prescriptionItems, medicalObservations, notes }) => {
     if (chiefComplaint !== undefined) {
         record.chiefComplaint = chiefComplaint;
@@ -114,8 +111,7 @@ const applyEditableFields = (record, { chiefComplaint, symptoms, diagnosis, advi
 
 const isBlank = (value) => typeof value !== "string" || value.trim() === "";
 
-// Enforces the record invariant: the four clinical text fields must hold a value;
-// prescription and observations are optional, but any present row must be complete.
+// Validates required fields and nested record completeness
 const assertRecordComplete = (record) => {
     if (
         isBlank(record.chiefComplaint) ||
@@ -149,8 +145,7 @@ const assertRecordComplete = (record) => {
     }
 };
 
-// Finalizes a draft: marks it FINALIZED, completes the appointment, notifies the
-// patient, and logs the verification/finalization audit.
+// Finalizes a record and completes the appointment
 const applyFinalizeUpdate = async ({ record, actor }) => {
     record.status = "FINALIZED";
     await record.save();
@@ -187,8 +182,7 @@ const applyFinalizeUpdate = async ({ record, actor }) => {
     });
 };
 
-// Saves a draft edit: logs a doctor update, or emails the assigned doctor to
-// re-verify when staff made the change.
+// Saves draft changes and triggers re-verification if needed
 const applyDraftUpdate = async ({ record, actor, doctorRole }) => {
     await record.save();
 
@@ -236,8 +230,7 @@ const applyDraftUpdate = async ({ record, actor, doctorRole }) => {
     });
 };
 
-// Create a medical record for an appointment.
-// Doctors may save as DRAFT or FINALIZED; Admin/Owner/Receptionist may only save DRAFT.
+// Creates a medical record for an appointment
 exports.createMedicalRecord = async (req, res) => {
 
     const {
@@ -261,17 +254,17 @@ exports.createMedicalRecord = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
-    // No records for cancelled/unattended appointments
+    // Rejects records for cancelled or unattended appointments
     if (appointment.status === "CANCELED" || appointment.status === "UNATTENDED") {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.APPOINTMENT_NOT_ELIGIBLE);
     }
 
-    // A doctor can only create records for their own appointments
+    // Restricts doctors to their own appointments
     if (doctorRole && appointment.doctorEmployeeId !== req.user.employeeCode) {
         throw new AppError(STATUS.FORBIDDEN, MESSAGES.MEDICAL_RECORD.OWN_ONLY);
     }
 
-    // Exactly one (non-deleted) record per appointment
+    // Ensures only one active record per appointment
     const existing = await MedicalRecord.findOne({
         appointmentId,
         isDeleted: { $ne: true }
@@ -281,14 +274,14 @@ exports.createMedicalRecord = async (req, res) => {
         throw new AppError(STATUS.CONFLICT, MESSAGES.MEDICAL_RECORD.ALREADY_EXISTS);
     }
 
-    // A record can only be generated after the appointment start time (Asia/Kolkata)
+    // Prevents record creation before appointment start
     const slotStart = (appointment.timeSlot || "").split("-")[0];
     const startMs = slotInstantMs(appointment.appointmentDate, slotStart);
     if (!Number.isNaN(startMs) && startMs > Date.now()) {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.CANNOT_BEFORE_START);
     }
 
-    // Resolve denormalized display details
+    // Resolves patient and doctor details
     const [patient, doctor] = await Promise.all([
         Patient.findOne({ UHID: appointment.patientUHID }).select("UHID name email"),
         Employee.findOne({ employeeCode: appointment.doctorEmployeeId }).select("employeeCode name email")
@@ -301,7 +294,7 @@ exports.createMedicalRecord = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.NOT_FOUND);
     }
 
-    // Status rules: only the assigned doctor may finalize
+    // Only the assigned doctor may finalize
     let recordStatus = "DRAFT";
     if (status === "FINALIZED") {
         if (!doctorRole) {
@@ -346,7 +339,7 @@ exports.createMedicalRecord = async (req, res) => {
     });
 };
 
-// Update a DRAFT medical record. Doctors may also finalize; staff may only keep it DRAFT.
+// Updates a draft medical record
 exports.updateMedicalRecord = async (req, res) => {
 
     const { medicalRecordId } = req.params;
@@ -373,12 +366,12 @@ exports.updateMedicalRecord = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.MEDICAL_RECORD.NOT_FOUND);
     }
 
-    // A doctor can only touch their own records
+    // Restricts doctors to their own records
     if (doctorRole && record.doctorEmployeeId !== req.user.employeeCode) {
         throw new AppError(STATUS.FORBIDDEN, MESSAGES.MEDICAL_RECORD.OWN_ONLY);
     }
 
-    // Finalized records are immutable
+    // Prevents edits to finalized records
     if (record.status === "FINALIZED") {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.MEDICAL_RECORD.ONLY_DRAFT_EDITABLE);
     }
@@ -391,7 +384,7 @@ exports.updateMedicalRecord = async (req, res) => {
         willFinalize = true;
     }
 
-    // Reject no-op updates (a DRAFT -> FINALIZED transition always counts as a change)
+    // Rejects updates with no actual changes
     if (
         !willFinalize &&
         !hasFieldChanges(
@@ -419,7 +412,7 @@ exports.updateMedicalRecord = async (req, res) => {
 
     applyEditableFields(record, { chiefComplaint, symptoms, diagnosis, advice, prescriptionItems, medicalObservations, notes });
 
-    // The resulting record must stay complete (prescription can never be emptied)
+    // Ensures the updated record remains complete
     assertRecordComplete(record);
 
     if (willFinalize) {
@@ -433,7 +426,7 @@ exports.updateMedicalRecord = async (req, res) => {
     });
 };
 
-// Paginated, role-scoped list with partial-match search
+// Lists paginated medical records with role-based filtering
 exports.listMedicalRecords = async (req, res) => {
 
     const actor = await resolveActor(req.user);
@@ -444,7 +437,7 @@ exports.listMedicalRecords = async (req, res) => {
     return paginateMedicalRecords(filter, req.query, res);
 };
 
-// Fetch a single full medical record (doctor own-scoped)
+// Retrieves a medical record by ID
 exports.getMedicalRecordById = async (req, res) => {
 
     const { medicalRecordId } = req.params;
@@ -467,8 +460,7 @@ exports.getMedicalRecordById = async (req, res) => {
     });
 };
 
-// Returns the existing (non-deleted) record for an appointment, or null.
-// Used by the appointment-detail popup to decide create vs edit.
+// Returns a record for an appointment, if available
 exports.getMedicalRecordByAppointment = async (req, res) => {
 
     const { appointmentId } = req.params;
@@ -487,7 +479,7 @@ exports.getMedicalRecordByAppointment = async (req, res) => {
     });
 };
 
-// Soft delete (Admin/Owner only); record is never physically removed
+// Soft deletes a medical record
 exports.deleteMedicalRecord = async (req, res) => {
 
     const { medicalRecordId } = req.params;

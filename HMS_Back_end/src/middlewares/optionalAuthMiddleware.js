@@ -1,9 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-// Best-effort employee identity for routes that must work with or without a live
-// access token (e.g. logout). Verifies the signature but tolerates expiry, since
-// it only attributes an action and grants no access — a just-expired token can
-// still name the actor. Never rejects: on any failure it leaves req.user unset.
+// Attaches employee identity when a valid token is available
 const attachEmployeeOptional = (req, _res, next) => {
     const authHeader = req.headers.authorization;
 
@@ -20,7 +17,7 @@ const attachEmployeeOptional = (req, _res, next) => {
                 req.user = payload;
             }
         } catch {
-            // Forged/malformed token: continue unauthenticated
+            // Ignore invalid tokens and continue unauthenticated
         }
     }
 

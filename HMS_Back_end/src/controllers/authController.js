@@ -120,7 +120,7 @@ exports.login = async (req, res) => {
     });
 };
 
-// Allow an authenticated user to change their own password
+// change password by authenticated user
 exports.changePassword = async (req, res) => {
 
     const employeeCode = req.user.employeeCode;
@@ -158,15 +158,15 @@ exports.changePassword = async (req, res) => {
 
     user.passwordHash = newPassHash;
     user.mustChangePassword = false;
-    // Invalidate every existing session: the version bump kills live access tokens
-    // and revoking refresh tokens stops them being renewed, forcing a fresh login
+
+    // Invalidate every existing session, forcing a fresh login
     user.tokenVersion += 1;
 
     await user.save();
 
     await revokeAllForSubject("EMPLOYEE", user.employeeCode);
 
-    // The current session is now invalid too; drop its refresh cookie
+    // Invalidate the current session and drop it's refresh cookie
     clearRefreshCookie(res);
 
     await recordAudit({
@@ -189,7 +189,7 @@ exports.forgotPassword = async (req, res) => {
         email
     });
 
-    // Logged internally regardless of whether the email matched (the response stays neutral)
+    // Logged internally regardless of whether the email matched
     await recordAudit({
         actorType: user ? "EMPLOYEE" : "ANONYMOUS",
         actorId: user ? user.employeeCode : email,
@@ -233,7 +233,7 @@ exports.forgotPassword = async (req, res) => {
         );
     }
 
-    // Send the raw token in the email attached to the url (best-effort)
+    // Send the raw token in the email attached to the url
     try {
         await sendEmail({
             to: user.email,
@@ -294,7 +294,8 @@ exports.resetPassword = async (req, res) => {
     user.resetPasswordTokenHash = null;
     user.resetPasswordTokenExpiry = null;
     user.mustChangePassword = false;
-    // Likely-compromised account: kill all live access and refresh tokens
+
+    // kill all live access and refresh tokens
     user.tokenVersion += 1;
 
     await user.save();
@@ -317,19 +318,14 @@ exports.logout = async (req, res) => {
     const refreshToken = req.cookies?.refreshToken;
     const tokenHash = refreshToken ? hashToken(refreshToken) : null;
 
-    // Prefer the authenticated employee from the access token (optionalAuth): the
-    // tab clicking logout is still logged in, and its Bearer header is sent even
-    // when SameSite rules drop the refresh cookie. Fall back to the refresh-token
-    // owner (looked up regardless of revocation state) when no access token.
+    // Prefer access-token auth to handle stale tabs after logout; otherwise use the refresh-token owner
     let subjectId = req.user?.employeeCode || null;
     if (!subjectId && tokenHash) {
         const record = await findByHash(tokenHash);
         subjectId = record?.subjectId ?? null;
     }
 
-    // Audit whenever we can attribute the logout to a subject; only the truly
-    // unidentifiable (no access token and no known refresh token) is skipped,
-    // so we never record a meaningless "unknown" logout. Revocation stays decoupled.
+    // Audit the logout event if we can identify the user; otherwise just revoke the token silently
     if (subjectId) {
         await recordAudit({
             actorType: "EMPLOYEE",
@@ -402,7 +398,7 @@ exports.refresh = async (req, res) => {
     });
 };
 
-// Return the current user's account and profile (used on page refresh)
+// Return the current user's account and profile
 exports.me = async (req, res) => {
     const user = await getCurrentUser(req.user.employeeCode);
 
@@ -446,7 +442,7 @@ exports.selfRegister = async (req, res) => {
 
     await user.save();
 
-    // Notify all active admins and owners of the pending registration (best-effort)
+    // Notify all active admins and owners of the pending registration
     try {
         const admins = await User.find({
             roles: { $in: ["ADMIN", "OWNER"] },

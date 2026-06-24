@@ -14,8 +14,7 @@ import { ConfirmModalService } from '../../../core/services/confirm-modal.servic
 import { Appointment } from '../../../core/models/appointment.model';
 import { MedicalRecord } from '../../../core/models/medical-record.model';
 
-// Appointment detail. Reception can edit/cancel BOOKED; any staff/doctor can mark
-// unattended; medical records are generated here (completion is a side effect of finalizing).
+// Appointment detail where reception edits or cancels BOOKED and any staff or doctor can mark unattended or generate records
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-appointment-detail',
@@ -84,8 +83,7 @@ export class AppointmentDetailComponent implements OnInit {
 
   hasRecord = computed(() => this.medicalRecord() !== null);
 
-  // Mark unattended: any role, BOOKED, no record, surfaced once the slot starts
-  // (the template keeps it disabled until the slot end time has passed)
+  // Mark unattended is available to any role for a BOOKED slot with no record once the slot has started
   canMarkUnattended = computed(
     () =>
       this.appointment()?.status === 'BOOKED' &&

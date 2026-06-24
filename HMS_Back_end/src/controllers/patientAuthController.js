@@ -22,7 +22,7 @@ require("dotenv").config();
 
 const SALT_ROUNDS = 12;
 
-// Hand-typed reset code alphabet; skips confusable chars, ~48 bits beats the 15-min expiry
+// Character set for user-friendly reset codes
 const RESET_CODE_ALPHABET =
     "ABCDEFGHJKMNPQRSTUVWXYZ" +
     "abcdefghjkmnpqrstuvwxyz" +
@@ -44,7 +44,7 @@ const signPatientToken = (patient) =>
         tokenVersion: patient.tokenVersion
     });
 
-// Self-service registration; own password, account immediately ACTIVE
+// Self register a new patient account
 exports.register = async (req, res) => {
 
     const {
@@ -86,7 +86,7 @@ exports.register = async (req, res) => {
     });
 };
 
-// Authenticate a patient by email + password and return a JWT
+// Authenticates a patient and issues tokens
 exports.login = async (req, res) => {
 
     const { email, password } = req.body;
@@ -141,7 +141,7 @@ exports.login = async (req, res) => {
     });
 };
 
-// Allow an authenticated patient to change their own password
+// Change password by authenticated user
 exports.changePassword = async (req, res) => {
 
     const { patientUHID } = req.patient;
@@ -168,8 +168,8 @@ exports.changePassword = async (req, res) => {
 
     patient.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     patient.mustChangePassword = false;
-    // Invalidate every existing session: version bump kills live access tokens,
-    // revoking refresh tokens stops renewal, forcing a fresh login
+
+    // Invalidates all active sessions
     patient.tokenVersion += 1;
     await patient.save();
 
@@ -193,7 +193,7 @@ exports.forgotPassword = async (req, res) => {
 
     const patient = await Patient.findOne({ email });
 
-    // Logged internally regardless of whether the email matched (the response stays neutral)
+    // Audits all password reset requests
     await recordAudit({
         actorType: patient ? "PATIENT" : "ANONYMOUS",
         actorId: patient ? patient.UHID : email,
@@ -210,7 +210,7 @@ exports.forgotPassword = async (req, res) => {
         return neutralResponse();
     }
 
-    // Store only the hash of the code; the raw value is emailed and never persisted.
+    // Stores only the hashed reset code
     const resetCode = generateResetCode();
     patient.resetPasswordTokenHash = crypto
         .createHash("sha256")
@@ -225,7 +225,7 @@ exports.forgotPassword = async (req, res) => {
         console.log(`\n[DEV] Patient reset code for ${patient.email}: ${resetCode}\n`);
     }
 
-    // Email failures must not break the neutral response
+    // Ignores email delivery failures
     try {
         await sendEmail({
             to: patient.email,
@@ -267,11 +267,13 @@ exports.resetPassword = async (req, res) => {
     }
 
     patient.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-    // Clear the reset fields back to undefined so they drop out of the document
+
+    // Clear the reset fields
     patient.resetPasswordTokenHash = undefined;
     patient.resetPasswordTokenExpiry = undefined;
     patient.mustChangePassword = false;
-    // Likely-compromised account: kill all live access and refresh tokens
+
+    // Invalidates all active sessions
     patient.tokenVersion += 1;
 
     await patient.save();
@@ -289,7 +291,7 @@ exports.resetPassword = async (req, res) => {
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_RESET_SUCCESS);
 };
 
-// Exchange a valid refresh token for a new access token, rotating the refresh token
+// Refreshes and rotates authentication tokens
 exports.refresh = async (req, res) => {
     const { refreshToken } = req.body || {};
 
@@ -319,7 +321,7 @@ exports.refresh = async (req, res) => {
     const patient = await Patient.findOne({ UHID: result.subjectId })
         .select("UHID status tokenVersion");
 
-    // Subject vanished or was deactivated since the refresh token was issued
+    // Rejects inactive or missing patients
     if (!patient || patient.status !== "ACTIVE") {
         await revokeAllForSubject("PATIENT", result.subjectId);
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
@@ -333,19 +335,15 @@ exports.refresh = async (req, res) => {
     });
 };
 
-// Revoke the presented refresh token so the session cannot be refreshed again
+// Logs out the patient by revoking the refresh token
 exports.logout = async (req, res) => {
     const { refreshToken } = req.body || {};
     const tokenHash = refreshToken ? hashToken(refreshToken) : null;
 
-    // This route has no auth middleware, so identity comes from the token itself.
-    // Look it up regardless of revocation state so an already-revoked token still
-    // names its owner.
+    // Resolves logout actor from the refresh token
     const record = tokenHash ? await findByHash(tokenHash) : null;
 
-    // Audit only when we can attribute the logout to a subject; an absent or
-    // unknown token tells us nothing about who left, so we skip the entry rather
-    // than record a meaningless "unknown" logout. Revocation stays decoupled below.
+    // Audits logout only when the actor is known
     if (record) {
         await recordAudit({
             actorType: "PATIENT",
@@ -356,7 +354,7 @@ exports.logout = async (req, res) => {
         });
     }
 
-    // Revoke separately; a no-op when the token is absent or already revoked
+    // Revokes the refresh token if present
     if (tokenHash) {
         await revokeByHash(tokenHash);
     }

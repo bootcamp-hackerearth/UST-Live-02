@@ -18,14 +18,14 @@ const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Builds a patient audit actor directly since resolveActor assumes an employee
+// Creates an audit actor for patients
 const patientActor = (patient) => ({
     employeeCode: patient.UHID,
     name: patient.name,
     designation: "PATIENT"
 });
 
-// Get the authenticated patient's own profile
+/// Retrieves the authenticated patient's profile
 exports.getMyProfile = async (req, res) => {
 
     const patient = await Patient.findOne({
@@ -41,7 +41,7 @@ exports.getMyProfile = async (req, res) => {
     });
 };
 
-// Updates own contact details; identity and account fields are not editable here
+// Updates the authenticated patient's profile
 exports.updateMyProfile = async (req, res) => {
 
     const patient = await Patient.findOne({
@@ -52,12 +52,12 @@ exports.updateMyProfile = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
     }
 
-    // Reject no-op updates so no false audit log is written
+    // Rejects updates with no actual changes
     if (!hasFieldChanges(patient, req.body, ["phone", "email", "address", "emergencyContact"])) {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
     }
 
-    // If email is changing, keep it unique across patients
+    // Ensures email uniqueness before updating
     if (req.body.email && req.body.email !== patient.email) {
         const existing = await Patient.findOne({ email: req.body.email });
         if (existing) {
@@ -88,7 +88,7 @@ exports.updateMyProfile = async (req, res) => {
     });
 };
 
-// List active doctors for the appointment booking screen
+// Lists active doctors for appointment booking
 exports.getDoctors = async (req, res) => {
 
     const users = await User.find({ status: "ACTIVE" }).select("employeeCode");
@@ -107,10 +107,10 @@ exports.getDoctors = async (req, res) => {
     });
 };
 
-// Return the list of already-booked time slots for a doctor on a given date
+// Returns booked slots for a doctor
 exports.getBookedSlots = getBookedSlots;
 
-// List the authenticated patient's own appointments (paginated, enriched)
+// Lists the authenticated patient's appointments
 exports.getMyAppointments = async (req, res) => {
 
     const filter = { patientUHID: req.patient.patientUHID };
@@ -127,7 +127,7 @@ exports.bookAppointment = async (req, res) => {
     const patientUHID = req.patient.patientUHID;
     const { doctorEmployeeId, appointmentDate, timeSlot } = req.body;
 
-    // Throws AppError when any booking rule is violated
+    // Validates appointment booking rules
     const { patient, doctor } = await checkAppointmentValidity({
         patientUHID,
         doctorId: doctorEmployeeId,
@@ -179,7 +179,7 @@ exports.updateMyAppointment = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
-    // A patient can only touch their own appointments
+    // Restricts patients to their own appointments
     if (appointment.patientUHID !== patientUHID) {
         throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
     }
@@ -188,7 +188,7 @@ exports.updateMyAppointment = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ONLY_BOOKED_EDITABLE);
     }
 
-    // Throws AppError when any booking rule is violated
+    // Validates appointment booking rules
     const { patient, doctor } = await checkAppointmentValidity({
         patientUHID,
         doctorId: doctorEmployeeId,
@@ -260,7 +260,7 @@ exports.cancelMyAppointment = async (req, res) => {
     });
 };
 
-// List the authenticated patient's own FINALIZED medical records (paginated)
+// // Lists the authenticated patient's finalized medical records
 exports.getMyMedicalRecords = async (req, res) => {
 
     const { page, limit, skip } = parsePagination(req.query);
@@ -290,7 +290,7 @@ exports.getMyMedicalRecords = async (req, res) => {
     });
 };
 
-// Fetch one of the patient's own FINALIZED medical records in full
+// Retrieves a finalized medical record by ID
 exports.getMyMedicalRecordById = async (req, res) => {
 
     const { medicalRecordId } = req.params;
@@ -313,8 +313,7 @@ exports.getMyMedicalRecordById = async (req, res) => {
     });
 };
 
-// Resolve the medical record state for one of the patient's own appointments.
-// state: "FINALIZED" (record returned), "DRAFT" (in progress), or "NONE".
+// Returns the medical record state for an appointment
 exports.getMyMedicalRecordByAppointment = async (req, res) => {
 
     const { appointmentId } = req.params;

@@ -47,8 +47,7 @@ router.put(
     controller.updatePatient
 );
 
-// Soft delete — restricted to admin/owner (receptionist passes the router-level
-// designation guard but not the role guard)
+// Soft delete restricted to admin and owner since a receptionist passes the designation guard but not the role guard
 router.delete(
     "/:UHID",
     authorizeRoles("OWNER", "ADMIN"),

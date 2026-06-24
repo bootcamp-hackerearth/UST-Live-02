@@ -108,6 +108,12 @@ export class PatientsListComponent implements OnInit {
           this.patients.set(res.data.patients || []);
           this.total.set(res.data.total || 0);
           this.totalPages.set(res.data.totalPages || 1);
+          // Re-clamp if the current page fell past the end after a shrink
+          if (this.total() > 0 && this.page() > this.totalPages()) {
+            this.page.set(this.totalPages());
+            this.load();
+            return;
+          }
           this.loading.set(false);
         },
         error: () => {

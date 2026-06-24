@@ -34,34 +34,28 @@ const medicalRecordSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    // Patient's reported problem (what they tell the doctor)
     chiefComplaint: {
         type: String,
         required: true
     },
-    // Doctor's findings from examination/questioning
     symptoms: {
         type: String,
         required: true
     },
-    // Final disease the doctor settles on
     diagnosis: {
         type: String,
         required: true
     },
-    // Plain-language guidance shown to the patient (e.g. "take rest, nebulize at home")
     advice: {
         type: String,
         required: true
     },
-    // Optional: absent (undefined) until medication is prescribed
     prescriptionItems: {
         type: [{
             name: {type: String, required: true},
-            dosage: {type: String, required: true},       // dose only, e.g. "1 tablet", "5 ml"
-            frequency: {type: String, required: true},    // e.g. "3 times a day"
-            duration: {type: String, required: true},     // e.g. "5 days"
-            // When the medicine is taken relative to food; offset stored in minutes
+            dosage: {type: String, required: true},
+            frequency: {type: String, required: true},
+            duration: {type: String, required: true},
             foodTiming: {
                 relation: {type: String, enum: FOOD_RELATIONS},
                 offsetMinutes: {type: Number}
@@ -71,11 +65,10 @@ const medicalRecordSchema = new mongoose.Schema({
         }],
         default: undefined
     },
-    // Optional vitals/lab tests; recordedTime is supplied by the clinician (not auto-set)
     medicalObservations: {
         type: [{
-            metricName: {type: String, required: true},   // e.g. "BP", "Heart rate", "WBC count"
-            metricValue: {type: String, required: true},  // e.g. "120/80", "72 bpm"
+            metricName: {type: String, required: true},
+            metricValue: {type: String, required: true},
             recordedTime: {type: Date, required: true}
         }],
         default: undefined
@@ -88,7 +81,6 @@ const medicalRecordSchema = new mongoose.Schema({
         enum: ["DRAFT", "FINALIZED"],
         default: "DRAFT"
     },
-    // Creator details retained for audit messaging (staff-created -> doctor-finalized)
     createdByEmployeeId: {
         type: String
     },
@@ -98,7 +90,6 @@ const medicalRecordSchema = new mongoose.Schema({
     createdByDesignation: {
         type: String
     },
-    // Soft-delete fields: absent until a deletion occurs (never null, never set at creation)
     isDeleted: {
         type: Boolean,
         default: undefined
@@ -114,15 +105,14 @@ const medicalRecordSchema = new mongoose.Schema({
 }, {timestamps: { createdAt: "created_at", updatedAt: "updated_at" }}
 );
 
-// Pre-save hook to generate sequential medical record id
 medicalRecordSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'medicalRecord' },
-                { $inc: { seq: 1 } }, // Creates sequence
-                { new: true, upsert: true } // upsert is update and insert
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
             );
-            this.medicalRecordId = `MEDREC-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
+            this.medicalRecordId = `MEDREC-${String(counter.seq).padStart(6, '0')}`;
     }
 });
 

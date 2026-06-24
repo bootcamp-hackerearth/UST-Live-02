@@ -3,10 +3,21 @@ const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Build a limiter that funnels rejections through the global error handler
-// so throttled responses use the same envelope as every other error
-const buildLimiter = ({ windowMs, limit, message }) =>
-    rateLimit({
+// Creates a rate limiter with standardized error responses
+const buildLimiter = ({ windowMs, limit, message }) => {
+    if (!Number.isInteger(windowMs) || windowMs <= 0) {
+        throw new Error(
+            "Rate limiter configuration error: windowMs must be a positive integer"
+        );
+    }
+
+    if (!Number.isInteger(limit) || limit <= 0) {
+        throw new Error(
+            "Rate limiter configuration error: limit must be a positive integer"
+        );
+    }
+
+    return rateLimit({
         windowMs,
         limit,
         standardHeaders: true,
@@ -14,15 +25,16 @@ const buildLimiter = ({ windowMs, limit, message }) =>
         handler: (req, res, next) =>
             next(new AppError(STATUS.TOO_MANY_REQUESTS, message))
     });
+};
 
-// Brute-force guard on credential submission
+// Limits login attempts
 const loginLimiter = buildLimiter({
     windowMs: 15 * 60 * 1000,
     limit: 10,
     message: MESSAGES.AUTH.TOO_MANY_ATTEMPTS
 });
 
-// Throttles reset-code guessing and reset-email spam
+// Limits password reset requests
 const passwordResetLimiter = buildLimiter({
     windowMs: 15 * 60 * 1000,
     limit: 5,

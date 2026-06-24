@@ -95,7 +95,7 @@
     <div class="loading-box">
       Loading appointments…
     </div>
-    } @else if (visibleAppointments().length === 0) {
+    } @else if (appointments().length === 0) {
     <div class="empty-box">
       <p>No appointments to show.</p>
     </div>
@@ -116,7 +116,7 @@
         </thead>
 
         <tbody>
-          @for (a of visibleAppointments(); track trackById($index, a)) {
+          @for (a of appointments(); track trackById($index, a)) {
           <tr
             class="clickable"
             tabindex="0"
@@ -158,7 +158,7 @@
       </table>
     </div>
 
-    @if (hasReceptionAccess() && totalPages() > 1) {
+    @if (totalPages() > 1) {
     <div class="pagination">
       <button
         type="button"

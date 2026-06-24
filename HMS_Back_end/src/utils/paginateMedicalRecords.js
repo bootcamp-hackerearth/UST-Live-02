@@ -4,8 +4,7 @@ const { sendSuccess } = require("./apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Shared pagination for medical record list endpoints; returns only the
-// summary columns shown in list views.
+// Shared pagination for medical record lists returning only the summary columns shown in list views
 const paginateMedicalRecords = async (filter, reqQuery, res) => {
     const { page, limit, skip } = parsePagination(reqQuery);
 

@@ -14,8 +14,7 @@ import {
   MedicalRecordListItem,
 } from '../../../core/models/medical-record.model';
 
-// Role-aware medical records list. Doctors are auto-scoped to their own records
-// (the doctor search fields are hidden). A row opens the full-detail dialog.
+// Role aware medical records list where doctors are scoped to their own records and a row opens the full detail dialog
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-medical-records',
@@ -105,6 +104,12 @@ export class MedicalRecordsComponent implements OnInit {
         this.records.set(res.data.medicalRecords || []);
         this.totalPages.set(res.data.totalPages || 1);
         this.total.set(res.data.total || 0);
+        // Re-clamp if the current page fell past the end after a shrink
+        if (this.total() > 0 && this.page() > this.totalPages()) {
+          this.page.set(this.totalPages());
+          this.load();
+          return;
+        }
         this.loading.set(false);
       },
       error: (err) => {

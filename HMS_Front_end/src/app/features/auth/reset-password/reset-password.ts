@@ -90,8 +90,7 @@ export class ResetPasswordComponent implements OnInit {
           this.toast.success(
             response?.message || APP_MESSAGES.PASSWORD_RESET,
           );
-          // Reset invalidates every session server-side; clear any local session on
-          // this browser too. No redirect, so the success screen + login link still show.
+          // Reset invalidates every server session so clear the local session too while staying on the success screen
           this.authService.forceClearSession(false);
         },
         error: (error) => {

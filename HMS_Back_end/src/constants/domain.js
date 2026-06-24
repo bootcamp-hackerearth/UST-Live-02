@@ -1,4 +1,4 @@
-// Staff designations that can be created or self-registered (OWNER and ADMIN excluded)
+// Staff designations that can be created or self-registered
 const STAFF_DESIGNATIONS = [
   "DOCTOR",
   "RECEPTIONIST",
@@ -25,10 +25,10 @@ const MEDICAL_DESIGNATIONS = ["DOCTOR", "NURSE", "PHARMACIST"];
 // Designations that carry a specialization field
 const SPECIALIZATION_DESIGNATIONS = ["DOCTOR", "LAB_TECH"];
 
-// Privileged roles created through dedicated flows; never self-registerable
+// Privileged roles created through dedicated flows
 const RESTRICTED_ROLES = ["OWNER", "ADMIN"];
 
-// Valid staff designations per department; must stay in sync with the frontend DEPARTMENT_DESIGNATIONS map
+// Valid staff designations per department
 const DEPARTMENT_DESIGNATIONS = {
   OPD: ["DOCTOR", "NURSE"],
   IPD: ["DOCTOR", "NURSE"],
@@ -39,8 +39,7 @@ const DEPARTMENT_DESIGNATIONS = {
   Administration: [],
 };
 
-// Routes of drug administration, grouped by category. Stored as the UPPERCASE codes;
-// frontends carry a matching label map. Must stay in sync with the Angular/RN copies.
+// Routes of drug administration, grouped by category
 const ADMINISTRATION_CATEGORIES = [
   "ENTERAL",
   "PARENTERAL",
@@ -48,7 +47,7 @@ const ADMINISTRATION_CATEGORIES = [
   "INHALATION_NASAL",
 ];
 
-// Valid administration methods per category (cascading dropdown source)
+// Valid administration methods per category
 const ADMINISTRATION_METHODS_BY_CATEGORY = {
   ENTERAL: ["ORAL", "SUBLINGUAL", "BUCCAL", "RECTAL"],
   PARENTERAL: ["INTRAVENOUS", "INTRAMUSCULAR", "SUBCUTANEOUS", "INTRADERMAL"],
@@ -56,7 +55,7 @@ const ADMINISTRATION_METHODS_BY_CATEGORY = {
   INHALATION_NASAL: ["INHALATION", "NASAL"],
 };
 
-// Flat list of every method (enum source for the prescription method field)
+// Flat list of every method
 const ADMINISTRATION_METHODS = Object.values(
   ADMINISTRATION_METHODS_BY_CATEGORY
 ).flat();

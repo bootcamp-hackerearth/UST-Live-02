@@ -1,8 +1,7 @@
 // Operational error translated into an HTTP response by the global error handler
 class AppError extends Error {
 
-    // Takes a 4xx/5xx status, a catalog message, an optional field-level error
-    // array, and an optional machine-readable code for clients to branch on
+    // Carries an HTTP status and catalog message plus optional field errors and a machine readable client code
     constructor(statusCode, message, errors = undefined, code = undefined) {
         super(message);
         this.name = "AppError";

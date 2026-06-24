@@ -17,8 +17,7 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    // Restore the session from the refresh cookie before the first route resolves,
-    // so a page reload doesn't bounce an authenticated user to /login
+    // Restore the session from the refresh cookie before the first route resolves so a reload keeps an authenticated user signed in
     provideAppInitializer(() =>
       firstValueFrom(inject(AuthService).bootstrapSession()),
     ),

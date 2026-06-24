@@ -81,8 +81,7 @@ export class ChangePasswordComponent implements OnInit {
           this.toast.success(
             response?.message || APP_MESSAGES.PASSWORD_CHANGED,
           );
-          // Changing the password invalidates every session server-side, so send
-          // the user back to login to sign in with their new password
+          // Changing the password invalidates every server session so the user returns to login to sign in again
           this.authService.forceClearSession();
         },
         error: (error) => {

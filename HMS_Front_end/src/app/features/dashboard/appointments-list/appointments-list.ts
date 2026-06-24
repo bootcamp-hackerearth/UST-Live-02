@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { AppointmentService } from '../../../core/services/appointment.service';
+import { DashboardService } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
@@ -34,6 +35,7 @@ type DoctorTab = 'today' | 'upcoming' | 'past' | 'completed';
 })
 export class AppointmentsListComponent implements OnInit {
   private readonly appointmentService = inject(AppointmentService);
+  private readonly dashboardService = inject(DashboardService);
   private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
@@ -70,31 +72,34 @@ export class AppointmentsListComponent implements OnInit {
     );
   });
 
-  // For the doctor view, slice the fetched list by tab
-  visibleAppointments = computed<Appointment[]>(() => {
-    if (!this.isDoctor()) {
-      return this.appointments();
-    }
-    return this.appointments().filter((a) =>
-      this.matchesDoctorTab(a, this.doctorTab()),
-    );
+  // Doctor tab badge counts (server totals, independent of the current page)
+  tabCounts = signal<Record<DoctorTab, number>>({
+    today: 0,
+    upcoming: 0,
+    past: 0,
+    completed: 0,
   });
 
   doctorTabCount(tab: DoctorTab): number {
-    return this.appointments().filter((a) => this.matchesDoctorTab(a, tab))
-      .length;
+    return this.tabCounts()[tab];
   }
 
-  // True once the appointment's slot end time has passed (hospital local time)
-  private hasEnded(a: Appointment): boolean {
-    const end = (a.timeSlot || '').split('-')[1];
-    if (!end) {
-      return false;
-    }
-    const [hh, mm] = end.split(':').map(Number);
-    const endAt = new Date(a.appointmentDate);
-    endAt.setHours(hh || 0, mm || 0, 0, 0);
-    return endAt.getTime() < Date.now();
+  // Pull the four doctor tab counts from the dashboard stats endpoint
+  private loadTabCounts(): void {
+    this.dashboardService.getStats().subscribe({
+      next: (res) => {
+        const s = res.data.stats;
+        this.tabCounts.set({
+          today: s.today ?? 0,
+          upcoming: s.upcoming ?? 0,
+          past: s.pastDue ?? 0,
+          completed: s.completed ?? 0,
+        });
+      },
+      error: () => {
+        // Badge counts are non-critical; leave them at their last values
+      },
+    });
   }
 
   // True once the slot start time has passed (mirrors detail view + backend guard)
@@ -106,29 +111,6 @@ export class AppointmentsListComponent implements OnInit {
       startAt.setHours(hh, mm, 0, 0);
     }
     return startAt.getTime() <= Date.now();
-  }
-
-  // Single source of truth for which doctor tab an appointment belongs to.
-  // Tabs are mutually exclusive: a BOOKED slot moves to "Past Due" once it ends.
-  private matchesDoctorTab(a: Appointment, tab: DoctorTab): boolean {
-    const apptDate = new Date(a.appointmentDate);
-    apptDate.setHours(0, 0, 0, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const isToday = apptDate.getTime() === today.getTime();
-    const isFuture = apptDate.getTime() > today.getTime();
-    const isPastDay = apptDate.getTime() < today.getTime();
-
-    switch (tab) {
-      case 'today':
-        return isToday && a.status === 'BOOKED' && !this.hasEnded(a);
-      case 'upcoming':
-        return isFuture && a.status === 'BOOKED';
-      case 'past':
-        return a.status === 'BOOKED' && (isPastDay || this.hasEnded(a));
-      case 'completed':
-        return a.status === 'COMPLETED';
-    }
   }
 
   ngOnInit(): void {
@@ -147,6 +129,10 @@ export class AppointmentsListComponent implements OnInit {
     if (status) {
       this.statusFilter.set(status);
     }
+    // Doctor tab badge counts come from the dashboard stats endpoint
+    if (this.isDoctor()) {
+      this.loadTabCounts();
+    }
     this.load();
   }
 
@@ -154,17 +140,27 @@ export class AppointmentsListComponent implements OnInit {
     this.loading.set(true);
 
     if (this.isDoctor()) {
-      // Pull a large window of the doctor's appointments and slice client-side
-      this.appointmentService.getMyAppointments(1, 200).subscribe({
-        next: (res) => {
-          this.appointments.set(res.data.appointments || []);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.loading.set(false);
-          this.toast.error(APP_MESSAGES.LOAD_APPOINTMENTS_FAILED);
-        },
-      });
+      // Server-side per-tab pagination for the doctor view
+      this.appointmentService
+        .getMyAppointments(this.page(), this.limit, { tab: this.doctorTab() })
+        .subscribe({
+          next: (res) => {
+            this.appointments.set(res.data.appointments || []);
+            this.totalPages.set(res.data.totalPages || 1);
+            this.total.set(res.data.total || 0);
+            // Re-clamp if the current page fell past the end after a shrink
+            if (this.total() > 0 && this.page() > this.totalPages()) {
+              this.page.set(this.totalPages());
+              this.load();
+              return;
+            }
+            this.loading.set(false);
+          },
+          error: () => {
+            this.loading.set(false);
+            this.toast.error(APP_MESSAGES.LOAD_APPOINTMENTS_FAILED);
+          },
+        });
       return;
     }
 
@@ -178,6 +174,12 @@ export class AppointmentsListComponent implements OnInit {
           this.appointments.set(res.data.appointments || []);
           this.totalPages.set(res.data.totalPages || 1);
           this.total.set(res.data.total || 0);
+          // Re-clamp if the current page fell past the end after a shrink
+          if (this.total() > 0 && this.page() > this.totalPages()) {
+            this.page.set(this.totalPages());
+            this.load();
+            return;
+          }
           this.loading.set(false);
         },
         error: () => {
@@ -188,7 +190,12 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   switchTab(tab: DoctorTab): void {
+    if (tab === this.doctorTab()) {
+      return;
+    }
     this.doctorTab.set(tab);
+    this.page.set(1);
+    this.load();
   }
 
   onStatusChange(value: string): void {

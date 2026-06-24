@@ -9,8 +9,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const hashToken = (raw) =>
     crypto.createHash("sha256").update(raw).digest("hex");
 
-// Per-domain signing secret, so a patient token cannot even be verified with the
-// employee secret (and the two domains can be rotated independently)
+// Per domain signing secret so a patient token cannot be verified with the employee secret and domains rotate independently
 const accessSecretForType = (type) =>
     type === "PATIENT" ? process.env.JWT_PATIENT_SECRET : process.env.JWT_SECRET;
 
@@ -24,8 +23,7 @@ const signAccessToken = (payload) =>
 const refreshExpiryDate = () =>
     new Date(Date.now() + Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS) * DAY_MS);
 
-// Persist a refresh token (hashed) and hand the raw value back to the caller.
-// Omitting familyId starts a new lineage; passing one continues an existing one.
+// Persists a hashed refresh token and returns the raw value while a missing familyId starts a new lineage
 const issueRefreshToken = async ({ subjectType, subjectId, familyId, req }) => {
     const raw = crypto.randomBytes(REFRESH_TOKEN_BYTES).toString("hex");
 
@@ -42,8 +40,7 @@ const issueRefreshToken = async ({ subjectType, subjectId, familyId, req }) => {
     return raw;
 };
 
-// Look up a token by hash regardless of revocation state, so callers can attribute
-// an action (e.g. logout) to its owner even after the token is already dead
+// Looks up a token by hash regardless of revocation so callers can attribute an action to its owner
 const findByHash = (tokenHash) =>
     RefreshToken.findOne({ tokenHash });
 
@@ -67,9 +64,7 @@ const revokeAllForSubject = (subjectType, subjectId) =>
         { $set: { revokedAt: new Date() } }
     );
 
-// Validate a presented refresh token and rotate it. On success the old token is
-// revoked and a successor is issued in the same family. Statuses:
-//   OK | INVALID | EXPIRED | REUSE_DETECTED
+// Validates and rotates a refresh token returning OK INVALID EXPIRED or REUSE_DETECTED
 const rotateRefreshToken = async ({ rawToken, subjectType, req }) => {
     const record = await RefreshToken.findOne({
         tokenHash: hashToken(rawToken),

@@ -3,9 +3,7 @@ const Appointment = require("../models/Appointments");
 // Group order for mixed lists: upcoming (BOOKED) first, then finished statuses
 const STATUS_PRIORITY = ["BOOKED", "COMPLETED", "UNATTENDED", "CANCELED"];
 
-// Sort rule: BOOKED ascending (closest upcoming first), every finished status
-// descending (most recent visit first). Ordering uses the full start instant
-// (appointment day + slot start time), so same-day rows order by time too.
+// Sorts BOOKED ascending and finished statuses descending using the full appointment start instant
 const listAppointments = (filter, skip, limit) =>
     Appointment.aggregate([
         { $match: filter },

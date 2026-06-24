@@ -1,10 +1,8 @@
-// httpOnly refresh-token cookie for the staff web app. Mobile clients use the
-// body-based refresh token instead, so this only applies to the employee routes.
+// httpOnly refresh token cookie for the staff web app since mobile clients use the body based refresh token
 const REFRESH_COOKIE_NAME = "refreshToken";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// httpOnly keeps it out of reach of JS/XSS; Secure requires HTTPS in production;
-// path scopes it so the browser only sends it to the auth endpoints
+// httpOnly blocks JS access and Secure requires HTTPS in production while path scopes it to the auth endpoints
 const baseCookieOptions = () => ({
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

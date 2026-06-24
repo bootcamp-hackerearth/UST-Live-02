@@ -6,6 +6,7 @@ const resolveActor = require("../utils/resolveActor");
 const emailTemplates = require("../utils/emailTemplates");
 const enrichAppointments = require("../utils/enrichAppointments");
 const paginateAppointments = require("../utils/paginateAppointments");
+const { paginateDoctorTab } = require("../utils/doctorAppointmentTabs");
 const getBookedSlots = require("../utils/getBookedSlots");
 const sendAppointmentEmail = require("../utils/sendAppointmentEmail");
 const cancelAppointmentRecord = require("../utils/cancelAppointmentRecord");
@@ -25,7 +26,7 @@ exports.createAppointment = async (req, res) => {
         timeSlot
     } = req.body;
 
-    // Validates patient, doctor availability, and slot conflicts; throws on violation
+    // Validates patient, doctor availability, and slot conflicts
     const { patient, doctor } = await checkAppointmentValidity({
         patientUHID,
         doctorId: doctorEmployeeId,
@@ -67,7 +68,7 @@ exports.createAppointment = async (req, res) => {
     });
 };
 
-// List all appointments with optional status/doctor/patient filters (paginated)
+// List all appointments with optional status/doctor/patient filters
 exports.getAppointments = async (req, res) => {
 
     const filter = {};
@@ -90,7 +91,15 @@ exports.getAppointments = async (req, res) => {
 // List appointments belonging to the authenticated doctor
 exports.getMyAppointments = async (req, res) => {
 
-    const filter = { doctorEmployeeId: req.user.employeeCode };
+    const doctorEmployeeId = req.user.employeeCode;
+
+    // Tab-aware per-tab pagination for the doctor view (today/upcoming/past/completed)
+    if (req.query.tab) {
+        return paginateDoctorTab(doctorEmployeeId, req.query.tab, req.query, res);
+    }
+
+    // Back-compat: no tab → status-filtered pagination
+    const filter = { doctorEmployeeId };
 
     if (req.query.status) {
         filter.status = req.query.status;
@@ -150,7 +159,7 @@ exports.cancelAppointment = async (req, res) => {
 
     await cancelAppointmentRecord(appointment, cancellationReason);
 
-    // Log appointment cancellation (actor resolved above)
+    // Log appointment cancellation
     await recordAudit({
         actor,
         action: "APPOINTMENT_CANCELED",
@@ -188,8 +197,7 @@ exports.updateAppointment = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.APPOINTMENT.ONLY_BOOKED_EDITABLE);
     }
 
-    // A doctor may only reschedule (date/time) their own appointments; patient and
-    // doctor are forced to the existing values so they cannot be changed.
+    // A doctor may only reschedule (date/time) their own appointments
     const actor = await resolveActor(req.user);
     let effectivePatientUHID = patientUHID;
     let effectiveDoctorId = doctorEmployeeId;
@@ -217,7 +225,7 @@ exports.updateAppointment = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
     }
 
-    // Re-validates excluding this appointment from duplicate checks; throws on violation
+    // Re-validates excluding this appointment from duplicate checks
     const { patient, doctor } = await checkAppointmentValidity({
         patientUHID: effectivePatientUHID,
         doctorId: effectiveDoctorId,
@@ -239,7 +247,7 @@ exports.updateAppointment = async (req, res) => {
         timeSlot
     }));
 
-    // Log appointment updation (actor resolved above)
+    // Log appointment updation
     await recordAudit({
         actor,
         action: "APPOINTMENT_UPDATED",
@@ -253,7 +261,7 @@ exports.updateAppointment = async (req, res) => {
     });
 };
 
-// Mark an appointment UNATTENDED (patient did not show up); no medical record is generated
+// Mark an appointment UNATTENDED
 exports.markUnattended = async (req, res) => {
 
     const { appointmentId } = req.params;

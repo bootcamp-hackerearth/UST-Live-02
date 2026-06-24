@@ -1,8 +1,7 @@
 // Hospital timezone is Asia/Kolkata, a fixed +5:30 offset (no DST)
 const TZ_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 
-// Epoch ms of "HH:mm" on the appointment's calendar day, interpreted in hospital time.
-// Computed explicitly so it stays correct regardless of the host server's timezone.
+// Epoch ms of a HH:mm slot on the appointment day interpreted in hospital time regardless of server timezone
 const slotInstantMs = (appointmentDate, hhmm) => {
   const [hour, minute] = (hhmm || "").split(":").map(Number);
   if (Number.isNaN(hour) || Number.isNaN(minute)) {
@@ -15,8 +14,7 @@ const slotInstantMs = (appointmentDate, hhmm) => {
   );
 };
 
-// UTC-midnight Date of the IST calendar day containing `whenMs` (default now).
-// Matches how date-only appointmentDate values are stored, for bucketing by day.
+// UTC midnight Date of the IST calendar day containing whenMs matching how appointmentDate values are stored
 const istDayStart = (whenMs = Date.now()) => {
   const shifted = new Date(whenMs + TZ_OFFSET_MS);
   return new Date(

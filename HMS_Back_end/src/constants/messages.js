@@ -1,4 +1,4 @@
-// Centralized catalog of user-facing API messages by domain; interpolated ones are arrow templates
+// Centralized catalog of user-facing API messages by domain
 
 const MESSAGES = Object.freeze({
 
@@ -190,7 +190,7 @@ const MESSAGES = Object.freeze({
         UNAUTHORIZED: "Unauthorized to access dashboard statistics"
     }),
 
-    // Audit-trail entries written via recordAudit (not sent to clients)
+    // Audit-trail entries written via recordAudit
     AUDIT: Object.freeze({
         USER_LOGIN: (id) => `Login successful for ${id}`,
         USER_LOGIN_FAILED: (email) => `Failed login attempt for ${email}`,

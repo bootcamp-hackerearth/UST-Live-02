@@ -3,7 +3,6 @@ const softDeletePlugin = require("../utils/softDeletePlugin");
 
 const userSchema = new mongoose.Schema(
     {
-        // Uniqueness enforced in the app layer so a deleted user's username can be reused
         username: {
             type: String,
             required: true,
@@ -38,7 +37,6 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
-        // Bumped on password change/reset to instantly invalidate live access tokens
         tokenVersion: {
             type: Number,
             default: 0

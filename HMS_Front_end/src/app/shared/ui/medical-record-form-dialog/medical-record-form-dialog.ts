@@ -38,8 +38,7 @@ import {
   FOOD_RELATION_SHORT_LABELS,
 } from '../../../core/models/medical-record.model';
 
-// Create / edit dialog for a medical record. Doctors may finalize; staff are
-// locked to DRAFT (the status field is read-only and the payload always sends DRAFT).
+// Create or edit dialog for a medical record where doctors may finalize and staff are locked to DRAFT
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-medical-record-form-dialog',
@@ -144,8 +143,7 @@ export class MedicalRecordFormDialogComponent implements OnInit {
   // Snapshot of the loaded record for no-op detection
   private baseline = '';
 
-  // True when the form differs from its initial snapshot; drives both the
-  // edit-mode submit guard and the discard-on-close prompt
+  // True when the form differs from its initial snapshot driving the submit guard and the discard prompt
   hasChanges(): boolean {
     return JSON.stringify(this.form.getRawValue()) !== this.baseline;
   }

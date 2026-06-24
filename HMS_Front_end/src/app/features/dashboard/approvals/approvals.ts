@@ -39,9 +39,20 @@ export class ApprovalsComponent implements OnInit {
   selectedRegistration = signal<EmployeeListItem | null>(null);
   selectedChange = signal<ProfileChangeRequest | null>(null);
 
-  totalPending = computed(
-    () => this.registrations().length + this.changes().length,
-  );
+  limit = 10;
+
+  // Registration tab pagination
+  regPage = signal(1);
+  regTotal = signal(0);
+  regTotalPages = signal(0);
+
+  // Profile-change tab pagination
+  changePage = signal(1);
+  changeTotal = signal(0);
+  changeTotalPages = signal(0);
+
+  // Pending badge reflects server totals across both tabs
+  totalPending = computed(() => this.regTotal() + this.changeTotal());
 
   ngOnInit(): void {
     this.loadRegistrations();
@@ -54,9 +65,17 @@ export class ApprovalsComponent implements OnInit {
 
   private loadRegistrations(): void {
     this.loadingReg.set(true);
-    this.adminService.getPendingEmployees().subscribe({
+    this.adminService.getPendingEmployees(this.regPage(), this.limit).subscribe({
       next: (res) => {
         this.registrations.set(res.data.employees || []);
+        this.regTotal.set(res.data.total || 0);
+        this.regTotalPages.set(res.data.totalPages || 1);
+        // Re-clamp if the current page fell past the end after a shrink
+        if (this.regTotal() > 0 && this.regPage() > this.regTotalPages()) {
+          this.regPage.set(this.regTotalPages());
+          this.loadRegistrations();
+          return;
+        }
         this.loadingReg.set(false);
       },
       error: () => {
@@ -68,9 +87,17 @@ export class ApprovalsComponent implements OnInit {
 
   private loadChanges(): void {
     this.loadingChanges.set(true);
-    this.adminService.getProfileChangeRequests().subscribe({
+    this.adminService.getProfileChangeRequests(this.changePage(), this.limit).subscribe({
       next: (res) => {
         this.changes.set(res.data.requests || []);
+        this.changeTotal.set(res.data.total || 0);
+        this.changeTotalPages.set(res.data.totalPages || 1);
+        // Re-clamp if the current page fell past the end after a shrink
+        if (this.changeTotal() > 0 && this.changePage() > this.changeTotalPages()) {
+          this.changePage.set(this.changeTotalPages());
+          this.loadChanges();
+          return;
+        }
         this.loadingChanges.set(false);
       },
       error: () => {
@@ -78,6 +105,34 @@ export class ApprovalsComponent implements OnInit {
         this.toast.error(APP_MESSAGES.LOAD_APPROVALS_FAILED);
       },
     });
+  }
+
+  prevRegPage(): void {
+    if (this.regPage() > 1) {
+      this.regPage.update((p) => p - 1);
+      this.loadRegistrations();
+    }
+  }
+
+  nextRegPage(): void {
+    if (this.regPage() < this.regTotalPages()) {
+      this.regPage.update((p) => p + 1);
+      this.loadRegistrations();
+    }
+  }
+
+  prevChangePage(): void {
+    if (this.changePage() > 1) {
+      this.changePage.update((p) => p - 1);
+      this.loadChanges();
+    }
+  }
+
+  nextChangePage(): void {
+    if (this.changePage() < this.changeTotalPages()) {
+      this.changePage.update((p) => p + 1);
+      this.loadChanges();
+    }
   }
 
   // Registration approvals

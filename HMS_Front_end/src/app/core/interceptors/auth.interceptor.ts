@@ -30,8 +30,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      // A protected call rejected with 401: try one silent refresh, then retry it.
-      // Public auth calls (incl. /refresh itself) are excluded to avoid loops.
+      // A protected 401 triggers one silent refresh and retry while public auth calls are excluded to avoid loops
       if (error.status === 401 && !isPublicAuthCall) {
         return authService.refreshAccessToken().pipe(
           switchMap((newToken) =>

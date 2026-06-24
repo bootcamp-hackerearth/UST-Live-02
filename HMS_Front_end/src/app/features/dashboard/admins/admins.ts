@@ -29,15 +29,29 @@ export class AdminsComponent implements OnInit {
   loading = signal(true);
   selected = signal<EmployeeListItem | null>(null);
 
+  // Pagination
+  page = signal(1);
+  limit = 10;
+  total = signal(0);
+  totalPages = signal(0);
+
   ngOnInit(): void {
     this.load();
   }
 
-  private load(): void {
+  load(): void {
     this.loading.set(true);
-    this.ownerService.getAdmins().subscribe({
+    this.ownerService.getAdmins(this.page(), this.limit).subscribe({
       next: (res) => {
         this.admins.set(res.data.admins || []);
+        this.total.set(res.data.total || 0);
+        this.totalPages.set(res.data.totalPages || 1);
+        // Re-clamp if the current page fell past the end after a shrink
+        if (this.total() > 0 && this.page() > this.totalPages()) {
+          this.page.set(this.totalPages());
+          this.load();
+          return;
+        }
         this.loading.set(false);
       },
       error: () => {
@@ -45,6 +59,20 @@ export class AdminsComponent implements OnInit {
         this.toast.error(APP_MESSAGES.LOAD_ADMINS_FAILED);
       },
     });
+  }
+
+  prevPage(): void {
+    if (this.page() > 1) {
+      this.page.update((p) => p - 1);
+      this.load();
+    }
+  }
+
+  nextPage(): void {
+    if (this.page() < this.totalPages()) {
+      this.page.update((p) => p + 1);
+      this.load();
+    }
   }
 
   open(item: EmployeeListItem): void {

@@ -1,6 +1,4 @@
-// Reusable soft-delete behavior: adds the deletion fields (absent until a delete
-// occurs) and a query hook that hides soft-deleted documents by default.
-// Pass { withDeleted: true } in query options to include deleted documents.
+// Reusable soft delete behavior that adds deletion fields and hides deleted documents unless withDeleted is passed
 function softDeletePlugin(schema) {
     schema.add({
         isDeleted: {
@@ -17,8 +15,7 @@ function softDeletePlugin(schema) {
         }
     });
 
-    // Exclude soft-deleted documents from finds and counts unless explicitly opted
-    // out (so list queries and their pagination totals stay consistent).
+    // Exclude soft deleted documents from finds and counts unless explicitly opted out
     const excludeDeleted = function () {
         if (this.getOptions().withDeleted) {
             return;

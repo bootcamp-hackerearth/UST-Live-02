@@ -2,7 +2,7 @@ const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Single point of truth for the error wire envelope
+// Builds a standardized error response
 const sendError = (res, statusCode, message, errors, code) => {
     const body = {
         success: false,
@@ -18,24 +18,24 @@ const sendError = (res, statusCode, message, errors, code) => {
     return res.status(statusCode).json(body);
 };
 
-// Global error handler; Express 5 registers it by the 4-arg signature
+// Handles all application errors
 const errorHandler = (err, req, res, next) => {
 
     if (res.headersSent) {
         return next(err);
     }
 
-    // Operational errors thrown by our own code
+    // Handles application errors
     if (err instanceof AppError) {
         return sendError(res, err.statusCode, err.message, err.errors, err.code);
     }
 
-    // Malformed JSON body rejected by express.json()
+    // Handles malformed JSON requests
     if (err.type === "entity.parse.failed") {
         return sendError(res, STATUS.BAD_REQUEST, MESSAGES.COMMON.INVALID_JSON);
     }
 
-    // Mongoose schema validation failures
+    // Handles Mongoose validation errors
     if (err.name === "ValidationError") {
         const errors = Object.values(err.errors || {}).map((e) => ({
             msg: e.message,
@@ -44,17 +44,17 @@ const errorHandler = (err, req, res, next) => {
         return sendError(res, STATUS.UNPROCESSABLE_ENTITY, MESSAGES.COMMON.VALIDATION_FAILED, errors);
     }
 
-    // Mongoose bad ObjectId / cast failures
+    // Handles invalid ObjectId errors
     if (err.name === "CastError") {
         return sendError(res, STATUS.BAD_REQUEST, MESSAGES.COMMON.VALIDATION_FAILED);
     }
 
-    // MongoDB duplicate key violations
+    // Handles duplicate key errors
     if (err.code === 11000) {
         return sendError(res, STATUS.CONFLICT, MESSAGES.COMMON.DUPLICATE_KEY);
     }
 
-    // Unknown error: log server-side, send an opaque message to the client
+    // Handles unexpected errors
     console.error("Unhandled error:", err);
     return sendError(res, STATUS.INTERNAL_SERVER_ERROR, MESSAGES.COMMON.INTERNAL_ERROR);
 };

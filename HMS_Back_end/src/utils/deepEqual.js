@@ -1,5 +1,4 @@
-// Order-independent deep equality for plain JSON-ish values (objects compared by
-// key, arrays by index). Used to detect whether an update actually changes anything.
+// Order independent deep equality for plain JSON values used to detect real update changes
 function deepEqual(a, b) {
     if (a === b) {
         return true;

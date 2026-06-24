@@ -15,6 +15,8 @@ export interface AppointmentFilters {
   date?: string;
   doctorEmployeeId?: string;
   patientUHID?: string;
+  // Doctor view tab: today | upcoming | past | completed
+  tab?: string;
 }
 
 @Injectable({
@@ -45,7 +47,7 @@ export class AppointmentService {
   // Doctor's own appointments
   getMyAppointments(
     page = 1,
-    limit = 100,
+    limit = 10,
     filters?: AppointmentFilters,
   ): Observable<AppointmentsResponse> {
     let params = this.buildListParams(page, limit, filters);
@@ -124,6 +126,9 @@ export class AppointmentService {
     }
     if (filters?.patientUHID) {
       params = params.set('patientUHID', filters.patientUHID);
+    }
+    if (filters?.tab) {
+      params = params.set('tab', filters.tab);
     }
     return params;
   }

@@ -24,8 +24,7 @@ interface DayCell {
   today: boolean;
 }
 
-// Month-grid date picker that only enables the doctor's available weekdays and
-// hides dates before `minDate`, after `maxDate`, or on/after `cutoffDate`.
+// Month grid date picker that enables only the doctor available weekdays and hides dates outside the allowed range
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-availability-calendar',

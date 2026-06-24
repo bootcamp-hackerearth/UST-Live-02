@@ -8,8 +8,7 @@ const frontendUrl = () => {
 
 const loginUrl = () => `${frontendUrl()}/login`;
 
-// Patient mobile app deep-link base (Expo custom scheme). A trailing slash is
-// ensured so paths append cleanly, e.g. hmsapp://login.
+// Patient mobile deep link base with an ensured trailing slash so paths append cleanly
 const patientAppUrl = () => {
   const url = process.env.PATIENT_APP_URL || "hmsapp://";
   return url.endsWith("/") ? url : `${url}/`;

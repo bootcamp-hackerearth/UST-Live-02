@@ -27,8 +27,7 @@ const MESSAGES = require("./constants/messages");
 
 const app = express();
 
-// Behind a single reverse proxy (e.g. Vercel) so req.ip and rate limiting read
-// the real client IP from X-Forwarded-For rather than the proxy address
+// Trust the single reverse proxy so req.ip and rate limiting use the real client IP from X-Forwarded-For
 app.set("trust proxy", 1);
 
 // Used for secure HTTP headers

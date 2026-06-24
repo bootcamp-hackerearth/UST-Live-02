@@ -4,7 +4,7 @@ const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Authenticates a patient JWT; rejects employee tokens so the auth domains stay separate
+// Authenticates patient access tokens
 const authenticatePatient = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
@@ -16,7 +16,7 @@ const authenticatePatient = async (req, res, next) => {
 
     let decoded;
 
-    // jwt.verify throwing is expected control flow for bad/expired tokens
+    // Handles invalid or expired tokens
     try {
         decoded = jwt.verify(token, process.env.JWT_PATIENT_SECRET, { algorithms: ["HS256"] });
     }
@@ -28,12 +28,11 @@ const authenticatePatient = async (req, res, next) => {
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
     }
 
-    // Reject tokens whose patient has since been soft-deleted or deactivated
-    // (the soft-delete query hook makes a deleted patient's lookup return null)
+    // Rejects deleted or inactive patients
     const patient = await Patient.findOne({ UHID: decoded.patientUHID })
         .select("status tokenVersion mustChangePassword");
 
-    // tokenVersion mismatch means the password changed after this token was issued
+    // Rejects tokens invalidated by password changes
     if (
         !patient ||
         patient.status !== "ACTIVE" ||
@@ -42,8 +41,7 @@ const authenticatePatient = async (req, res, next) => {
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
     }
 
-    // A patient on a temporary password may only reach the patient auth router
-    // (change-password); the code lets the mobile app route to that screen
+    // Restricts patients with temporary passwords to auth routes only
     if (patient.mustChangePassword && req.baseUrl !== "/api/patient/auth") {
         throw new AppError(
             STATUS.FORBIDDEN,

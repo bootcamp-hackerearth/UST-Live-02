@@ -1,10 +1,7 @@
 // Escapes user input for safe use inside a RegExp (partial-match search)
 const escapeRegex = (value) => String(value).replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
-// Builds a Mongo filter for medical record listing/search.
-// Soft-deleted records are always excluded. When doctorEmployeeId is provided
-// (the authenticated doctor), visibility is locked to their own records and the
-// doctor-based search fields are ignored.
+// Builds a Mongo filter for medical record listing that excludes soft deleted records and scopes a doctor to their own records
 const buildMedicalRecordFilter = (query, doctorEmployeeId) => {
     const filter = { isDeleted: { $ne: true } };
 

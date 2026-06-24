@@ -14,7 +14,6 @@ async function handler(req, res) {
   } catch (error) {
     console.error("Database connection error:", error);
 
-    // Outside Express, so the envelope is emitted directly here
     return res.status(STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       statusCode: STATUS.INTERNAL_SERVER_ERROR,

@@ -30,9 +30,7 @@ export class EmployeeService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/employees`;
 
-  // Short-lived cache for the doctor dropdown (reference data fetched on every
-  // appointment-book open). Only successful responses are cached, and the TTL
-  // bounds staleness so a newly added doctor appears within a few minutes.
+  // Short lived cache for the doctor dropdown that stores only successful responses and bounds staleness with a TTL
   private doctorsCache: DoctorsResponse | null = null;
   private doctorsCachedAt = 0;
   private static readonly DOCTORS_TTL_MS = 5 * 60 * 1000;

@@ -10,8 +10,7 @@ import { AuditLog } from '../../../core/models/audit.model';
 // Audit feed page size on the overview
 const AUDIT_PAGE_SIZE = 15;
 
-// Audit actions that record a failed or adverse outcome; shown in red, while
-// every successful operation keeps the default green chip
+// Audit actions that record a failed outcome shown in red while every successful operation keeps the green chip
 const FAILURE_AUDIT_ACTIONS = new Set<string>([
   'USER_LOGIN_FAILED',
   'REFRESH_REUSE_DETECTED',
@@ -80,8 +79,7 @@ export class OverviewComponent implements OnInit {
     }
   }
 
-  // One role-aware call to /api/dashboard/stats (replaces the previous ~6 list
-  // calls). The backend returns only the fields for the caller's designation.
+  // One role aware call to the dashboard stats endpoint that returns only the fields for the caller designation
   private loadStats(): void {
     this.dashboardService.getStats().subscribe({
       next: (res) => {
@@ -108,6 +106,11 @@ export class OverviewComponent implements OnInit {
         this.auditPage.set(res.data.page || page);
         this.auditTotalPages.set(res.data.totalPages || 1);
         this.auditTotal.set(res.data.total || 0);
+        // Re-clamp if the current page fell past the end after a shrink
+        if (this.auditTotal() > 0 && this.auditPage() > this.auditTotalPages()) {
+          this.loadAuditLogs(this.auditTotalPages());
+          return;
+        }
         this.loadingAudit.set(false);
       },
       error: () => {

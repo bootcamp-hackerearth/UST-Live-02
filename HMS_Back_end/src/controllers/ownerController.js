@@ -8,6 +8,7 @@ const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
 const createAccountWithEmployee = require("../utils/createAccountWithEmployee");
 const deleteEmployeeAccount = require("../utils/deleteEmployeeAccount");
+const parsePagination = require("../utils/parsePagination");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -38,11 +39,20 @@ const createAdmin = async (req, res) => {
   });
 };
 
-// List all admin users with their linked employee records
+// List admin users with their linked employee records (paginated)
 const getAdmins = async (req, res) => {
-  const admins = await User.find({
-    roles: "ADMIN",
-  }).select("-passwordHash");
+  const { page, limit, skip } = parsePagination(req.query, 10);
+
+  const filter = { roles: "ADMIN" };
+
+  const [admins, total] = await Promise.all([
+    User.find(filter)
+      .select("-passwordHash")
+      .sort({ employeeCode: 1 })
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments(filter),
+  ]);
 
   const employeeCodes = admins.map((admin) => admin.employeeCode);
 
@@ -50,12 +60,16 @@ const getAdmins = async (req, res) => {
     employeeCode: {
       $in: employeeCodes,
     },
-  });
+  }).sort({ employeeCode: 1 });
 
   const formattedAdmins = buildEmployeeResponse(employees, admins);
 
   return sendSuccess(res, STATUS.OK, MESSAGES.OWNER.ADMINS_RETRIEVED, {
-    totalAdmins: formattedAdmins.length,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    totalAdmins: total,
     admins: formattedAdmins,
   });
 };

@@ -6,8 +6,7 @@ const {
     FOOD_RELATIONS
 } = require("../constants/domain");
 
-// Per-item prescription rules. The wildcard validators only run for items that are
-// actually present, so each field is "required-if-present" (an absent array is skipped).
+// Per item prescription rules that validate each field only when the item is present
 const prescriptionItemValidation = [
     body("prescriptionItems.*.name")
         .trim()
@@ -68,8 +67,7 @@ const prescriptionItemValidation = [
         })
 ];
 
-// Per-item observation rules (required-if-present). recordedTime is supplied by the
-// clinician, so it must be a valid date but is never auto-generated.
+// Per item observation rules that require a valid clinician supplied recordedTime when present
 const medicalObservationValidation = [
     body("medicalObservations.*.metricName")
         .trim()

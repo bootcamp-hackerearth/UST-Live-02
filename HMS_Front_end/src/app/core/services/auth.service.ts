@@ -123,8 +123,7 @@ export class AuthService {
     );
   }
 
-  // Swaps the httpOnly refresh cookie for a fresh access token. The in-flight
-  // request is shared so a burst of 401s only triggers a single /refresh call.
+  // Swaps the httpOnly refresh cookie for a fresh access token sharing the in flight request so a burst of 401s triggers one refresh
   refreshAccessToken(): Observable<string> {
     this.refresh$ ??= this.http
       .post<RefreshResponse>(

@@ -11,9 +11,7 @@ export class DashboardService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/dashboard`;
 
-  // Role-aware overview stats in a single call (replaces the ~6 list calls the
-  // overview previously made). The backend returns the subset for the caller's
-  // designation.
+  // Role aware overview stats in a single call where the backend returns only the subset for the caller designation
   getStats(): Observable<DashboardStatsResponse> {
     return this.http.get<DashboardStatsResponse>(`${this.apiUrl}/stats`);
   }

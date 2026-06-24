@@ -9,8 +9,7 @@ export const MEDICAL_RECORD_STATUSES: MedicalRecordStatus[] = [
   'FINALIZED',
 ];
 
-// Administration routes, grouped by category. Codes mirror the backend domain.js;
-// keep these in sync with Unoptimized-Back-end/src/constants/domain.js and the RN app.
+// Administration routes grouped by category that must stay in sync with the backend domain constants and the RN app
 export type AdministrationCategory =
   | 'ENTERAL'
   | 'PARENTERAL'
@@ -113,8 +112,7 @@ export interface MedicalObservation {
   recordedTime: string;
 }
 
-// Converts a food-timing offset (minutes) to an hours phrase for display:
-// 30 -> "half hour", 60 -> "1 hour", 90 -> "1.5 hours".
+// Converts a food timing offset in minutes to an hours phrase for display
 export function formatFoodOffset(minutes?: number | null): string {
   if (minutes == null || minutes <= 0) {
     return '';

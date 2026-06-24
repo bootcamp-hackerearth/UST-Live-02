@@ -21,7 +21,7 @@ const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Editable employee fields + how to compare them for no-op detection
+// Editable employee fields
 const EMPLOYEE_UPDATABLE_FIELDS = [
   "name",
   "phone",
@@ -35,19 +35,43 @@ const EMPLOYEE_UPDATABLE_FIELDS = [
   "availabilitySlots",
   "bookingCutoffDate",
 ];
+
 const EMPLOYEE_CHANGE_OPTIONS = {
   dateFields: ["joiningDate", "bookingCutoffDate"],
   arrayKeys: { availabilitySlots: ["day", "startTime", "endTime"] },
 };
 
-// Fetch all STAFF users with a given status and their linked employee records
-const getEmployeesByStatus = async (status, res) => {
-  const users = await User.find({ roles: "STAFF", status }).select("-passwordHash");
+// Escape user-supplied search text for safe regex matching
+const escapeRegex = (value) =>
+  value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
+// Fetch STAFF users with a given status (paginated) and their linked employee records
+const getEmployeesByStatus = async (status, reqQuery, res) => {
+  const { page, limit, skip } = parsePagination(reqQuery, 10);
+
+  const filter = { roles: "STAFF", status };
+
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select("-passwordHash")
+      .sort({ employeeCode: 1 })
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments(filter),
+  ]);
+
   const employeeCodes = users.map((user) => user.employeeCode);
-  const employees = await Employee.find({ employeeCode: { $in: employeeCodes } });
+  const employees = await Employee.find({ employeeCode: { $in: employeeCodes } }).sort({
+    employeeCode: 1,
+  });
   const formattedEmployees = buildEmployeeResponse(employees, users);
+
   return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.LIST_RETRIEVED, {
-    totalEmployees: formattedEmployees.length,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    totalEmployees: total,
     employees: formattedEmployees,
   });
 };
@@ -72,7 +96,7 @@ exports.createEmployee = async (req, res) => {
     throw new AppError(STATUS.FORBIDDEN, MESSAGES.AUTH.INVALID_DESIGNATION);
   }
 
-  const { employee, user } = await createAccountWithEmployee(req, { // NOSONAR: false positive; function is async but Sonar loses type info across CommonJS require
+  const { employee, user } = await createAccountWithEmployee(req, { // NOSONAR: false positive; function is async but Sonar loses type info across CommonJS import
     roles: ["STAFF"],
     emailTemplate: emailTemplates.employeeCredentials,
     auditAction: "EMPLOYEE_CREATED",
@@ -119,13 +143,80 @@ exports.getEmployee = async (req, res) => {
   });
 };
 
-// List all active STAFF employees
-exports.getEmployees = async (req, res) =>
-  getEmployeesByStatus("ACTIVE", res);
+// List active employees (and admins for owners) with filters + pagination
+exports.getEmployees = async (req, res) => {
+  const { page, limit, skip } = parsePagination(req.query, 10);
+
+  const status = req.query.status || "ACTIVE";
+  const isOwner = req.user.roles.includes("OWNER");
+  const roleScope = isOwner ? ["STAFF", "ADMIN"] : ["STAFF"];
+
+  // Employee-side filters: designation + free-text search
+  const employeeMatch = { isDeleted: { $ne: true } };
+  if (req.query.designation) {
+    employeeMatch.designation = req.query.designation;
+  }
+  if (req.query.search?.trim()) {
+    const regex = new RegExp(escapeRegex(req.query.search.trim()), "i");
+    employeeMatch.$or = [
+      { name: regex },
+      { email: regex },
+      { employeeCode: regex },
+      { department: regex },
+    ];
+  }
+
+  // Join the linked user for status/roles/lastLogin, then scope by role + status
+  const [result] = await Employee.aggregate([
+    { $match: employeeMatch },
+    {
+      $lookup: {
+        from: "users",
+        localField: "employeeCode",
+        foreignField: "employeeCode",
+        as: "user",
+      },
+    },
+    { $unwind: "$user" },
+    {
+      $match: {
+        "user.isDeleted": { $ne: true },
+        "user.roles": { $in: roleScope },
+        "user.status": status,
+      },
+    },
+    { $sort: { employeeCode: 1 } },
+    {
+      $facet: {
+        rows: [{ $skip: skip }, { $limit: limit }],
+        meta: [{ $count: "total" }],
+      },
+    },
+  ]);
+
+  const rows = result?.rows || [];
+  const total = result?.meta?.[0]?.total || 0;
+
+  const employees = rows.map((row) => ({
+    employee: buildEmployeeProfile(row),
+    status: row.user.status,
+    roles: row.user.roles,
+    lastLoginAt: row.user.lastLoginAt,
+  }));
+
+  return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.LIST_RETRIEVED, {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    totalEmployees: total,
+    employees,
+  });
+};
 
 // List STAFF employees with PENDING account status awaiting approval
 exports.getPendingEmployees = async (req, res) =>
-  getEmployeesByStatus("PENDING", res);
+  getEmployeesByStatus("PENDING", req.query, res);
 
 // Approve a self-registered employee
 exports.approveEmployee = async (req, res) => {
@@ -153,7 +244,7 @@ exports.approveEmployee = async (req, res) => {
 
   await user.save();
 
-  // Notify the employee that their account has been approved (best-effort)
+  // Notify the employee that their account has been approved
   try {
     await sendEmail({
       to: user.email,
@@ -201,7 +292,7 @@ exports.rejectEmployee = async (req, res) => {
     throw new AppError(STATUS.BAD_REQUEST, MESSAGES.ADMIN.STATUS_NOT_PENDING);
   }
 
-  // Email before deletion so the address is still reachable (best-effort)
+  // Email before deletion so the address is still reachable
   try {
     await sendEmail({
       to: user.email,
@@ -222,13 +313,13 @@ exports.rejectEmployee = async (req, res) => {
     message: MESSAGES.AUDIT.EMPLOYEE_REGISTRATION_REJECTED(employeeCode, user.username),
   });
 
-  // Soft-delete the account (marked REJECTED) so the email/username free up for re-registration
+  // Soft-delete the account
   await deleteEmployeeAccount(employeeCode, actor.employeeCode, { userStatus: "REJECTED" });
 
   return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.REGISTRATION_REJECTED);
 };
 
-// Normalized availability fingerprint for change detection (subdoc _ids churn on assignment)
+// Normalized availability fingerprint for change detection
 const availabilityKey = (slots) =>
   (slots || []).map((s) => `${s.day} ${s.startTime}-${s.endTime}`).sort().join("|");
 
@@ -301,8 +392,7 @@ exports.deleteEmployee = async (req, res) => {
     throw new AppError(STATUS.FORBIDDEN, MESSAGES.ADMIN.CANNOT_DELETE_PRIVILEGED);
   }
 
-  // A doctor with scheduled (BOOKED) appointments cannot be deleted. Set a booking
-  // cutoff date so bookings wind down, then delete once none remain BOOKED.
+  // A doctor with BOOKED appointments cannot be deleted until the booking cutoff winds them down
   if (employee.designation === "DOCTOR") {
     const bookedCount = await Appointment.countDocuments({
       doctorEmployeeId: employeeCode,
@@ -331,7 +421,7 @@ exports.deleteEmployee = async (req, res) => {
 
 // Fetch paginated audit log entries with optional action filter
 exports.getAuditLogs = async (req, res) => {
-  const { page, limit, skip } = parsePagination(req.query, 20);
+  const { page, limit, skip } = parsePagination(req.query, 10);
 
   const filter = {};
 
@@ -358,14 +448,21 @@ exports.getAuditLogs = async (req, res) => {
   });
 };
 
-// List all pending profile change requests
+// List pending profile change requests (paginated)
 exports.getProfileChangeRequests = async (req, res) => {
-  const requests = await ProfileChangeRequest.find({
-    status: "PENDING",
-  })
-    .select("-__v")
-    .sort({ created_at: -1 })
-    .lean();
+  const { page, limit, skip } = parsePagination(req.query, 10);
+
+  const filter = { status: "PENDING" };
+
+  const [requests, total] = await Promise.all([
+    ProfileChangeRequest.find(filter)
+      .select("-__v")
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    ProfileChangeRequest.countDocuments(filter),
+  ]);
 
   // Normalize the Map field to a plain object for JSON serialization
   const formatted = requests.map((request) => ({
@@ -374,7 +471,10 @@ exports.getProfileChangeRequests = async (req, res) => {
   }));
 
   return sendSuccess(res, STATUS.OK, MESSAGES.ADMIN.CHANGE_REQUESTS_RETRIEVED, {
-    total: formatted.length,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
     requests: formatted,
   });
 };
@@ -405,7 +505,7 @@ exports.approveProfileChange = async (req, res) => {
   request.reviewedAt = new Date();
   await request.save();
 
-  // Notify the employee of approval (best-effort)
+  // Notify the employee of approval
   try {
     await sendEmail({
       to: employee.email,
@@ -449,7 +549,7 @@ exports.rejectProfileChange = async (req, res) => {
   request.reviewedAt = new Date();
   await request.save();
 
-  // Notify the employee of rejection (best-effort)
+  // Notify the employee of rejection
   try {
     await sendEmail({
       to: request.email,

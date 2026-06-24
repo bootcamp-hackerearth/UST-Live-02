@@ -10,6 +10,7 @@ const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
+const parsePagination = require("../utils/parsePagination");
 
 // Fields a patient record exposes
 const PATIENT_PROJECTION = "-passwordHash -__v";
@@ -57,7 +58,7 @@ exports.createPatient = async (req, res) => {
     const patient = new Patient(patientData);
     await patient.save();
 
-    // Send email AFTER successful account creation (best-effort)
+    // Send email AFTER successful account creation
     try {
         await sendEmail({
             to: patient.email,
@@ -89,12 +90,7 @@ exports.createPatient = async (req, res) => {
 // Get all patients
 exports.getPatients = async (req, res) => {
 
-    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.min(
-        Math.max(Number.parseInt(req.query.limit, 10) || 10, 1),
-        100
-    );
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, 10);
 
     // Build filter
     const filter = {};
@@ -199,12 +195,12 @@ exports.updatePatient = async (req, res) => {
         "status"
     ];
 
-    // Reject no-op updates so no false audit log is written (email is part of the set)
+    // Rejects updates with no actual changes
     if (!hasFieldChanges(patient, req.body, [...allowedFields, "email"], { dateFields: ["dob"] })) {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
     }
 
-    // If email is being changed, ensure it stays unique
+    // Ensures email uniqueness before updating
     if (req.body.email && req.body.email !== patient.email) {
         const existing = await Patient.findOne({
             email: req.body.email
@@ -244,7 +240,7 @@ exports.updatePatient = async (req, res) => {
     });
 };
 
-// Soft delete a patient (Admin/Owner only); record is never physically removed
+// Soft deletes a patient
 exports.deletePatient = async (req, res) => {
 
     const { UHID } = req.params;

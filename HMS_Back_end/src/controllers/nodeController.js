@@ -23,7 +23,7 @@ exports.createNode = async (req, res) => {
         throw new AppError(STATUS.CONFLICT, MESSAGES.NODE.PATH_EXISTS);
     }
 
-    // Create node
+    // Save the node to mongodb
     const node = await Node.create({
         name,
         path,
