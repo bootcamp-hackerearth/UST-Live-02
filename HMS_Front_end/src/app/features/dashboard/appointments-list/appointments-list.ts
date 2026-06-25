@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -28,6 +31,7 @@ type DoctorTab = 'today' | 'upcoming' | 'past' | 'completed';
     FormsModule,
     RouterLink,
     DashboardLayoutComponent,
+    PaginationComponent,
     DatePipe,
   ],
   templateUrl: './appointments-list.html',
@@ -54,6 +58,21 @@ export class AppointmentsListComponent implements OnInit {
   statusFilter = signal<string>('');
   dateFilter = signal<string>('');
 
+  // Reception search: filter by doctor employeeCode / patient UHID (debounced)
+  doctorSearch = signal<string>('');
+  patientSearch = signal<string>('');
+  // Each keystroke pushes here; the subscription debounces before hitting the API
+  private readonly searchInput$ = new Subject<void>();
+
+  // Drives the single "Clear filters" button: true when any reception filter is set
+  hasActiveFilters = computed(
+    () =>
+      !!this.patientSearch() ||
+      !!this.doctorSearch() ||
+      !!this.statusFilter() ||
+      !!this.dateFilter(),
+  );
+
   // Doctor tabs
   doctorTab = signal<DoctorTab>('today');
   todayIso = todayIsoDate();
@@ -79,6 +98,22 @@ export class AppointmentsListComponent implements OnInit {
     past: 0,
     completed: 0,
   });
+
+  constructor() {
+    // Debounce the search box so we issue one request after the user stops typing,
+    // and skip the call entirely when the trimmed terms are unchanged.
+    this.searchInput$
+      .pipe(
+        debounceTime(400),
+        map(() => `${this.doctorSearch().trim()}|${this.patientSearch().trim()}`),
+        distinctUntilChanged(),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.page.set(1);
+        this.load();
+      });
+  }
 
   doctorTabCount(tab: DoctorTab): number {
     return this.tabCounts()[tab];
@@ -168,6 +203,8 @@ export class AppointmentsListComponent implements OnInit {
       .getAppointments(this.page(), this.limit, {
         status: this.statusFilter() || undefined,
         date: this.dateFilter() || undefined,
+        doctorEmployeeId: this.doctorSearch().trim() || undefined,
+        patientUHID: this.patientSearch().trim() || undefined,
       })
       .subscribe({
         next: (res) => {
@@ -210,24 +247,35 @@ export class AppointmentsListComponent implements OnInit {
     this.load();
   }
 
-  clearDate(): void {
+  onDoctorSearch(value: string): void {
+    this.doctorSearch.set(value);
+    this.searchInput$.next();
+  }
+
+  onPatientSearch(value: string): void {
+    this.patientSearch.set(value);
+    this.searchInput$.next();
+  }
+
+  // Clears the search terms plus the status and date filters in one action
+  clearAllFilters(): void {
+    if (!this.hasActiveFilters()) {
+      return;
+    }
+    this.patientSearch.set('');
+    this.doctorSearch.set('');
+    this.statusFilter.set('');
     this.dateFilter.set('');
     this.page.set(1);
     this.load();
   }
 
-  prevPage(): void {
-    if (this.page() > 1) {
-      this.page.update((p) => p - 1);
-      this.load();
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages() || p === this.page()) {
+      return;
     }
-  }
-
-  nextPage(): void {
-    if (this.page() < this.totalPages()) {
-      this.page.update((p) => p + 1);
-      this.load();
-    }
+    this.page.set(p);
+    this.load();
   }
 
   open(a: Appointment): void {

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { PatientService } from '../../../core/services/patient.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -26,6 +27,7 @@ import {
     FormsModule,
     RouterLink,
     DashboardLayoutComponent,
+    PaginationComponent,
     DatePipe,
   ],
   templateUrl: './patients-list.html',
@@ -139,18 +141,12 @@ export class PatientsListComponent implements OnInit {
     this.load();
   }
 
-  prevPage(): void {
-    if (this.page() > 1) {
-      this.page.update((p) => p - 1);
-      this.load();
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages() || p === this.page()) {
+      return;
     }
-  }
-
-  nextPage(): void {
-    if (this.page() < this.totalPages()) {
-      this.page.update((p) => p + 1);
-      this.load();
-    }
+    this.page.set(p);
+    this.load();
   }
 
   open(p: Patient): void {

@@ -16,6 +16,12 @@ const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
+// Escapes user input for safe use inside a RegExp (partial-match search)
+const escapeRegex = (value) => String(value).replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
+// Case-insensitive partial match for a search term
+const partial = (value) => ({ $regex: escapeRegex(value), $options: "i" });
+
 // Create appointment
 exports.createAppointment = async (req, res) => {
 
@@ -78,11 +84,11 @@ exports.getAppointments = async (req, res) => {
     }
 
     if (req.query.doctorEmployeeId) {
-        filter.doctorEmployeeId = req.query.doctorEmployeeId;
+        filter.doctorEmployeeId = partial(req.query.doctorEmployeeId);
     }
 
     if (req.query.patientUHID) {
-        filter.patientUHID = req.query.patientUHID;
+        filter.patientUHID = partial(req.query.patientUHID);
     }
 
     return paginateAppointments(filter, req.query, res);

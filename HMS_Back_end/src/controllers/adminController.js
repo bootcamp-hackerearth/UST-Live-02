@@ -143,13 +143,14 @@ exports.getEmployee = async (req, res) => {
   });
 };
 
-// List active employees (and admins for owners) with filters + pagination
+// List active STAFF employees with filters + pagination
 exports.getEmployees = async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query, 10);
 
   const status = req.query.status || "ACTIVE";
-  const isOwner = req.user.roles.includes("OWNER");
-  const roleScope = isOwner ? ["STAFF", "ADMIN"] : ["STAFF"];
+  // Admins are managed on the dedicated owner-only admins page, so the
+  // employee list shows STAFF only regardless of who is requesting it.
+  const roleScope = ["STAFF"];
 
   // Employee-side filters: designation + free-text search
   const employeeMatch = { isDeleted: { $ne: true } };

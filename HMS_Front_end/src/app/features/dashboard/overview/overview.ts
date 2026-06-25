@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed } 
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { AuthService } from '../../../core/services/auth.service';
 import { AdminService } from '../../../core/services/admin.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
@@ -21,7 +22,7 @@ const FAILURE_AUDIT_ACTIONS = new Set<string>([
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-overview',
   standalone: true,
-  imports: [CommonModule, RouterLink, DashboardLayoutComponent, DatePipe],
+  imports: [CommonModule, RouterLink, DashboardLayoutComponent, PaginationComponent, DatePipe],
   templateUrl: './overview.html',
   styleUrl: './overview.css',
 })
@@ -120,16 +121,16 @@ export class OverviewComponent implements OnInit {
     });
   }
 
-  prevAuditPage(): void {
-    if (this.auditPage() > 1) {
-      this.loadAuditLogs(this.auditPage() - 1);
+  goToAuditPage(page: number): void {
+    if (
+      this.loadingAudit() ||
+      page < 1 ||
+      page > this.auditTotalPages() ||
+      page === this.auditPage()
+    ) {
+      return;
     }
-  }
-
-  nextAuditPage(): void {
-    if (this.auditPage() < this.auditTotalPages()) {
-      this.loadAuditLogs(this.auditPage() + 1);
-    }
+    this.loadAuditLogs(page);
   }
 
   trackByAudit = (_: number, log: AuditLog) => log.auditId;

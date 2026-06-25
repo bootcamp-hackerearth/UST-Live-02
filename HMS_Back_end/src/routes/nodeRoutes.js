@@ -1,34 +1,47 @@
 const express = require("express");
 const router = express.Router();
-const { body, param } = require("express-validator");
+const { body, param, query } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/nodeController");
 const { STAFF_DESIGNATIONS, RESTRICTED_ROLES } = require("../constants/domain");
 
+// Every designation that may be granted access to a node
+const ALLOWED_DESIGNATIONS = [...RESTRICTED_ROLES, ...STAFF_DESIGNATIONS];
+
 // All the routes require authentication
 router.use(auth);
 
-// Validates node name, path format, and allowed designation values
+// Validates node name, path format, optional icon, and allowed designation values
 const createNodeValidation = [
 
     body("name")
+        .trim()
         .notEmpty()
-        .withMessage("Node name is required"),
+        .withMessage("Node name is required")
+        .isLength({ max: 60 })
+        .withMessage("Node name must be at most 60 characters"),
 
     body("path")
+        .trim()
         .notEmpty()
         .withMessage("Node path is required")
-        .matches(/^\/.*/)
-        .withMessage("Path must start with /"),
+        .matches(/^\/[\w\-/]*$/)
+        .withMessage("Path must start with / and contain only letters, numbers, - and /"),
+
+    body("icon")
+        .optional({ values: "falsy" })
+        .trim()
+        .isLength({ max: 40 })
+        .withMessage("Icon must be at most 40 characters"),
 
     body("allowedDesignations")
         .isArray({ min: 1 })
         .withMessage("At least one allowed designation is required"),
 
     body("allowedDesignations.*")
-        .isIn([...STAFF_DESIGNATIONS, ...RESTRICTED_ROLES])
+        .isIn(ALLOWED_DESIGNATIONS)
         .withMessage("Valid designation is required")
 ];
 
@@ -41,15 +54,19 @@ const updateNodeValidation = [
 
     body("name")
         .optional()
+        .trim()
         .notEmpty()
-        .withMessage("Node name cannot be empty"),
+        .withMessage("Node name cannot be empty")
+        .isLength({ max: 60 })
+        .withMessage("Node name must be at most 60 characters"),
 
-    body("path")
-        .optional()
-        .notEmpty()
-        .withMessage("Node path cannot be empty")
-        .matches(/^\/.*/)
-        .withMessage("Path must start with /"),
+    // path is intentionally not accepted on update — a node's path is immutable
+
+    body("icon")
+        .optional({ values: "falsy" })
+        .trim()
+        .isLength({ max: 40 })
+        .withMessage("Icon must be at most 40 characters"),
 
     body("allowedDesignations")
         .optional()
@@ -60,7 +77,7 @@ const updateNodeValidation = [
 
     body("allowedDesignations.*")
         .optional()
-        .isIn([...STAFF_DESIGNATIONS, ...RESTRICTED_ROLES])
+        .isIn(ALLOWED_DESIGNATIONS)
         .withMessage("Valid designation is required")
 ];
 
@@ -72,10 +89,36 @@ const nodeIdValidation = [
         .withMessage("Node ID is required")
 ];
 
-// Node management routes (ADMIN / OWNER only)
+// Validates pagination + search query params for the list endpoint
+const listNodesValidation = [
+
+    query("page")
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage("Page must be a positive integer"),
+
+    query("limit")
+        .optional()
+        .isInt({ min: 1, max: 100 })
+        .withMessage("Limit must be between 1 and 100"),
+
+    query("search")
+        .optional()
+        .trim()
+];
+
+// Node management routes (OWNER only — admins are intentionally excluded)
+router.get(
+    "/",
+    authorizeRoles("OWNER"),
+    listNodesValidation,
+    validate,
+    controller.getNodes
+);
+
 router.post(
     "/create-node",
-    authorizeRoles("ADMIN", "OWNER"),
+    authorizeRoles("OWNER"),
     createNodeValidation,
     validate,
     controller.createNode
@@ -83,7 +126,7 @@ router.post(
 
 router.put(
     "/update-node/:nodeId",
-    authorizeRoles("ADMIN", "OWNER"),
+    authorizeRoles("OWNER"),
     updateNodeValidation,
     validate,
     controller.updateNode
@@ -91,7 +134,7 @@ router.put(
 
 router.delete(
     "/delete-node/:nodeId",
-    authorizeRoles("ADMIN", "OWNER"),
+    authorizeRoles("OWNER"),
     nodeIdValidation,
     validate,
     controller.deleteNode

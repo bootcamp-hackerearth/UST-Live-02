@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { SortAvailabilitySlotsPipe } from '../../../shared/pipes/sort-availability-slots.pipe';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -17,7 +18,7 @@ import {
   STAFF_DESIGNATIONS,
 } from '../../../core/models/employee.model';
 
-// Active employees list with search and designation filter (OWNER/ADMIN)
+// Active staff list with search and designation filter (OWNER/ADMIN viewers)
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-employees-list',
@@ -27,6 +28,7 @@ import {
     FormsModule,
     RouterLink,
     DashboardLayoutComponent,
+    PaginationComponent,
     DatePipe,
     LastLoginCellComponent,
     SortAvailabilitySlotsPipe,
@@ -42,7 +44,7 @@ export class EmployeesListComponent implements OnInit {
   private readonly router = inject(Router);
 
   loading = signal(true);
-  // Active employees (plus admins for owners) — paginated server-side
+  // Active staff employees — paginated server-side (admins live on their own page)
   employees = signal<EmployeeListItem[]>([]);
 
   searchTerm = signal('');
@@ -50,7 +52,6 @@ export class EmployeesListComponent implements OnInit {
   designations: (Designation | 'ALL')[] = [
     'ALL',
     ...STAFF_DESIGNATIONS,
-    'ADMIN',
   ];
 
   // Pagination
@@ -112,18 +113,12 @@ export class EmployeesListComponent implements OnInit {
     this.load();
   }
 
-  prevPage(): void {
-    if (this.page() > 1) {
-      this.page.update((p) => p - 1);
-      this.load();
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages() || p === this.page()) {
+      return;
     }
-  }
-
-  nextPage(): void {
-    if (this.page() < this.totalPages()) {
-      this.page.update((p) => p + 1);
-      this.load();
-    }
+    this.page.set(p);
+    this.load();
   }
 
   open(item: EmployeeListItem): void {
@@ -148,7 +143,8 @@ export class EmployeesListComponent implements OnInit {
     });
   }
 
-  // Admin rows are view only here while only staff designations may be edited or deleted from this tab
+  // Defensive: only staff rows are returned here, but never expose edit/delete
+  // for any privileged (OWNER/ADMIN) row that might slip through
   canEdit(item: EmployeeListItem): boolean {
     return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
   }

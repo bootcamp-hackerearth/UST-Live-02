@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { OwnerService } from '../../../core/services/owner.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
@@ -15,7 +16,7 @@ import { EmployeeListItem } from '../../../core/models/employee.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-admins',
   standalone: true,
-  imports: [CommonModule, RouterLink, DashboardLayoutComponent, DatePipe, LastLoginCellComponent],
+  imports: [CommonModule, RouterLink, DashboardLayoutComponent, PaginationComponent, DatePipe, LastLoginCellComponent],
   templateUrl: './admins.html',
   styleUrl: './admins.css',
 })
@@ -61,18 +62,12 @@ export class AdminsComponent implements OnInit {
     });
   }
 
-  prevPage(): void {
-    if (this.page() > 1) {
-      this.page.update((p) => p - 1);
-      this.load();
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages() || p === this.page()) {
+      return;
     }
-  }
-
-  nextPage(): void {
-    if (this.page() < this.totalPages()) {
-      this.page.update((p) => p + 1);
-      this.load();
-    }
+    this.page.set(p);
+    this.load();
   }
 
   open(item: EmployeeListItem): void {

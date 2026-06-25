@@ -46,25 +46,11 @@
       </div>
 
       @if (totalPages() > 1) {
-        <div class="pagination">
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            (click)="prevPage()"
-            [disabled]="page() === 1">
-            ← Previous
-          </button>
-          <span class="page-info">
-            Page {{ page() }} of {{ totalPages() }} · {{ total() }} total
-          </span>
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            (click)="nextPage()"
-            [disabled]="page() === totalPages()">
-            Next →
-          </button>
-        </div>
+        <app-pagination
+          [page]="page()"
+          [totalPages]="totalPages()"
+          [total]="total()"
+          (pageChange)="goToPage($event)" />
       }
     }
   </div>
@@ -77,7 +63,13 @@
             <h3 class="modal-title">{{ item.employee.name }}</h3>
             <p class="modal-sub">{{ item.employee.employeeCode }} · ADMIN</p>
           </div>
-          <button type="button" class="modal-close" (click)="close()">✕</button>
+          <div class="modal-header-actions">
+            <a [routerLink]="['/dashboard/admins', item.employee.employeeCode, 'edit']"
+              class="btn btn-primary btn-sm">
+              Edit
+            </a>
+            <button type="button" class="modal-close" (click)="close()">✕</button>
+          </div>
         </div>
         <div class="modal-body">
           <div class="detail-grid">

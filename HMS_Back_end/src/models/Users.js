@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema(
         }],
         employeeCode: {
             type: String,
+            unique: true,
             required: true
         },
         mustChangePassword: {

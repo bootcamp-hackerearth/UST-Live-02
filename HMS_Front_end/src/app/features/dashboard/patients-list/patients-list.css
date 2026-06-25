@@ -120,24 +120,6 @@
   color: #475569;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 0.5rem 0;
-}
-
-.page-info {
-  font-size: 0.8125rem;
-  color: #64748b;
-}
-
-.btn-sm {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.8125rem;
-}
-
 /* Modal */
 .modal-backdrop {
   position: fixed;

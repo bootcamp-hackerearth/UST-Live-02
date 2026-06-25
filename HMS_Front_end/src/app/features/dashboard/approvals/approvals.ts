@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
@@ -19,7 +20,7 @@ type Tab = 'registrations' | 'profileChanges';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-approvals',
   standalone: true,
-  imports: [CommonModule, DatePipe, DashboardLayoutComponent],
+  imports: [CommonModule, DatePipe, DashboardLayoutComponent, PaginationComponent],
   templateUrl: './approvals.html',
   styleUrl: './approvals.css',
 })
@@ -107,32 +108,20 @@ export class ApprovalsComponent implements OnInit {
     });
   }
 
-  prevRegPage(): void {
-    if (this.regPage() > 1) {
-      this.regPage.update((p) => p - 1);
-      this.loadRegistrations();
+  goToRegPage(p: number): void {
+    if (p < 1 || p > this.regTotalPages() || p === this.regPage()) {
+      return;
     }
+    this.regPage.set(p);
+    this.loadRegistrations();
   }
 
-  nextRegPage(): void {
-    if (this.regPage() < this.regTotalPages()) {
-      this.regPage.update((p) => p + 1);
-      this.loadRegistrations();
+  goToChangePage(p: number): void {
+    if (p < 1 || p > this.changeTotalPages() || p === this.changePage()) {
+      return;
     }
-  }
-
-  prevChangePage(): void {
-    if (this.changePage() > 1) {
-      this.changePage.update((p) => p - 1);
-      this.loadChanges();
-    }
-  }
-
-  nextChangePage(): void {
-    if (this.changePage() < this.changeTotalPages()) {
-      this.changePage.update((p) => p + 1);
-      this.loadChanges();
-    }
+    this.changePage.set(p);
+    this.loadChanges();
   }
 
   // Registration approvals

@@ -107,25 +107,11 @@
       </div>
 
       @if (totalPages() > 1) {
-        <div class="pagination">
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            (click)="prevPage()"
-            [disabled]="page() === 1">
-            ← Previous
-          </button>
-          <span class="page-info">
-            Page {{ page() }} of {{ totalPages() }} · {{ total() }} total
-          </span>
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            (click)="nextPage()"
-            [disabled]="page() === totalPages()">
-            Next →
-          </button>
-        </div>
+        <app-pagination
+          [page]="page()"
+          [totalPages]="totalPages()"
+          [total]="total()"
+          (pageChange)="goToPage($event)" />
       }
     }
   </div>

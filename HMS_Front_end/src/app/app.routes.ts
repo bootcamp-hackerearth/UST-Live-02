@@ -132,6 +132,26 @@ export const routes: Routes = [
             './features/dashboard/employees-create/employees-create'
           ).then((m) => m.CreateEmployeeComponent),
       },
+      {
+        path: 'admins/:code/edit',
+        canActivate: [ownerOnlyGuard()],
+        canDeactivate: [unsavedChangesGuard],
+        data: { mode: 'admin-edit' },
+        loadComponent: () =>
+          import(
+            './features/dashboard/employees-create/employees-create'
+          ).then((m) => m.CreateEmployeeComponent),
+      },
+
+      // Menu Nodes (sidebar node management): OWNER only
+      {
+        path: 'menu-nodes',
+        canActivate: [ownerOnlyGuard()],
+        loadComponent: () =>
+          import('./features/dashboard/menu-nodes/menu-nodes').then(
+            (m) => m.MenuNodesComponent,
+          ),
+      },
 
       // Patients: OWNER + ADMIN + RECEPTIONIST
       {

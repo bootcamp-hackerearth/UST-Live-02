@@ -63,7 +63,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   private readonly router = inject(Router);
   private readonly formDraft = inject(FormDraftService);
 
-  mode: 'staff' | 'admin' | 'edit' = 'staff';
+  mode: 'staff' | 'admin' | 'edit' | 'admin-edit' = 'staff';
   editEmployeeCode = '';
   form: FormGroup;
   loading = false;
@@ -118,22 +118,43 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
     return `draft:create-${this.mode}`;
   }
 
+  // True for both employee edit and admin edit (load-then-update flows)
+  get isEditMode(): boolean {
+    return this.mode === 'edit' || this.mode === 'admin-edit';
+  }
+
+  // True for both admin create and admin edit (designation/department locked)
+  get isAdminMode(): boolean {
+    return this.mode === 'admin' || this.mode === 'admin-edit';
+  }
+
+  // List to return to after save/cancel
+  get listRoute(): string {
+    return this.isAdminMode ? '/dashboard/admins' : '/dashboard/employees';
+  }
+
   get pageTitle(): string {
+    if (this.mode === 'admin-edit') return 'Edit Admin';
     if (this.mode === 'edit') return 'Edit Employee';
     return this.mode === 'admin' ? 'Create Admin' : 'Create Employee';
   }
 
   get cardTitle(): string {
+    if (this.mode === 'admin-edit') return 'Edit Administrator';
     if (this.mode === 'edit') return 'Edit Employee';
     return this.mode === 'admin' ? 'New Administrator' : 'New Employee';
   }
 
   ngOnInit(): void {
     this.mode =
-      (this.route.snapshot.data['mode'] as 'staff' | 'admin' | 'edit') || 'staff';
+      (this.route.snapshot.data['mode'] as
+        | 'staff'
+        | 'admin'
+        | 'edit'
+        | 'admin-edit') || 'staff';
     this.isOwner = this.authService.getDesignation() === 'OWNER';
 
-    if (this.mode === 'edit') {
+    if (this.isEditMode) {
       this.editEmployeeCode = this.route.snapshot.paramMap.get('code') ?? '';
       this.loadForEdit();
       return;
@@ -180,7 +201,7 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
       error: () => {
         this.initialLoading = false;
         this.toast.error(APP_MESSAGES.LOAD_EMPLOYEE_FAILED);
-        this.router.navigate(['/dashboard/employees']);
+        this.router.navigate([this.listRoute]);
       },
     });
   }
@@ -208,6 +229,10 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
     }
 
     this.refreshDesignationsForDepartment(false);
+    // Admin designation/department are fixed, so keep the locked select to ADMIN
+    if (this.isAdminMode) {
+      this.designations = ['ADMIN'];
+    }
     // Sets isDoctor/showMedical/showSpecialization, validators, and clears slots
     this.onDesignationChange();
 
@@ -370,20 +395,33 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
     const raw = this.form.getRawValue() as Record<string, unknown>;
     const commonPayload = this.buildCommonPayload(raw);
 
-    if (this.mode === 'edit') {
+    if (this.isEditMode) {
+      const isAdminEdit = this.mode === 'admin-edit';
+      const update$ = isAdminEdit
+        ? this.ownerService.updateAdmin(this.editEmployeeCode, commonPayload)
+        : this.adminService.updateEmployee(this.editEmployeeCode, commonPayload);
+
       this.loading = true;
-      this.adminService.updateEmployee(this.editEmployeeCode, commonPayload).subscribe({
+      update$.subscribe({
         next: (res) => {
           this.loading = false;
           this.cdr.markForCheck();
           this.submittedOk = true;
-          this.toast.success(res.message || APP_MESSAGES.EMPLOYEE_UPDATED);
-          this.router.navigate(['/dashboard/employees']);
+          this.toast.success(
+            res.message ||
+              (isAdminEdit ? APP_MESSAGES.ADMIN_UPDATED : APP_MESSAGES.EMPLOYEE_UPDATED),
+          );
+          this.router.navigate([this.listRoute]);
         },
         error: (err) => {
           this.loading = false;
           this.cdr.markForCheck();
-          this.toast.error(this.apiError.message(err, APP_MESSAGES.EMPLOYEE_UPDATE_FAILED));
+          this.toast.error(
+            this.apiError.message(
+              err,
+              isAdminEdit ? APP_MESSAGES.ADMIN_UPDATE_FAILED : APP_MESSAGES.EMPLOYEE_UPDATE_FAILED,
+            ),
+          );
         },
       });
       return;
@@ -438,12 +476,6 @@ export class CreateEmployeeComponent implements OnInit, CanComponentDeactivate {
   }
 
   onCancel(): void {
-    if (this.mode === 'edit') {
-      this.router.navigate(['/dashboard/employees']);
-      return;
-    }
-    this.router.navigate([
-      this.mode === 'admin' ? '/dashboard/admins' : '/dashboard/employees',
-    ]);
+    this.router.navigate([this.listRoute]);
   }
 }

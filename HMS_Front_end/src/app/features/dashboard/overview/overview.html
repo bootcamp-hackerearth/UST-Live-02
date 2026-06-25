@@ -109,27 +109,12 @@
               </ul>
 
               @if (auditTotalPages() > 1) {
-                <div class="pagination">
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    (click)="prevAuditPage()"
-                    [disabled]="auditPage() === 1 || loadingAudit()">
-                    ← Previous
-                  </button>
-
-                  <span class="page-info">
-                    Page {{ auditPage() }} of {{ auditTotalPages() }} · {{ auditTotal() }} total
-                  </span>
-
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    (click)="nextAuditPage()"
-                    [disabled]="auditPage() === auditTotalPages() || loadingAudit()">
-                    Next →
-                  </button>
-                </div>
+                <app-pagination
+                  [page]="auditPage()"
+                  [totalPages]="auditTotalPages()"
+                  [total]="auditTotal()"
+                  [disabled]="loadingAudit()"
+                  (pageChange)="goToAuditPage($event)" />
               }
             }
           </div>

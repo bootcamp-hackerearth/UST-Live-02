@@ -55,25 +55,12 @@
         </div>
 
         @if (regTotalPages() > 1) {
-          <div class="pagination">
-            <button
-              type="button"
-              class="btn btn-secondary btn-sm"
-              (click)="prevRegPage()"
-              [disabled]="regPage() === 1">
-              ← Previous
-            </button>
-            <span class="page-info">
-              Page {{ regPage() }} of {{ regTotalPages() }} · {{ regTotal() }} total
-            </span>
-            <button
-              type="button"
-              class="btn btn-secondary btn-sm"
-              (click)="nextRegPage()"
-              [disabled]="regPage() === regTotalPages()">
-              Next →
-            </button>
-          </div>
+          <app-pagination
+            [page]="regPage()"
+            [totalPages]="regTotalPages()"
+            [total]="regTotal()"
+            [disabled]="loadingReg()"
+            (pageChange)="goToRegPage($event)" />
         }
       }
     }
@@ -112,25 +99,12 @@
         </div>
 
         @if (changeTotalPages() > 1) {
-          <div class="pagination">
-            <button
-              type="button"
-              class="btn btn-secondary btn-sm"
-              (click)="prevChangePage()"
-              [disabled]="changePage() === 1">
-              ← Previous
-            </button>
-            <span class="page-info">
-              Page {{ changePage() }} of {{ changeTotalPages() }} · {{ changeTotal() }} total
-            </span>
-            <button
-              type="button"
-              class="btn btn-secondary btn-sm"
-              (click)="nextChangePage()"
-              [disabled]="changePage() === changeTotalPages()">
-              Next →
-            </button>
-          </div>
+          <app-pagination
+            [page]="changePage()"
+            [totalPages]="changeTotalPages()"
+            [total]="changeTotal()"
+            [disabled]="loadingChanges()"
+            (pageChange)="goToChangePage($event)" />
         }
       }
     }

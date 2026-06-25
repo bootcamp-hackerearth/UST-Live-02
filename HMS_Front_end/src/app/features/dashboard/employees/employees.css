@@ -300,16 +300,3 @@
     transform: translateY(0) scale(1);
   }
 }
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 0.5rem 0;
-}
-
-.page-info {
-  font-size: 0.8125rem;
-  color: #64748b;
-}

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { MedicalRecordDetailDialogComponent } from '../../../shared/ui/medical-record-detail-dialog/medical-record-detail-dialog';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { MedicalRecordService } from '../../../core/services/medical-record.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -24,6 +25,7 @@ import {
     FormsModule,
     DashboardLayoutComponent,
     MedicalRecordDetailDialogComponent,
+    PaginationComponent,
   ],
   templateUrl: './medical-records.html',
   styleUrl: './medical-records.css',
@@ -142,18 +144,12 @@ export class MedicalRecordsComponent implements OnInit {
     this.load();
   }
 
-  prevPage(): void {
-    if (this.page() > 1) {
-      this.page.update((p) => p - 1);
-      this.load();
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages() || p === this.page()) {
+      return;
     }
-  }
-
-  nextPage(): void {
-    if (this.page() < this.totalPages()) {
-      this.page.update((p) => p + 1);
-      this.load();
-    }
+    this.page.set(p);
+    this.load();
   }
 
   open(row: MedicalRecordListItem): void {

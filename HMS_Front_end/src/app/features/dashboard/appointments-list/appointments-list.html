@@ -47,8 +47,23 @@
     <div class="toolbar">
       <div class="toolbar-filters">
 
-        <label for="statusFilter">Status Filter</label>
+        <input
+          type="text"
+          class="form-input toolbar-filter"
+          placeholder="Patient UHID"
+          aria-label="Search by patient UHID"
+          [ngModel]="patientSearch()"
+          (ngModelChange)="onPatientSearch($event)" />
 
+        <input
+          type="text"
+          class="form-input toolbar-filter toolbar-search"
+          placeholder="Doctor employee code"
+          aria-label="Search by doctor employee code"
+          [ngModel]="doctorSearch()"
+          (ngModelChange)="onDoctorSearch($event)" />
+
+        <label for="statusFilter" class="sr-only">Filter by status</label>
         <select
           id="statusFilter"
           class="form-select toolbar-filter"
@@ -72,12 +87,12 @@
           [value]="dateFilter()"
           (change)="onDateChange($any($event.target).value)" />
 
-        @if (dateFilter()) {
+        @if (hasActiveFilters()) {
         <button
           type="button"
           class="btn btn-secondary btn-sm"
-          (click)="clearDate()">
-          Clear date
+          (click)="clearAllFilters()">
+          Clear filters
         </button>
         }
 
@@ -159,27 +174,11 @@
     </div>
 
     @if (totalPages() > 1) {
-    <div class="pagination">
-      <button
-        type="button"
-        class="btn btn-secondary btn-sm"
-        (click)="prevPage()"
-        [disabled]="page() === 1">
-        ← Previous
-      </button>
-
-      <span class="page-info">
-        Page {{ page() }} of {{ totalPages() }} · {{ total() }} total
-      </span>
-
-      <button
-        type="button"
-        class="btn btn-secondary btn-sm"
-        (click)="nextPage()"
-        [disabled]="page() === totalPages()">
-        Next →
-      </button>
-    </div>
+    <app-pagination
+      [page]="page()"
+      [totalPages]="totalPages()"
+      [total]="total()"
+      (pageChange)="goToPage($event)" />
     }
 
     }
