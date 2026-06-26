@@ -18,7 +18,7 @@
       <div class="stats-grid">
         @if (isOwnerOrAdmin()) {
           <a routerLink="/dashboard/employees" class="stat-card stat-card--link">
-            <span class="stat-label">Active Employees</span>
+            <span class="stat-label">{{ isOwner() ? 'Active Employees' : 'Active Staff' }}</span>
             <span class="stat-value">{{ activeEmployees() ?? '—' }}</span>
           </a>
           <a routerLink="/dashboard/approvals" class="stat-card stat-card--link stat-card--warning">

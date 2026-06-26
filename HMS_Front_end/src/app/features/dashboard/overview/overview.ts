@@ -62,6 +62,8 @@ export class OverviewComponent implements OnInit {
   }
 
   isOwnerOrAdmin = computed(() => this.authService.isSuperUser());
+  // Owner sees every employee; admins can't see other admins, so their count is labelled differently
+  isOwner = computed(() => this.designation === 'OWNER');
   isReceptionist = computed(() => this.designation === 'RECEPTIONIST');
   isDoctor = computed(() => this.designation === 'DOCTOR');
   hasReceptionAccess = computed(
