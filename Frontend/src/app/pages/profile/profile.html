@@ -1,0 +1,90 @@
+<div class="profile-container">
+  <button class="floating-back-btn" (click)="goBack()" title="Go back">
+    <i class="bi bi-arrow-left"></i>
+  </button>
+  <div class="profile-card">
+
+    <div class="profile-header">
+      <div class="avatar">
+        {{ profile?.firstName?.charAt(0) }}{{ profile?.lastName?.charAt(0) }}
+      </div>
+
+      <h2>My Profile</h2>
+      <p>View your account and employee information</p>
+    </div>
+
+    @if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    }
+
+    @if (profile) {
+    <div class="profile-details">
+
+      <div class="section-title">User Details</div>
+
+      <div class="profile-row">
+        <span class="label">Full Name</span>
+        <span class="value">{{ profile.firstName }} {{ profile.lastName }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Email</span>
+        <span class="value">{{ profile.email }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Role</span>
+        <span class="value">{{ profile.role }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Role Code</span>
+        <span class="value">{{ profile.roleCode }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Status</span>
+        <span class="status-badge">{{ profile.status }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Email Verified</span>
+        <span class="value">{{ profile.isVerified ? 'Yes' : 'No' }}</span>
+      </div>
+
+
+      <div class="profile-row">
+        <span class="label">Employee Code</span>
+        <span class="value">{{ profile.employeeCode }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Phone</span>
+        <span class="value">{{ profile.phone }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Department</span>
+        <span class="value">{{ profile.department }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Designation</span>
+        <span class="value">{{ profile.designation }}</span>
+      </div>
+
+      <div class="profile-row">
+        <span class="label">Joining Date</span>
+        <span class="value">{{ profile.joiningDate | date:'mediumDate' }}</span>
+      </div>
+
+    </div>
+    } @else {
+    @if (!errorMessage) {
+    <p class="loading">Loading profile...</p>
+    }
+    }
+
+  </div>
+
+</div>

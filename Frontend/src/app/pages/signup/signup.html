@@ -1,0 +1,26 @@
+
+<div class="signup-container">
+    <div class="signup-box">
+<h1>Sign Up</h1>
+
+<form action="">
+    <input type="text" placeholder="First Name">
+    <input type="text" placeholder="Last Name">
+    <input type="email" placeholder="Enter Your Mail">
+    <input type="password" placeholder="Enter your password">
+    <button type="button" (click)="showDemoMessage()">Sign Up</button>
+
+<p class="demo-message" *ngIf="message">
+  {{ message }}
+</p>
+    
+</form>
+
+<p> 
+    Already have an account ?
+    <a routerLink="/login">login</a>
+</p>
+
+</div>
+
+</div>

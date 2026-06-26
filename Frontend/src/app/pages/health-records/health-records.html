@@ -1,0 +1,143 @@
+<div class="health-record-page">
+
+  <div class="page-header">
+    <div>
+      <h2>Health Records</h2>
+      <p>View draft and finalized health records.</p>
+    </div>
+  </div>
+
+  <div class="table-toolbar">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by medical record, patient, doctor, UHID, status..."
+        [value]="searchText()"
+        (input)="searchText.set($any($event.target).value); filterHealthRecords()"
+      />
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-box">
+      Loading health records...
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="error-box">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (!loading() && healthRecords().length > 0) {
+    <div class="health-record-table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Medical Record ID</th>
+            <th>Appointment Code</th>
+            <th>Patient</th>
+            <th>UHID</th>
+            <th>Doctor</th>
+            <th>Diagnosis</th>
+            <th>Status</th>
+            <th>Created Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (record of healthRecords(); track record._id) {
+            <tr>
+              <td>{{ record.medicalRecordId || '-' }}</td>
+
+              <td>{{ getAppointmentCode(record) }}</td>
+
+              <td>{{ getPatientName(record) }}</td>
+
+              <td>
+                @if (typeof record.patientId !== 'string') {
+                  {{ record.patientId?.UHID || '-' }}
+                } @else {
+                  -
+                }
+              </td>
+
+              <td>{{ getDoctorName(record) }}</td>
+
+              <td class="diagnosis-cell">
+                {{ record.diagnosis || '-' }}
+              </td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="{
+                    'status-draft': record.status === 'DRAFT',
+                    'status-finalized': record.status === 'FINALIZED'
+                  }"
+                >
+                  {{ record.status }}
+                </span>
+              </td>
+
+              <td>
+                {{ record.createdAt | date:'dd-MM-yyyy' }}
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="view-btn"
+                  (click)="viewAppointmentDetails(record)"
+                >
+                  View Details
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <p>
+        Records: {{ startRecord }} - {{ endRecord }} of {{ totalRecords() }}
+      </p>
+
+      <div class="pagination">
+        <i
+          class="bi bi-chevron-left"
+          [class.disabled]="currentPage() === 1"
+          (click)="goToPreviousPage()"
+          (keypress)="goToPreviousPage()"
+          (keydown)="goToPreviousPage()"
+          (keyup)="goToPreviousPage()"
+        ></i>
+
+        <span class="page-info">
+          Page {{ currentPage() }} of {{ totalPages() || 1 }}
+        </span>
+
+        <i
+          class="bi bi-chevron-right"
+          [class.disabled]="currentPage() === totalPages() || totalPages() === 0"
+          (click)="goToNextPage()"
+          (keypress)="goToNextPage()"
+          (keydown)="goToNextPage()"
+          (keyup)="goToNextPage()"
+        ></i>
+      </div>
+    </div>
+  }
+
+  @if (!loading() && healthRecords().length === 0 && !errorMessage()) {
+    <div class="empty-state">
+      <i class="bi bi-file-medical"></i>
+      <h3>No health records found</h3>
+      <p>Health records will appear here after draft creation.</p>
+    </div>
+  }
+
+</div>
