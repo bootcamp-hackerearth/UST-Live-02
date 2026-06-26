@@ -17,6 +17,8 @@ import COLORS from "../../utils/colors";
 
 import { useAuth } from "../../context/AuthContext";
 
+import PropTypes from "prop-types";
+
 import {
     isEmpty,
     isValidEmail,
@@ -97,6 +99,14 @@ export default function LoginScreen({ navigation }) {
                 password,
             });
         } catch (error) {
+            //   NEW: Check if temporary password reset is required
+            if (error.requiresPasswordReset) {
+                navigation.navigate("ForceResetPassword", {
+                    email: error.email,
+                });
+                return;
+            }
+
             Alert.alert(
                 "Login Failed",
                 error?.response?.data?.message ||
@@ -146,6 +156,17 @@ export default function LoginScreen({ navigation }) {
                         disabled={loading}
                     />
 
+                    {/*   NEW: Forgot Password Link */}
+                    <TouchableOpacity
+                        onPress={() =>
+                            navigation.navigate("ForgotPassword")
+                        }
+                    >
+                        <Text style={styles.forgotPasswordLink}>
+                            Forgot Password?
+                        </Text>
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                         onPress={() =>
                             navigation.navigate("Register")
@@ -194,4 +215,17 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         fontWeight: "800",
     },
+
+    //   NEW: Forgot Password Link Style
+    forgotPasswordLink: {
+        marginTop: 15,
+        textAlign: "center",
+        color: COLORS.primary,
+        fontWeight: "600",
+        fontSize: 14,
+    },
 });
+
+LoginScreen.propTypes = {
+    navigation: PropTypes.object.isRequired,
+};

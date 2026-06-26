@@ -14,13 +14,42 @@ import {
     registerPatient,
 } from "../api/authService";
 
+import PropTypes from "prop-types";
+
 import {
     updatePatientApi,
 } from "../api/patientService";
 
 const AuthContext = createContext(null);
 
+// JWT Timeout duration in milliseconds (60 minutes)
+const JWT_TIMEOUT_DURATION = 60 * 60 * 1000;
+
+// Decode JWT to get expiration time
+const decodeJWT = (token) => {
+    try {
+        const parts = token.split(".");
+        if (parts.length !== 3) return null;
+        
+        const decoded = JSON.parse(
+            Buffer.from(parts[1], "base64").toString()
+        );
+        return decoded;
+    } catch (err) {
+        console.log("JWT decode error:", err);
+        return null;
+    }
+};
+
+// Check if token is expired based on custom timeout
+const isCustomTokenExpired = (expiryTime) => {
+    if (!expiryTime) return false;
+    const currentTime = Date.now();
+    return currentTime > expiryTime;
+};
+
 const normalizePatient = (p) => {
+    console.log(p);
     if (!p) return null;
 
     return {
@@ -38,6 +67,7 @@ const normalizePatient = (p) => {
 };
 
 const normalizeLogin = (payload) => {
+    console.log(payload);
     const d = payload?.data || payload;
 
     return {
@@ -52,17 +82,37 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [patient, setPatient] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
+    const [tokenExpiry, setTokenExpiry] = useState(null);
 
     const restoreSession = useCallback(async () => {
         try {
             const t = await AsyncStorage.getItem("token");
             const u = await AsyncStorage.getItem("user");
             const p = await AsyncStorage.getItem("patient");
+            const expiryTime = await AsyncStorage.getItem("tokenExpiry");
 
-            if (t && p) {
-                setToken(t);
-                setUser(u ? JSON.parse(u) : null);
-                setPatient(normalizePatient(JSON.parse(p)));
+            if (t && p && expiryTime) {
+                // Check if custom token timeout has expired
+                const expiryTimeNum = Number.parseInt(expiryTime);
+                if (isCustomTokenExpired(expiryTimeNum)) {
+                    console.log("Token has timed out, clearing session");
+                    await AsyncStorage.multiRemove([
+                        "token",
+                        "user",
+                        "patient",
+                        "tokenExpiry",
+                    ]);
+                    setToken(null);
+                    setUser(null);
+                    setPatient(null);
+                    setTokenExpiry(null);
+                } else {
+                    console.log("Token is still valid, restoring session");
+                    setToken(t);
+                    setUser(u ? JSON.parse(u) : null);
+                    setPatient(normalizePatient(JSON.parse(p)));
+                    setTokenExpiry(expiryTimeNum);
+                }
             }
         } catch (err) {
             console.log("RESTORE SESSION ERROR:", err);
@@ -76,20 +126,32 @@ export function AuthProvider({ children }) {
     }, [restoreSession]);
 
     const login = useCallback(async ({ email, password }) => {
-        const data = normalizeLogin(
-            await loginPatient({
-                email: email.trim().toLowerCase(),
-                password,
-            })
-        );
+        const response = await loginPatient({
+            email: email.trim().toLowerCase(),
+            password,
+        });
 
-        console.log("LOGIN DATA:", data);
+        console.log("LOGIN RESPONSE:", response);
+
+        // NEW: Check if temporary password reset is required
+        if (response.requiresPasswordReset) {
+            const error = new Error("Temporary password reset required");
+            error.requiresPasswordReset = true;
+            error.email = response.email;
+            throw error;
+        }
+
+        const data = normalizeLogin(response);
 
         if (!data.token || !data.patient) {
             throw new Error("Invalid login response from server");
         }
 
+        // Calculate token expiry time
+        const expiryTime = Date.now() + JWT_TIMEOUT_DURATION;
+
         await AsyncStorage.setItem("token", data.token);
+        await AsyncStorage.setItem("tokenExpiry", expiryTime.toString());
 
         if (data.user) {
             await AsyncStorage.setItem(
@@ -106,6 +168,7 @@ export function AuthProvider({ children }) {
         );
 
         setToken(data.token);
+        setTokenExpiry(expiryTime);
         setUser(data.user || null);
         setPatient(data.patient);
 
@@ -121,12 +184,36 @@ export function AuthProvider({ children }) {
             "token",
             "user",
             "patient",
+            "tokenExpiry",
         ]);
 
         setToken(null);
         setUser(null);
         setPatient(null);
+        setTokenExpiry(null);
     }, []);
+
+    // Monitor token expiration and auto-logout
+    useEffect(() => {
+        if (!token || !tokenExpiry) return;
+
+        const now = Date.now();
+        const timeUntilExpiry = tokenExpiry - now;
+
+        if (timeUntilExpiry <= 0) {
+            // Token already expired
+            logout();
+            return;
+        }
+
+        // Set timeout to logout when token expires
+        const timeoutId = setTimeout(() => {
+            console.log("Token expired, logging out...");
+            logout();
+        }, timeUntilExpiry);
+
+        return () => clearTimeout(timeoutId);
+    }, [token, tokenExpiry, logout]);
 
     const updatePatientState = useCallback(async (p) => {
         const n = normalizePatient(p);
@@ -168,6 +255,7 @@ export function AuthProvider({ children }) {
         token,
         user,
         patient,
+        tokenExpiry,
         isLoggedIn: !!token,
         authLoading,
         login,
@@ -179,6 +267,7 @@ export function AuthProvider({ children }) {
         token,
         user,
         patient,
+        tokenExpiry,
         authLoading,
         login,
         register,
@@ -202,4 +291,8 @@ export const useAuth = () => {
     }
 
     return v;
+};
+
+AuthProvider.propTypes = {
+    children: PropTypes.node.isRequired,
 };

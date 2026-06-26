@@ -1,3 +1,7 @@
+const FIELD_LABEL = "Password";
+const PASSWORD_REQUIRED = FIELD_LABEL + " is required";
+const PASSWORD_MIN_LENGTH = FIELD_LABEL + " must be at least 8 characters";
+
 import {
     getTomorrowDate,
     normalizeDateOnly,
@@ -8,7 +12,7 @@ export const isEmpty = (value) => {
 };
 
 export const isValidEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(
+    return /^[^\s@]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(
         String(email).trim()
     );
 };
@@ -61,8 +65,9 @@ export const firstErrorMessage = (errors) => {
 
 export const validateLoginSubmit = ({
     email,
-    password,
+    password: userInput,
 }) => {
+
     const errors = {};
 
     if (isEmpty(email)) {
@@ -71,8 +76,10 @@ export const validateLoginSubmit = ({
         errors.email = "Please enter a valid email address";
     }
 
-    if (isEmpty(password)) {
-        errors.password = "Password is required";
+    if (isEmpty(userInput)) {
+        errors.password = PASSWORD_REQUIRED;
+    } else if (!isValidPassword(userInput)) {
+        errors.password = PASSWORD_MIN_LENGTH;
     }
 
     return errors;
@@ -82,36 +89,41 @@ export const validateRegisterSubmit = ({
     name,
     phone,
     email,
-    password,
+    password: enteredPassword,
     gender,
     dob,
     pincode,
     emergencyPhone,
 }) => {
+
     const errors = {};
 
     if (isEmpty(name)) {
         errors.name = "Full name is required";
     } else if (name.trim().length < 3) {
-        errors.name = "Name must be at least 3 characters";
+        errors.name =
+            "Name must be at least 3 characters";
     }
 
     if (isEmpty(phone)) {
         errors.phone = "Phone number is required";
     } else if (!isValidIndianMobile(phone)) {
-        errors.phone = "Phone must be a valid 10-digit Indian mobile number, start with 6-9, and cannot contain all same digits";
+        errors.phone =
+            "Phone must be a valid 10-digit Indian mobile number, start with 6-9, and cannot contain all same digits";
     }
 
     if (isEmpty(email)) {
         errors.email = "Email is required";
     } else if (!isValidEmail(email)) {
-        errors.email = "Please enter a valid email address";
+        errors.email =
+            "Please enter a valid email address";
     }
 
-    if (isEmpty(password)) {
-        errors.password = "Password is required";
-    } else if (!isValidPassword(password)) {
-        errors.password = "Password must be at least 8 characters";
+    if (isEmpty(enteredPassword)) {
+        errors.password = PASSWORD_REQUIRED;
+    } else if (!isValidPassword(enteredPassword)) {
+        errors.password =
+            PASSWORD_MIN_LENGTH;
     }
 
     if (isEmpty(gender)) {
@@ -121,18 +133,21 @@ export const validateRegisterSubmit = ({
     if (!dob) {
         errors.dob = "Date of birth is required";
     } else if (isFutureDate(dob)) {
-        errors.dob = "Date of birth cannot be a future date";
+        errors.dob =
+            "Date of birth cannot be a future date";
     }
 
     if (!isValidPincode(pincode)) {
-        errors.pincode = "Pincode must be 6 digits";
+        errors.pincode =
+            "Pincode must be 6 digits";
     }
 
     if (
         !isEmpty(emergencyPhone) &&
         !isValidIndianMobile(emergencyPhone)
     ) {
-        errors.emergencyPhone = "Emergency contact phone must be a valid 10-digit mobile number, start with 6-9, and cannot contain all same digits";
+        errors.emergencyPhone =
+            "Emergency contact phone must be a valid 10-digit mobile number, start with 6-9, and cannot contain all same digits";
     }
 
     return errors;

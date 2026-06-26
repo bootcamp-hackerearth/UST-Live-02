@@ -11,7 +11,8 @@ import {
 import {
     createNativeStackNavigator,
 } from "@react-navigation/native-stack";
-
+import HealthRecordsScreen
+    from "../screens/patient/HealthRecordsScreen";
 import DashboardScreen from "../screens/patient/DashboardScreen";
 import MyAppointmentsScreen from "../screens/patient/MyAppointmentsScreen";
 import ProfileScreen from "../screens/patient/ProfileScreen";
@@ -20,9 +21,13 @@ import EditAppointmentScreen from "../screens/patient/EditAppointmentScreen";
 import EditProfileScreen from "../screens/patient/EditProfileScreen";
 
 import COLORS from "../utils/colors";
+import PropTypes from "prop-types";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const DashboardTabIcon = () => <TabIcon icon="🏠" />;
+const AppointmentTabIcon = () => <TabIcon icon="📅" />;
+const ProfileTabIcon = () => <TabIcon icon="👤" />;
 
 const TabIcon = ({ icon }) => {
     return (
@@ -57,9 +62,7 @@ function MainTabs() {
                 component={DashboardScreen}
                 options={{
                     title: "Home",
-                    tabBarIcon: () => (
-                        <TabIcon icon="🏠" />
-                    ),
+                    tabBarIcon: DashboardTabIcon,
                 }}
             />
 
@@ -68,9 +71,7 @@ function MainTabs() {
                 component={MyAppointmentsScreen}
                 options={{
                     title: "Appointments",
-                    tabBarIcon: () => (
-                        <TabIcon icon="📅" />
-                    ),
+                    tabBarIcon: AppointmentTabIcon,
                 }}
             />
 
@@ -79,9 +80,7 @@ function MainTabs() {
                 component={ProfileScreen}
                 options={{
                     title: "Profile",
-                    tabBarIcon: () => (
-                        <TabIcon icon="👤" />
-                    ),
+                    tabBarIcon: ProfileTabIcon,
                 }}
             />
         </Tab.Navigator>
@@ -109,6 +108,10 @@ export default function MainNavigator() {
                 name="EditAppointment"
                 component={EditAppointmentScreen}
             />
+            <Stack.Screen
+                name="HealthRecords"
+                component={HealthRecordsScreen}
+            />
 
             <Stack.Screen
                 name="EditProfile"
@@ -117,3 +120,7 @@ export default function MainNavigator() {
         </Stack.Navigator>
     );
 }
+
+TabIcon.propTypes = {
+    icon: PropTypes.node.isRequired,
+};

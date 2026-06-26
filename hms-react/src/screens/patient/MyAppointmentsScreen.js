@@ -21,6 +21,7 @@ import { useAppointments } from "../../context/AppointmentContext";
 
 import COLORS from "../../utils/colors";
 import { formatDateDisplay } from "../../utils/dateUtils";
+import PropTypes from "prop-types";
 
 const canEdit = (status) => {
     return status === "PENDING";
@@ -36,13 +37,19 @@ export default function MyAppointmentsScreen({
     const {
         appointments,
         appointmentsLoading,
+        appointmentsLoadingMore,
+        appointmentsHasMore,
+        appointmentTotalCount,
         loadAppointments,
+        loadMoreAppointments,
         cancelAppointment,
     } = useAppointments();
 
     useFocusEffect(
         useCallback(() => {
-            loadAppointments();
+            loadAppointments({
+                page: 1,
+            });
         }, [loadAppointments])
     );
 
@@ -58,21 +65,23 @@ export default function MyAppointmentsScreen({
                 {
                     text: "Yes",
                     style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await cancelAppointment(appointmentId);
+                    onPress: () => {
+                        void (async () => {
+                            try {
+                                await cancelAppointment(appointmentId);
 
-                            Alert.alert(
-                                "Success",
-                                "Appointment cancelled"
-                            );
-                        } catch (err) {
-                            Alert.alert(
-                                "Error",
-                                err?.response?.data?.message ||
-                                "Unable to cancel appointment"
-                            );
-                        }
+                                Alert.alert(
+                                    "Success",
+                                    "Appointment cancelled"
+                                );
+                            } catch (err) {
+                                Alert.alert(
+                                    "Error",
+                                    err?.response?.data?.message ??
+                                    "Unable to cancel appointment"
+                                );
+                            }
+                        })();
                     },
                 },
             ]
@@ -116,7 +125,7 @@ export default function MyAppointmentsScreen({
                 </Text>
 
                 <Text style={styles.listCount}>
-                    {appointments.length} total
+                    {appointmentTotalCount || appointments.length} total
                 </Text>
             </View>
 
@@ -142,6 +151,22 @@ export default function MyAppointmentsScreen({
                             No appointments found
                         </Text>
                     }
+                    ListFooterComponent={
+                        appointmentsLoadingMore ? (
+                            <View style={styles.footerLoader}>
+                                <ActivityIndicator
+                                    size="small"
+                                    color={COLORS.primary}
+                                />
+                            </View>
+                        ) : null
+                    }
+                    onEndReached={() => {
+                        if (appointmentsHasMore) {
+                            loadMoreAppointments();
+                        }
+                    }}
+                    onEndReachedThreshold={0.4}
                     renderItem={({ item }) => {
                         const statusStyle =
                             getStatusStyle(item.status);
@@ -388,4 +413,13 @@ const styles = StyleSheet.create({
         marginTop: 50,
         color: COLORS.subtitle,
     },
+
+    footerLoader: {
+        paddingVertical: 18,
+        alignItems: "center",
+    },
 });
+
+MyAppointmentsScreen.propTypes = {
+    navigation: PropTypes.object.isRequired,
+};

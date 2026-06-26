@@ -3,6 +3,7 @@ import React, {
     useCallback,
     useContext,
     useMemo,
+    useRef,
     useState,
 } from "react";
 import PropTypes from "prop-types";
@@ -17,12 +18,28 @@ import {
 
 const AppointmentContext = createContext(null);
 
+const APPOINTMENTS_PAGE_SIZE = 10;
+
 const normalizeList = (payload) => {
-    const data = payload?.data || payload;
-    return Array.isArray(data) ? data : [];
+    console.log(payload);
+    return Array.isArray(payload)
+        ? payload
+        : [];
+};
+
+const normalizePaginatedAppointments = (payload) => {
+    const appointments = Array.isArray(payload?.appointments)
+        ? payload.appointments
+        : normalizeList(payload);
+
+    return {
+        appointments,
+        pagination: payload?.pagination || null,
+    };
 };
 
 const normalizeSlots = (payload, fallbackSlots = []) => {
+    console.log(payload);
     const data = payload?.data || payload || {};
 
     return {
@@ -37,6 +54,9 @@ const normalizeSlots = (payload, fallbackSlots = []) => {
 export function AppointmentProvider({ children }) {
     const [doctors, setDoctors] = useState([]);
     const [appointments, setAppointments] = useState([]);
+    const [appointmentsPage, setAppointmentsPage] = useState(1);
+    const [appointmentsHasMore, setAppointmentsHasMore] = useState(true);
+    const [appointmentTotalCount, setAppointmentTotalCount] = useState(0);
 
     const [doctorSlots, setDoctorSlots] = useState({
         allSlots: [],
@@ -46,12 +66,19 @@ export function AppointmentProvider({ children }) {
 
     const [doctorsLoading, setDoctorsLoading] = useState(false);
     const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+    const [appointmentsLoadingMore, setAppointmentsLoadingMore] =
+        useState(false);
     const [slotsLoading, setSlotsLoading] = useState(false);
+    const appointmentsLoadingMoreRef = useRef(false);
 
     const loadDoctors = useCallback(async () => {
         try {
             setDoctorsLoading(true);
             const payload = await getDoctorsApi();
+            console.log(
+    "DOCTORS RESPONSE:",
+    JSON.stringify(payload, null, 2)
+);
             setDoctors(normalizeList(payload));
         } catch (err) {
             console.log("LOAD DOCTORS ERROR:", err?.response?.data || err.message);
@@ -61,18 +88,85 @@ export function AppointmentProvider({ children }) {
         }
     }, []);
 
-    const loadAppointments = useCallback(async () => {
+    const loadAppointments = useCallback(async ({
+        page = 1,
+        append = false,
+    } = {}) => {
         try {
-            setAppointmentsLoading(true);
-            const payload = await getMyAppointmentsApi();
-            setAppointments(normalizeList(payload));
+            if (append) {
+                setAppointmentsLoadingMore(true);
+            } else {
+                setAppointmentsLoading(true);
+            }
+
+            const payload = await getMyAppointmentsApi({
+                page,
+                limit: APPOINTMENTS_PAGE_SIZE,
+            });
+
+            const {
+                appointments: nextAppointments,
+                pagination,
+            } = normalizePaginatedAppointments(payload);
+
+            setAppointments((currentAppointments) =>
+                append
+                    ? [
+                        ...currentAppointments,
+                        ...nextAppointments,
+                    ]
+                    : nextAppointments
+            );
+            setAppointmentsPage(page);
+            setAppointmentTotalCount(
+                pagination?.totalRecords ??
+                nextAppointments.length
+            );
+            setAppointmentsHasMore(
+                pagination
+                    ? page < pagination.totalPages
+                    : nextAppointments.length === APPOINTMENTS_PAGE_SIZE
+            );
         } catch (err) {
             console.log("LOAD APPOINTMENTS ERROR:", err?.response?.data || err.message);
-            setAppointments([]);
+            if (!append) {
+                setAppointments([]);
+                setAppointmentTotalCount(0);
+                setAppointmentsHasMore(false);
+            }
         } finally {
             setAppointmentsLoading(false);
+            setAppointmentsLoadingMore(false);
         }
     }, []);
+
+    const loadMoreAppointments = useCallback(async () => {
+        if (
+            appointmentsLoading ||
+            appointmentsLoadingMore ||
+            appointmentsLoadingMoreRef.current ||
+            !appointmentsHasMore
+        ) {
+            return;
+        }
+
+        appointmentsLoadingMoreRef.current = true;
+
+        try {
+            await loadAppointments({
+                page: appointmentsPage + 1,
+                append: true,
+            });
+        } finally {
+            appointmentsLoadingMoreRef.current = false;
+        }
+    }, [
+        appointmentsHasMore,
+        appointmentsLoading,
+        appointmentsLoadingMore,
+        appointmentsPage,
+        loadAppointments,
+    ]);
 
     const loadDoctorSlots = useCallback(async (
         doctorEmployeeId,
@@ -142,10 +236,14 @@ export function AppointmentProvider({ children }) {
 
         doctorsLoading,
         appointmentsLoading,
+        appointmentsLoadingMore,
         slotsLoading,
+        appointmentsHasMore,
+        appointmentTotalCount,
 
         loadDoctors,
         loadAppointments,
+        loadMoreAppointments,
         loadDoctorSlots,
 
         bookAppointment,
@@ -158,10 +256,14 @@ export function AppointmentProvider({ children }) {
 
         doctorsLoading,
         appointmentsLoading,
+        appointmentsLoadingMore,
         slotsLoading,
+        appointmentsHasMore,
+        appointmentTotalCount,
 
         loadDoctors,
         loadAppointments,
+        loadMoreAppointments,
         loadDoctorSlots,
 
         bookAppointment,

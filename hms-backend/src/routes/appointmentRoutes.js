@@ -2,58 +2,72 @@ const express = require("express");
 const router = express.Router();
 
 const appointmentController = require("../controllers/appointmentController");
-
 const auth = require("../middleware/authMiddleware");
-const allowRoles = require("../middleware/roleMiddleware");
+const allowPermission = require("../middleware/checkPermission");
+const { PERMISSIONS } = require("../constants/permission");
 
-const adminReceptionistAccess = [
-    auth,
-    allowRoles("ADMIN", "RECEPTIONIST")
-];
-
-
+// CREATE APPOINTMENT
 router.post(
-    "/",
-    adminReceptionistAccess,
-    appointmentController.createAppointment
+  "/",
+  auth,
+  allowPermission(PERMISSIONS.APPOINTMENT_CREATE),
+  appointmentController.createAppointment,
 );
 
-
+// GET ALL APPOINTMENTS
 router.get(
-    "/",
-    auth,
-    appointmentController.getAppointments
+  "/",
+  auth,
+  allowPermission(PERMISSIONS.APPOINTMENT_READ),
+  appointmentController.getAppointments,
 );
 
+// APPROVE APPOINTMENT
 router.put(
-    "/:appointmentId/approve",
-    adminReceptionistAccess,
-    appointmentController.approveAppointment
+  "/:appointmentId/approve",
+  auth,
+  allowPermission(PERMISSIONS.APPOINTMENT_UPDATE),
+  appointmentController.approveAppointment,
 );
 
+// REJECT APPOINTMENT
 router.put(
-    "/:appointmentId/reject",
-    adminReceptionistAccess,
-    appointmentController.rejectAppointment
+  "/:appointmentId/reject",
+  auth,
+  allowPermission(PERMISSIONS.APPOINTMENT_UPDATE),
+  appointmentController.rejectAppointment,
 );
 
+// UPDATE APPOINTMENT STATUS  👈 added
+router.put(
+  "/:appointmentId/status",
+  auth,
+  allowPermission(PERMISSIONS.APPOINTMENT_UPDATE),
+  appointmentController.updateAppointmentStatus,
+);
+
+// GET SINGLE APPOINTMENT
 router.get(
-    "/:appointmentId",
-    auth,
-    appointmentController.getAppointmentById
+  "/:appointmentId",
+  auth,
+  allowPermission(PERMISSIONS.APPOINTMENT_READ),
+  appointmentController.getAppointmentById,
 );
 
+// UPDATE APPOINTMENT
 router.put(
-    "/:appointmentId",
-    adminReceptionistAccess,
-    appointmentController.updateAppointment
+  "/:appointmentId",
+  auth,
+  allowPermission(PERMISSIONS.APPOINTMENT_UPDATE),
+  appointmentController.updateAppointment,
 );
 
-
+// DELETE APPOINTMENT
 router.delete(
-    "/:appointmentId",
-    adminReceptionistAccess,
-    appointmentController.deleteAppointment
+  "/:appointmentId",
+  auth,
+  allowPermission(PERMISSIONS.APPOINTMENT_DELETE),
+  appointmentController.deleteAppointment,
 );
 
 module.exports = router;

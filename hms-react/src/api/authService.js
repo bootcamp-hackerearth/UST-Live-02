@@ -21,3 +21,44 @@ export const loginPatient = async (data) => {
 
     return unwrap(response);
 };
+
+const sendForgotPasswordRequest = async (data) => {
+    const response = await api.post(
+        "/patient-auth/forgot-password",
+        data
+    );
+
+    return unwrap(response);
+};
+
+export const forgotPasswordApi = sendForgotPasswordRequest;
+
+
+export const verifyOTPApi = async (data) => {
+    const response = await api.post(
+        "/patient-auth/verify-otp",
+        data
+    );
+
+    return unwrap(response);
+};
+
+export const resetPasswordApi = async (data) => {
+    const response = await api.post(
+        "/patient-auth/reset-password",
+        data
+    );
+
+    return unwrap(response);
+};
+
+export const resendOTPApi = sendForgotPasswordRequest;
+
+export const resetTemporaryPasswordApi = async (data) => {
+    const response = await api.post(
+        "/patient-auth/reset-temporary-password",
+        data
+    );
+
+    return unwrap(response);
+};
