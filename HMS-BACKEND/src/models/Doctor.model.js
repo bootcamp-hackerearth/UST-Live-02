@@ -9,11 +9,11 @@ const doctorSchema = mongoose.Schema({
     },
     specialization: {
         type: String,
-        trim:true
+        trim: true
     },
     qualification: {
         type: String,
-        trim:true
+        trim: true
     },
     consultationFee: {
         type: Number,
@@ -23,7 +23,7 @@ const doctorSchema = mongoose.Schema({
         type: String,
         unique: true,
         required: true,
-        trim:true
+        trim: true
     },
     availabilityStartTime: {
         type: String,
@@ -36,6 +36,19 @@ const doctorSchema = mongoose.Schema({
         required: true,
     },
 
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    deletedAt: {
+        type: Date,
+        default: null
+    },
+    deletedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    }
 }, {
     timestamps: true
 })

@@ -34,4 +34,11 @@ router.put(
     authRoles(permissions.UPDATE_DOCTOR),
     doctorController.updateDoctor
 );
+
+router.get(
+  '/specializations',
+  authMiddleware,
+  doctorController.getDoctorSpecializations
+);
+
 module.exports=router;

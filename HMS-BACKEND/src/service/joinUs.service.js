@@ -6,6 +6,10 @@ const bcrypt = require('bcrypt')
 const Role = require('../models/Role.model')
 const Employee = require('../models/Employee.model')
 const Doctor = require('../models/Doctor.model')
+const {
+  getPagination,
+  buildPaginationResponse
+} = require('../utils/pagination');
 
 exports.createJoinUsRequest = async (joinUsData) => {
     const {
@@ -116,20 +120,110 @@ exports.verifyJoinUsEmail = async (token) => {
     return joinUsRequest;
 };
 
-exports.getAllJoinUsRequests = async () => {
-    const requests = await JoinUs.find()
-        .sort({ createdAt: -1 });
+exports.getAllJoinUsRequests = async (query = {}) => {
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+  const search = query.search ? query.search.trim() : '';
 
-    return requests;
+  const allowedSortFields = [
+    'createdAt',
+    'firstName',
+    'lastName',
+    'email',
+    'status'
+  ];
+
+  const finalSortBy = allowedSortFields.includes(sortBy)
+    ? sortBy
+    : 'createdAt';
+
+  const filter = {};
+
+  if (search) {
+    filter.$or = [
+      { firstName: { $regex: search, $options: 'i' } },
+      { lastName: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { phone: { $regex: search, $options: 'i' } },
+      { role: { $regex: search, $options: 'i' } },
+      { department: { $regex: search, $options: 'i' } },
+      { designation: { $regex: search, $options: 'i' } },
+      { status: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  const totalRecords = await JoinUs.countDocuments(filter);
+
+  const requests = await JoinUs.find(filter)
+    .sort({ [finalSortBy]: sortOrder })
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    requests,
+    pagination: {
+      ...buildPaginationResponse({
+        page,
+        limit,
+        totalRecords
+      }),
+      sortBy: finalSortBy,
+      sortOrder: sortOrder === 1 ? 'asc' : 'desc'
+    }
+  };
 };
 
-exports.getPendingJoinUsRequests = async () => {
-    const requests = await JoinUs.find({
-        isVerified: true,
-        approvalStatus: 'PENDING'
-    }).sort({ createdAt: -1 });
+exports.getPendingJoinUsRequests = async (query = {}) => {
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+  const search = query.search ? query.search.trim() : '';
 
-    return requests;
+  const allowedSortFields = [
+    'createdAt',
+    'firstName',
+    'lastName',
+    'email',
+    'approvalStatus'
+  ];
+
+  const finalSortBy = allowedSortFields.includes(sortBy)
+    ? sortBy
+    : 'createdAt';
+
+  const filter = {
+    isVerified: true,
+    approvalStatus: 'PENDING'
+  };
+
+  if (search) {
+    filter.$or = [
+      { firstName: { $regex: search, $options: 'i' } },
+      { lastName: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { phone: { $regex: search, $options: 'i' } },
+      { role: { $regex: search, $options: 'i' } },
+      { department: { $regex: search, $options: 'i' } },
+      { designation: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  const totalRecords = await JoinUs.countDocuments(filter);
+
+  const requests = await JoinUs.find(filter)
+    .sort({ [finalSortBy]: sortOrder })
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    requests,
+    pagination: {
+      ...buildPaginationResponse({
+        page,
+        limit,
+        totalRecords
+      }),
+      sortBy: finalSortBy,
+      sortOrder: sortOrder === 1 ? 'asc' : 'desc'
+    }
+  };
 };
 
 exports.checkJoinUsEmail = async (email) => {

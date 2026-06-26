@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { router } from 'expo-router';
 
 import { Appointment } from '../../../types/appointment.types';
 import { styles } from '../../../styles/patient/appointments/appointmentCard.style';
@@ -47,6 +48,7 @@ export default function AppointmentCard({
 
   const doctorName = getDoctorName();
   const canCancel = appointment.status === 'BOOKED' && Boolean(onCancel);
+  const canViewHealthRecord = appointment.status === 'COMPLETED';
 
   return (
     <View style={styles.appointmentCard}>
@@ -82,20 +84,41 @@ export default function AppointmentCard({
           {appointment.reason || 'No reason provided'}
         </Text>
 
-        {canCancel && (
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => onCancel?.(appointment._id)}
-            disabled={cancelling}
-            activeOpacity={0.8}
-          >
-            {cancelling ? (
-              <ActivityIndicator size="small" />
-            ) : (
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            )}
-          </TouchableOpacity>
-        )}
+        <View style={styles.actionButtons}>
+          {canViewHealthRecord && (
+            <TouchableOpacity
+              style={styles.healthRecordButton}
+              onPress={() =>
+                router.push({
+                  pathname: '/health-record-details',
+                  params: {
+                    appointmentId: appointment._id,
+                  },
+                })
+              }
+              activeOpacity={0.8}
+            >
+              <Text style={styles.healthRecordButtonText}>
+                View Record
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {canCancel && (
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => onCancel?.(appointment._id)}
+              disabled={cancelling}
+              activeOpacity={0.8}
+            >
+              {cancelling ? (
+                <ActivityIndicator size="small" />
+              ) : (
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );

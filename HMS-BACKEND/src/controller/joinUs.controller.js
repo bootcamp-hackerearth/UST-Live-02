@@ -29,33 +29,33 @@ exports.verifyJoinUsEmail = async (req, res, next) => {
         next(error);
     }
 };
-
 exports.getAllJoinUsRequests = async (req, res, next) => {
     try {
-        const requests = await joinUsService.getAllJoinUsRequests();
+        const result = await joinUsService.getAllJoinUsRequests(req.query);
 
         return res.status(200).json({
             success: true,
             message: 'Join requests fetched successfully',
-            data: requests
+            data: result.requests,
+            pagination: result.pagination
         });
     } catch (error) {
         next(error);
     }
 };
-
 exports.getPendingJoinUsRequests = async (req, res, next) => {
-    try {
-        const requests = await joinUsService.getPendingJoinUsRequests();
+  try {
+    const result = await joinUsService.getPendingJoinUsRequests(req.query);
 
-        return res.status(200).json({
-            success: true,
-            message: 'Pending verified join requests fetched successfully',
-            data: requests
-        });
-    } catch (error) {
-        next(error);
-    }
+    return res.status(200).json({
+      success: true,
+      message: 'Pending verified join requests fetched successfully',
+      data: result.requests,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 exports.getPendingJoinUsCount = async (req, res, next) => {

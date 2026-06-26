@@ -1,0 +1,453 @@
+<div class="details-page">
+
+  <div class="page-header">
+    <button type="button" class="back-btn" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      Back
+    </button>
+
+    <div class="page-title-section">
+      <h2>Appointment Details</h2>
+      <p>View appointment information and manage health record draft.</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-box">
+      Loading appointment details...
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <p class="error-msg">{{ errorMessage() }}</p>
+  }
+
+  @if (successMessage()) {
+    <p class="success-msg">{{ successMessage() }}</p>
+  }
+
+  @if (!loading() && appointment()) {
+
+    <div class="details-grid">
+
+      <div class="details-card">
+        <h3>Appointment Information</h3>
+
+        <p>
+          <strong>Appointment Code:</strong>
+          {{ appointment()?.appointmentCode || '-' }}
+        </p>
+
+        <p>
+          <strong>Date:</strong>
+          {{ appointment()?.appointmentDate | date:'dd-MM-yyyy' }}
+        </p>
+
+        <p>
+          <strong>Time Slot:</strong>
+          {{ appointment()?.timeSlot || '-' }}
+        </p>
+
+        <p>
+          <strong>Status:</strong>
+          <span
+            class="status-badge"
+            [ngClass]="{
+              'status-booked': appointment()?.status === 'BOOKED',
+              'status-completed': appointment()?.status === 'COMPLETED',
+              'status-cancelled': appointment()?.status === 'CANCELLED'
+            }"
+          >
+            {{ appointment()?.status || '-' }}
+          </span>
+        </p>
+
+        <p>
+          <strong>Reason / Symptoms:</strong>
+          {{ appointment()?.reason || '-' }}
+        </p>
+      </div>
+
+      <div class="details-card">
+        <h3>Patient Information</h3>
+
+        <p>
+          <strong>Name:</strong>
+          {{ appointment()?.patientId?.firstName || '-' }}
+          {{ appointment()?.patientId?.lastName || '' }}
+        </p>
+
+        <p>
+          <strong>UHID:</strong>
+          {{ appointment()?.patientId?.UHID || '-' }}
+        </p>
+
+        <p>
+          <strong>Phone:</strong>
+          {{ appointment()?.patientId?.phone || '-' }}
+        </p>
+
+        <p>
+          <strong>Gender:</strong>
+          {{ appointment()?.patientId?.gender || '-' }}
+        </p>
+      </div>
+
+      <div class="details-card">
+        <h3>Doctor Information</h3>
+
+        <p>
+          <strong>Name:</strong>
+          Dr.
+          {{ appointment()?.doctorId?.employeeId?.userId?.firstName || appointment()?.doctorId?.userId?.firstName || '-' }}
+          {{ appointment()?.doctorId?.employeeId?.userId?.lastName || appointment()?.doctorId?.userId?.lastName || '' }}
+        </p>
+
+        <p>
+          <strong>Department:</strong>
+          {{ appointment()?.doctorId?.employeeId?.department || appointment()?.doctorId?.department || '-' }}
+        </p>
+
+        <p>
+          <strong>Designation:</strong>
+          {{ appointment()?.doctorId?.employeeId?.designation || appointment()?.doctorId?.designation || '-' }}
+        </p>
+      </div>
+
+    </div>
+
+    <div class="health-record-card">
+
+      <div class="section-header">
+        <div>
+          <h3>Health Record</h3>
+
+          @if (healthRecord()) {
+            <p class="section-subtitle">
+              Medical Record ID:
+              <strong>{{ healthRecord()?.medicalRecordId || '-' }}</strong>
+            </p>
+          }
+        </div>
+
+        <div class="section-actions">
+
+          @if (canAddHealthRecord()) {
+            <button
+              type="button"
+              class="save-btn"
+              (click)="openAddModal()"
+            >
+              <i class="bi bi-plus-lg"></i>
+              Add Health Record
+            </button>
+          }
+
+          @if (canEditDraft()) {
+            <button
+              type="button"
+              class="save-btn"
+              (click)="openEditModal()"
+            >
+              <i class="bi bi-pencil-square"></i>
+              Edit Draft
+            </button>
+          }
+
+          @if (canFinalize()) {
+            <button
+              type="button"
+              class="finalize-btn"
+              (click)="finalizeRecord()"
+              [disabled]="finalizing()"
+            >
+              <i class="bi bi-check2-circle"></i>
+              {{ finalizing() ? 'Finalizing...' : 'Finalize' }}
+            </button>
+          }
+
+        </div>
+      </div>
+
+      @if (!healthRecord()) {
+        <div class="empty-record">
+          <i class="bi bi-file-medical"></i>
+
+          <h4>No health record created yet</h4>
+
+          @if (appointment()?.status === 'BOOKED') {
+            <p>Create a draft health record for this appointment.</p>
+          }
+
+          @if (appointment()?.status === 'CANCELLED') {
+            <p>Health record cannot be created for a cancelled appointment.</p>
+          }
+
+          @if (appointment()?.status === 'COMPLETED') {
+            <p>This appointment is completed, but no health record was found.</p>
+          }
+        </div>
+      }
+
+      @if (healthRecord()) {
+        <div class="record-view">
+
+          <div class="record-summary">
+            <p>
+              <strong>Status:</strong>
+              <span
+                class="record-status"
+                [ngClass]="{
+                  'record-draft': healthRecord()?.status === 'DRAFT',
+                  'record-finalized': healthRecord()?.status === 'FINALIZED'
+                }"
+              >
+                {{ healthRecord()?.status }}
+              </span>
+            </p>
+
+            <p>
+              <strong>Diagnosis:</strong>
+              {{ healthRecord()?.diagnosis || '-' }}
+            </p>
+
+            <p>
+              <strong>Notes:</strong>
+              {{ healthRecord()?.notes || '-' }}
+            </p>
+          </div>
+
+          <h4>Prescription</h4>
+
+          @if (healthRecord()?.prescription?.length) {
+            <div class="prescription-table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Medicine</th>
+                    <th>Dosage</th>
+                    <th>Duration</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (medicine of healthRecord()?.prescription; track $index) {
+                    <tr>
+                      <td>{{ medicine.name }}</td>
+                      <td>{{ medicine.dosage }}</td>
+                      <td>{{ medicine.duration }}</td>
+                      <td>{{ medicine.notes || '-' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @if (!healthRecord()?.prescription?.length) {
+            <p class="empty-text">No prescription added.</p>
+          }
+
+        </div>
+      }
+
+    </div>
+  }
+
+</div>
+
+@if (isModalOpen()) {
+  <div class="modal-overlay">
+
+    <div class="modal-box">
+
+      <div class="modal-header">
+        <h2>
+          {{ isEditMode() ? 'Edit Health Record Draft' : 'Add Health Record' }}
+        </h2>
+
+        <button
+          class="close-btn"
+          type="button"
+          (click)="closeModal()"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <div class="readonly-info">
+          <div>
+            <strong>Appointment:</strong>
+            {{ appointment()?.appointmentCode || '-' }}
+          </div>
+
+          <div>
+            <strong>Patient:</strong>
+            {{ appointment()?.patientId?.firstName || '-' }}
+            {{ appointment()?.patientId?.lastName || '' }}
+          </div>
+
+          <div>
+            <strong>Reason:</strong>
+            {{ appointment()?.reason || '-' }}
+          </div>
+        </div>
+
+        <form [formGroup]="healthRecordForm">
+
+          <div class="form-group">
+            <label for="diagnosis">
+              Diagnosis <span>*</span>
+            </label>
+
+            <textarea
+              rows="3"
+              formControlName="diagnosis"
+              placeholder="Enter diagnosis"
+            ></textarea>
+
+            @if (healthRecordForm.get('diagnosis')?.invalid && healthRecordForm.get('diagnosis')?.touched) {
+              <small class="error-msg">
+                Diagnosis is required
+              </small>
+            }
+          </div>
+
+          <div class="prescription-section" formArrayName="prescription">
+
+            <div class="section-header prescription-header">
+              <h3>Prescription</h3>
+
+              <button
+                type="button"
+                class="add-medicine-btn"
+                (click)="addMedicine()"
+              >
+                <i class="bi bi-plus-lg"></i>
+                Add Medicine
+              </button>
+            </div>
+
+            @for (medicine of prescription.controls; track $index) {
+              <div class="medicine-row" [formGroupName]="$index">
+
+                <div class="form-group">
+                  <label for="medicineName">
+                    Medicine Name <span>*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    formControlName="name"
+                    placeholder="Medicine name"
+                  />
+
+                  @if (medicine.get('name')?.invalid && medicine.get('name')?.touched) {
+                    <small class="error-msg">
+                      Medicine name is required
+                    </small>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="dosage">
+                    Dosage <span>*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    formControlName="dosage"
+                    placeholder="500mg twice daily"
+                  />
+
+                  @if (medicine.get('dosage')?.invalid && medicine.get('dosage')?.touched) {
+                    <small class="error-msg">
+                      Dosage is required
+                    </small>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="duration">
+                    Duration <span>*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    formControlName="duration"
+                    placeholder="3 days"
+                  />
+
+                  @if (medicine.get('duration')?.invalid && medicine.get('duration')?.touched) {
+                    <small class="error-msg">
+                      Duration is required
+                    </small>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="medicineNotes">Medicine Notes</label>
+
+                  <input
+                    type="text"
+                    formControlName="notes"
+                    placeholder="After food"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  class="remove-btn"
+                  (click)="removeMedicine($index)"
+                  [disabled]="prescription.length === 1"
+                >
+                  Remove
+                </button>
+
+              </div>
+            }
+
+          </div>
+
+          <div class="form-group">
+            <label for="generalNotes">General Notes</label>
+
+            <textarea
+              rows="3"
+              formControlName="notes"
+              placeholder="Optional notes"
+            ></textarea>
+          </div>
+
+        </form>
+
+      </div>
+
+      <div class="modal-footer">
+
+        <button
+          class="cancel-btn"
+          type="button"
+          (click)="closeModal()"
+        >
+          Close
+        </button>
+
+        <button
+          class="save-btn"
+          type="button"
+          (click)="saveDraft()"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Saving...' : (isEditMode() ? 'Update Draft' : 'Save Draft') }}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+}

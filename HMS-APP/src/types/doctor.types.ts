@@ -12,3 +12,5 @@ export interface Doctor {
   availabilityEndTime?: string;
   experienceYears?: number;
 }
+
+export type DoctorSpecializations = string[];

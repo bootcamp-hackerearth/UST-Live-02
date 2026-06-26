@@ -1,18 +1,18 @@
-// src/services/appointment.service.ts
-
 import apiClient from '../config/appClient';
 
 import {
     Appointment,
     AppointmentDoctor,
     CreateAppointmentPayload,
+    AppointmentsResponse
 } from '../types/appointment.types';
 
-export const getMyAppointments = async (): Promise<Appointment[]> => {
-    const response = await apiClient.get('/appointments/my-appointments');
-    return response.data.data;
+export const getMyAppointments = async (page = 1, limit = 5): Promise<AppointmentsResponse> => {
+    const response = await apiClient.get('/appointments/my-appointments', {
+        params: { page, limit },
+    });
+    return response.data;
 };
-
 export const getDoctorsForAppointment = async (): Promise<AppointmentDoctor[]> => {
     const response = await apiClient.get('/doctors/list');
     return response.data.data;
@@ -41,11 +41,18 @@ export const getAvailableSlots = async (
 };
 
 export const cancelAppointment = async (
-  appointmentId: string
+    appointmentId: string
 ): Promise<Appointment> => {
-  const response = await apiClient.put(
-    `/appointments/cancel/${appointmentId}`
-  );
+    const response = await apiClient.put(
+        `/appointments/cancel/${appointmentId}`
+    );
 
-  return response.data.data;
+    return response.data.data;
+};
+export const getAppointmentDetails = async (appointmentId: string) => {
+    const response = await apiClient.get(
+        `/appointments/details/${appointmentId}`
+    );
+
+    return response.data.data;
 };
