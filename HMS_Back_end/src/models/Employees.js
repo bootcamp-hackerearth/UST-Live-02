@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Counter = require("./Counter");
+const softDeletePlugin = require("../utils/softDeletePlugin");
 
 const employeeSchema = new mongoose.Schema({
   employeeCode: {
@@ -17,7 +18,6 @@ const employeeSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
   },
   department: {
     type: String,
@@ -52,11 +52,13 @@ const employeeSchema = new mongoose.Schema({
   },
   medicalRegistrationNumber: {
     type: String,
-    unique: true,
-    sparse: true,
   },
   specialization: {
     type: String,
+  },
+  bookingCutoffDate: {
+    type: Date,
+    default: undefined,
   },
   qualification: [
     {
@@ -101,11 +103,13 @@ employeeSchema.pre("save", async function () {
   if (this.isNew && !this.employeeCode) {
     const counter = await Counter.findOneAndUpdate(
       { name: "employees" },
-      { $inc: { seq: 1 } }, 
-      { new: true, upsert: true }, 
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
     );
-    this.employeeCode = `EMP-${String(counter.seq).padStart(6, "0")}`; 
+    this.employeeCode = `EMP-${String(counter.seq).padStart(6, "0")}`;
   }
 });
+
+employeeSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model("Employee", employeeSchema);

@@ -1,6 +1,8 @@
+// Mongoose .select() string that excludes the sensitive/internal fields on reads
 const PATIENT_SAFE_PROJECTION =
     "-passwordHash -resetPasswordTokenHash -resetPasswordTokenExpiry -__v";
 
+// Strip the sensitive/internal fields from a patient document before returning it
 const toSafePatient = (patient) => {
     const safe = patient.toObject();
     delete safe.passwordHash;

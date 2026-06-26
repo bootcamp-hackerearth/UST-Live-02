@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const validate = require("../middlewares/validate");
 const patientAuth = require("../middlewares/patientAuthMiddleware");
+const { loginLimiter, passwordResetLimiter } = require("../middlewares/rateLimiters");
 const controller = require("../controllers/patientAuthController");
 const {
     patientRegisterValidation,
@@ -11,6 +12,7 @@ const {
     patientResetPasswordValidation
 } = require("../validators/patientAuthValidators");
 
+// Public patient auth routes
 router.post(
     "/register",
     patientRegisterValidation,
@@ -20,6 +22,7 @@ router.post(
 
 router.post(
     "/login",
+    loginLimiter,
     patientLoginValidation,
     validate,
     controller.login
@@ -27,6 +30,7 @@ router.post(
 
 router.post(
     "/forgot-password",
+    passwordResetLimiter,
     patientForgotPasswordValidation,
     validate,
     controller.forgotPassword
@@ -34,11 +38,13 @@ router.post(
 
 router.post(
     "/reset-password",
+    passwordResetLimiter,
     patientResetPasswordValidation,
     validate,
     controller.resetPassword
 );
 
+// Authenticated password change
 router.put(
     "/change-password",
     patientAuth,
@@ -46,5 +52,10 @@ router.put(
     validate,
     controller.changePassword
 );
+
+// Session lifecycle endpoints carry the refresh token in the body so no access token auth is required
+router.post("/refresh", controller.refresh);
+
+router.post("/logout", controller.logout);
 
 module.exports = router;

@@ -21,7 +21,7 @@
     </span>
   </button>
 
-  @if (selectedOption()) {
+  @if (selectedOption() && !disabled) {
     <button
       type="button"
       class="ss-clear"

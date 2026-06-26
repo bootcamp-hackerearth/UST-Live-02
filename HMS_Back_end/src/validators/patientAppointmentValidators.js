@@ -4,6 +4,7 @@ const {
     cancelAppointmentValidation
 } = require("./appointmentValidators");
 
+// Patient booking/reschedule fields; patientUHID comes from the token, never the body
 const patientBookAppointmentValidation = [
     body("doctorEmployeeId")
         .notEmpty()
@@ -19,6 +20,7 @@ const patientBookAppointmentValidation = [
         .withMessage("Time slot must be in HH:mm-HH:mm format")
 ];
 
+// Reuses the staff appointmentId-param and cancellation-reason rules
 module.exports = {
     patientBookAppointmentValidation,
     patientAppointmentIdValidation: appointmentIdValidation,

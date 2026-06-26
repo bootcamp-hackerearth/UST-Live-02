@@ -4,14 +4,18 @@ const sendEmail = require("../utils/sendEmail");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const emailTemplates = require("../utils/emailTemplates");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
+const parsePagination = require("../utils/parsePagination");
 
+// Fields a patient record exposes
 const PATIENT_PROJECTION = "-passwordHash -__v";
 
+// Create Patient Account
 exports.createPatient = async (req, res) => {
 
     const {
@@ -50,8 +54,11 @@ exports.createPatient = async (req, res) => {
         createdByEmployeeId: req.user.employeeCode
     };
 
+    // Create Patient
     const patient = new Patient(patientData);
     await patient.save();
+
+    // Send email AFTER successful account creation
     try {
         await sendEmail({
             to: patient.email,
@@ -60,6 +67,8 @@ exports.createPatient = async (req, res) => {
     } catch (emailError) {
         console.error("Email sending error:", emailError);
     }
+
+    // Record audit
     const actor = await resolveActor(req.user);
     await recordAudit({
         actor,
@@ -77,15 +86,13 @@ exports.createPatient = async (req, res) => {
         patient: safePatient
     });
 };
+
+// Get all patients
 exports.getPatients = async (req, res) => {
 
-    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.min(
-        Math.max(Number.parseInt(req.query.limit, 10) || 10, 1),
-        100
-    );
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, 10);
 
+    // Build filter
     const filter = {};
 
     if (req.query.status) {
@@ -114,8 +121,11 @@ exports.getPatients = async (req, res) => {
     });
 };
 
+// Search patients by name / phone / email / UHID
 exports.searchPatients = async (req, res) => {
+
     const query = (req.query.q || "").trim();
+
     if (!query) {
         return sendSuccess(res, STATUS.OK, MESSAGES.PATIENT.NO_SEARCH_QUERY, {
             total: 0,
@@ -123,8 +133,10 @@ exports.searchPatients = async (req, res) => {
         });
     }
 
+    // Escape regex special characters for safe matching
     const escaped = query.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const regex = new RegExp(escaped, "i");
+
     const patients = await Patient.find({
         $or: [
             { name: regex },
@@ -143,8 +155,11 @@ exports.searchPatients = async (req, res) => {
     });
 };
 
+// Get a single patient by UHID
 exports.getPatientById = async (req, res) => {
+
     const { UHID } = req.params;
+
     const patient = await Patient.findOne({ UHID }).select(
         PATIENT_PROJECTION
     );
@@ -158,13 +173,18 @@ exports.getPatientById = async (req, res) => {
     });
 };
 
+// Update a patient
 exports.updatePatient = async (req, res) => {
+
     const { UHID } = req.params;
+
     const patient = await Patient.findOne({ UHID });
+
     if (!patient) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
     }
 
+    // Fields that may be updated
     const allowedFields = [
         "name",
         "phone",
@@ -175,6 +195,12 @@ exports.updatePatient = async (req, res) => {
         "status"
     ];
 
+    // Rejects updates with no actual changes
+    if (!hasFieldChanges(patient, req.body, [...allowedFields, "email"], { dateFields: ["dob"] })) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
+    }
+
+    // Ensures email uniqueness before updating
     if (req.body.email && req.body.email !== patient.email) {
         const existing = await Patient.findOne({
             email: req.body.email
@@ -195,6 +221,7 @@ exports.updatePatient = async (req, res) => {
 
     await patient.save();
 
+    // Record audit
     const actor = await resolveActor(req.user);
     await recordAudit({
         actor,
@@ -210,5 +237,36 @@ exports.updatePatient = async (req, res) => {
 
     return sendSuccess(res, STATUS.OK, MESSAGES.PATIENT.UPDATED, {
         patient: safePatient
+    });
+};
+
+// Soft deletes a patient
+exports.deletePatient = async (req, res) => {
+
+    const { UHID } = req.params;
+
+    const patient = await Patient.findOne({ UHID });
+
+    if (!patient) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
+    }
+
+    const actor = await resolveActor(req.user);
+
+    patient.isDeleted = true;
+    patient.deletedAt = new Date();
+    patient.deletedBy = actor.employeeCode;
+    await patient.save();
+
+    await recordAudit({
+        actor,
+        action: "PATIENT_DELETED",
+        targetType: "PATIENT",
+        targetId: patient.UHID,
+        message: MESSAGES.AUDIT.PATIENT_DELETED(patient.name, patient.UHID)
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.PATIENT.DELETED, {
+        patient: { UHID: patient.UHID }
     });
 };

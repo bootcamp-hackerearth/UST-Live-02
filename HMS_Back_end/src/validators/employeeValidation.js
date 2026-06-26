@@ -12,8 +12,10 @@ const {
   DEPARTMENT_DESIGNATIONS,
 } = require("../constants/domain");
 
+// Medical registration number: "MED-" followed by digits and hyphens (e.g. MED-12345)
 const MED_REG_REGEX = /^MED-[0-9-]+$/;
 
+// Parses "HH:mm" into total minutes; returns null for invalid input
 const toMinutes = (t) => {
   const m = /^(\d{2}):(\d{2})$/.exec(String(t || "").trim());
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
@@ -41,6 +43,7 @@ const parseTimeRange = (slot) => {
   return { start, end };
 };
 
+// Throws if [start, end) overlaps any already-seen range on the same day
 const checkOverlap = (start, end, existingSlots, day, startTime, endTime) => {
   for (const e of existingSlots) {
     if (start < e.end && end > e.start) {
@@ -51,6 +54,7 @@ const checkOverlap = (start, end, existingSlots, day, startTime, endTime) => {
   }
 };
 
+// Validates a slot and rejects duplicates or same-day overlaps
 const validateSlot = (slot, seen, byDay) => {
   const day = parseDay(slot?.day);
   const { start, end } = parseTimeRange(slot);
@@ -67,6 +71,7 @@ const validateSlot = (slot, seen, byDay) => {
   byDay[day].push({ start, end, startTime: slot.startTime, endTime: slot.endTime });
 };
 
+// Employee-only reusable field validators (reused by the employee/admin routes)
 const usernameValidator = (field = "username", { optional = false } = {}) => {
   const chain = body(field);
   if (optional) {
@@ -96,6 +101,7 @@ const joiningDateValidator = (field = "joiningDate", { optional = false } = {}) 
     .withMessage("Valid joining date is required");
 };
 
+// Core validators shared by employee creation (admin), admin creation (owner), and self-registration
 const employeeBaseValidators = [
   usernameValidator(),
   nameValidator("name", "Name"),
@@ -118,6 +124,7 @@ const employeeBaseValidators = [
     }),
   qualificationValidator(),
 
+  // Medical registration number is required for medical designations
   body("medicalRegistrationNumber")
     .if((value, { req }) => MEDICAL_DESIGNATIONS_SET.has(req.body.designation))
     .notEmpty()
@@ -128,6 +135,7 @@ const employeeBaseValidators = [
       "Medical registration number must start with 'MED-' followed by numbers and hyphens (e.g. MED-12345)",
     ),
 
+  // Medical registration number must NOT be provided for non-medical designations
   body("medicalRegistrationNumber")
     .if((value, { req }) => !MEDICAL_DESIGNATIONS_SET.has(req.body.designation))
     .custom((value) => {
@@ -139,11 +147,13 @@ const employeeBaseValidators = [
       return true;
     }),
 
+  // Specialization is required for designations that carry one
   body("specialization")
     .if((value, { req }) => SPECIALIZATION_DESIGNATIONS_SET.has(req.body.designation))
     .notEmpty()
     .withMessage("Specialization is required"),
 
+  // Specialization must NOT be provided for non-specialization designations
   body("specialization")
     .if((value, { req }) => !SPECIALIZATION_DESIGNATIONS_SET.has(req.body.designation))
     .custom((value) => {
@@ -155,11 +165,13 @@ const employeeBaseValidators = [
       return true;
     }),
 
+  // DOCTOR only fields
   body("consultationFee")
     .if(body("designation").equals("DOCTOR"))
     .notEmpty()
     .withMessage("Consultation fee is required for doctor"),
 
+  // Consultation fee must NOT be provided for non-doctor designations
   body("consultationFee")
     .if((value, { req }) => req.body.designation !== "DOCTOR")
     .custom((value) => {
@@ -171,6 +183,7 @@ const employeeBaseValidators = [
       return true;
     }),
 
+  // Each slot must be valid, unique, and non-overlapping within a day
   body("availabilitySlots")
     .if(body("designation").equals("DOCTOR"))
     .isArray({ min: 1 })
@@ -185,6 +198,7 @@ const employeeBaseValidators = [
       return true;
     }),
 
+  // Availability slots must NOT be provided for non-doctor designations
   body("availabilitySlots")
     .if((value, { req }) => req.body.designation !== "DOCTOR")
     .custom((value) => {

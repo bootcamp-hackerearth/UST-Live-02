@@ -11,13 +11,21 @@ export interface User {
   profile: EmployeeProfile;
 }
 
+// POST /auth/login response (refresh token is delivered as an httpOnly cookie)
 export type LoginResponse = ApiResponse<{
-  token: string;
+  accessToken: string;
   user: User;
 }>;
 
+// POST /auth/refresh response
+export type RefreshResponse = ApiResponse<{
+  accessToken: string;
+}>;
+
+// GET /auth/me and GET /employees/me response
 export type MeResponse = ApiResponse<{
   user: User;
 }>;
 
+// Re-export commonly used role types so consumers can import from one place
 export type { Designation, UserRole } from './employee.model';

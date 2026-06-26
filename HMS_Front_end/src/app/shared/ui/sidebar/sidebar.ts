@@ -1,20 +1,26 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   EventEmitter,
   inject,
   Output,
   OnInit,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { EMPTY, interval, catchError, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NodeService } from '../../../core/services/node.service';
 import { SidebarNode } from '../../../core/models/node.model';
 
 // Dynamic sidebar; menu items load from /nodes/my-nodes with Overview and Profile as defaults
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
@@ -24,6 +30,11 @@ import { SidebarNode } from '../../../core/models/node.model';
 export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly nodeService = inject(NodeService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly destroyRef = inject(DestroyRef);
+
+  // Re-poll interval so owner-granted nodes surface without a reload
+  private readonly nodeRefreshMs = 30_000;
 
   // Emitted when a nav link is activated so the parent can collapse the mobile overlay
   @Output() navigate = new EventEmitter<void>();
@@ -78,22 +89,25 @@ export class SidebarComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.nodeService.loadMyNodes().subscribe({
-      next: (nodes) => {
+    const defaultPaths = new Set(
+      this.defaultNodes.map((n) => n.path.toLowerCase()),
+    );
+
+    // Poll the backend so a newly granted node appears without a reload while a failed tick is swallowed so the current items stay put
+    interval(this.nodeRefreshMs)
+      .pipe(
+        startWith(0),
+        switchMap(() =>
+          this.nodeService.refreshMyNodes().pipe(catchError(() => EMPTY)),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((nodes) => {
         // Drop any backend node that collides with a default path
-        const defaultPaths = new Set(
-          this.defaultNodes.map((n) => n.path.toLowerCase()),
+        this.backendNodes.set(
+          nodes.filter((n) => !defaultPaths.has(n.path.toLowerCase())),
         );
-        const filtered = nodes.filter(
-          (n) => !defaultPaths.has(n.path.toLowerCase()),
-        );
-        this.backendNodes.set(filtered);
-      },
-      error: () => {
-        // On failure, defaults still render so the user is never stranded
-        this.backendNodes.set([]);
-      },
-    });
+      });
   }
 
   toggleUserMenu(): void {
@@ -134,7 +148,7 @@ export class SidebarComponent implements OnInit {
   }
 
   // Icon cache so identical markup is not recreated on every change detection
-  private readonly iconCache = new Map<string, string>();
+  private readonly iconCache = new Map<string, SafeHtml>();
 
   // Inline 24x24 stroke icons keyed by the node's `icon` field (with aliases)
   private readonly icons: Record<string, string> = {
@@ -156,12 +170,16 @@ export class SidebarComponent implements OnInit {
       '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
     'calendar-plus':
       '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/>',
+    'file-text':
+      '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+    menu:
+      '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="12" y1="8" x2="18" y2="8"/><line x1="12" y1="12" x2="18" y2="12"/><line x1="12" y1="16" x2="18" y2="16"/>',
   };
 
   private readonly fallbackIcon =
     '<circle cx="12" cy="12" r="9"/>';
 
-  iconFor(node: SidebarNode): string {
+  iconFor(node: SidebarNode): SafeHtml {
     const key = (node.icon || '').toLowerCase();
 
     const cached = this.iconCache.get(key);
@@ -176,7 +194,10 @@ export class SidebarComponent implements OnInit {
       `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
       `${inner}</svg>`;
 
-    this.iconCache.set(key, svg);
-    return svg;
+    // Bypass sanitization because the svg comes only from trusted constant icon strings and never from user input
+    const safe = this.sanitizer.bypassSecurityTrustHtml(svg); // NOSONAR only hardcoded icon constants reach this bypass
+
+    this.iconCache.set(key, safe);
+    return safe;
   }
 }

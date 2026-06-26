@@ -10,6 +10,7 @@ const { createPatientValidation } = require("./patientValidators");
 const EMERGENCY_PHONE_MESSAGE =
     "Emergency contact number must include a country code followed by exactly 10 digits";
 
+// Confirms the confirmPassword field matches the given password field
 const matchesPassword = (passwordField) =>
     body("confirmPassword")
         .notEmpty()
@@ -22,33 +23,39 @@ const matchesPassword = (passwordField) =>
             return true;
         });
 
+// Self-registration reuses createPatientValidation rules and adds a self-chosen password
 const patientRegisterValidation = [
     ...createPatientValidation,
     passwordStrengthValidator("password"),
     matchesPassword("password")
 ];
 
+// Email + password presence for login
 const patientLoginValidation = [
     emailValidator("email"),
     body("password").notEmpty().withMessage("Password is required")
 ];
 
+// Current password + new password strength + confirmation match
 const patientChangePasswordValidation = [
     body("currentPassword").notEmpty().withMessage("Current password is required"),
     passwordStrengthValidator("newPassword"),
     matchesPassword("newPassword")
 ];
 
+// Email presence for the forgot-password flow
 const patientForgotPasswordValidation = [
     emailValidator("email")
 ];
 
+// Reset code + new password strength + confirmation match
 const patientResetPasswordValidation = [
     body("resetCode").notEmpty().withMessage("Reset code is required"),
     passwordStrengthValidator("newPassword"),
     matchesPassword("newPassword")
 ];
 
+// Editable contact fields only. Identity fields (name/gender/dob) are NOT accepted.
 const patientProfileUpdateValidation = [
     phoneValidator("phone", { optional: true }),
     emailValidator("email", { optional: true }),

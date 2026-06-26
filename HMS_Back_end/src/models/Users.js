@@ -1,18 +1,17 @@
 const mongoose = require("mongoose");
+const softDeletePlugin = require("../utils/softDeletePlugin");
 
 const userSchema = new mongoose.Schema(
     {
         username: {
             type: String,
             required: true,
-            unique: true,
             lowercase: true,
             trim: true
         },
         email: {
             type: String,
             required: true,
-            unique: true,
             lowercase: true,
             trim: true
         },
@@ -32,11 +31,16 @@ const userSchema = new mongoose.Schema(
         }],
         employeeCode: {
             type: String,
+            unique: true,
             required: true
         },
         mustChangePassword: {
             type: Boolean,
             default: false
+        },
+        tokenVersion: {
+            type: Number,
+            default: 0
         },
         createdByAdmin: {
             type: Boolean,
@@ -73,5 +77,7 @@ const userSchema = new mongoose.Schema(
         }
     }
 );
+
+userSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model("User", userSchema);

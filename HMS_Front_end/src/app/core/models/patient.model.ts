@@ -30,6 +30,7 @@ export interface Patient {
   createdByEmployeeId?: string;
 }
 
+// Payload for creating a patient
 export interface CreatePatientPayload {
   name: string;
   phone: string;
@@ -41,16 +42,19 @@ export interface CreatePatientPayload {
   status?: PatientStatus;
 }
 
+// GET /patients response
 export interface PatientsData extends PaginatedData {
   patients: Patient[];
 }
 export type PatientsResponse = ApiResponse<PatientsData>;
 
+// GET /patients/search response
 export type PatientSearchResponse = ApiResponse<{
   total: number;
   patients: Patient[];
 }>;
 
+// Single-patient response (create / get / update)
 export type PatientResponse = ApiResponse<{
   patient: Patient;
 }>;

@@ -1,6 +1,15 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
+const {
+    signAccessToken,
+    issueRefreshToken,
+    rotateRefreshToken,
+    findByHash,
+    revokeByHash,
+    revokeAllForSubject,
+    hashToken
+} = require("../utils/tokenService");
+const { setRefreshCookie, clearRefreshCookie } = require("../utils/refreshCookie");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 const sendEmail = require("../utils/sendEmail");
@@ -9,6 +18,7 @@ const buildEmployeeProfile = require("../utils/buildEmployeeProfile");
 const buildEmployeeData = require("../utils/buildEmployeeData");
 const validateUniqueEmployeeFields = require("../validators/validateUniqueEmployeeFields");
 const getCurrentUser = require("../utils/getCurrentUser");
+const recordAudit = require("../utils/recordAudit");
 const { RESTRICTED_ROLES_SET } = require("../constants/domain");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
@@ -16,20 +26,34 @@ const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 require("dotenv").config();
 
+// Authenticate a user and return a JWT with their roles
 exports.login = async (req, res) => {
 
     const { email, password } = req.body;
 
+    // Records a failed attempt before the request is rejected
+    const auditFailedLogin = (actorType, actorId) =>
+        recordAudit({
+            actorType,
+            actorId,
+            action: "USER_LOGIN_FAILED",
+            ipAddress: req.ip,
+            message: MESSAGES.AUDIT.USER_LOGIN_FAILED(email)
+        });
+
     const user = await User.findOne({ email });
     if (!user) {
+        await auditFailedLogin("ANONYMOUS", email);
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
     const isMatch = Boolean(await bcrypt.compare(password, user.passwordHash));
     if (!isMatch) {
+        await auditFailedLogin("ANONYMOUS", email);
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
+    // Block login for non-ACTIVE accounts with a status-specific message
     const blockedStatuses = {
         PENDING: MESSAGES.AUTH.APPROVAL_PENDING,
         REJECTED: MESSAGES.AUTH.REGISTRATION_REJECTED,
@@ -39,12 +63,14 @@ exports.login = async (req, res) => {
     const blockedMessage = blockedStatuses[user.status];
 
     if (blockedMessage) {
+        await auditFailedLogin("EMPLOYEE", user.employeeCode);
         throw new AppError(STATUS.FORBIDDEN, blockedMessage);
     }
 
     user.lastLoginAt = new Date();
     await user.save();
 
+    // Load the linked employee profile to include in the response
     const employee = await Employee.findOne({
         employeeCode: user.employeeCode
     }).select("-__v");
@@ -55,19 +81,33 @@ exports.login = async (req, res) => {
 
     const profile = buildEmployeeProfile(employee);
 
-    const token = jwt.sign(
-        {
-            employeeCode: user.employeeCode,
-            roles: user.roles
-        },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: process.env.JWT_EXPIRES_IN
-        }
-    );
+    // Short-lived access token; the EMPLOYEE marker blocks use on patient routes
+    const accessToken = signAccessToken({
+        employeeCode: user.employeeCode,
+        roles: user.roles,
+        tokenVersion: user.tokenVersion,
+        type: "EMPLOYEE"
+    });
+
+    const refreshToken = await issueRefreshToken({
+        subjectType: "EMPLOYEE",
+        subjectId: user.employeeCode,
+        req
+    });
+
+    // Staff web client: refresh token rides in an httpOnly cookie, never the body
+    setRefreshCookie(res, refreshToken);
+
+    await recordAudit({
+        actorType: "EMPLOYEE",
+        actorId: user.employeeCode,
+        action: "USER_LOGIN",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.USER_LOGIN(user.employeeCode)
+    });
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGIN_SUCCESS, {
-        token,
+        accessToken,
         user: {
             employeeCode: user.employeeCode,
             username: user.username,
@@ -80,6 +120,7 @@ exports.login = async (req, res) => {
     });
 };
 
+// change password by authenticated user
 exports.changePassword = async (req, res) => {
 
     const employeeCode = req.user.employeeCode;
@@ -112,16 +153,34 @@ exports.changePassword = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.AUTH.PASSWORD_SAME_AS_CURRENT);
     }
 
+    // Hash and persist the new password, clearing the forced-change flag
     const newPassHash = await bcrypt.hash(newPassword, 10);
 
     user.passwordHash = newPassHash;
     user.mustChangePassword = false;
 
+    // Invalidate every existing session, forcing a fresh login
+    user.tokenVersion += 1;
+
     await user.save();
+
+    await revokeAllForSubject("EMPLOYEE", user.employeeCode);
+
+    // Invalidate the current session and drop it's refresh cookie
+    clearRefreshCookie(res);
+
+    await recordAudit({
+        actorType: "EMPLOYEE",
+        actorId: user.employeeCode,
+        action: "PASSWORD_CHANGED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_CHANGED(user.employeeCode)
+    });
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_CHANGED);
 };
 
+// Generate a short-lived reset token and email it to the user
 exports.forgotPassword = async (req, res) => {
 
     const { email } = req.body;
@@ -130,6 +189,16 @@ exports.forgotPassword = async (req, res) => {
         email
     });
 
+    // Logged internally regardless of whether the email matched
+    await recordAudit({
+        actorType: user ? "EMPLOYEE" : "ANONYMOUS",
+        actorId: user ? user.employeeCode : email,
+        action: "PASSWORD_RESET_REQUESTED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_RESET_REQUESTED(email)
+    });
+
+    // Same neutral response always, so registered emails are not leaked
     const neutralResponse = () =>
         sendSuccess(res, STATUS.OK, MESSAGES.AUTH.RESET_LINK_SENT);
 
@@ -140,6 +209,7 @@ exports.forgotPassword = async (req, res) => {
         return neutralResponse();
     }
 
+    // Create a random token, store only its hash so the raw value cannot be recovered from the DB
     const resetPasswordToken = crypto.randomBytes(32).toString("hex");
     const resetPasswordTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -154,6 +224,7 @@ exports.forgotPassword = async (req, res) => {
 
     await user.save();
 
+    // dev only: print reset link to console for manual testing without email
     if (process.env.NODE_ENV !== "production") {
         console.log(
             "\n[DEV] Reset link for " + user.email + ":\n" +
@@ -162,6 +233,7 @@ exports.forgotPassword = async (req, res) => {
         );
     }
 
+    // Send the raw token in the email attached to the url
     try {
         await sendEmail({
             to: user.email,
@@ -174,6 +246,7 @@ exports.forgotPassword = async (req, res) => {
     return neutralResponse();
 };
 
+// Validate the reset token and set a new password
 exports.resetPassword = async (req, res) => {
 
     const {
@@ -186,6 +259,7 @@ exports.resetPassword = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.AUTH.PASSWORDS_DO_NOT_MATCH);
     }
 
+    // Hash the incoming token to look it up against the stored hash
     const hashedToken =
         crypto
             .createHash("sha256")
@@ -212,6 +286,7 @@ exports.resetPassword = async (req, res) => {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.AUTH.PASSWORD_SAME_AS_CURRENT);
     }
 
+    // Hash the new password and clear the reset token fields
     const newHash = await bcrypt.hash(newPassword, 10);
 
     user.passwordHash = newHash;
@@ -220,14 +295,110 @@ exports.resetPassword = async (req, res) => {
     user.resetPasswordTokenExpiry = null;
     user.mustChangePassword = false;
 
+    // kill all live access and refresh tokens
+    user.tokenVersion += 1;
+
     await user.save();
+
+    await revokeAllForSubject("EMPLOYEE", user.employeeCode);
+
+    await recordAudit({
+        actorType: "EMPLOYEE",
+        actorId: user.employeeCode,
+        action: "PASSWORD_RESET_COMPLETED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_RESET_COMPLETED(user.employeeCode)
+    });
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_RESET_SUCCESS);
 };
 
-exports.logout = (req, res) =>
-    sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGOUT_SUCCESS);
+// Revoke the cookie's refresh token so the session cannot be refreshed again
+exports.logout = async (req, res) => {
+    const refreshToken = req.cookies?.refreshToken;
+    const tokenHash = refreshToken ? hashToken(refreshToken) : null;
 
+    // Prefer access-token auth to handle stale tabs after logout; otherwise use the refresh-token owner
+    let subjectId = req.user?.employeeCode || null;
+    if (!subjectId && tokenHash) {
+        const record = await findByHash(tokenHash);
+        subjectId = record?.subjectId ?? null;
+    }
+
+    // Audit the logout event if we can identify the user; otherwise just revoke the token silently
+    if (subjectId) {
+        await recordAudit({
+            actorType: "EMPLOYEE",
+            actorId: subjectId,
+            action: "USER_LOGOUT",
+            ipAddress: req.ip,
+            message: MESSAGES.AUDIT.USER_LOGOUT(subjectId)
+        });
+    }
+
+    // Revoke separately; a no-op when the token is absent or already revoked
+    if (tokenHash) {
+        await revokeByHash(tokenHash);
+    }
+
+    clearRefreshCookie(res);
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGOUT_SUCCESS);
+};
+
+// Exchange the cookie's refresh token for a new access token, rotating the cookie
+exports.refresh = async (req, res) => {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    const result = await rotateRefreshToken({
+        rawToken: refreshToken,
+        subjectType: "EMPLOYEE",
+        req
+    });
+
+    if (result.status !== "OK") {
+        if (result.status === "REUSE_DETECTED") {
+            await recordAudit({
+                actorType: "EMPLOYEE",
+                actorId: result.subjectId,
+                action: "REFRESH_REUSE_DETECTED",
+                ipAddress: req.ip,
+                message: MESSAGES.AUDIT.REFRESH_REUSE_DETECTED(result.subjectId)
+            });
+        }
+        clearRefreshCookie(res);
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    const user = await User.findOne({ employeeCode: result.subjectId })
+        .select("employeeCode roles status tokenVersion");
+
+    // Subject vanished or was deactivated since the refresh token was issued
+    if (!user || String(user.status) !== "ACTIVE") {
+        await revokeAllForSubject("EMPLOYEE", result.subjectId);
+        clearRefreshCookie(res);
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    setRefreshCookie(res, result.newRefreshToken);
+
+    const accessToken = signAccessToken({
+        employeeCode: user.employeeCode,
+        roles: user.roles,
+        tokenVersion: user.tokenVersion,
+        type: "EMPLOYEE"
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.TOKEN_REFRESHED, {
+        accessToken
+    });
+};
+
+// Return the current user's account and profile
 exports.me = async (req, res) => {
     const user = await getCurrentUser(req.user.employeeCode);
 
@@ -236,6 +407,7 @@ exports.me = async (req, res) => {
     });
 };
 
+// Submit a self-registration request
 exports.selfRegister = async (req, res) => {
 
     const { username, email, password, designation } = req.body;
@@ -244,6 +416,7 @@ exports.selfRegister = async (req, res) => {
         throw new AppError(STATUS.FORBIDDEN, MESSAGES.AUTH.INVALID_DESIGNATION);
     }
 
+    // Throws AppError(409) when username/email/registration number is taken
     await validateUniqueEmployeeFields(req.body);
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -269,6 +442,7 @@ exports.selfRegister = async (req, res) => {
 
     await user.save();
 
+    // Notify all active admins and owners of the pending registration
     try {
         const admins = await User.find({
             roles: { $in: ["ADMIN", "OWNER"] },

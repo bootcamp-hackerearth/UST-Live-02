@@ -30,6 +30,8 @@ const OWNER_USER = {
   resetPasswordTokenExpiry: null,
   lastLoginAt: null,
 };
+
+// Ensures the employees counter, owner employee, and owner user exist; assumes an active connection
 const seedOwner = async () => {
   const counterExists = await Counter.findOne({ name: "employees" });
 

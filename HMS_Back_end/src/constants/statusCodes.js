@@ -1,3 +1,4 @@
+// Single source of truth for HTTP status codes
 const STATUS = Object.freeze({
     OK: 200,
     CREATED: 201,
@@ -7,6 +8,7 @@ const STATUS = Object.freeze({
     NOT_FOUND: 404,
     CONFLICT: 409,
     UNPROCESSABLE_ENTITY: 422,
+    TOO_MANY_REQUESTS: 429,
     INTERNAL_SERVER_ERROR: 500
 });
 

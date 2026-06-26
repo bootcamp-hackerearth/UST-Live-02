@@ -5,6 +5,7 @@ const AppError = require("../utils/AppError");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
+// Throws AppError 409 on any uniqueness violation, resolves silently otherwise
 const validateUniqueEmployeeFields = async (data) => {
 
     const {
@@ -14,6 +15,7 @@ const validateUniqueEmployeeFields = async (data) => {
         medicalRegistrationNumber
     } = data;
 
+    // Check username uniqueness across all user accounts
     const existingUsername = await User.findOne({
         username
     });
@@ -21,6 +23,8 @@ const validateUniqueEmployeeFields = async (data) => {
     if (existingUsername) {
         throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.USERNAME_EXISTS);
     }
+
+    // Check email uniqueness in the users collection
     const existingUserEmail = await User.findOne({
         email
     });
@@ -29,6 +33,7 @@ const validateUniqueEmployeeFields = async (data) => {
         throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.USER_EMAIL_EXISTS);
     }
 
+    // Check email uniqueness in the employees collection
     const existingEmployeeEmail = await Employee.findOne({
         email
     });
@@ -37,6 +42,7 @@ const validateUniqueEmployeeFields = async (data) => {
         throw new AppError(STATUS.CONFLICT, MESSAGES.EMPLOYEE.EMAIL_EXISTS);
     }
 
+    // Medical registration number uniqueness is only enforced for medical designations
     if (MEDICAL_DESIGNATIONS_SET.has(designation)) {
         const existingMedicalEmployee = await Employee.findOne({
             medicalRegistrationNumber

@@ -18,7 +18,7 @@
       <div class="stats-grid">
         @if (isOwnerOrAdmin()) {
           <a routerLink="/dashboard/employees" class="stat-card stat-card--link">
-            <span class="stat-label">Active Employees</span>
+            <span class="stat-label">{{ isOwner() ? 'Active Employees' : 'Active Staff' }}</span>
             <span class="stat-value">{{ activeEmployees() ?? '—' }}</span>
           </a>
           <a routerLink="/dashboard/approvals" class="stat-card stat-card--link stat-card--warning">
@@ -59,6 +59,15 @@
             <span class="stat-label">Upcoming Appointments</span>
             <span class="stat-value">{{ myAppointmentsUpcoming() ?? '—' }}</span>
           </a>
+          <a
+            routerLink="/dashboard/appointments"
+            [queryParams]="{ tab: 'past' }"
+            class="stat-card stat-card--link"
+            [class.stat-card--warning]="(myAppointmentsPastDue() ?? 0) > 0"
+          >
+            <span class="stat-label">Past Due</span>
+            <span class="stat-value">{{ myAppointmentsPastDue() ?? '—' }}</span>
+          </a>
         }
       </div>
 
@@ -78,7 +87,10 @@
                 @for (log of auditLogs(); track trackByAudit($index, log)) {
                   <li class="activity-item">
                     <div class="activity-main">
-                      <span class="activity-action">{{ actionLabel(log.action) }}</span>
+                      <span
+                        class="activity-action"
+                        [class.activity-action--danger]="isFailureAction(log.action)"
+                      >{{ actionLabel(log.action) }}</span>
                       <span class="activity-message">{{ log.message }}</span>
                     </div>
                     <div class="activity-meta">
@@ -95,6 +107,15 @@
                   </li>
                 }
               </ul>
+
+              @if (auditTotalPages() > 1) {
+                <app-pagination
+                  [page]="auditPage()"
+                  [totalPages]="auditTotalPages()"
+                  [total]="auditTotal()"
+                  [disabled]="loadingAudit()"
+                  (pageChange)="goToAuditPage($event)" />
+              }
             }
           </div>
         </div>

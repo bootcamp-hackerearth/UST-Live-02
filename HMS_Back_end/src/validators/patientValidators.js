@@ -13,6 +13,7 @@ const allowedGenders = new Set([
     "Female"
 ]);
 
+// Validates all required fields for creating a new patient record
 const createPatientValidation = [
     nameValidator("name", "Patient name"),
 
@@ -54,6 +55,7 @@ const createPatientValidation = [
     phoneValidator("emergencyContact.contactNumber", { message: EMERGENCY_PHONE_MESSAGE })
 ];
 
+// Validates the UHID param and all optional body fields for patient updates
 const updatePatientValidation = [
     param("UHID")
         .notEmpty()
@@ -84,6 +86,7 @@ const updatePatientValidation = [
     phoneValidator("emergencyContact.contactNumber", { optional: true, message: EMERGENCY_PHONE_MESSAGE })
 ];
 
+// Validates the UHID URL parameter
 const uhidValidation = [
     param("UHID")
         .notEmpty()

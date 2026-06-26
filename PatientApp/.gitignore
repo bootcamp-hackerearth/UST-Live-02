@@ -55,3 +55,6 @@ errorlogs
 
 # vs code settings
 .vscode
+
+# eslint config files
+eslint.config.js

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -18,6 +18,7 @@ import {
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-reset-password',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, PasswordInputComponent],
@@ -37,7 +38,7 @@ export class ResetPasswordComponent implements OnInit {
   errorMessage = '';
   passwordReset = false;
   submitted = false;
-
+  // Set when the backend rejects because the new password equals the old one
   sameAsCurrent = false;
   token = '';
 
@@ -50,13 +51,14 @@ export class ResetPasswordComponent implements OnInit {
       { validators: passwordMatchValidator('newPassword', 'confirmPassword') },
     );
 
+    // Clear the server-side "same as current" error once the user edits the password
     this.resetPasswordForm.get('newPassword')?.valueChanges.subscribe(() => {
       this.sameAsCurrent = false;
     });
   }
 
   ngOnInit(): void {
-
+    // The reset email links to /reset-password?token=...
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
     if (!this.token) {
       this.errorMessage = 'Invalid or missing reset link.';
@@ -77,6 +79,7 @@ export class ResetPasswordComponent implements OnInit {
 
     const { newPassword, confirmPassword } = this.resetPasswordForm.value;
 
+    // Backend expects { resetToken, newPassword, confirmPassword }
     this.authService
       .resetPassword(this.token, newPassword, confirmPassword)
       .subscribe({
@@ -87,12 +90,15 @@ export class ResetPasswordComponent implements OnInit {
           this.toast.success(
             response?.message || APP_MESSAGES.PASSWORD_RESET,
           );
+          // Reset invalidates every server session so clear the local session too while staying on the success screen
+          this.authService.forceClearSession(false);
         },
         error: (error) => {
           this.loading = false;
           this.cdr.markForCheck();
           const msg = this.apiError.message(error, '');
 
+          // Show the "same as current" rejection under the new-password field
           if (/same as current/i.test(msg)) {
             this.sameAsCurrent = true;
             this.toast.error(msg);

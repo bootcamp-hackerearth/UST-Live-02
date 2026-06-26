@@ -13,8 +13,10 @@ const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
+// Fields an employee is allowed to self-update
 const SELF_EDITABLE_FIELDS = ["phone", "qualification"];
 
+// Get current authenticated user + profile
 exports.getMe = async (req, res) => {
 
     const user = await getCurrentUser(req.user.employeeCode);
@@ -24,7 +26,10 @@ exports.getMe = async (req, res) => {
     });
 };
 
+// Get all active doctors
 exports.getDoctors = async (req, res) => {
+
+    // Active doctor users
     const users = await User.find({
         status: "ACTIVE"
     }).select("employeeCode");
@@ -35,7 +40,7 @@ exports.getDoctors = async (req, res) => {
         designation: "DOCTOR",
         employeeCode: { $in: activeCodes }
     }).select(
-        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate"
+        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate bookingCutoffDate"
     );
 
     return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.DOCTORS_RETRIEVED, {
@@ -44,22 +49,32 @@ exports.getDoctors = async (req, res) => {
     });
 };
 
+// Submit a profile change request
 exports.profileUpdate = async (req, res) => {
+
     const employee = await Employee.findOne({
         employeeCode: req.user.employeeCode
     });
+
     if (!employee) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.EMPLOYEE.NOT_FOUND);
     }
+
+    // Build the diff of requested changes for allowed fields only
     const requestedChanges = {};
+
     SELF_EDITABLE_FIELDS.forEach((field) => {
         if (req.body[field] === undefined) {
             return;
         }
+
         const oldValue = employee[field];
         const newValue = req.body[field];
+
+        // Normalize arrays/values for comparison
         const isDifferent =
             JSON.stringify(oldValue) !== JSON.stringify(newValue);
+
         if (isDifferent) {
             requestedChanges[field] = {
                 old: oldValue,
@@ -67,9 +82,12 @@ exports.profileUpdate = async (req, res) => {
             };
         }
     });
+
     if (Object.keys(requestedChanges).length === 0) {
         throw new AppError(STATUS.BAD_REQUEST, MESSAGES.EMPLOYEE.NO_VALID_CHANGES);
     }
+
+    // OWNER and ADMIN directly update their profile, no wait for approval
     const isPrivileged = (req.user.roles || []).some((role) =>
         RESTRICTED_ROLES_SET.has(role)
     );
@@ -80,6 +98,8 @@ exports.profileUpdate = async (req, res) => {
         });
 
         await employee.save();
+
+        // Record audit
         const actor = await resolveActor(req.user);
         await recordAudit({
             actor,
@@ -96,6 +116,8 @@ exports.profileUpdate = async (req, res) => {
             employee: buildEmployeeProfile(employee)
         });
     }
+
+    // Prevent duplicate pending requests
     const existingPending = await ProfileChangeRequest.findOne({
         employeeCode: employee.employeeCode,
         status: "PENDING"
@@ -115,6 +137,8 @@ exports.profileUpdate = async (req, res) => {
     if (!request) {
         throw new Error("Failed to create profile change request");
     }
+
+    // Notify admins
     try {
         const admins = await User.find({
             roles: { $in: ["ADMIN", "OWNER"] },
@@ -136,6 +160,7 @@ exports.profileUpdate = async (req, res) => {
         console.error("Admin notification email error:", emailError);
     }
 
+    // Record audit
     const actor = await resolveActor(req.user);
     await recordAudit({
         actor,

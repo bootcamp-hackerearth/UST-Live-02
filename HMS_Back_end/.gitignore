@@ -146,4 +146,7 @@ vite.config.ts.timestamp-*
 sonar-project.properties
 
 # sonar scanner
-.scannerwork/
+.scannerwork
+
+# walkthrough file
+*.pdf

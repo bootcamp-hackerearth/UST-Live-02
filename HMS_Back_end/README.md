@@ -55,6 +55,7 @@ already gitignored.
 | ---------------- | ------------------------------------------------------- | ------------------------------------ |
 | `MONGO_URI`      | MongoDB connection string                               | `mongodb://localhost:27017/hms`      |
 | `FRONTEND_URL`   | Allowed CORS origin (the Angular app)                   | `http://localhost:4200`              |
+| `PATIENT_APP_URL`| Patient app deep-link base for login links in emails    | `hmsapp://`                          |
 | `PORT`           | Port the API listens on                                 | `5000`                               |
 | `JWT_SECRET`     | Secret used to sign/verify JWTs                          | `<long-random-string>`               |
 | `JWT_EXPIRES_IN` | JWT lifetime                                             | `1d`                                 |
@@ -116,7 +117,7 @@ Additional rules:
 ```
 src/
 ├── api/
-│   └── index.js            
+│   └── index.js            # Vercel serverless handler (connects DB, delegates to app)
 ├── app.js                  # Express app: middleware + route mounting
 ├── server.js               # Local entrypoint: connect DB, seed, listen
 ├── config/
@@ -212,7 +213,17 @@ server root (e.g. `POST /api/auth/login`).
 | GET    | `/:appointmentId`          | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Appointment detail            |
 | PUT    | `/:appointmentId`          | OWNER, ADMIN, RECEPTIONIST            | Reschedule / update           |
 | PUT    | `/:appointmentId/cancel`   | OWNER, ADMIN, RECEPTIONIST            | Cancel (with reason)          |
-| PUT    | `/:appointmentId/complete` | DOCTOR                                | Mark completed                |
+| PUT    | `/:appointmentId/unattended` | OWNER, ADMIN, RECEPTIONIST, DOCTOR  | Mark patient unattended       |
+
+### `/api/medical-records` — authenticated
+| Method | Path                              | Auth                                  | Purpose                              |
+| ------ | --------------------------------- | ------------------------------------- | ------------------------------------ |
+| POST   | `/`                               | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Create record (doctor may finalize)  |
+| GET    | `/`                               | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | List/search (doctor sees own only)   |
+| GET    | `/by-appointment/:appointmentId`  | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Existing record for an appointment   |
+| GET    | `/:medicalRecordId`               | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Record detail                        |
+| PUT    | `/:medicalRecordId`               | OWNER, ADMIN, RECEPTIONIST, DOCTOR    | Update draft (doctor may finalize)   |
+| DELETE | `/:medicalRecordId`               | OWNER, ADMIN                          | Soft delete                          |
 
 ### `/api/employees` — authenticated
 | Method | Path              | Auth                       | Purpose                              |
@@ -261,3 +272,10 @@ npm run test:coverage  # with coverage
 
 > The test scripts target a `tests/` directory which is not present in the repo
 > yet; add tests under `tests/unit` and `tests/integration` to use them.
+
+## Deployment
+
+Configured for **Vercel** serverless deployment via `vercel.json`, which routes
+all traffic to `src/api/index.js`. That handler establishes the MongoDB
+connection per invocation and delegates to the Express `app`. The production
+frontend is configured to call `https://vanguard-hms-rho.vercel.app/api`.

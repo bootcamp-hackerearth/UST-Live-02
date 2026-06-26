@@ -28,6 +28,7 @@ export class ConfirmModalService {
     resolveFn: null
   });
 
+  // Opens the modal and returns a Promise the component awaits
   open(config: ConfirmModalConfig): Promise<{ confirmed: boolean; inputValue?: string }> {
     return new Promise((resolve) => {
       this.modalState.set({
@@ -44,6 +45,7 @@ export class ConfirmModalService {
     });
   }
 
+  // Called by modal component when user clicks Confirm
   confirm(inputValue?: string): void {
     const state = this.modalState();
     if (state.resolveFn) {
@@ -52,6 +54,7 @@ export class ConfirmModalService {
     this.close();
   }
 
+  // Called by modal component when user clicks Cancel/X
   cancel(): void {
     const state = this.modalState();
     if (state.resolveFn) {

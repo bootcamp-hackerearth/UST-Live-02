@@ -4,11 +4,14 @@ const mongoose = require("mongoose");
 
 const seedNodes = require("./seedNodes");
 const seedOwner = require("./seedOwner");
+
+// Runs all seeders in order on the current connection; throws on the first failure
 const runSeeders = async () => {
   await seedNodes();
   await seedOwner();
 };
 
+// Standalone entrypoint for `npm run seed:all` / postinstall: owns its own connection, fails fast
 const runStandalone = async () => { // NOSONAR - top-level await is unavailable in CommonJS modules
   try {
     await mongoose.connect(process.env.MONGO_URI);

@@ -1,5 +1,6 @@
 const sendEmail = require("./sendEmail");
 
+// Best-effort appointment notification; failures are logged, never thrown
 const sendAppointmentEmail = async (to, template) => {
     try {
         await sendEmail({ to, ...template });

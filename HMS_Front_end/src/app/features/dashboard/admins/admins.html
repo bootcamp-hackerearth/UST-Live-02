@@ -44,6 +44,14 @@
           </tbody>
         </table>
       </div>
+
+      @if (totalPages() > 1) {
+        <app-pagination
+          [page]="page()"
+          [totalPages]="totalPages()"
+          [total]="total()"
+          (pageChange)="goToPage($event)" />
+      }
     }
   </div>
 
@@ -55,7 +63,13 @@
             <h3 class="modal-title">{{ item.employee.name }}</h3>
             <p class="modal-sub">{{ item.employee.employeeCode }} · ADMIN</p>
           </div>
-          <button type="button" class="modal-close" (click)="close()">✕</button>
+          <div class="modal-header-actions">
+            <a [routerLink]="['/dashboard/admins', item.employee.employeeCode, 'edit']"
+              class="btn btn-primary btn-sm">
+              Edit
+            </a>
+            <button type="button" class="modal-close" (click)="close()">✕</button>
+          </div>
         </div>
         <div class="modal-body">
           <div class="detail-grid">

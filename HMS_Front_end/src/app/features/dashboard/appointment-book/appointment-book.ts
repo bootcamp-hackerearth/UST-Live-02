@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -13,9 +13,11 @@ import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { SearchableSelectComponent } from '../../../shared/ui/searchable-select/searchable-select';
 import { SlotPickerComponent } from '../../../shared/ui/slot-picker/slot-picker';
+import { AvailabilityCalendarComponent } from '../../../shared/ui/availability-calendar/availability-calendar';
 import { PatientService } from '../../../core/services/patient.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AppointmentService } from '../../../core/services/appointment.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -34,8 +36,10 @@ import {
 
 const DRAFT_KEY_CREATE = 'draft:appointment-book';
 
+// Slot length in minutes — kept consistent with the backend HH:mm-HH:mm format
 const SLOT_MINUTES = 30;
 
+// JS Date.getDay() (0=Sunday) -> backend WeekDay enum
 const DAY_MAP: Record<number, WeekDay> = {
   0: 'SUNDAY',
   1: 'MONDAY',
@@ -46,7 +50,9 @@ const DAY_MAP: Record<number, WeekDay> = {
   6: 'SATURDAY',
 };
 
+// Appointment booking/editing (OWNER/ADMIN/RECEPTIONIST) with create and edit modes
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-appointment-book',
   standalone: true,
   imports: [
@@ -55,6 +61,7 @@ const DAY_MAP: Record<number, WeekDay> = {
     DashboardLayoutComponent,
     SearchableSelectComponent,
     SlotPickerComponent,
+    AvailabilityCalendarComponent,
   ],
   templateUrl: './appointment-book.html',
   styleUrl: './appointment-book.css',
@@ -71,14 +78,19 @@ export class AppointmentBookComponent
   private readonly formDraft = inject(FormDraftService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
+
+  // Doctors only reach this in edit mode; patient + doctor are locked to the existing values
+  isDoctor = false;
 
   form: FormGroup = this.fb.group({
-    patientId: ['', Validators.required],
+    patientUHID: ['', Validators.required],
     doctorEmployeeId: ['', Validators.required],
     appointmentDate: ['', [Validators.required, noPastDate]],
     timeSlot: ['', Validators.required],
   });
 
+  // Rejects an appointment date earlier than the selected doctor's joining date
   private readonly beforeJoiningValidator = (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
     const joinIso = this.doctorJoinIso();
@@ -90,6 +102,8 @@ export class AppointmentBookComponent
   };
 
   todayIso = todayIsoDate();
+  // Latest bookable date: 6 months ahead (mirrors the backend cap)
+  maxIso = this.sixMonthsAhead();
   loading = false;
   submittedOk = false;
 
@@ -130,52 +144,18 @@ export class AppointmentBookComponent
   ngOnInit(): void {
     this.mode = (this.route.snapshot.data['mode'] ?? 'create') as 'create' | 'edit';
     this.editAppointmentId = this.route.snapshot.paramMap.get('appointmentId');
+    this.isDoctor = this.authService.getDesignation() === 'DOCTOR';
 
     if (this.mode === 'edit' && !this.editAppointmentId) {
       this.router.navigate(['/dashboard/appointments']);
       return;
     }
 
-    this.employeeService.getDoctors().subscribe({
-      next: (res) => {
-        const docs = res.data.doctors || [];
-        this.doctors.set(docs);
-        this.doctorOptions.set(
-          docs.map((d) => ({
-            value: d.employeeCode,
-            label: d.name,
-            sublabel: d.specialization || d.department || '',
-          })),
-        );
-        this.updateDoctorJoining();
-        this.cdr.markForCheck();
-
-        if (this.mode === 'edit' && this.editAppointmentId) {
-          this.loadForEdit(this.editAppointmentId);
-        }
-      },
-      error: () => this.toast.error(APP_MESSAGES.LOAD_DOCTORS_FAILED),
-    });
-
-    this.patientService.getPatients(1, 25).subscribe({
-      next: (res) => {
-        this.setPatientOptions(res.data.patients);
-      },
-      error: () => this.toast.error(APP_MESSAGES.LOAD_PATIENTS_FAILED),
-    });
-
-    // Debounced server-side patient search
-    this.patientSearch$.pipe(debounceTime(300)).subscribe((term) => {
-      if (!term || term.trim().length === 0) {
-        this.patientService.getPatients(1, 25).subscribe({
-          next: (res) => this.setPatientOptions(res.data.patients),
-        });
-        return;
-      }
-      this.patientService.searchPatients(term).subscribe({
-        next: (res) => this.setPatientOptions(res.data.patients),
-      });
-    });
+    if (this.isDoctor) {
+      this.loadSelfDoctor();
+    } else {
+      this.loadReceptionOptions();
+    }
 
     // Attach the joining-date validator to the date control
     this.form
@@ -205,6 +185,85 @@ export class AppointmentBookComponent
     }
   }
 
+  // Reception/admin/owner: full doctor + patient pickers
+  private loadReceptionOptions(): void {
+    this.employeeService.getDoctors().subscribe({
+      next: (res) => {
+        const docs = res.data.doctors || [];
+        this.doctors.set(docs);
+        this.doctorOptions.set(
+          docs.map((d) => ({
+            value: d.employeeCode,
+            label: d.name,
+            sublabel: d.specialization || d.department || '',
+          })),
+        );
+        this.updateDoctorJoining();
+        this.cdr.markForCheck();
+
+        if (this.mode === 'edit' && this.editAppointmentId) {
+          this.loadForEdit(this.editAppointmentId);
+        }
+      },
+      error: () => this.toast.error(APP_MESSAGES.LOAD_DOCTORS_FAILED),
+    });
+
+    this.patientService.getPatients(1, 25).subscribe({
+      next: (res) => this.setPatientOptions(res.data.patients),
+      error: () => this.toast.error(APP_MESSAGES.LOAD_PATIENTS_FAILED),
+    });
+
+    // Debounced server-side patient search
+    this.patientSearch$.pipe(debounceTime(300)).subscribe((term) => {
+      if (!term || term.trim().length === 0) {
+        this.patientService.getPatients(1, 25).subscribe({
+          next: (res) => this.setPatientOptions(res.data.patients),
+        });
+        return;
+      }
+      this.patientService.searchPatients(term).subscribe({
+        next: (res) => this.setPatientOptions(res.data.patients),
+      });
+    });
+  }
+
+  // Doctor reschedule locks patient and doctor and loads the own profile while the patient option comes from the loaded appointment
+  private loadSelfDoctor(): void {
+    this.form.get('patientUHID')!.disable();
+    this.form.get('doctorEmployeeId')!.disable();
+
+    this.employeeService.getMe().subscribe({
+      next: (res) => {
+        const p = res.data.user.profile;
+        const self: DoctorOption = {
+          employeeCode: p.employeeCode,
+          name: p.name,
+          specialization: p.specialization,
+          department: p.department,
+          consultationFee: p.consultationFee,
+          availabilitySlots: p.availabilitySlots,
+          joiningDate: p.joiningDate,
+          bookingCutoffDate: p.bookingCutoffDate,
+        };
+        this.doctors.set([self]);
+        this.doctorOptions.set([
+          {
+            value: self.employeeCode,
+            label: self.name,
+            sublabel: self.specialization || self.department || '',
+          },
+        ]);
+        this.updateDoctorJoining();
+        this.cdr.markForCheck();
+
+        if (this.editAppointmentId) {
+          this.loadForEdit(this.editAppointmentId);
+        }
+      },
+      error: () => this.toast.error(APP_MESSAGES.LOAD_DOCTORS_FAILED),
+    });
+  }
+
   // Loads and patches the form for edit mode (after the doctors list is available)
   private loadForEdit(id: string): void {
     this.loading = true;
@@ -221,14 +280,14 @@ export class AppointmentBookComponent
         // Ensure the appointment's patient appears in the dropdown
         if (a.patient) {
           const alreadyListed = this.patientOptions().some(
-            (o) => o.value === a.patientId,
+            (o) => o.value === a.patientUHID,
           );
           if (!alreadyListed) {
             this.patientOptions.set([
               {
-                value: a.patientId,
+                value: a.patientUHID,
                 label: a.patient.name,
-                sublabel: `${a.patientId} · ${a.patient.phone}`,
+                sublabel: `${a.patientUHID} · ${a.patient.phone}`,
               },
               ...this.patientOptions(),
             ]);
@@ -236,7 +295,7 @@ export class AppointmentBookComponent
         }
 
         // Set values without emitting to avoid racing valueChanges subscriptions
-        this.form.get('patientId')!.setValue(a.patientId, { emitEvent: false });
+        this.form.get('patientUHID')!.setValue(a.patientUHID, { emitEvent: false });
         this.form.get('doctorEmployeeId')!.setValue(a.doctorEmployeeId, { emitEvent: false });
         this.form.get('appointmentDate')!.setValue(
           this.toIso(new Date(a.appointmentDate)),
@@ -248,6 +307,15 @@ export class AppointmentBookComponent
         // refreshSlots clears the timeSlot; restore it once booked-slots loads
         this.pendingTimeSlot = a.timeSlot;
         this.refreshSlots();
+
+        // Baseline from the appointment's canonical values (matches the form once the slot restores)
+        this.baseline = JSON.stringify({
+          patientUHID: a.patientUHID,
+          doctorEmployeeId: a.doctorEmployeeId,
+          appointmentDate: this.toIso(new Date(a.appointmentDate)),
+          timeSlot: a.timeSlot,
+        });
+
         this.loading = false;
       },
       error: () => {
@@ -347,13 +415,14 @@ export class AppointmentBookComponent
     const filtered =
       date === todayIsoDate()
         ? candidate.filter(
-          (slot) => this.toMinutes(slot.split('-')[0]) > nowMinutes,
-        )
+            (slot) => this.toMinutes(slot.split('-')[0]) > nowMinutes,
+          )
         : candidate;
 
     this.availableSlots.set(filtered);
 
     if (candidate.length === 0) {
+      this.restorePendingSlot();
       return;
     }
 
@@ -370,19 +439,29 @@ export class AppointmentBookComponent
           this.bookedSlots.set(res.data.bookedSlots || []);
           this.loadingSlots.set(false);
           // Restore the pre-selected slot after slots finish loading (edit mode)
-          if (this.pendingTimeSlot) {
-            this.form.patchValue(
-              { timeSlot: this.pendingTimeSlot },
-              { emitEvent: false },
-            );
-            this.pendingTimeSlot = null;
-          }
+          this.restorePendingSlot();
         },
         error: () => {
           this.loadingSlots.set(false);
           this.bookedSlots.set([]);
         },
       });
+  }
+
+  // Restores the edited appointment's slot only if it is still offered
+  private restorePendingSlot(): void {
+    if (!this.pendingTimeSlot) {
+      return;
+    }
+    if (this.availableSlots().includes(this.pendingTimeSlot)) {
+      this.form.patchValue(
+        { timeSlot: this.pendingTimeSlot },
+        { emitEvent: false },
+      );
+    } else {
+      this.toast.warning(APP_MESSAGES.APPOINTMENT_SLOT_UNAVAILABLE);
+    }
+    this.pendingTimeSlot = null;
   }
 
   // Expands availability windows into SLOT_MINUTES "HH:mm-HH:mm" chunks
@@ -415,10 +494,47 @@ export class AppointmentBookComponent
     return this.form.dirty && !this.submittedOk;
   }
 
+  // Snapshot of the appointment's scheduling fields when editing (no-op detection)
+  private baseline = '';
+
+  private schedulingSnapshot(): string {
+    const v = this.form.getRawValue();
+    return JSON.stringify({
+      patientUHID: v.patientUHID,
+      doctorEmployeeId: v.doctorEmployeeId,
+      appointmentDate: v.appointmentDate,
+      timeSlot: v.timeSlot,
+    });
+  }
+
+  // Edit mode: true only when patient/doctor/date/time differ from the loaded appointment
+  hasChanges(): boolean {
+    return this.schedulingSnapshot() !== this.baseline;
+  }
+
   // Selected doctor — used to show a fee summary
   get selectedDoctor(): DoctorOption | null {
     const id = this.form.get('doctorEmployeeId')!.value;
     return this.doctors().find((d) => d.employeeCode === id) || null;
+  }
+
+  // Weekdays the selected doctor is available on (drives the date calendar)
+  get doctorAvailableDays(): WeekDay[] {
+    const slots = this.selectedDoctor?.availabilitySlots || [];
+    return [...new Set(slots.map((s) => s.day))];
+  }
+
+  // Selected doctor's booking cutoff as yyyy-mm-dd (null if none)
+  get doctorCutoffIso(): string | null {
+    const cutoff = this.selectedDoctor?.bookingCutoffDate;
+    return cutoff ? cutoff.substring(0, 10) : null;
+  }
+
+  // yyyy-mm-dd six months from today
+  private sixMonthsAhead(): string {
+    const d = new Date(this.todayIso);
+    d.setMonth(d.getMonth() + 6);
+    return this.toIso(d);
   }
 
   onSubmit(): void {

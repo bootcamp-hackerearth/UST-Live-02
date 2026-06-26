@@ -8,20 +8,26 @@ const validateUniqueEmployeeFields = require("../validators/validateUniqueEmploy
 const recordAudit = require("./recordAudit");
 const resolveActor = require("./resolveActor");
 
+// Creates employee + user account
 async function createAccountWithEmployee(
     req,
     { roles, emailTemplate, auditAction, buildAuditMessage }
 ) {
     const { username, email } = req.body;
 
+    // Throws AppError 409 if username, email, or medical registration number is taken
     await validateUniqueEmployeeFields(req.body);
 
+    // Generate a temporary password
     const temporaryPassword = generateTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, 10);
     const employeeData = buildEmployeeData(req.body);
+
+    // Persist the employee record
     const employee = new Employee(employeeData);
     await employee.save();
 
+    // Create the linked user account with mustChangePassword set to true
     const user = new User({
         username,
         email,
@@ -36,6 +42,8 @@ async function createAccountWithEmployee(
         createdBy: req.user.employeeCode,
     });
     await user.save();
+
+    // Email the temporary password
     try {
         await sendEmail({
             to: user.email,
@@ -44,6 +52,8 @@ async function createAccountWithEmployee(
     } catch (emailError) {
         console.error("Email sending error:", emailError);
     }
+
+    // Log the creation action
     const actor = await resolveActor(req.user);
     await recordAudit({
         actor,

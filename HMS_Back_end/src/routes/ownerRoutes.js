@@ -16,13 +16,20 @@ const {
     joiningDateValidator,
 } = require("../validators/employeeValidation");
 
+// All the routes require authentication and authorization as OWNER
 router.use(auth, authorizeRoles("OWNER"));
 
+// Admin creation fields
 const adminCreationValidation = [
+
     usernameValidator(),
+
     nameValidator("name", "Name"),
+
     phoneValidator("phone"),
+
     emailValidator("email"),
+
     body("department")
         .equals("Administration")
         .withMessage("Admin must belong to Administration department"),
@@ -36,17 +43,20 @@ const adminCreationValidation = [
     qualificationValidator()
 ];
 
+// Validates the employeeCode URL parameter
 const employeeCodeValidation = [
     param("employeeCode")
         .notEmpty()
         .withMessage("Employee Code is required")
 ];
 
+// employeeCode param plus an optional name (validated only when an update includes it)
 const adminUpdateValidation = [
     ...employeeCodeValidation,
     nameValidator("name", "Name", { optional: true })
 ];
 
+// Admin management routes
 router.post(
     "/create-admin",
     adminCreationValidation,

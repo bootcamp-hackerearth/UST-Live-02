@@ -1,3 +1,4 @@
+// Designations are the real roles in this system (stored on the employee)
 export type Designation =
   | 'OWNER'
   | 'ADMIN'
@@ -8,6 +9,7 @@ export type Designation =
   | 'LAB_TECH'
   | 'PHARMACIST';
 
+// Departments exactly match the backend enum
 export type Department =
   | 'OPD'
   | 'IPD'
@@ -30,12 +32,14 @@ export type WeekDay =
   | 'SATURDAY'
   | 'SUNDAY';
 
+// A single availability window for a doctor
 export interface AvailabilitySlot {
   day: WeekDay;
-  startTime: string; 
-  endTime: string;  
+  startTime: string; // HH:mm
+  endTime: string;   // HH:mm
 }
 
+//Employee profile
 export interface EmployeeProfile {
   employeeCode: string;
   name: string;
@@ -45,10 +49,15 @@ export interface EmployeeProfile {
   designation: Designation;
   joiningDate?: string;
   qualification?: string[];
+  // medical staff (DOCTOR, NURSE, LAB_TECH, PHARMACIST)
   medicalRegistrationNumber?: string;
+  // DOCTOR + LAB_TECH
   specialization?: string;
+  // DOCTOR only
   consultationFee?: number;
   availabilitySlots?: AvailabilitySlot[];
+  // DOCTOR only — date on/after which no new appointments may be booked
+  bookingCutoffDate?: string;
 }
 export interface EmployeeListItem {
   employee: EmployeeProfile;
@@ -57,6 +66,7 @@ export interface EmployeeListItem {
   lastLoginAt?: string | null;
 }
 
+// Payload to create an employee (admin) / admin (owner)
 export interface CreateEmployeePayload {
   username: string;
   name: string;
@@ -72,6 +82,7 @@ export interface CreateEmployeePayload {
   availabilitySlots?: AvailabilitySlot[];
 }
 
+// Payload to update an existing employee (admin / owner actors only)
 export interface UpdateEmployeePayload {
   name?: string;
   phone?: string;
@@ -83,6 +94,7 @@ export interface UpdateEmployeePayload {
   specialization?: string;
   consultationFee?: number;
   availabilitySlots?: AvailabilitySlot[];
+  bookingCutoffDate?: string | null;
 }
 
 export const DEPARTMENTS: Department[] = [
@@ -95,6 +107,7 @@ export const DEPARTMENTS: Department[] = [
   'Billing',
 ];
 
+// Designations a user may self-register / be created as (never OWNER/ADMIN here)
 export const STAFF_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'RECEPTIONIST',
@@ -114,17 +127,20 @@ export const WEEK_DAYS: WeekDay[] = [
   'SUNDAY',
 ];
 
+// Designations that require a medical registration number
 export const MEDICAL_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'NURSE',
   'PHARMACIST',
 ];
 
+// Designations that carry a specialization
 export const SPECIALIZATION_DESIGNATIONS: Designation[] = [
   'DOCTOR',
   'LAB_TECH',
 ];
 
+// Valid staff designations for each department
 export const DEPARTMENT_DESIGNATIONS: Record<Department, Designation[]> = {
   Reception: ['RECEPTIONIST'],
   Lab: ['LAB_TECH'],

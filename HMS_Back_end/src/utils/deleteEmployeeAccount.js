@@ -1,10 +1,19 @@
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
 
-async function deleteEmployeeAccount(employeeCode) {
+// Soft deletes the Employee and linked User so history is preserved while freeing the email and username for reuse
+async function deleteEmployeeAccount(employeeCode, deletedBy, { userStatus = "INACTIVE" } = {}) {
+  const deletedAt = new Date();
+
   await Promise.all([
-    Employee.deleteOne({ employeeCode }),
-    User.deleteOne({ employeeCode }),
+    Employee.updateOne(
+      { employeeCode },
+      { $set: { isDeleted: true, deletedAt, deletedBy } },
+    ),
+    User.updateOne(
+      { employeeCode },
+      { $set: { isDeleted: true, deletedAt, deletedBy, status: userStatus } },
+    ),
   ]);
 }
 

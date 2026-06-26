@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-confirm-modal',
   standalone: true,
   imports: [CommonModule, FormsModule],

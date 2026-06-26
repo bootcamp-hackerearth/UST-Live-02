@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -27,6 +27,7 @@ const DRAFT_KEY = 'draft:patient-create';
 
 // Patient creation form (OWNER/ADMIN/RECEPTIONIST); DOB cannot be a future date
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-patient-create',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, DashboardLayoutComponent],

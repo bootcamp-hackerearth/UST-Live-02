@@ -47,21 +47,25 @@ const nodeSchema = new mongoose.Schema(
 nodeSchema.pre("save", async function () {
 
     if (this.isNew) {
+
         const counter =
             await Counter.findOneAndUpdate(
                 {
                     name: "nodes"
                 },
+
                 {
                     $inc: {
                         seq: 1
                     }
                 },
+
                 {
                     returnDocument: "after",
                     upsert: true
                 }
             );
+
         this.nodeId = `NODE-${String(counter.seq).padStart(6, "0")}`;
     }
 });

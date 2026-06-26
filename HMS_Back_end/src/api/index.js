@@ -1,3 +1,5 @@
+process.env.TZ = process.env.TZ || "Asia/Kolkata"; // hospital-local time for all Date math
+
 require("dotenv").config();
 
 const app = require("../app");
@@ -11,7 +13,6 @@ async function handler(req, res) {
     return app(req, res);
   } catch (error) {
     console.error("Database connection error:", error);
-
 
     return res.status(STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,

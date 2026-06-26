@@ -12,8 +12,10 @@ const {
     patientCancelAppointmentValidation
 } = require("../validators/patientAppointmentValidators");
 
+// Every route here requires a valid patient token
 router.use(patientAuth);
 
+// Profile
 router.get("/me", controller.getMyProfile);
 
 router.put(
@@ -23,9 +25,11 @@ router.put(
     controller.updateMyProfile
 );
 
+// Booking helpers
 router.get("/doctors", controller.getDoctors);
 router.get("/booked-slots", controller.getBookedSlots);
 
+// Appointments
 router.get("/appointments", controller.getMyAppointments);
 
 router.post(
@@ -48,5 +52,13 @@ router.put(
     validate,
     controller.cancelMyAppointment
 );
+
+// Medical records (read-only, finalized records only)
+router.get("/medical-records", controller.getMyMedicalRecords);
+router.get(
+    "/medical-records/by-appointment/:appointmentId",
+    controller.getMyMedicalRecordByAppointment
+);
+router.get("/medical-records/:medicalRecordId", controller.getMyMedicalRecordById);
 
 module.exports = router;

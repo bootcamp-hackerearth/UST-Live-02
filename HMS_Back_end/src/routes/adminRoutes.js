@@ -11,25 +11,32 @@ const {
 } = require("../validators/employeeValidation");
 const { nameValidator } = require("../validators/sharedValidators");
 
+// All the routes require authentication and admin-level authorization
 router.use(auth, authorizeRoles("OWNER", "ADMIN"));
 
+// Full employee field set plus joining date
 const employeeCreationValidation = [
   ...employeeBaseValidators,
   joiningDateValidator(),
 ];
 
+// Validates the employeeCode URL parameter
 const employeeCodeValidation = [
   param("employeeCode").notEmpty().withMessage("Employee Code is required"),
 ];
 
+// employeeCode param plus an optional name (validated only when an update includes it)
 const employeeUpdateValidation = [
   ...employeeCodeValidation,
   nameValidator("name", "Name", { optional: true }),
 ];
+
+// Validates the requestId URL parameter
 const requestIdValidation = [
   param("requestId").notEmpty().withMessage("Request ID is required"),
 ];
 
+// Employee management routes
 router.post(
   "/create-employee",
   employeeCreationValidation,
@@ -76,8 +83,10 @@ router.delete(
   controller.deleteEmployee,
 );
 
+// Audit log route
 router.get("/audit-logs", controller.getAuditLogs);
 
+// Profile change request routes
 router.get("/profile-change-requests", controller.getProfileChangeRequests);
 
 router.put(

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Counter = require("./Counter");
+const softDeletePlugin = require("../utils/softDeletePlugin");
 
 const patientSchema = new mongoose.Schema({
     UHID: {
@@ -51,6 +52,10 @@ const patientSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    tokenVersion: {
+        type: Number,
+        default: 0
+    },
     resetPasswordTokenHash: {
         type: String,
         default: undefined
@@ -68,11 +73,13 @@ patientSchema.pre('save', async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(
             { name: 'patients' },
-            { $inc: { seq: 1 } }, 
-            { new: true, upsert: true } 
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true }
         );
-        this.UHID = `UHID-${String(counter.seq).padStart(6, '0')}`; 
+        this.UHID = `UHID-${String(counter.seq).padStart(6, '0')}`;
     }
 });
+
+patientSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model("Patients", patientSchema);

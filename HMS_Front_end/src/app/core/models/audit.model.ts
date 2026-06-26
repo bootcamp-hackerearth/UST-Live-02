@@ -30,6 +30,7 @@ export interface AuditLog {
   created_at: string;
 }
 
+// GET /admin/audit-logs response
 export interface AuditLogsData extends PaginatedData {
   logs: AuditLog[];
 }

@@ -6,7 +6,7 @@ const appointmentSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
-    patientId: {
+    patientUHID: {
         type: String,
         required: true,
         ref: "Patients"
@@ -26,7 +26,7 @@ const appointmentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["BOOKED", "CANCELED", "COMPLETED"],
+        enum: ["BOOKED", "CANCELED", "COMPLETED", "UNATTENDED"],
         default: "BOOKED"
     },
     cancellationReason: {
@@ -42,10 +42,10 @@ appointmentSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'appointments' },
-                { $inc: { seq: 1 } }, 
-                { new: true, upsert: true } 
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
             );
-            this.appointmentId = `APT-${String(counter.seq).padStart(6, '0')}`; 
+            this.appointmentId = `APT-${String(counter.seq).padStart(6, '0')}`;
     }
 });
 

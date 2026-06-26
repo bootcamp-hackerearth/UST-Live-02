@@ -1,5 +1,6 @@
 const Employee = require("../models/Employees");
 
+// Look up the acting employee's name and designation for a readable audit trail
 const resolveActor = async (reqUser) => {
     const employeeCode = reqUser?.employeeCode;
 

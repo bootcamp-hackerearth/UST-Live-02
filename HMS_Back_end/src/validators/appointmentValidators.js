@@ -1,9 +1,10 @@
 const { body, param, query } = require("express-validator");
 
+// Validates patient, doctor, date, and time slot fields for appointment creation/update
 const createAppointmentValidation = [
-    body("patientId")
+    body("patientUHID")
         .notEmpty()
-        .withMessage("Patient id is required"),
+        .withMessage("Patient UHID is required"),
 
     body("doctorEmployeeId")
         .notEmpty()
@@ -19,6 +20,7 @@ const createAppointmentValidation = [
         .withMessage("Time slot must be in HH:mm-HH:mm format")
 ];
 
+// Validates the doctor and date query parameters for the booked-slots lookup
 const bookedSlotsValidation = [
     query("doctorEmployeeId")
         .notEmpty()
@@ -29,12 +31,14 @@ const bookedSlotsValidation = [
         .withMessage("Valid date is required")
 ];
 
+// Validates the appointmentId URL parameter
 const appointmentIdValidation = [
     param("appointmentId")
         .notEmpty()
         .withMessage("Appointment id is required")
 ];
 
+// Validates the appointmentId param plus the required cancellation reason body
 const cancelAppointmentValidation = [
     param("appointmentId")
         .notEmpty()
