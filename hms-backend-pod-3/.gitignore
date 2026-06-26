@@ -1,0 +1,13 @@
+# ignore all env
+.env*
+# ignore installed packages
+node_modules/
+# sonar qube configs
+sonar-project.properties
+.scannerwork/
+# vscode config
+.vscode/
+# sonar config
+sonar-project.properties
+.idea
+.vscode

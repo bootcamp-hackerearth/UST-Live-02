@@ -1,0 +1,115 @@
+@import url("https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap");
+body {  
+  background: white;          
+  background-size: cover;
+  background-attachment: fixed;
+  font-family: 'Google Sans',sans-serif;
+  margin:0;
+  padding: 0;
+}
+
+:root {
+  --mat-autocomplete-background-color: white;
+}
+
+.container{
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  box-sizing: border-box;
+}
+
+.box-container {
+  height: 100%;
+  width: 50%;
+  flex:1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.box{
+  width: 60%;
+  height: 80%;
+  padding: 20px;
+   border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  overflow-y: scroll;
+  animation: zoomIn .5s ease-out;
+}
+
+.title-text{
+  font-size:15px;
+  color: rgb(98, 98, 98);
+}
+
+h2{
+  margin-right: auto;
+  font-size: 38px;
+}
+
+.box::-webkit-scrollbar {
+  width: 0;
+}
+
+.box::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+
+a{
+  text-decoration: none;
+  color:black;
+}
+
+.cover-image {
+  width: 55%;
+  height: 100%;
+  border-radius: 15px;
+  background: url('/assets/cover.jpg') center/cover no-repeat;
+  animation: zoomIn .5s ease-out;
+  box-shadow: inset 0px 5px 40px rgba(0,0,0,0.4);
+}
+
+
+@keyframes zoomIn{
+  0%{
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100%{
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp{
+  0%{
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  100%{
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+
+@keyframes slideRight{
+  0%{
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  100%{
+    transform: translateX(0px);
+  }
+}
+
+
+
