@@ -1,0 +1,123 @@
+<section class="employee-wrapper">
+  <div class="panel-header">
+    <div>
+      <span class="panel-subtitle">Directory</span>
+      <h2>Employee Management</h2>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary"><a routerLink="/approval">Approvals</a></button>
+      <button class="btn-primary" routerLink="/signup-modal">Add Employee</button>
+    </div>
+  </div>
+
+  <div class="directory-panel">
+    <div class="controls">
+      <div class="search-box">
+        <input
+          type="text"
+          id="search-employee"
+          aria-label="search-employee"
+          placeholder="Search Employee"
+          [(ngModel)]="selectedText"
+          (input)="fetchEmployees()"
+        />
+      </div>
+      <div class="filter-group">
+        <select
+          [(ngModel)]="selectedDepartment"
+          (change)="fetchEmployees()"
+          id="selectedDepartment"
+          aria-label="selectedDepartment"
+        >
+          <option value="" selected>All Department</option>
+          <option *ngFor="let department of departmentsData" [value]="department.department_name">
+            {{ department.department_name }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Employee Name</th>
+            <th>Email Address</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of employeeData; trackBy: trackFn">
+            <ng-container
+              *ngIf="
+                employee.employeeCode !== employeeId &&
+                (role === 'Super Admin' || employee.department !== 'Administration')
+              "
+            >
+              <td>
+                <span class="employee-id">{{ employee.employeeCode }}</span>
+              </td>
+              <td>
+                <div class="employee-info">
+                  <div
+                    class="avatar"
+                    [ngClass]="{
+                      'amber-avatar': employee.department == 'Administration',
+                      'green-avatar': employee.department == 'OPD',
+                      'blue-avatar': employee.department == 'IPD',
+                      'violet-avatar': employee.department == 'ICU',
+                    }"
+                  >
+                    {{ employee.name.slice(0, 2).toUpperCase() }}
+                  </div>
+                  <div>
+                    <h4>{{ employee.name }}</h4>
+                  </div>
+                </div>
+              </td>
+              <td class="muted-text">{{ employee.email }}</td>
+              <td>
+                <span class="department-text">{{ employee.department }}</span>
+              </td>
+              <td>
+                <span class="designation-badge">{{ employee.designation }}</span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="icon-btn edit-btn" (click)="updateProfile(employee.email)">
+                    Edit
+                  </button>
+                  <button
+                    class="icon-btn delete-btn"
+                    (click)="deleteUserProfile(employee.employeeCode)"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination-bar">
+        <button class="page-btn" (click)="prevPage()" [disabled]="page === 1">Prev</button>
+
+        <div class="page-numbers">
+          <button
+            *ngFor="let p of [].constructor(totalPages); let i = index"
+            class="page-number"
+            [class.active]="page === i + 1"
+            (click)="goToPage(i + 1)"
+          >
+            {{ i + 1 }}
+          </button>
+        </div>
+
+        <button class="page-btn" (click)="nextPage()" [disabled]="page === totalPages">Next</button>
+      </div>
+    </div>
+  </div>
+</section>
