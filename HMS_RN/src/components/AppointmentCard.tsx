@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Feather } from "@expo/vector-icons"; 
+import { Feather } from "@expo/vector-icons";
 
 export interface Appointment {
   _id: string;
@@ -17,21 +17,21 @@ interface Props {
   appointment: Appointment;
 }
 
-export default function AppointmentCard({ appointment }: Readonly<Props>) {
-  const formatDate = (isoString: string) => {
-    const dateObj = new Date(isoString);
-    return dateObj.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
+const formatDate = (isoString: string) => {
+  const dateObj = new Date(isoString);
+  return dateObj.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 
-  const formatSpecialization = (spec: string) => {
-    if (!spec) return "N/A";
-    return spec.charAt(0).toUpperCase() + spec.slice(1);
-  };
+const formatSpecialization = (spec: string) => {
+  if (!spec) return "N/A";
+  return spec.charAt(0).toUpperCase() + spec.slice(1);
+};
 
+function AppointmentCard({ appointment }: Readonly<Props>) {
   return (
     <View style={styles.cardWrapper}>
       <View style={styles.card}>
@@ -56,6 +56,8 @@ export default function AppointmentCard({ appointment }: Readonly<Props>) {
     </View>
   );
 }
+
+export default React.memo(AppointmentCard);
 
 const styles = StyleSheet.create({
   cardWrapper: {
@@ -90,7 +92,6 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend",
     marginBottom: 16,
   },
-
   pillRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -109,6 +110,6 @@ const styles = StyleSheet.create({
     color: "#6C4EDB",
     fontSize: 13,
     fontFamily: "Lexend",
-    marginLeft: 6, 
+    marginLeft: 6,
   },
 });

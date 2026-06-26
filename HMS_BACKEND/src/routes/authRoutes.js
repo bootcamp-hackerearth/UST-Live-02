@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
+const asyncHandler = require("../middlewares/asyncHandler");
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const {
   signupValidation,
@@ -10,19 +11,27 @@ const {
 } = require("../validations/authValidation");
 
 const {
-  signUpByAdmin,
   signupByUser,
   login,
   changeFirstPassword,
+  refreshAccessToken,
+  logout,
 } = require("../controllers/authController");
 
-router.post("/signupByUser", signupValidation, validate, signupByUser);
-router.post("/login", loginValidation, validate, login);
+router.post(
+  "/signupByUser",
+  signupValidation,
+  validate,
+  asyncHandler(signupByUser),
+);
+router.post("/login", loginValidation, validate, asyncHandler(login));
+router.post("/refresh", asyncHandler(refreshAccessToken));
+router.post("/logout", asyncHandler(logout));
 router.post(
   "/setpassword",
   changePasswordValidation,
   validate,
-  changeFirstPassword,
+  asyncHandler(changeFirstPassword),
 );
 
 module.exports = router;

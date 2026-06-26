@@ -1,4 +1,10 @@
-import React, { useState } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
 import {
   View,
   Text,
@@ -6,32 +12,47 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  ListRenderItem,
+  ScrollView,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { MaterialIcons, Fontisto } from "@expo/vector-icons";
-import Toast from "react-native-toast-message"; 
+import Toast from "react-native-toast-message";
 
 import { appointmentService } from "../services/appointmentService";
 import { useAppointmentData } from "../hooks/useAppointmentData";
 import SelectablePill from "./SelectablePill";
+import SearchBar from "./SearchBar";
 
 interface AppointmentFormProps {
   patientUHID: string | undefined;
   isEditMode?: boolean;
   appointmentData?: any;
+  preselectedDoctorId?: string;
   onSuccess: () => void;
 }
 
-export default function AppointmentForm({
+function AppointmentForm({
   patientUHID,
   isEditMode = false,
   appointmentData,
+  preselectedDoctorId,
   onSuccess,
 }: Readonly<AppointmentFormProps>) {
   const navigation = useNavigation<NavigationProp<any>>();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [doctorSearchQuery, setDoctorSearchQuery] = useState("");
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const {
     doctors,
@@ -45,33 +66,42 @@ export default function AppointmentForm({
     tomorrow,
     doctorListRef,
     slotListRef,
-  } = useAppointmentData(isEditMode, appointmentData);
+  } = useAppointmentData(isEditMode, appointmentData, preselectedDoctorId);
+
+  const filteredDoctors = useMemo(() => {
+    if (!doctorSearchQuery.trim()) return doctors;
+    const q = doctorSearchQuery.toLowerCase();
+    return doctors.filter(
+      (d: any) =>
+        d.name.toLowerCase().includes(q) ||
+        (d.specialization?.toLowerCase().includes(q)),
+    );
+  }, [doctors, doctorSearchQuery]);
 
   const maxAppointmentDate = new Date(tomorrow);
-  
+
   maxAppointmentDate.setMonth(
     maxAppointmentDate.getMonth() +
       Number(process.env.NO_OF_MONTH_ALLOWED_IN_FUTURE_FOR_APPOINTMENT || 6),
   );
 
-  const handleScrollFailed = (
-    info: any,
-    ref: React.RefObject<FlatList | null>,
-  ) => {
-    setTimeout(
-      () =>
-        ref.current?.scrollToIndex({
-          index: info.index,
-          animated: true,
-          viewPosition: 0.5,
-        }),
-      500,
-    );
-  };
+  const handleScrollFailed = useCallback(
+    (info: any, ref: React.RefObject<FlatList | null>) => {
+      setTimeout(
+        () =>
+          ref.current?.scrollToIndex({
+            index: info.index,
+            animated: true,
+            viewPosition: 0.5,
+          }),
+        500,
+      );
+    },
+    [],
+  );
 
   const handleFormSubmit = async () => {
     if (!selectedDoctor || !selectedSlot) {
-      
       return Toast.show({
         type: "error",
         text1: "Validation Error",
@@ -88,7 +118,7 @@ export default function AppointmentForm({
       const exactLocalDate = `${year}-${month}-${day}`;
 
       const payload = {
-        patientID: patientUHID,
+        patientId: patientUHID,
         doctorEmployeeID: selectedDoctor,
         date: exactLocalDate,
         timeSlot: selectedSlot,
@@ -100,7 +130,7 @@ export default function AppointmentForm({
           appointmentData.appointmentCode,
           payload,
         );
-        
+
         Toast.show({
           type: "success",
           text1: "Success",
@@ -108,7 +138,7 @@ export default function AppointmentForm({
         });
       } else {
         await appointmentService.createAppointment(payload);
-        
+
         Toast.show({
           type: "success",
           text1: "Success",
@@ -122,148 +152,179 @@ export default function AppointmentForm({
         err.message ||
         "An unknown error occurred.";
 
-      
       Toast.show({
         type: "error",
         text1: "Booking Rejected",
         text2: serverErrorMessage,
       });
     } finally {
-      setIsLoading(false);
+      if (isMounted.current) setIsLoading(false);
     }
   };
 
+  const renderDoctorItem = useCallback<ListRenderItem<any>>(
+    ({ item }) => (
+      <SelectablePill
+        title={item.name}
+        subtitle={item.specialization}
+        isSelected={selectedDoctor === item.employeeCode}
+        onPress={() => {
+          setSelectedDoctor(item.employeeCode);
+          setSelectedSlot("");
+        }}
+      />
+    ),
+    [selectedDoctor, setSelectedDoctor, setSelectedSlot],
+  );
+
+  const renderSlotItem = useCallback<ListRenderItem<string>>(
+    ({ item }) => (
+      <SelectablePill
+        title={item}
+        isSelected={selectedSlot === item}
+        onPress={() => setSelectedSlot(item)}
+      />
+    ),
+    [selectedSlot, setSelectedSlot],
+  );
+
   return (
-    <View style={styles.card}>
-      <View style={styles.cardHeaderRow}>
-        <View style={styles.iconCircle}>
-          <MaterialIcons name="today" size={24} color="white" />
-        </View>
-        <View>
-          <Text style={styles.subText}>
-            {isEditMode ? "MODIFY ENTRY" : "NEW ENTRY"}
-          </Text>
-          <Text style={styles.cardTitle}>
-            {isEditMode ? "Edit Appointment Details" : "Book Appointment"}
-          </Text>
-        </View>
-      </View>
-
-      <Text style={styles.label}>PATIENT ID</Text>
-      <View style={styles.disabledInput}>
-        <Text style={styles.disabledInputText}>
-          {patientUHID || "Fetching..."}
-        </Text>
-      </View>
-
-      <Text style={styles.label}>SELECT DOCTOR</Text>
-      <View style={styles.scrollWrapper}>
-        <FlatList
-          ref={doctorListRef}
-          data={doctors}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.employeeCode}
-          onScrollToIndexFailed={(info) =>
-            handleScrollFailed(info, doctorListRef)
-          }
-          renderItem={({ item }) => (
-            <SelectablePill
-              title={item.name}
-              subtitle={item.specialization}
-              isSelected={selectedDoctor === item.employeeCode}
-              onPress={() => {
-                setSelectedDoctor(item.employeeCode);
-                setSelectedSlot("");
-              }}
-            />
-          )}
-        />
-      </View>
-
-      <Text style={styles.label}>SCHEDULE DATE</Text>
-      <TouchableOpacity
-        style={styles.pickerContainer}
-        onPress={() => setShowDatePicker(true)}
-      >
-        <Text style={styles.dateText}>{selectedDate.toDateString()}</Text>
-      </TouchableOpacity>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          minimumDate={tomorrow}
-          maximumDate={maxAppointmentDate}
-          onChange={(e, date) => {
-            setShowDatePicker(false);
-            if (date) {
-              setSelectedDate(date);
-              setSelectedSlot("");
-            }
-          }}
-        />
-      )}
-
-      {!!selectedDoctor && (
-        <>
-          <Text style={styles.label}>AVAILABLE SLOTS</Text>
-          <View style={styles.scrollWrapper}>
-            {slots.length === 0 ? (
-              <Text style={styles.noSlotsText}>
-                No slots available for this date.
-              </Text>
-            ) : (
-              <FlatList
-                ref={slotListRef}
-                data={slots}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item}
-                onScrollToIndexFailed={(info) =>
-                  handleScrollFailed(info, slotListRef)
-                }
-                renderItem={({ item }) => (
-                  <SelectablePill
-                    title={item}
-                    isSelected={selectedSlot === item}
-                    onPress={() => setSelectedSlot(item)}
-                  />
-                )}
-              />
-            )}
+    <ScrollView>
+      <View style={styles.card}>
+        <View style={styles.cardHeaderRow}>
+          <View style={styles.iconCircle}>
+            <MaterialIcons name="today" size={24} color="white" />
           </View>
-        </>
-      )}
-
-      <TouchableOpacity
-        style={styles.btn}
-        onPress={handleFormSubmit}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#FFF" />
-        ) : (
-          <Text style={styles.btnText}>
-            {isEditMode ? "Confirm Modifications" : "Request Appointment"}
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() =>
-          navigation.reset({ index: 0, routes: [{ name: "ViewAppointments" }] })
-        }
-      >
-        <View style={styles.backBtnContainer}>
-          <Fontisto name="close" size={24} color="#4B5563" />
-          <Text style={styles.backText}>CANCEL</Text>
+          <View>
+            <Text style={styles.subText}>
+              {isEditMode ? "MODIFY ENTRY" : "NEW ENTRY"}
+            </Text>
+            <Text style={styles.cardTitle}>
+              {isEditMode ? "Edit Appointment Details" : "Book Appointment"}
+            </Text>
+          </View>
         </View>
-      </TouchableOpacity>
-    </View>
+
+        <Text style={styles.label}>PATIENT ID</Text>
+        <View style={styles.disabledInput}>
+          <Text style={styles.disabledInputText}>
+            {patientUHID || "Fetching..."}
+          </Text>
+        </View>
+
+        <Text style={styles.label}>SELECT DOCTOR</Text>
+        <View style={{ marginBottom: 12 }}>
+          <SearchBar
+            value={doctorSearchQuery}
+            onChangeText={setDoctorSearchQuery}
+            placeholder="Search doctors..."
+          />
+        </View>
+        <View style={styles.scrollWrapper}>
+          <FlatList
+            ref={doctorListRef}
+            data={filteredDoctors}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.employeeCode}
+            onScrollToIndexFailed={(info) =>
+              handleScrollFailed(info, doctorListRef)
+            }
+            renderItem={renderDoctorItem}
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+            removeClippedSubviews={true}
+          />
+        </View>
+
+        <Text style={styles.label}>SCHEDULE DATE</Text>
+        <TouchableOpacity
+          style={styles.pickerContainer}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Text style={styles.dateText}>{selectedDate.toDateString()}</Text>
+        </TouchableOpacity>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            minimumDate={tomorrow}
+            maximumDate={maxAppointmentDate}
+            onChange={(e, date) => {
+              setShowDatePicker(false);
+              if (date) {
+                setSelectedDate(date);
+                setSelectedSlot("");
+              }
+            }}
+          />
+        )}
+
+        {!!selectedDoctor && (
+          <>
+            <Text style={styles.label}>AVAILABLE SLOTS</Text>
+            <View style={styles.scrollWrapper}>
+              {slots.length === 0 ? (
+                <Text style={styles.noSlotsText}>
+                  No slots available for this date.
+                </Text>
+              ) : (
+                <FlatList
+                  ref={slotListRef}
+                  data={slots}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => item}
+                  onScrollToIndexFailed={(info) =>
+                    handleScrollFailed(info, slotListRef)
+                  }
+                  renderItem={renderSlotItem}
+                  initialNumToRender={8}
+                  maxToRenderPerBatch={8}
+                  windowSize={5}
+                  removeClippedSubviews={true}
+                />
+              )}
+            </View>
+          </>
+        )}
+
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={handleFormSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <Text style={styles.btnText}>
+              {isEditMode ? "Confirm Modifications" : "Request Appointment"}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() =>
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "ViewAppointments" }],
+            })
+          }
+        >
+          <View style={styles.backBtnContainer}>
+            <Fontisto name="close" size={24} color="#4B5563" />
+            <Text style={styles.backText}>CANCEL</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
+
+export default React.memo(AppointmentForm);
 
 const styles = StyleSheet.create({
   card: {

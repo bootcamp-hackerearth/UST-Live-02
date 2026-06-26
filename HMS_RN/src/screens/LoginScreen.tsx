@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -25,8 +25,29 @@ export default function LoginScreen() {
   const [emailError, setEmailError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const isMounted = useRef(true);
 
-  const handleLoginPress = async () => {
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const handleEmailChange = useCallback(
+    (text: string) => {
+      setEmail(text);
+      if (emailError) setEmailError("");
+    },
+    [emailError],
+  );
+
+  const toggleSecureEntry = useCallback(() => setSecure((s) => !s), []);
+
+  const navigateToRegister = useCallback(() => navigation.navigate("Register"), [navigation]);
+
+  const handleLoginPress = useCallback(async () => {
     const trimmedEmail = email.trim();
 
     if (trimmedEmail === "" || password === "") {
@@ -56,9 +77,9 @@ export default function LoginScreen() {
         text2: error.message,
       });
     } finally {
-      setIsLoading(false);
+      if (isMounted.current) setIsLoading(false);
     }
-  };
+  }, [email, password, navigation]);
 
   return (
     <ImageBackground
@@ -85,10 +106,7 @@ export default function LoginScreen() {
                 placeholder="Email"
                 placeholderTextColor="#9CA3AF"
                 value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (emailError) setEmailError("");
-                }}
+                onChangeText={handleEmailChange}
                 style={[
                   styles.input,
                   emailError ? styles.inputError : null,
@@ -121,7 +139,7 @@ export default function LoginScreen() {
                 autoCapitalize="none"
               />
 
-              <TouchableOpacity onPress={() => setSecure(!secure)}>
+              <TouchableOpacity onPress={toggleSecureEntry}>
                 <Feather
                   name={secure ? "eye-off" : "eye"}
                   size={20}
@@ -141,7 +159,7 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => navigation.navigate("Register")}
+              onPress={navigateToRegister}
               style={styles.linkButton}
             >
               <Text style={styles.linkTextRegular}>

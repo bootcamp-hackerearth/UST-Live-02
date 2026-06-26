@@ -4,11 +4,14 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractContro
 import { AppointmentService } from '../../services/appointmentService/appointment-service';
 import { ApiService } from '../../services/apiService/api-service';
 import { ToastrService } from 'ngx-toastr';
+import { Router } from '@angular/router';
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
+import { environment } from '../../../environments';
 
 @Component({
   selector: 'app-appointment',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, HasPermissionDirective],
   templateUrl: './appointment.html',
   styleUrls: ['./appointment.css']
 })
@@ -33,12 +36,19 @@ export class Appointment implements OnInit {
   displayDoctors: any[] = [];
   selectedDoctorDisplay = '';
 
+  currentPage = 1;
+  pageSize = environment.pageSize;
+  totalRecords = 0;
+  totalPages = 1;
+  visiblePages: (number | string)[] = [];
+
   toast: ToastrService = inject(ToastrService);
   constructor(
     private readonly fb: FormBuilder,
     private readonly appointmentService: AppointmentService,
     private readonly apiService: ApiService,
     private readonly cdr: ChangeDetectorRef,
+    private readonly router: Router,
     @Inject(PLATFORM_ID) private readonly platformId: Object
   ) {
     this.initForm();
@@ -75,6 +85,8 @@ export class Appointment implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       this.fetchCurrentUser();
 
+
+
       this.appointmentForm.get('doctorEmployeeID')?.valueChanges.subscribe(() => {
         this.updateDynamicTimeSlots();
       });
@@ -87,7 +99,7 @@ export class Appointment implements OnInit {
 
   initForm() {
     this.appointmentForm = this.fb.group({
-      patientID: ['', Validators.required],
+      patientId: ['', Validators.required],
       doctorEmployeeID: ['', Validators.required],
       date: ['', [Validators.required, this.pastDateValidator]],
       timeSlot: ['', Validators.required],
@@ -96,26 +108,28 @@ export class Appointment implements OnInit {
   }
 
   loadData() {
-    if (this.userRole !== 'DOCTOR') {
-      this.appointmentService.getStats().subscribe(data => {
-        this.stats = { ...this.stats, ...data };
-        this.cdr.markForCheck();
-      });
-    }
+    this.appointmentService.getStats().subscribe(data => {
+      this.stats = { ...this.stats, ...data };
+      this.cdr.detectChanges();
+    });
 
     this.appointmentService.getDoctors().subscribe(data => {
       this.doctors = data;
       this.displayDoctors = [...this.doctors];
-      this.cdr.markForCheck();
+      this.cdr.detectChanges();
     });
 
-    this.apiService.getAllPatients().subscribe({
-      next: (data: any) => {
-        this.patients = data.filter((pat: any) =>
+
+    this.apiService.getAllPatients({ limit: 100 }).subscribe({
+      next: (res: any) => {
+
+        const patientsList = res.data || res || [];
+
+        this.patients = patientsList.filter((pat: any) =>
           String(pat.status).toUpperCase() === 'ACTIVE' || String(pat.status) === 'true'
         );
         this.displayPatients = [...this.patients];
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Failed to fetch patients', err)
     });
@@ -123,26 +137,67 @@ export class Appointment implements OnInit {
     this.fetchRecentAppointments();
   }
 
-  fetchRecentAppointments() {
-    this.appointmentService.getRecentAppointments().subscribe(data => {
-      if (this.userRole === 'DOCTOR') {
-        this.recentAppointments = data.filter((apt: any) =>
-          apt.doctorEmployeeID === this.currentUser?.employeeCode
-        );
 
-        this.stats = {
-          total: this.recentAppointments.length,
-          completed: this.recentAppointments.filter((a: any) => a.status === 'Completed').length,
-          booked: this.recentAppointments.filter((a: any) => a.status === 'Scheduled').length,
-          cancelled: this.recentAppointments.filter((a: any) => a.status === 'Cancelled').length,
-          pending: this.recentAppointments.filter((a: any) => a.status?.toUpperCase() === 'PENDING').length
-        };
-      } else {
-        this.recentAppointments = data;
-        this.stats.pending = this.recentAppointments.filter((a: any) => a.status?.toUpperCase() === 'PENDING').length;
-      }
-      this.cdr.detectChanges();
+
+  fetchRecentAppointments() {
+    const params = {
+      page: this.currentPage,
+      limit: this.pageSize
+    };
+
+    this.appointmentService.getRecentAppointments(params).subscribe({
+      next: (res: any) => {
+
+        this.recentAppointments = res.data || [];
+        this.totalRecords = res.pagination?.total || 0;
+        this.totalPages = res.pagination?.pages || 1;
+
+        this.generatePagesArray();
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Failed to fetch appointments', err)
     });
+  }
+
+
+
+  generatePagesArray() {
+    const total = this.totalPages;
+    const nowPage = this.currentPage;
+
+    if (total <= 6) {
+      this.visiblePages = Array.from({ length: total }, (_, i) => i + 1);
+      return;
+    }
+
+    if (nowPage <= 3) {
+      this.visiblePages = [1, 2, 3, 4, '...', total];
+    } else if (nowPage >= total - 2) {
+      this.visiblePages = [1, '...', total - 3, total - 2, total - 1, total];
+    } else {
+      this.visiblePages = [1, '...', nowPage - 1, nowPage, nowPage + 1, '...', total];
+    }
+  }
+
+  goToPage(page: number | string) {
+    if (typeof page === 'number' && page !== this.currentPage) {
+      this.currentPage = page;
+      this.fetchRecentAppointments();
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.fetchRecentAppointments();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.fetchRecentAppointments();
+    }
   }
 
   fetchCurrentUser() {
@@ -150,6 +205,15 @@ export class Appointment implements OnInit {
       next: (response: any) => {
         this.currentUser = response.user?.profile || response.user || response;
         this.userRole = this.getRoleFromToken().toUpperCase();
+
+        if (this.userRole === 'DOCTOR') {
+          this.appointmentForm.patchValue({
+            doctorEmployeeID: this.currentUser.employeeCode
+          }, { emitEvent: true });
+
+          this.selectedDoctorDisplay = `${this.currentUser.name} (${this.currentUser.department || 'General Medicine'})`;
+        }
+
         this.loadData();
         this.cdr.markForCheck();
       },
@@ -162,14 +226,15 @@ export class Appointment implements OnInit {
     this.isPatientDropdownOpen = true;
     this.selectedPatientDisplay = (event.target as HTMLInputElement).value;
 
+
     this.displayPatients = this.patients.filter(pat =>
-      pat.name.toLowerCase().includes(term) ||
-      pat.UHID.toLowerCase().includes(term)
+      pat.name?.toLowerCase().includes(term) ||
+      pat.UHID?.toLowerCase().includes(term)
     );
   }
 
   selectPatient(pat: any) {
-    this.appointmentForm.patchValue({ patientID: pat.UHID });
+    this.appointmentForm.patchValue({ patientId: pat.UHID });
     this.selectedPatientDisplay = `${pat.name} (${pat.UHID})`;
     this.isPatientDropdownOpen = false;
     this.displayPatients = [...this.patients];
@@ -179,7 +244,7 @@ export class Appointment implements OnInit {
     setTimeout(() => {
       this.isPatientDropdownOpen = false;
 
-      const currentVal = this.appointmentForm.get('patientID')?.value;
+      const currentVal = this.appointmentForm.get('patientId')?.value;
       if (currentVal) {
         const pat = this.patients.find(p => p.UHID === currentVal);
         this.selectedPatientDisplay = pat ? `${pat.name} (${pat.UHID})` : currentVal;
@@ -229,7 +294,7 @@ export class Appointment implements OnInit {
     this.selectedPatientDisplay = '';
     this.selectedDoctorDisplay = '';
     this.appointmentForm.patchValue({
-      patientID: '',
+      patientId: '',
       doctorEmployeeID: ''
     });
 
@@ -340,15 +405,15 @@ export class Appointment implements OnInit {
     const formattedDate = new Date(apt.date).toISOString().split('T')[0];
 
     this.appointmentForm.patchValue({
-      patientID: apt.patientID,
+      patientId: apt.patientId,
       doctorEmployeeID: apt.doctorEmployeeID,
       date: formattedDate,
       timeSlot: apt.timeSlot,
       status: apt.status
     }, { emitEvent: false });
 
-    const pat = this.patients.find(p => p.UHID === apt.patientID);
-    this.selectedPatientDisplay = pat ? `${pat.name} (${pat.UHID})` : apt.patientID;
+    const pat = this.patients.find(p => p.UHID === apt.patientId);
+    this.selectedPatientDisplay = pat ? `${pat.name} (${pat.UHID})` : apt.patientId;
 
     const doc = this.doctors.find(d => d.employeeCode === apt.doctorEmployeeID);
     this.selectedDoctorDisplay = doc ? `${doc.name} (${doc.department || 'General'})` : apt.doctorEmployeeID;
@@ -367,9 +432,9 @@ export class Appointment implements OnInit {
   }
 
   deleteAppointment(appointmentCode: string) {
-    const isConfirmed = confirm(`Are you sure you want to delete appointment ${appointmentCode}? This action cannot be undone.`);
+    const canDelete = confirm(`Are you sure you want to delete appointment ${appointmentCode}? This action cannot be undone.`);
 
-    if (isConfirmed) {
+    if (canDelete) {
       this.appointmentService.deleteAppointment(appointmentCode).subscribe({
         next: () => {
           this.toast.success('Appointment deleted successfully!');
@@ -436,5 +501,55 @@ export class Appointment implements OnInit {
         }
       });
     }
+  }
+
+  rejectAppointment(apt: any) {
+    const isConfirmed = confirm(`Reject appointment ${apt.appointmentCode}?`);
+
+    if (isConfirmed) {
+      const payload = { ...apt, status: 'Cancelled' };
+
+      this.appointmentService.updateAppointment(apt.appointmentCode, payload).subscribe({
+        next: () => {
+          this.toast.success('Appointment rejected!');
+          this.loadData();
+        },
+        error: (err) => {
+          this.toast.error('Error rejecting appointment: ' + (err.error?.message || 'Unknown error'));
+        }
+      });
+    }
+  }
+
+  canStartEncounter(apt: any): boolean {
+    const now = new Date();
+    const appointmentDate = new Date(apt.date);
+    const startTime = (apt.timeSlot || '00:00').split(' - ')[0];
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const appointmentDateTime = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate(), hours, minutes);
+
+    return now >= appointmentDateTime;
+  }
+
+  startEncounter(apt: any) {
+    if (apt.status === 'Cancelled' || apt.status.toUpperCase() === 'PENDING') {
+      this.toast.error('Cannot start encounter for this appointment status.');
+      return;
+    }
+
+    const now = new Date();
+    const appointmentDate = new Date(apt.date);
+    const startTime = (apt.timeSlot || '00:00').split(' - ')[0];
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const appointmentDateTime = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate(), hours, minutes);
+
+    if (now < appointmentDateTime) {
+      this.toast.error('Cannot start encounter before the scheduled appointment time.');
+      return;
+    }
+
+    this.router.navigate(['/records'], {
+      queryParams: { appointmentId: apt.appointmentCode }
+    });
   }
 }

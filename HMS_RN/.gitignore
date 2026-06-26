@@ -12,7 +12,7 @@ expo-env.d.ts
 # Native
 .kotlin/
 *.orig.*
-*.jks
+*.jksfsona
 *.p8
 *.p12
 *.key
@@ -41,6 +41,3 @@ yarn-error.*
 /android
 
 .env
-
-sonar-project.properties
-.scannerwork/*

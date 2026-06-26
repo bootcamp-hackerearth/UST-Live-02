@@ -9,6 +9,7 @@ import ProfileScreen from "../screens/ProfileScreen";
 import BookAppointmentScreen from "../screens/BookAppointmentScreen";
 import ViewAppointmentsScreen from "../screens/ViewAppointmentsScreen";
 import EditAppointmentScreen from "../screens/EditAppointmentScreens";
+import MedicalRecordsScreen from "../screens/MedicalRecordsScreen"; 
 
 import { AppointmentStackParamList } from "../types/navigation";
 
@@ -90,6 +91,10 @@ const CalendarIcon = ({ focused }: { focused: boolean }) => (
   <AnimatedTabIcon focused={focused} iconName="calendar" />
 );
 
+const RecordsIcon = ({ focused }: { focused: boolean }) => (
+  <AnimatedTabIcon focused={focused} iconName="file-text" />
+);
+
 const UserIcon = ({ focused }: { focused: boolean }) => (
   <AnimatedTabIcon focused={focused} iconName="user" />
 );
@@ -129,6 +134,14 @@ export default function MainTabNavigator() {
       />
 
       <Tab.Screen
+        name="RecordsTab"
+        component={MedicalRecordsScreen}
+        options={{
+          tabBarIcon: RecordsIcon,
+        }}
+      />
+
+      <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
         options={{
@@ -148,7 +161,7 @@ const styles = StyleSheet.create({
   },
   circleBackground: {
     position: "absolute",
-    width: 200,
+    width: 100,
     height: 35,
     backgroundColor: "rgba(108, 78, 219, 0.15)",
     borderTopLeftRadius: 0,

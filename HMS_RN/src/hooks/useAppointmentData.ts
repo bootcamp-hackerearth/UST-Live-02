@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { FlatList } from "react-native";
 import { appointmentService } from "../services/appointmentService";
 
-export function useAppointmentData(isEditMode: boolean, appointmentData: any) {
+export function useAppointmentData(isEditMode: boolean, appointmentData: any, preselectedDoctorId?: string) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
@@ -22,8 +22,10 @@ export function useAppointmentData(isEditMode: boolean, appointmentData: any) {
             setSelectedDoctor(appointmentData.doctorEmployeeID);
             setSelectedDate(new Date(appointmentData.date));
             setSelectedSlot(appointmentData.timeSlot);
+        } else if (!isEditMode && preselectedDoctorId) {
+            setSelectedDoctor(preselectedDoctorId);
         }
-    }, [isEditMode, appointmentData]);
+    }, [isEditMode, appointmentData, preselectedDoctorId]);
 
     useEffect(() => {
         if (selectedDoctor && selectedDate) fetchAvailableSlots();

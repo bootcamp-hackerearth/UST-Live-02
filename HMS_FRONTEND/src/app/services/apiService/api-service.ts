@@ -40,8 +40,8 @@ export class ApiService {
     return this.http.post(`${this.backendUrl}/api/auth/setpassword`, payload);
   }
 
-  getAllEmployees() {
-    return this.http.get(`${this.backendUrl}/api/employees/all`);
+  getAllEmployees(params: any = {}) {
+    return this.http.get(`${this.backendUrl}/api/employees/all`, { params });
   }
 
   updateEmployee(employeeCode: string, payload: any) {
@@ -60,8 +60,12 @@ export class ApiService {
     return this.http.patch(`${this.backendUrl}/api/employees/approve/${employeeCode}`, {});
   }
 
-  getAllPatients() {
-    return this.http.get(`${this.backendUrl}/api/patients/all`);
+  rejectEmployee(employeeCode: string): Observable<any> {
+    return this.http.patch(`${this.backendUrl}/api/employees/reject/${employeeCode}`, {});
+  }
+
+  getAllPatients(params: any = {}) {
+    return this.http.get(`${this.backendUrl}/api/patients/all`, { params });
   }
 
   updatePatient(employeeCode: string, payload: any) {
@@ -84,4 +88,5 @@ export class ApiService {
         catchError(() => of(false)),
       );
   }
+
 }

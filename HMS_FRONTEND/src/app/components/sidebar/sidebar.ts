@@ -3,11 +3,12 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ApiService, MenuNode } from '../../services/apiService/api-service';
 import { AppointmentService } from '../../services/appointmentService/appointment-service';
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, HasPermissionDirective],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.css'],
 })
@@ -50,14 +51,14 @@ export class Sidebar implements OnInit {
   }
 
   fetchPendingAppointments() {
-    this.appointmentService.getRecentAppointments().subscribe({
-      next: (data: any[]) => {
-        this.pendingAppointmentsCount = data.filter(
-          (apt) => apt.status?.toUpperCase() === 'PENDING'
-        ).length;
+
+    this.appointmentService.getStats().subscribe({
+      next: (stats: any) => {
+
+        this.pendingAppointmentsCount = stats.pending || 0;
         this.cdr.markForCheck();
       },
-      error: (err) => console.error('Error fetching pending appointments for sidebar', err)
+      error: (err) => console.error('Error fetching appointment stats for sidebar', err)
     });
   }
 

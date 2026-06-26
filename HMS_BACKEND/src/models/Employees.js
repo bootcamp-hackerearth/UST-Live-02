@@ -56,16 +56,17 @@ const employeeSchema = new mongoose.Schema(
         "INACTIVE",
         "PASSWORD_CHANGE_PENDING",
         "ADMIN_APPROVAL_PENDING",
+        "DELETED"
       ],
     },
     department: {
       type: String,
-      enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN"],
+      enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN", "SUPER_ADMIN"],
       required: true,
     },
 
     designation: { type: String, required: true },
- 
+
     joiningDate: { type: Date, required: true },
 
     medicalRegistrationNo: {

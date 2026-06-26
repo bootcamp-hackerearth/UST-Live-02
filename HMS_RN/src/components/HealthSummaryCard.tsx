@@ -7,10 +7,10 @@ interface Props {
   profile: PatientProfile | null;
 }
 
-export default function HealthSummaryCard({ profile }: Readonly<Props>) {
+function HealthSummaryCard({ profile }: Readonly<Props>) {
   return (
     <View style={styles.summaryCard}>
-      <View style = {styles.summaryHeader}>
+      <View style={styles.summaryHeader}>
         <MaterialIcons name="health-and-safety" size={24} color="blue" />
         <Text style={styles.cardTitle}> Health Summary</Text>
       </View>
@@ -36,9 +36,11 @@ export default function HealthSummaryCard({ profile }: Readonly<Props>) {
   );
 }
 
+export default React.memo(HealthSummaryCard);
+
 const styles = StyleSheet.create({
   summaryCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#e6e6fb",
     marginHorizontal: 20,
     padding: 20,
     borderRadius: 20,

@@ -49,7 +49,7 @@ h6 {
   padding: 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between
+  justify-content: space-between;
 }
 
 .table-container {
@@ -179,10 +179,10 @@ h6 {
   gap: 16px;
 }
 
-.avatar.bg-purple {
+.avatar {
   width: 42px;
   height: 42px;
-  background: rgb(0, 68, 255);
+  background: rgb(0, 68, 255) !important;
   color: white;
   border-radius: 12px;
   display: flex;
@@ -234,14 +234,14 @@ h6 {
   padding: 6px 12px;
   color: #027718;
   font-weight: 600;
-  cursor: pointer; 
-  transition: all 0.2s ease; 
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-approve:hover {
   color: #cdf4db !important;
   background-color: #027718 !important;
-  border-color: #027718 !important; 
+  border-color: #027718 !important;
 }
 
 .btn-reject {
@@ -251,19 +251,128 @@ h6 {
   padding: 6px 12px;
   color: rgb(144, 0, 0);
   font-weight: 600;
-  cursor: pointer; 
-  transition: all 0.2s ease; 
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-reject:hover {
-  color: #efb7b7 !important; 
-  background-color: rgb(144, 0, 0) !important; 
-  border: 3px solid rgb(0, 144, 70) !important;
+  color: #efb7b7 !important;
+  background-color: rgb(144, 0, 0) !important;
+  border-color: rgb(144, 0, 0) !important;
 }
-
-
 
 .ng-touched.ng-invalid:not(form) {
   border: 2px solid #ef4444 !important;
   background-color: #fef2f2 !important;
+}
+
+
+.pagination-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  padding-bottom: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.show-page-numbers {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-ellipsis {
+  color: #6b7280;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.btn-page {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: 0.2s;
+}
+
+.btn-page.previous {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+.btn-page.previous:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.btn-page.next {
+  background-color: #f3f0ff;
+  color: #063cef;
+}
+.btn-page.next:hover:not(:disabled) {
+  background-color: #e0f2fe;
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-page-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background-color: transparent;
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  padding: 0;
+}
+
+.btn-page-number:hover {
+  background-color: #f3f4f6;
+}
+
+.btn-page-number.active {
+  background-color: #3267a3;
+  color: white;
+}
+
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

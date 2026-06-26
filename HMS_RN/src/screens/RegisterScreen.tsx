@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   ImageBackground,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -16,95 +16,107 @@ import PatientForm from "../components/PatientForm";
 
 import { authService } from "../services/authService";
 
+const initialSignupValues = {
+  name: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+  gender: undefined,
+  dob: undefined,
+  bloodGroup: "",
+  allergies: "",
+  emergencyContact: "",
+  line1: "",
+  line2: "",
+  state: "",
+  pincode: "",
+};
+
 export default function RegisterScreen() {
   const backgroundImage = require("../../assets/images/hospital3.jpg");
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [isLoading, setIsLoading] = useState(false);
+  const isMounted = useRef(true);
 
-  const initialSignupValues = {
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    gender: undefined,
-    dob: undefined,
-    bloodGroup: "",
-    allergies: "",
-    emergencyContact: "",
-    line1: "",
-    line2: "",
-    state: "",
-    pincode: "",
-  };
+  useEffect(() => {
+    isMounted.current = true;
 
-  const handleRegisterSubmit = async (data: any) => {
-    setIsLoading(true);
-    try {
-      let formattedDob = "";
-      if (data.dob) {
-        const dateObj = new Date(data.dob);
-        formattedDob = Number.isNaN(dateObj.getTime())
-          ? String(data.dob).split("T")[0]
-          : dateObj.toISOString().split("T")[0];
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const handleRegisterSubmit = useCallback(
+    async (data: any) => {
+      setIsLoading(true);
+      try {
+        let formattedDob = "";
+        if (data.dob) {
+          const dateObj = new Date(data.dob);
+          formattedDob = Number.isNaN(dateObj.getTime())
+            ? String(data.dob).split("T")[0]
+            : dateObj.toISOString().split("T")[0];
+        }
+
+        const formattedBloodGroup =
+          data.bloodGroup && data.bloodGroup.trim() !== ""
+            ? data.bloodGroup
+            : null;
+
+        const formattedAllergies =
+          data.allergies && data.allergies.trim() !== ""
+            ? data.allergies
+                .split(",")
+                .map((a: string) => a.trim())
+                .filter((a: string) => a.length > 0)
+            : [];
+
+        const payload = {
+          name: data.name.trim(),
+          email: data.email.trim().toLowerCase(),
+          phone: data.phone.trim(),
+          password: data.password,
+          gender: data.gender,
+          dob: formattedDob,
+          bloodGroup: formattedBloodGroup,
+          allergies: formattedAllergies,
+          emergencyContact: data.emergencyContact
+            ? data.emergencyContact.trim()
+            : null,
+          address: {
+            line1: data.line1.trim(),
+            line2: data.line2?.trim() || "",
+            state: data.state.trim(),
+            pincode: Number.parseInt(data.pincode, 10),
+          },
+        };
+
+        console.log(
+          "🚀 FINAL SANITIZED PAYLOAD:",
+          JSON.stringify(payload, null, 2),
+        );
+
+        await authService.register(payload);
+
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: "Account created successfully.",
+        });
+        navigation.navigate("Login");
+      } catch (error: any) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: error.message,
+        });
+      } finally {
+        if (isMounted.current) setIsLoading(false);
       }
-
-      const formattedBloodGroup =
-        data.bloodGroup && data.bloodGroup.trim() !== ""
-          ? data.bloodGroup
-          : null;
-
-      const formattedAllergies =
-        data.allergies && data.allergies.trim() !== ""
-          ? data.allergies
-              .split(",")
-              .map((a: string) => a.trim())
-              .filter((a: string) => a.length > 0)
-          : [];
-
-      const payload = {
-        name: data.name.trim(),
-        email: data.email.trim().toLowerCase(),
-        phone: data.phone.trim(),
-        password: data.password,
-        gender: data.gender,
-        dob: formattedDob,
-        bloodGroup: formattedBloodGroup,
-        allergies: formattedAllergies,
-        emergencyContact: data.emergencyContact
-          ? data.emergencyContact.trim()
-          : null,
-        address: {
-          line1: data.line1.trim(),
-          line2: data.line2?.trim() || "",
-          state: data.state.trim(),
-          pincode: Number.parseInt(data.pincode, 10),
-        },
-      };
-
-      console.log(
-        "🚀 FINAL SANITIZED PAYLOAD:",
-        JSON.stringify(payload, null, 2),
-      );
-
-      await authService.register(payload);
-
-      Toast.show({
-        type: "success",
-        text1: "Success",
-        text2: "Account created successfully.",
-      });
-      navigation.navigate("Login");
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [navigation],
+  );
 
   return (
     <ImageBackground
@@ -113,41 +125,46 @@ export default function RegisterScreen() {
       imageStyle={{ opacity: 0.3 }}
     >
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView
+        <FlatList
+          data={[]}
+          renderItem={undefined}
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.headerSection}>
-            <Text style={styles.headerTitleLine1}>New To,</Text>
-            <Text style={styles.headerTitleLine2}>HMS?</Text>
-            <View style={styles.subtitleContainer}>
-              <Text style={styles.subtitleText}>
-                Create your account to get started.
-              </Text>
-            </View>
-          </View>
+          ListHeaderComponent={
+            <>
+              <View style={styles.headerSection}>
+                <Text style={styles.headerTitleLine1}>New To,</Text>
+                <Text style={styles.headerTitleLine2}>HMS?</Text>
+                <View style={styles.subtitleContainer}>
+                  <Text style={styles.subtitleText}>
+                    Create your account to get started.
+                  </Text>
+                </View>
+              </View>
 
-          <View style={styles.card}>
-            <PatientForm
-              initialValues={initialSignupValues}
-              onSubmit={handleRegisterSubmit}
-              isLoading={isLoading}
-              buttonText="Signup"
-              isEditMode={false}
-            />
+              <View style={styles.card}>
+                <PatientForm
+                  initialValues={initialSignupValues}
+                  onSubmit={handleRegisterSubmit}
+                  isLoading={isLoading}
+                  buttonText="Signup"
+                  isEditMode={false}
+                />
 
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              style={styles.linkButton}
-            >
-              <Text style={styles.linkTextRegular}>
-                Already have an account?{" "}
-                <Text style={styles.linkTextPurple}>Login</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Login")}
+                  style={styles.linkButton}
+                >
+                  <Text style={styles.linkTextRegular}>
+                    Already have an account?{" "}
+                    <Text style={styles.linkTextPurple}>Login</Text>
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          }
+        />
       </SafeAreaView>
     </ImageBackground>
   );

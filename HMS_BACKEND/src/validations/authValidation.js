@@ -103,7 +103,6 @@ exports.changePasswordValidation = [
     .withMessage("Password must contain at least one special character"),
 ];
 
-
 exports.patientSignupValidation = [
   body("email")
     .trim()
@@ -161,6 +160,90 @@ exports.patientSignupValidation = [
   body("address.pincode")
     .notEmpty()
     .withMessage("Pincode is required")
+    .isInt()
+    .withMessage("Pincode must be a number")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("Pincode must be exactly 6 digits"),
+];
+
+exports.patientSignupByAdminValidation = [
+  body("email")
+    .trim()
+    .isEmail()
+    .withMessage("A valid email is required")
+    .normalizeEmail(),
+
+  body("dob")
+    .notEmpty()
+    .withMessage("Date of birth is required")
+    .isISO8601()
+    .withMessage("Date of birth must be a valid date (YYYY-MM-DD)")
+    .toDate(),
+
+  body("phone")
+    .trim()
+    .notEmpty()
+    .withMessage("Phone number is required")
+    .customSanitizer((value) => value.replaceAll(/\s+/g, ""))
+    .isMobilePhone("en-IN")
+    .withMessage("Enter a valid phone number"),
+
+  body("address.state")
+    .trim()
+    .notEmpty()
+    .withMessage("State is required")
+    .escape(),
+
+  body("address.line1")
+    .trim()
+    .notEmpty()
+    .withMessage("Address Line 1 is required")
+    .escape(),
+
+  body("address.line2").optional().trim().escape(),
+
+  body("address.pincode")
+    .notEmpty()
+    .withMessage("Pincode is required")
+    .isInt()
+    .withMessage("Pincode must be a number")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("Pincode must be exactly 6 digits"),
+
+  body("gender")
+    .notEmpty()
+    .withMessage("Gender is required")
+    .isIn(["Male", "Female", "Other"])
+    .withMessage("Gender must be Male, Female, or Other"),
+];
+
+exports.patientSelfUpdate = [
+  body("phone")
+    .trim()
+    .optional()
+    .customSanitizer((value) => value.replaceAll(/\s+/g, ""))
+    .isMobilePhone("en-IN")
+    .withMessage("Enter a valid phone number"),
+
+  body("gender")
+    .optional()
+    .isIn(["Male", "Female", "Other"])
+    .withMessage("Gender must be Male, Female, or Other"),
+
+  body("dob")
+    .optional()
+    .isISO8601()
+    .withMessage("Date of birth must be a valid date (YYYY-MM-DD)")
+    .toDate(),
+
+  body("address.line1").optional().escape(),
+
+  body("address.line2").optional().trim().escape(),
+
+  body("address.state").optional().escape(),
+
+  body("address.pincode")
+    .optional()
     .isInt()
     .withMessage("Pincode must be a number")
     .isLength({ min: 6, max: 6 })

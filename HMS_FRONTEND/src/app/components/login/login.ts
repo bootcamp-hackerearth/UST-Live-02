@@ -83,8 +83,8 @@ export class Login {
             return;
           }
 
-          if (response.token) {
-            localStorage.setItem('token', response.token);
+          if (response.accessToken) {
+            localStorage.setItem('token', response.accessToken);
           }
 
           const userRole = response.user?.role?.toUpperCase() || '';
@@ -112,7 +112,7 @@ export class Login {
     const payload = {
       email: this.tempEmail,
       oldPassword: this.tempOldPassword,
-      newPassword: this.passwordForm.value.newPassword,
+      password: this.passwordForm.value.newPassword,
     };
 
     this.api.changeFirstPassword(payload).subscribe({
@@ -120,7 +120,9 @@ export class Login {
         this.isLoading = false;
         this.showFirstLoginModal = false;
 
-        localStorage.setItem('token', res.token);
+        if (res.accessToken) {
+          localStorage.setItem('token', res.accessToken);
+        }
         const userRole = res.user?.role?.toUpperCase() || '';
 
         if (userRole !== 'ADMIN') {
@@ -129,7 +131,7 @@ export class Login {
       },
       error: (err) => {
         this.isLoading = false;
-        this.toast.success(err.error?.message || 'Failed to update password');
+        this.toast.error(err.error?.message || 'Failed to update password');
       },
     });
   }

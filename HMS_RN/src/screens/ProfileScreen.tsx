@@ -1,13 +1,20 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   ImageBackground,
+  FlatList,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -32,10 +39,41 @@ export default function ProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    loadProfile();
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
+
+  const fetchProfileData = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) setIsLoading(true);
+    try {
+      const profileString = await SecureStore.getItemAsync("patient_profile");
+      if (profileString && isMounted.current) {
+        setProfile(JSON.parse(profileString));
+      }
+    } catch (error) {
+      console.error("Failed to load profile", error);
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+        setRefreshing(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfileData();
+  }, [fetchProfileData]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchProfileData(true);
+  }, [fetchProfileData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -45,78 +83,72 @@ export default function ProfileScreen() {
     }, []),
   );
 
-  const loadProfile = async () => {
-    try {
-      const profileString = await SecureStore.getItemAsync("patient_profile");
-      if (profileString) {
-        setProfile(JSON.parse(profileString));
+  const handleUpdateProfile = useCallback(
+    async (data: any) => {
+      if (!profile?.UHID) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "User identification missing.",
+        });
+        return;
       }
-    } catch (error) {
-      console.error("Failed to load profile", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleUpdateProfile = async (data: any) => {
-    if (!profile?.UHID) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "User identification missing.",
-      });
-      return;
-    }
+      setIsSaving(true);
+      try {
+        const payload = {
+          phone: data.phone.trim(),
+          gender: data.gender,
+          dob: data.dob.toISOString().split("T")[0],
+          bloodGroup: data.bloodGroup,
+          allergies: data.allergies
+            ? data.allergies.split(",").map((a: string) => a.trim())
+            : [],
+          emergencyContact: data.emergencyContact
+            ? data.emergencyContact.trim()
+            : null,
+          address: {
+            line1: data.line1.trim(),
+            line2: data.line2 ? data.line2.trim() : "",
+            state: data.state.trim(),
+            pincode: Number.parseInt(data.pincode, 10),
+          },
+        };
 
-    setIsSaving(true);
-    try {
-      const payload = {
-        phone: data.phone.trim(),
-        gender: data.gender,
-        dob: data.dob.toISOString().split("T")[0],
-        bloodGroup: data.bloodGroup,
-        allergies: data.allergies
-          ? data.allergies.split(",").map((a: string) => a.trim())
-          : [],
-        emergencyContact: data.emergencyContact
-          ? data.emergencyContact.trim()
-          : null,
-        address: {
-          line1: data.line1.trim(),
-          line2: data.line2 ? data.line2.trim() : "",
-          state: data.state.trim(),
-          pincode: Number.parseInt(data.pincode, 10),
-        },
-      };
+        await patientService.updateProfile(profile.UHID, payload);
 
-      await patientService.updateProfile(profile.UHID, payload);
+        if (isMounted.current) {
+          const updatedProfile = { ...profile, ...payload };
+          setProfile(updatedProfile);
+          await SecureStore.setItemAsync(
+            "patient_profile",
+            JSON.stringify(updatedProfile),
+          );
 
-      const updatedProfile = { ...profile, ...payload };
-      setProfile(updatedProfile);
-      await SecureStore.setItemAsync(
-        "patient_profile",
-        JSON.stringify(updatedProfile),
-      );
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Profile updated successfully.",
+          });
+          setIsEditing(false);
+        }
+      } catch (error: any) {
+        if (isMounted.current) {
+          Toast.show({
+            type: "error",
+            text1: "Error",
+            text2: error.message,
+          });
+          console.error("Profile Update Failed:", error);
+        }
+      } finally {
+        if (isMounted.current) setIsSaving(false);
+      }
+    },
+    [profile],
+  );
 
-      Toast.show({
-        type: "success",
-        text1: "Success",
-        text2: "Profile updated successfully.",
-      });
-      setIsEditing(false);
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error.message,
-      });
-      console.error("Profile Update Failed:", error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const executeLogout = async () => {
+  const executeLogout = useCallback(async () => {
     try {
       await SecureStore.deleteItemAsync("patient_jwt");
       await SecureStore.deleteItemAsync("patient_profile");
@@ -133,22 +165,22 @@ export default function ProfileScreen() {
         text2: "Failed to clear session data safely.",
       });
     }
-  };
+  }, [navigation]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     Alert.alert("Logout", "Are you sure you want to log out of your account?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Logout",
         style: "destructive",
         onPress: () => {
-          executeLogout();
+          void executeLogout();
         },
       },
     ]);
-  };
+  }, [executeLogout]);
 
-  const getInitialEditValues = () => {
+  const initialEditValues = useMemo(() => {
     if (!profile) return {};
     return {
       ...profile,
@@ -159,7 +191,9 @@ export default function ProfileScreen() {
       state: profile.address?.state || "",
       pincode: profile.address?.pincode?.toString() || "",
     };
-  };
+  }, [profile]);
+
+  const toggleEditMode = useCallback(() => setIsEditing((e) => !e), []);
 
   if (isLoading) {
     return (
@@ -176,84 +210,101 @@ export default function ProfileScreen() {
       imageStyle={{ opacity: 0.3 }}
     >
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <ScrollView
+        <FlatList
+          data={[]}
+          renderItem={undefined}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarIcon}>
-                <Ionicons name="person-outline" size={50} color="black" />
-              </Text>
-            </View>
-            <Text style={styles.nameText}>{profile?.name}</Text>
-
-            <TouchableOpacity
-              style={[styles.editButton, isEditing && styles.cancelButton]}
-              onPress={() => setIsEditing(!isEditing)}
-            >
-              <Text style={styles.editButtonText}>
-                {isEditing ? "Cancel Edit" : "Edit Profile"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {isEditing ? (
-            <PatientForm
-              initialValues={getInitialEditValues()}
-              onSubmit={(data) => {
-                handleUpdateProfile(data);
-              }}
-              isLoading={isSaving}
-              buttonText="Save Changes"
-              isEditMode={true}
-            />
-          ) : (
+          ListHeaderComponent={
             <>
-              <View style={styles.card}>
-                <ProfileField label="UHID" value={profile?.UHID} />
-                <ProfileField label="Email" value={profile?.email} />
-                <ProfileField label="Name" value={profile?.name} />
-                <ProfileField label="Phone" value={profile?.phone} />
-                <ProfileField label="Gender" value={profile?.gender} />
-                <ProfileField
-                  label="Date of Birth"
-                  value={
-                    profile?.dob
-                      ? new Date(profile.dob).toLocaleDateString()
-                      : ""
-                  }
-                />
-                <ProfileField label="Blood Group" value={profile?.bloodGroup} />
-                <ProfileField
-                  label="Emergency Contact"
-                  value={profile?.emergencyContact}
-                />
-                <ProfileField
-                  label="Allergies"
-                  value={profile?.allergies?.join(", ")}
-                />
-                <ProfileField label="Address" value={profile?.address?.line1} />
-                <ProfileField
-                  label="State / City"
-                  value={profile?.address?.state}
-                />
-                <ProfileField
-                  label="Postcode"
-                  value={profile?.address?.pincode?.toString()}
-                  hideBorder
-                />
+              <View style={styles.header}>
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarIcon}>
+                    <Ionicons name="person-outline" size={50} color="black" />
+                  </Text>
+                </View>
+                <Text style={styles.nameText}>{profile?.name}</Text>
+
+                <TouchableOpacity
+                  style={[styles.editButton, isEditing && styles.cancelButton]}
+                  onPress={toggleEditMode}
+                >
+                  <Text style={styles.editButtonText}>
+                    {isEditing ? "Cancel Edit" : "Edit Profile"}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={handleLogout}
-              >
-                <Text style={styles.logoutButtonText}>Logout</Text>
-              </TouchableOpacity>
+              {isEditing ? (
+                <PatientForm
+                  initialValues={initialEditValues}
+                  onSubmit={handleUpdateProfile}
+                  isLoading={isSaving}
+                  buttonText="Save Changes"
+                  isEditMode={true}
+                />
+              ) : (
+                <>
+                  <View style={styles.card}>
+                    <ProfileField label="UHID" value={profile?.UHID} />
+                    <ProfileField label="Email" value={profile?.email} />
+                    <ProfileField label="Name" value={profile?.name} />
+                    <ProfileField label="Phone" value={profile?.phone} />
+                    <ProfileField label="Gender" value={profile?.gender} />
+                    <ProfileField
+                      label="Date of Birth"
+                      value={
+                        profile?.dob
+                          ? new Date(profile.dob).toLocaleDateString()
+                          : ""
+                      }
+                    />
+                    <ProfileField
+                      label="Blood Group"
+                      value={profile?.bloodGroup}
+                    />
+                    <ProfileField
+                      label="Emergency Contact"
+                      value={profile?.emergencyContact}
+                    />
+                    <ProfileField
+                      label="Allergies"
+                      value={profile?.allergies?.join(", ")}
+                    />
+                    <ProfileField
+                      label="Address"
+                      value={profile?.address?.line1}
+                    />
+                    <ProfileField
+                      label="State / City"
+                      value={profile?.address?.state}
+                    />
+                    <ProfileField
+                      label="Postcode"
+                      value={profile?.address?.pincode?.toString()}
+                      hideBorder
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.logoutButton}
+                    onPress={handleLogout}
+                  >
+                    <Text style={styles.logoutButtonText}>Logout</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </>
-          )}
-        </ScrollView>
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#6C4EDB"]}
+              tintColor="#6C4EDB"
+            />
+          }
+        />
       </SafeAreaView>
     </ImageBackground>
   );

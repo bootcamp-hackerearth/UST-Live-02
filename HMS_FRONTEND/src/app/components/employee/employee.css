@@ -534,8 +534,13 @@ h6 {
 }
 
 .pill-icon-onboarding {
-  background-color: #fee2e2;
-  color: rgb(198, 0, 0);
+  background-color: #f7e2fe;
+  color: rgb(119, 0, 198);
+}
+
+.pill-icon-approval-pending {
+  background-color: #fef9c3;
+  color: #9a3412;
 }
 
 .notification-badge {
@@ -559,4 +564,113 @@ h6 {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.pagination-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  padding-bottom: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.page-numbers {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-ellipsis {
+  color: #6b7280;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.btn-page {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: 0.2s;
+}
+
+.btn-page.prev {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+.btn-page.prev:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.btn-page.next {
+  background-color: #f3f0ff;
+  color: #063cef;
+}
+.btn-page.next:hover:not(:disabled) {
+  background-color: #e0f2fe;
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-page-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background-color: transparent;
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  padding: 0;
+}
+
+.btn-page-number:hover {
+  background-color: #f3f4f6;
+}
+
+.btn-page-number.active {
+  background-color: #3267a3;
+  color: white;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

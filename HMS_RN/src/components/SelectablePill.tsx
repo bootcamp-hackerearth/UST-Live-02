@@ -8,7 +8,7 @@ interface SelectablePillProps {
   onPress: () => void;
 }
 
-export default function SelectablePill({
+function SelectablePill({
   isSelected,
   title,
   subtitle,
@@ -23,7 +23,7 @@ export default function SelectablePill({
       <Text style={[styles.pillText, isSelected && styles.pillTextSelected]}>
         {title}
       </Text>
-      {!!(subtitle) && (
+      {!!subtitle && (
         <Text
           style={[styles.pillSubText, isSelected && styles.pillSubTextSelected]}
         >
@@ -33,6 +33,8 @@ export default function SelectablePill({
     </TouchableOpacity>
   );
 }
+
+export default React.memo(SelectablePill);
 
 const styles = StyleSheet.create({
   pill: {

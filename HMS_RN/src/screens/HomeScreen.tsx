@@ -1,13 +1,20 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   ImageBackground,
   ActivityIndicator,
   RefreshControl,
+  FlatList,
+  ListRenderItem,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -16,10 +23,14 @@ import * as SecureStore from "expo-secure-store";
 import Toast from "react-native-toast-message";
 import { PatientProfile } from "../features/auth/types";
 import AppointmentCard, { Appointment } from "../components/AppointmentCard";
-import TopDoctors, { Doctor } from "../components/TopDoctors";
+import { Doctor } from "../components/DoctorCarousel";
 import HealthSummaryCard from "../components/HealthSummaryCard";
 import { appointmentService } from "../services/appointmentService";
 import { Ionicons } from "@expo/vector-icons";
+import SearchBar from "../components/SearchBar";
+
+
+const EMPTY_ARRAY: Doctor[] = [];
 
 export default function HomeScreen() {
   const backgroundImage = require("../../assets/images/hospital3.jpg");
@@ -29,27 +40,31 @@ export default function HomeScreen() {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
 
   const [profile, setProfile] = useState<PatientProfile | null>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchDashboardData();
-    }, []),
-  );
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener("tabPress", () => {
-      if (navigation.isFocused()) {
-        setRefreshing(true);
-        fetchDashboardData();
-      }
-    });
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
-    return unsubscribe;
-  }, [navigation]);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 1000); // 300ms delay
 
-  const fetchDashboardData = async () => {
+    // Cleanup function to clear the timeout if the user types again
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  const fetchDashboardData = useCallback(async () => {
     try {
       const token = await SecureStore.getItemAsync("patient_jwt");
       const profileString = await SecureStore.getItemAsync("patient_profile");
@@ -59,15 +74,16 @@ export default function HomeScreen() {
         return;
       }
 
-      setProfile(JSON.parse(profileString));
-
       const [appointmentsData, doctorsData] = await Promise.all([
         appointmentService.getMyAppointments(),
         appointmentService.getDoctors(),
       ]);
 
-      setAppointments(appointmentsData);
-      setDoctors(doctorsData);
+      if (isMounted.current) {
+        setProfile(JSON.parse(profileString));
+        setAppointments(appointmentsData);
+        setDoctors(doctorsData);
+      }
     } catch (error) {
       console.error("Dashboard Fetch Error:", error);
       Toast.show({
@@ -76,17 +92,25 @@ export default function HomeScreen() {
         text2: "Could not load dashboard data. Please try again.",
       });
     } finally {
-      setIsLoading(false);
-      setRefreshing(false);
+      if (isMounted.current) {
+        setIsLoading(false);
+        setRefreshing(false);
+      }
     }
-  };
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchDashboardData();
+    }, [fetchDashboardData]),
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
-  const getNextAppointment = () => {
+  const nextAppointment = useMemo(() => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -100,9 +124,157 @@ export default function HomeScreen() {
         (app.status === "Scheduled" || app.status === "Pending")
       );
     });
-  };
+  }, [appointments]);
 
-  const nextAppointment = getNextAppointment();
+  const specialties = useMemo(() => {
+    const specs = new Set<string>();
+    doctors.forEach((d) => {
+      if (d.specialization) specs.add(d.specialization);
+      else if (d.department) specs.add(d.department);
+      else specs.add("General");
+    });
+    return Array.from(specs);
+  }, [doctors]);
+
+  const filteredDoctors = useMemo(() => {
+    if (!debouncedSearchTerm.trim()) return EMPTY_ARRAY;
+    const query = debouncedSearchTerm.toLowerCase();
+    return doctors.filter(
+      (d) =>
+        d.name.toLowerCase().includes(query) ||
+        d.specialization?.toLowerCase().includes(query) ||
+        d.designation?.toLowerCase().includes(query),
+    );
+  }, [doctors, debouncedSearchTerm]);
+
+  const navigateToBookDoctor = useCallback(
+    (doctorEmployeeCode: string) => {
+      navigation.navigate("AppointmentsTab", {
+        screen: "BookAppointment",
+        params: { preselectedDoctorId: doctorEmployeeCode },
+      });
+    },
+    [navigation],
+  );
+
+  const navigateToViewAppointments = useCallback(() => {
+    navigation.navigate("AppointmentsTab", {
+      screen: "ViewAppointments",
+    });
+  }, [navigation]);
+
+  const renderDoctorResult = useCallback<ListRenderItem<Doctor>>(
+    ({ item: doctor }) => (
+      <View style={{ paddingHorizontal: 20 }}>
+        <TouchableOpacity
+          style={styles.doctorResultCard}
+          onPress={() => navigateToBookDoctor(doctor.employeeCode)}
+        >
+          <View>
+            <Text style={styles.resultName}>{doctor.name}</Text>
+            <Text style={styles.resultSpec}>
+              {doctor.specialization || doctor.department || "General"}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+        
+      </View>
+    ),
+    [navigateToBookDoctor],
+  );
+
+  const keyExtractor = useCallback(
+    (item: Doctor) => item._id || item.employeeCode,
+    [],
+  );
+
+  const renderListHeader = useCallback(
+    () => (
+      <>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.patientName}>{profile?.name}</Text>
+            <Text style={styles.uhid}>{profile?.UHID}</Text>
+          </View>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Ionicons name="calendar-clear-outline" size={20} color="blue" />
+          <Text style={styles.sectionTitle}>Upcoming Appointment</Text>
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={navigateToViewAppointments}
+        >
+          {nextAppointment ? (
+            <AppointmentCard appointment={nextAppointment} />
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>
+                No upcoming appointments. Tap to schedule.
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <View style={[styles.sectionHeader, { marginBottom: 12 }]}>
+          <Ionicons name="search-outline" size={20} color="blue" />
+          <Text style={styles.sectionTitle}>Find a Doctor</Text>
+        </View>
+
+        <View style={styles.searchContainer}>
+          <SearchBar
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            placeholder="Search by name, specialty, or designation"
+            
+          />
+        </View>
+
+        {searchTerm.trim() ? (
+          <View style={styles.searchResultsContainer}>
+            <Text style={styles.subHeading}>Search Results</Text>
+            {filteredDoctors.length === 0 && (
+              <Text style={styles.noResultsText}>
+                No doctors found matching your search.
+              </Text>
+            )}
+          </View>
+        ) : (
+          <View style={styles.specialtiesContainer}>
+            <Text style={styles.subHeading}>Specialties</Text>
+            <View style={styles.specialtiesGrid}>
+              {specialties.map((spec) => (
+                <TouchableOpacity
+                  key={spec}
+                  style={styles.specialtyPill}
+                  onPress={() => setSearchTerm(spec)}
+                >
+                  <Text style={styles.specialtyText}>{spec}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+        
+      </>
+    ),
+    [
+      profile,
+      nextAppointment,
+      searchTerm,
+      specialties,
+      filteredDoctors.length,
+      navigateToViewAppointments,
+      profile, nextAppointment, specialties, navigateToViewAppointments
+    ],
+  );
+
+  const renderListFooter = useCallback(() => {
+    return <HealthSummaryCard profile={profile} />;
+  }, [profile]);
 
   return (
     <ImageBackground
@@ -117,7 +289,17 @@ export default function HomeScreen() {
             <Text style={styles.loadingText}>Loading your dashboard...</Text>
           </View>
         ) : (
-          <ScrollView
+          <FlatList
+            data={debouncedSearchTerm.trim() ? filteredDoctors : EMPTY_ARRAY} 
+            keyExtractor={keyExtractor} 
+            renderItem={renderDoctorResult}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={11}
+            removeClippedSubviews={true}
+            ListFooterComponent={renderListFooter} 
+            ListHeaderComponent={renderListHeader()}
+            keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             refreshControl={
@@ -128,42 +310,7 @@ export default function HomeScreen() {
                 tintColor="#4B1D76"
               />
             }
-          >
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.patientName}>{profile?.name}</Text>
-                <Text style={styles.uhid}>{profile?.UHID}</Text>
-              </View>
-            </View>
-
-            <HealthSummaryCard profile={profile} />
-
-            <View style={styles.sectionHeader}>
-              <Ionicons name="calendar-clear-outline" size={20} color="blue" />
-              <Text style={styles.sectionTitle}>My Appointments</Text>
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() =>
-                navigation.navigate("AppointmentsTab", {
-                  screen: "ViewAppointments",
-                })
-              }
-            >
-              {nextAppointment ? (
-                <AppointmentCard appointment={nextAppointment} />
-              ) : (
-                <View style={styles.emptyCard}>
-                  <Text style={styles.emptyText}>
-                    No upcoming appointments. Tap to schedule.
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            <TopDoctors doctors={doctors} />
-          </ScrollView>
+          />
         )}
       </SafeAreaView>
     </ImageBackground>
@@ -267,5 +414,66 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     fontStyle: "italic",
     fontFamily: "Lexend",
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  specialtiesContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  subHeading: {
+    fontSize: 16,
+    fontFamily: "Lexend",
+    color: "#4B5563",
+    marginBottom: 12,
+    borderRadius: 20,
+    backgroundColor: "#e6e6fb",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  specialtiesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  specialtyPill: {
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  specialtyText: { color: "#4B1D76", fontFamily: "Lexend", fontSize: 14 },
+  searchResultsContainer: { paddingHorizontal: 20, marginBottom: 20 },
+  doctorResultCard: {
+    backgroundColor: "#FFF",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  resultName: {
+    fontSize: 16,
+    fontFamily: "Lexend",
+    color: "#1E1E3F",
+    marginBottom: 4,
+  },
+  resultSpec: { fontSize: 13, fontFamily: "Lexend", color: "#6B7280" },
+  noResultsText: {
+    color: "#9CA3AF",
+    fontFamily: "Lexend",
+    fontStyle: "italic",
+  },
+  healthSummaryContainer: {
+    marginTop: 24,
+    paddingHorizontal: 20,
   },
 });

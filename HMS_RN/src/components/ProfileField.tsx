@@ -7,7 +7,7 @@ interface ProfileFieldProps {
   hideBorder?: boolean;
 }
 
-export default function ProfileField({
+function ProfileField({
   label,
   value,
   hideBorder = false,
@@ -19,6 +19,8 @@ export default function ProfileField({
     </View>
   );
 }
+
+export default React.memo(ProfileField);
 
 const styles = StyleSheet.create({
   container: {

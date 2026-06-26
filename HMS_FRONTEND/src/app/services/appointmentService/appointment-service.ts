@@ -25,10 +25,10 @@ export class AppointmentService {
     return of([]);
   }
 
-  getRecentAppointments(): Observable<any[]> {
+  getRecentAppointments(params: any = {}): Observable<any> {
     if (isPlatformBrowser(this.platformId))
-      return this.http.get<any[]>(`${this.apiUrl}/api/appointment/recent`);
-    return of([]);
+      return this.http.get<any>(`${this.apiUrl}/api/appointment/recent`, { params });
+    return of({ data: [], pagination: { total: 0, pages: 1 } });
   }
 
   updateAppointment(id: string, data: any): Observable<any> {
@@ -43,6 +43,10 @@ export class AppointmentService {
     return this.http.delete<any>(`${this.apiUrl}/api/appointment/${id}`);
   }
 
+  cancelAppointment(id: string, data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/api/appointment/${id}`, data);
+  }
+
   getAvailableSlots(doctorId: string, date: string): Observable<string[]> {
     let headers = new HttpHeaders();
 
@@ -55,4 +59,6 @@ export class AppointmentService {
       { headers },
     );
   }
+  getAllAppointments(): Observable<any> { return this.http.get(`${this.apiUrl}/api/appointment/all`); }
+
 }

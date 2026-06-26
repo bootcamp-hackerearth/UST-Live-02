@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Feather, FontAwesome6 } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 interface ManageAppointmentCardProps {
   appointment: any;
@@ -8,12 +8,36 @@ interface ManageAppointmentCardProps {
   onDelete: () => void;
 }
 
-export default function ManageAppointmentCard({
+function ManageAppointmentCard({
   appointment,
   onEdit,
   onDelete,
 }: Readonly<ManageAppointmentCardProps>) {
   const isScheduled = appointment.status === "Scheduled";
+  const isCancelled = appointment.status === "Cancelled";
+  const isCompleted = appointment.status === "Completed";
+
+  let badgeBackgroundColor;
+  let badgeTextColor;
+  let badgeText;
+
+  if (isScheduled) {
+    badgeBackgroundColor = "#c7c5ea";
+    badgeTextColor = "blue";
+    badgeText = "Booked";
+  } else if (isCancelled) {
+    badgeBackgroundColor = "#f3c7c7";
+    badgeTextColor = "red";
+    badgeText = appointment.status;
+  } else if (isCompleted) {
+    badgeBackgroundColor = "#bef0bf";
+    badgeTextColor = "green";
+    badgeText = appointment.status;
+  } else {
+    badgeBackgroundColor = "#f7d7a6";
+    badgeTextColor = "#9e6002";
+    badgeText = appointment.status;
+  }
 
   return (
     <View style={styles.card}>
@@ -21,7 +45,7 @@ export default function ManageAppointmentCard({
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
             {appointment.doctorName
-              ? appointment.doctorName.substring(4, 6).toUpperCase()
+              ? appointment.doctorName.substring(0, 2).toUpperCase()
               : "DR"}
           </Text>
         </View>
@@ -35,21 +59,27 @@ export default function ManageAppointmentCard({
               appointment.doctorDept ||
               "General Medicine"}
           </Text>
+          <Text style={styles.aptCode}>{appointment.appointmentCode}</Text>
         </View>
 
         <View
           style={[
             styles.badge,
-            { backgroundColor: isScheduled ? "#c5ead5" : "#f7d7a6" },
+            {
+              backgroundColor: badgeBackgroundColor,
+              borderRadius: 6,
+            },
           ]}
         >
           <Text
             style={[
               styles.badgeText,
-              { color: isScheduled ? "green" : "#9e6002" },
+              {
+                color: badgeTextColor,
+              },
             ]}
           >
-            {isScheduled ? "Booked" : "Pending"}
+            {badgeText}
           </Text>
         </View>
       </View>
@@ -67,18 +97,32 @@ export default function ManageAppointmentCard({
       </View>
 
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.actionBtn} onPress={onEdit}>
+        <TouchableOpacity
+          style={[
+            styles.actionBtn,
+            (isCancelled || isCompleted) && { opacity: 0.3 },
+          ]}
+          onPress={onEdit}
+          disabled={isCancelled || isCompleted}
+        >
           <View style={styles.actionButton}>
             <Feather name="edit-3" size={18} color="blue" />
             <Text style={[styles.actionText, { color: "blue" }]}> Edit</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionBtn} onPress={onDelete}>
+        <TouchableOpacity
+          style={[
+            styles.actionBtn,
+            (isCancelled || isCompleted) && { opacity: 0.3 },
+          ]}
+          onPress={onDelete}
+          disabled={isCancelled || isCompleted}
+        >
           <View style={styles.actionButton}>
-            <FontAwesome6 name="trash-can" size={18} color="red" />
+            <MaterialCommunityIcons name="cancel" size={18} color="red" />
             <Text style={[styles.actionText, { color: "#EF4444" }]}>
-              Delete
+              Cancel
             </Text>
           </View>
         </TouchableOpacity>
@@ -86,6 +130,8 @@ export default function ManageAppointmentCard({
     </View>
   );
 }
+
+export default React.memo(ManageAppointmentCard);
 
 const styles = StyleSheet.create({
   card: {
@@ -121,6 +167,11 @@ const styles = StyleSheet.create({
     fontFamily: "Lexend",
   },
   deptText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Lexend" },
+  aptCode: {
+    fontSize: 14,
+    color: "#7e4fed",
+    fontFamily: "Lexend",
+  },
   badge: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
   badgeText: {
     color: "#FFF",
@@ -158,15 +209,15 @@ const styles = StyleSheet.create({
   },
   timeContainer: {
     flexDirection: "row",
-    gap: 8, 
+    gap: 8,
     alignItems: "center",
   },
 
   pill: {
-    backgroundColor: "#E0E7FF", 
+    backgroundColor: "#E0E7FF",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20, 
+    borderRadius: 20,
   },
 
   pillText: {

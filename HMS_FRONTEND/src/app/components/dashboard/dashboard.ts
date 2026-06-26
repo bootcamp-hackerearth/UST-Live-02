@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../services/dashboardService/dashboard-service';
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HasPermissionDirective],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
@@ -77,7 +78,6 @@ export class Dashboard implements OnInit {
             color: '#ef4444',
             bg: '#fef2f2',
           },
-          { title: 'Cancelled', value: 0, icon: 'x-circle-fill', color: '#fca5a5', bg: '#fef2f2' },
         ];
 
         this.cdr.markForCheck();

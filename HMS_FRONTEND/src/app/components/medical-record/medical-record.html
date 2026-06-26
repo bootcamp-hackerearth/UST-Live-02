@@ -1,0 +1,545 @@
+<div class="page-wrapper">
+  <div *hasPermission="['VIEW_ALL_RECORDS', 'CREATE_RECORD_FOR_ANYONE']" class="dashboard-header">
+    <div class="title-section">
+      <p class="subtitle">MEDICAL RECORDS</p>
+      <h1 class="page-title">Medical Records</h1>
+      <p class="desc">Create, manage, and review patient medical records.</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card purple">
+        <div class="icon-box"><i class="bi bi-file-earmark-medical"></i></div>
+        <div class="stat-info">
+          <h2>{{ stats.total }}</h2>
+          <p>Total</p>
+        </div>
+      </div>
+      <div class="stat-card green">
+        <div class="icon-box"><i class="bi bi-check-circle"></i></div>
+        <div class="stat-info">
+          <h2>{{ stats.active }}</h2>
+          <p>Finalized</p>
+        </div>
+      </div>
+      <div class="stat-card blue">
+        <div class="icon-box"><i class="bi bi-clock-history"></i></div>
+        <div class="stat-info">
+          <h2>{{ stats.review }}</h2>
+          <p>Drafts</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *hasPermission="['CREATE_RECORD_FOR_ANYONE', 'CREATE_MY_RECORD']" class="form-container">
+    <p class="subtitle">NEW ENTRY</p>
+    <h2 class="section-title">Medical Record</h2>
+
+    <form [formGroup]="recordForm">
+      <div class="form-layout-grid">
+        <div class="left-col">
+          <div class="form-card">
+            <h3>Patient & Appointment Details</h3>
+            <p class="card-desc">BASIC INFORMATION</p>
+            <div class="input-row">
+              <div class="input-group">
+                <label for="appointment"><i class="bi bi-calendar"></i> APPOINTMENT ID *</label>
+                <div class="searchable-dropdown-container position-relative">
+                  <input
+                    aria-label="appointmentInput"
+                    type="text"
+                    class="form-control custom-select"
+                    placeholder="Search APT ID..."
+                    [value]="selectedFormAppointment"
+                    (input)="onAppointmentInput($event)"
+                    (focus)="isFormAppointmentOpen = true; displayFormAppointments = appointments"
+                    [class.is-invalid]="
+                      recordForm.get('appointmentId')?.invalid &&
+                      recordForm.get('appointmentId')?.touched
+                    "
+                  />
+                  @if (isFormAppointmentOpen) {
+                    <div class="dropdown-list shadow-sm">
+                      @for (apt of displayFormAppointments; track apt.appointmentCode) {
+                        <div
+                          class="dropdown-item"
+                          (mousedown)="$event.preventDefault(); selectAppointment(apt)"
+                        >
+                          <div style="font-weight: bold; color: #111827; font-size: 0.9rem">
+                            {{ apt.appointmentCode }}
+                          </div>
+                        </div>
+                      } @empty {
+                        <div class="dropdown-item text-muted" style="padding: 10px 16px">
+                          No match
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label for="patient"><i class="bi bi-person"></i> PATIENT *</label>
+                <div class="searchable-dropdown-container position-relative">
+                  <input
+                    aria-label="patientInput"
+                    type="text"
+                    class="form-control custom-select"
+                    placeholder="Search Name or ID..."
+                    [value]="selectedFormPatient"
+                    (input)="onPatientInput($event, 'form')"
+                    (focus)="isFormPatientOpen = true; displayFormPatients = patients"
+                    [class.is-invalid]="
+                      recordForm.get('patientId')?.invalid && recordForm.get('patientId')?.touched
+                    "
+                  />
+                  @if (isFormPatientOpen) {
+                    <div class="dropdown-list shadow-sm">
+                      @for (pat of displayFormPatients; track pat.UHID) {
+                        <div
+                          class="dropdown-item"
+                          (mousedown)="$event.preventDefault(); selectPatient(pat, 'form')"
+                        >
+                          <div style="font-weight: bold; color: #111827; font-size: 0.9rem">
+                            {{ pat.name }}
+                          </div>
+                          <div style="color: #6b7280; font-size: 0.75rem">{{ pat.UHID }}</div>
+                        </div>
+                      } @empty {
+                        <div class="dropdown-item text-muted" style="padding: 10px 16px">
+                          No match
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label for="doctor"><i class="bi bi-person-badge"></i> DOCTOR *</label>
+                <div class="searchable-dropdown-container position-relative">
+                  <input
+                    aria-label="doctorInput"
+                    type="text"
+                    class="form-control custom-select"
+                    placeholder="Search Name or ID..."
+                    [value]="selectedFormDoctor"
+                    (input)="onDoctorInput($event, 'form')"
+                    (focus)="openFormDoctorDropdown()"
+                    [readonly]="!userPermissions.includes('CREATE_RECORD_FOR_ANYONE')"
+                    [class.is-invalid]="
+                      recordForm.get('doctorEmployeeId')?.invalid &&
+                      recordForm.get('doctorEmployeeId')?.touched
+                    "
+                  />
+                  @if (isFormDoctorOpen) {
+                    <div class="dropdown-list shadow-sm">
+                      @for (doc of displayFormDoctors; track doc.employeeCode) {
+                        <div
+                          class="dropdown-item"
+                          (mousedown)="$event.preventDefault(); selectDoctor(doc, 'form')"
+                        >
+                          <div style="font-weight: bold; color: #111827; font-size: 0.9rem">
+                            {{ doc.name }}
+                          </div>
+                          <div style="color: #6b7280; font-size: 0.75rem">
+                            {{ doc.employeeCode }}
+                          </div>
+                        </div>
+                      } @empty {
+                        <div class="dropdown-item text-muted" style="padding: 10px 16px">
+                          No match
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-card summary">
+            <h3>Clinical Summary</h3>
+            <p class="card-desc">COMPLAINT, SYMPTOMS & DIAGNOSIS</p>
+            <div class="input-group complaint full-width">
+              <label for="complaint">COMPLAINT</label>
+              <textarea
+                aria-label="complaint"
+                class="scrollable-textarea-complaint"
+                formControlName="complaint"
+                placeholder="Specify the patient's complaint"
+              ></textarea>
+            </div>
+            <div class="input-group symptoms full-width mt-3">
+              <label for="syptoms">SYMPTOMS</label>
+              <textarea
+                aria-label="symptoms"
+                class="scrollable-textarea-symptoms"
+                formControlName="symptoms"
+                placeholder="Detail the symptoms, duration, and severity"
+              ></textarea>
+            </div>
+            <div class="input-group diagnosis mt-3">
+              <label for="diagnosis">DIAGNOSIS</label>
+              <textarea
+                aria-label="diagnosis"
+                class="scrollable-textarea-diagnosis"
+                formControlName="diagnosis"
+                placeholder="Document the provisional or final diagnosis"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-col">
+          <div class="form-card">
+            <h3>Medications</h3>
+            <p class="card-desc">CURRENT & PRESCRIBED</p>
+            <div class="array-scroll-container" formArrayName="medications">
+              @if (medications.length > 0) {
+                <table class="array-table">
+                  <thead>
+                    <tr>
+                      <th>NAME</th>
+                      <th>DOSAGE</th>
+                      <th>FREQ</th>
+                      <th>DUR</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (med of medications.controls; track $index; let i = $index) {
+                      <tr [formGroupName]="i">
+                        <td>
+                          <input
+                            aria-label="name"
+                            type="text"
+                            formControlName="name"
+                            placeholder="Name"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            aria-label="dosage"
+                            type="text"
+                            formControlName="dosage"
+                            placeholder="50mg"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            aria-label="freq"
+                            type="text"
+                            formControlName="frequency"
+                            placeholder="Twice"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            aria-label="duration"
+                            type="text"
+                            formControlName="duration"
+                            placeholder="5 days"
+                          />
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            class="btn-delete medication"
+                            (click)="removeMedication(i)"
+                          >
+                            <i class="bi bi-x"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </div>
+            <button type="button" class="btn-add-array mt-2" (click)="addMedication()">
+              + Add Medication
+            </button>
+          </div>
+
+          <div class="form-card mt-4">
+            <h3>Medical Observations</h3>
+            <p class="card-desc">VITALS & OTHER METRICS</p>
+            <div class="array-scroll-container" formArrayName="medicalObservations">
+              @if (medicalObservations.length > 0) {
+                <table class="array-table">
+                  <thead>
+                    <tr>
+                      <th>METRIC</th>
+                      <th>VALUE</th>
+                      <th>TIME</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (obs of medicalObservations.controls; track $index; let i = $index) {
+                      <tr [formGroupName]="i">
+                        <td>
+                          <input
+                            aria-label="metric"
+                            type="text"
+                            formControlName="metricName"
+                            placeholder="metric"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            aria-label="value"
+                            type="text"
+                            formControlName="metricValue"
+                            placeholder="value"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            aria-label="recordedTime"
+                            type="datetime-local"
+                            formControlName="recordedTime"
+                            placeholder="datetime"
+                          />
+                        </td>
+                        <td>
+                          <button type="button" class="btn-delete" (click)="removeObservation(i)">
+                            <i class="bi bi-x"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </div>
+            <button type="button" class="btn-add-array mt-2" (click)="addObservation()">
+              + Add Observation
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card mt-4 full-width">
+        <h3>Additional Notes</h3>
+        <div class="input-group full-width">
+          <textarea
+            aria-label="Notes"
+            class="scrollable-textarea"
+            formControlName="notes"
+            placeholder="Document any additional notes"
+            rows="2"
+          ></textarea>
+        </div>
+      </div>
+      <div class="form-actions mt-4">
+        <button type="button" class="btn-reset" (click)="resetForm()">
+          <i class="bi bi-arrow-clockwise"></i>Reset
+        </button>
+        <div class="action-right">
+          <button type="button" class="btn-draft" (click)="onSubmit('DRAFT')">Save Draft</button>
+          <button type="button" class="btn-save" (click)="onSubmit('FINAL')">Save Final</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-container mt-5">
+    <div class="table-header-flex">
+      <div>
+        <p class="subtitle">RECORDS</p>
+        <h2 class="section-title">All Medical Records</h2>
+      </div>
+
+      <div class="filter-group">
+        <div class="searchable-dropdown-container">
+          <input
+            aria-label="patientInput"
+            type="text"
+            class="form-control custom-select"
+            placeholder="Filter Patient Name/ID"
+            [value]="selectedFilterPatient"
+            (input)="onPatientInput($event, 'filter')"
+            (focus)="isFilterPatientOpen = true; displayFilterPatients = patients"
+            (blur)="closeDropdowns('filterPatient')"
+          />
+          @if (isFilterPatientOpen) {
+            <div class="dropdown-list filter-list shadow-sm">
+              @for (pat of displayFilterPatients; track pat.UHID) {
+                <div
+                  class="dropdown-item"
+                  (mousedown)="$event.preventDefault(); selectPatient(pat, 'filter')"
+                >
+                  <div style="font-weight: bold; color: #111827; font-size: 0.9rem">
+                    {{ pat.name }}
+                  </div>
+                  <div style="color: #6b7280; font-size: 0.75rem">{{ pat.UHID }}</div>
+                </div>
+              } @empty {
+                <div class="dropdown-item text-muted" style="padding: 10px 16px">No match</div>
+              }
+            </div>
+          }
+        </div>
+
+        <input
+          aria-label="DateFilter"
+          type="date"
+          [value]="filterDate"
+          (change)="onFilterDateChange($event)"
+          class="form-control"
+          style="width: auto"
+        />
+
+        <div class="searchable-dropdown-container" *hasPermission="'VIEW_ALL_RECORDS'">
+          <input
+            aria-label="doctorControl"
+            type="text"
+            class="form-control custom-select"
+            placeholder="Filter Doctor Name/ID"
+            [value]="selectedFilterDoctor"
+            (input)="onDoctorInput($event, 'filter')"
+            (focus)="openFilterDoctorDropdown()"
+            (blur)="closeDropdowns('filterDoctor')"
+          />
+          @if (isFilterDoctorOpen) {
+            <div class="dropdown-list filter-list shadow-sm">
+              @for (doc of displayFilterDoctors; track doc.employeeCode) {
+                <div
+                  class="dropdown-item"
+                  (mousedown)="$event.preventDefault(); selectDoctor(doc, 'filter')"
+                >
+                  <div style="font-weight: bold; color: #111827; font-size: 0.9rem">
+                    {{ doc.name }}
+                  </div>
+                  <div style="color: #6b7280; font-size: 0.75rem">{{ doc.employeeCode }}</div>
+                </div>
+              } @empty {
+                <div class="dropdown-item text-muted" style="padding: 10px 16px">No match</div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <table class="data-table mt-3">
+      <thead>
+        <tr>
+          <th>RECORD ID</th>
+          <th>APPOINTMENT ID</th>
+          <th>PATIENT</th>
+          <th>DOCTOR</th>
+          <th>DIAGNOSIS</th>
+          <th>STATUS</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (rec of records; track rec._id) {
+          <tr>
+            <td class="text-purple fw-bold">{{ rec.recordCode }}</td>
+            <td>{{ rec.appointmentId }}</td>
+            <td>
+              <div class="cell patient">
+                <div class="avatar bg-purple">{{ getInitials(rec.patientName) }}</div>
+                <div>
+                  <div>{{ rec.patientName }}</div>
+                  <div>{{ rec.patientId }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="cell patient">
+                <div class="avatar bg-purple">{{ getInitials(rec.doctorName) }}</div>
+                <div>
+                  <div>Dr. {{ rec.doctorName }}</div>
+                  <div>{{ rec.doctorEmployeeId }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="truncate-text">{{ rec.diagnosis || 'Pending' }}</span>
+            </td>
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="rec.status === 'FINAL' ? 'badge-active' : 'badge-review'"
+                >{{ rec.status }}</span
+              >
+            </td>
+            <td class="action-cell">
+              <button class="btn-icon view" (click)="viewRecord(rec)">
+                <i class="bi bi-eye"></i>
+              </button>
+              @if (canEdit(rec)) {
+                <button class="btn-icon edit" (click)="editRecord(rec)">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+              }
+              <button
+                *hasPermission="'DELETE_HEALTH_RECORD'"
+                class="btn-icon delete"
+                (click)="deleteRecord(rec._id)"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No records found.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Showing Page {{ currentPage }} of {{ totalPages }}
+        <span style="font-weight: 400; margin-left: 8px">({{ totalRecords }} Total Records)</span>
+      </div>
+
+      <div class="pagination-controls">
+        <button class="btn-page prev" [disabled]="currentPage === 1" (click)="prevPage()">
+          <i class="bi bi-chevron-left"></i> Prev
+        </button>
+
+        <div class="clickable-page-numbers">
+          @for (page of visiblePages; track $index) {
+            @if (page === '...') {
+              <span class="pagination-ellipsis">...</span>
+            } @else {
+              <button
+                class="btn-page-number"
+                [class.active]="currentPage === page"
+                (click)="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+            }
+          }
+        </div>
+
+        <button
+          class="btn-page next"
+          [disabled]="currentPage === totalPages || totalPages === 0"
+          (click)="nextPage()"
+        >
+          Next <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+@if (showViewModal && selectedRecordForView) {
+  <app-record-details-modal
+    [record]="selectedRecordForView"
+    [patients]="patients"
+    [doctors]="doctors"
+    (closeModal)="closeViewModal()"
+    (deleteRecord)="deleteRecord($event); closeViewModal()"
+  >
+  </app-record-details-modal>
+}

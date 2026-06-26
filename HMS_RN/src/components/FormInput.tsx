@@ -15,7 +15,7 @@ interface FormInputProps extends TextInputProps {
   isDisabled?: boolean;
 }
 
-export default function FormInput({
+function FormInput({
   name,
   control,
   error,
@@ -44,10 +44,14 @@ export default function FormInput({
           />
         )}
       />
-      {!!(error?.message) && <Text style={styles.errorText}>{error.message}</Text>}
+      {!!error?.message && (
+        <Text style={styles.errorText}>{error.message}</Text>
+      )}
     </View>
   );
 }
+
+export default React.memo(FormInput);
 
 const styles = StyleSheet.create({
   container: { width: "100%" },

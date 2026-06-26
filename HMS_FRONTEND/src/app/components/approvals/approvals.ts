@@ -1,71 +1,123 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/apiService/api-service';
 import { ToastrService } from 'ngx-toastr';
 import { RouterLink } from '@angular/router';
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
+import { environment } from '../../../environments';
 
 @Component({
   selector: 'app-approvals',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, HasPermissionDirective],
   templateUrl: './approvals.html',
-  styleUrls: ['../employee/employee.css'],
+  styleUrls: ['./approvals.css'],
 })
 export class Approvals implements OnInit {
   employees: any[] = [];
-  filteredEmployees: any[] = [];
   isLoading = true;
 
   searchTerm: string = '';
   selectedDepartment: string = '';
   departments = ["OPD", "IPD", "ADMIN", "LAB", "PHARMACY"];
 
+
+  currentPage = 1;
+  pageSize = environment.pageSize;
+  totalRecords = 0;
+  totalPages = 1;
+  visiblePages: (number | string)[] = [];
+
   toast: ToastrService = inject(ToastrService);
 
   constructor(
     private readonly apiService: ApiService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private readonly platformId: Object
   ) { }
 
   ngOnInit() {
-    this.fetchPendingEmployees();
+    if (isPlatformBrowser(this.platformId)) {
+      this.fetchPendingEmployees();
+    }
   }
 
   fetchPendingEmployees() {
-    this.apiService.getAllEmployees().subscribe({
-      next: (data: any) => {
-        if (!Array.isArray(data)) {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-          return;
-        }
+    this.isLoading = true;
 
-        this.employees = data.filter((e: any) => e.status === 'ADMIN_APPROVAL_PENDING');
-        this.applyFilters();
 
+    const params: any = {
+      page: this.currentPage,
+      limit: this.pageSize,
+      status: 'ADMIN_APPROVAL_PENDING'
+    };
+
+    if (this.searchTerm) params.search = this.searchTerm;
+    if (this.selectedDepartment) params.department = this.selectedDepartment;
+
+    this.apiService.getAllEmployees(params).subscribe({
+      next: (res: any) => {
+
+        this.employees = res.data || [];
+        this.totalRecords = res.pagination?.total || 0;
+        this.totalPages = res.pagination?.pages || 1;
+
+        this.generatePagesArray();
         this.isLoading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error fetching queue', err);
         this.isLoading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
     });
   }
 
+
+  generatePagesArray() {
+    const total = this.totalPages;
+    const currentlyShowing = this.currentPage;
+
+    if (total <= 6) {
+      this.visiblePages = Array.from({ length: total }, (_, num) => num + 1);
+      return;
+    }
+
+    if (currentlyShowing <= 3) {
+      this.visiblePages = [1, 2, 3, 4, '...', total];
+    } else if (currentlyShowing >= total - 2) {
+      this.visiblePages = [1, '...', total - 3, total - 2, total - 1, total];
+    } else {
+      this.visiblePages = [1, '...', currentlyShowing - 1, currentlyShowing, currentlyShowing + 1, '...', total];
+    }
+  }
+
+  goToPage(page: number | string) {
+    if (typeof page === 'number' && page !== this.currentPage) {
+      this.currentPage = page;
+      this.fetchPendingEmployees();
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.fetchPendingEmployees();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.fetchPendingEmployees();
+    }
+  }
+
   applyFilters() {
-    this.filteredEmployees = this.employees.filter((emp) => {
-      const matchesSearch = !this.searchTerm ||
-        emp.name?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        emp.email?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        emp.employeeCode?.toLowerCase().includes(this.searchTerm.toLowerCase());
-
-      const matchesDept = !this.selectedDepartment || emp.department === this.selectedDepartment;
-
-      return matchesSearch && matchesDept;
-    });
+    this.currentPage = 1;
+    this.fetchPendingEmployees();
   }
 
   getRoleString(role: any): string {
@@ -82,6 +134,10 @@ export class Approvals implements OnInit {
       this.apiService.approveEmployee(emp.employeeCode).subscribe({
         next: () => {
           this.toast.success('Employee approved successfully!');
+
+          if (this.employees.length === 1 && this.currentPage > 1) {
+            this.currentPage--;
+          }
           this.fetchPendingEmployees();
         },
         error: (err) => {
@@ -91,15 +147,19 @@ export class Approvals implements OnInit {
     }
   }
 
-  rejectEmployee(id: string) {
-    if (confirm(`Are you sure you want to reject and delete this application?`)) {
-      this.apiService.deleteEmployee(id).subscribe({
+  rejectEmployee(emp: any) {
+    if (confirm(`Reject account for ${emp.name}?`)) {
+      this.apiService.rejectEmployee(emp.employeeCode).subscribe({
         next: () => {
-          this.toast.success('Application rejected successfully.');
+          this.toast.success('Employee rejected successfully!');
+
+          if (this.employees.length === 1 && this.currentPage > 1) {
+            this.currentPage--;
+          }
           this.fetchPendingEmployees();
         },
         error: (err) => {
-          this.toast.error('Error rejecting application: ' + (err.error?.message || 'Unknown error'));
+          this.toast.error('Error rejecting employee: ' + (err.error?.message || 'Unknown error'));
         },
       });
     }

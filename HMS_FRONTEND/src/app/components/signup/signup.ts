@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -25,6 +25,7 @@ import {
   imports: [FormsModule, ReactiveFormsModule, CommonModule, RouterLink],
   templateUrl: './signup.html',
   styleUrl: './signup.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Signup {
   private readonly auth = inject(Auth);
@@ -38,7 +39,7 @@ export class Signup {
   signupForm: FormGroup;
   medicalRoles = ['doctor', 'nurse', 'lab_tech', 'pharmacist'];
   rowSubSlotsMap: { [uniqueId: string]: GeneratedSlot[] } = {};
-  departments = ["OPD", "IPD", "ADMIN", "LAB", "PHARMACY"];
+  departments = ["OPD", "IPD", "LAB", "PHARMACY"];
 
   availableHours: string[] = Array.from({ length: 24 }, (_, i) => {
     const hour = i.toString().padStart(2, '0');

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -11,17 +11,19 @@ import {
 } from '@angular/forms';
 import { ApiService } from '../../services/apiService/api-service';
 import { ToastrService } from 'ngx-toastr';
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
+import { environment } from '../../../environments';
 
 @Component({
   selector: 'app-patient',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, HasPermissionDirective],
   templateUrl: './patient.html',
   styleUrls: ['./patient.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Patient implements OnInit {
   patients: any[] = [];
-  filteredpatients: any[] = [];
   isLoading = true;
   showAddModal = false;
   isEditMode = false;
@@ -30,18 +32,35 @@ export class Patient implements OnInit {
   modalError: string | null = null;
   isSubmittingModal = false;
   searchTerm: string = '';
+
+  currentPage = 1;
+  pageSize = environment.pageSize;
+  totalRecords = 0;
+  totalPages = 1;
+  visiblePages: (number | string)[] = [];
+
   toast: ToastrService = inject(ToastrService);
 
   constructor(
     private readonly apiService: ApiService,
     private readonly cdr: ChangeDetectorRef,
     private readonly fb: FormBuilder,
+    private readonly elementRef: ElementRef
   ) {
     this.initForm();
   }
 
   ngOnInit() {
     this.fetchPatients();
+  }
+
+
+  @HostListener('document:mousedown', ['$event'])
+  onGlobalClick(event: MouseEvent): void {
+    const modalOverlay = this.elementRef.nativeElement.querySelector('.modal-overlay');
+    if (this.showAddModal && event.target === modalOverlay) {
+      this.closeModal();
+    }
   }
 
   initForm() {
@@ -83,27 +102,78 @@ export class Patient implements OnInit {
 
   fetchPatients() {
     this.isLoading = true;
-    this.apiService.getAllPatients().subscribe({
-      next: (data) => {
-        const patients = data as any[];
-        this.patients = patients;
-        this.filteredpatients = patients;
+
+    const params: any = {
+      page: this.currentPage,
+      limit: this.pageSize
+    };
+
+    if (this.searchTerm) {
+      params.search = this.searchTerm;
+    }
+
+    this.apiService.getAllPatients(params).subscribe({
+      next: (res: any) => {
+
+        this.patients = res.data || [];
+        this.totalRecords = res.pagination?.total || 0;
+        this.totalPages = res.pagination?.pages || 1;
+
+        this.generatePagesArray();
         this.isLoading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error(err);
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }
 
+
+  generatePagesArray() {
+    const total = this.totalPages;
+    const current = this.currentPage;
+
+    if (total <= 6) {
+      this.visiblePages = Array.from({ length: total }, (_, i) => i + 1);
+      return;
+    }
+
+    if (current <= 3) {
+      this.visiblePages = [1, 2, 3, 4, '...', total];
+    } else if (current >= total - 2) {
+      this.visiblePages = [1, '...', total - 3, total - 2, total - 1, total];
+    } else {
+      this.visiblePages = [1, '...', current - 1, current, current + 1, '...', total];
+    }
+  }
+
+  goToPage(page: number | string) {
+    if (typeof page === 'number' && page !== this.currentPage) {
+      this.currentPage = page;
+      this.fetchPatients();
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.fetchPatients();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.fetchPatients();
+    }
+  }
+
   applyFilters() {
-    this.filteredpatients = this.patients.filter(
-      (p) =>
-        p.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        p.email.toLowerCase().includes(this.searchTerm.toLowerCase()),
-    );
+    this.currentPage = 1;
+    this.fetchPatients();
   }
 
   openModal() {
@@ -126,7 +196,10 @@ export class Patient implements OnInit {
 
   deletePatient(uhid: string) {
     if (confirm('Delete patient?')) {
-      this.apiService.deletePatient(uhid).subscribe(() => this.fetchPatients());
+      this.apiService.deletePatient(uhid).subscribe(() => {
+        this.toast.success("Patient deleted successfully");
+        this.fetchPatients();
+      });
     }
   }
 
@@ -141,13 +214,13 @@ export class Patient implements OnInit {
 
     action$.subscribe({
       next: () => {
-        this.toast.success('Patient created successfully!');
+        this.toast.success(this.isEditMode ? 'Patient updated successfully!' : 'Patient created successfully!');
         this.fetchPatients();
         this.closeModal();
         this.isSubmittingModal = false;
       },
       error: (err) => {
-        this.toast.error(err.error?.message);
+        this.toast.error(err.error?.message || err.message);
         this.modalError = err.message;
         this.isSubmittingModal = false;
       },

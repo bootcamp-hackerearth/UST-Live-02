@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -8,8 +8,9 @@ import {
   ImageBackground,
   TouchableOpacity,
   Alert,
+  ListRenderItem,
+  RefreshControl,
 } from "react-native";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   useNavigation,
@@ -20,92 +21,139 @@ import Toast from "react-native-toast-message";
 import { appointmentService } from "../services/appointmentService";
 import ManageAppointmentCard from "../components/ManageAppointmentCard";
 
+interface Appointment {
+  _id: string;
+  appointmentCode: string;
+  doctorEmployeeID: string;
+  date: string;
+  timeSlot: string;
+  doctorName: string;
+  doctorSpecialization?: string;
+  doctorDept?: string;
+  status: "Scheduled" | "Pending";
+}
+
 export default function ViewAppointmentsScreen() {
   const backgroundImage = require("../../assets/images/hospital3.jpg");
   const navigation = useNavigation<NavigationProp<any>>();
-  const [appointments, setAppointments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const fetchAppointments = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) setIsLoading(true);
+    try {
+      const data = await appointmentService.getMyAppointments();
+      if (isMounted.current) setAppointments(data);
+    } catch (err) {
+      console.error("Fetch Appointments Failed:", err);
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+        setRefreshing(false);
+      }
+    }
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchAppointments(true);
+  }, [fetchAppointments]);
 
   useFocusEffect(
     useCallback(() => {
       fetchAppointments();
-    }, []),
+    }, [fetchAppointments]),
   );
 
-  useEffect(() => {
-    const parentNav = navigation.getParent<BottomTabNavigationProp<any>>();
-
-    if (!parentNav) return;
-
-    const unsubscribe = parentNav.addListener("tabPress", () => {
-      if (navigation.isFocused()) {
-        fetchAppointments();
-      }
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  const fetchAppointments = async () => {
-    setIsLoading(true);
-    try {
-      const data = await appointmentService.getMyAppointments();
-      setAppointments(data);
-    } catch (err) {
-      console.error("Fetch Appointments Failed:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEdit = (appointment: any) => {
-    navigation.navigate("EditAppointment", {
-      appointmentData: {
-        appointmentCode: appointment.appointmentCode,
-        doctorEmployeeID: appointment.doctorEmployeeID,
-        date: appointment.date,
-        timeSlot: appointment.timeSlot,
-      },
-    });
-  };
-
-  const executeDeletion = async (appointment: any) => {
-    try {
-      await appointmentService.deleteAppointment(appointment.appointmentCode);
-      Toast.show({
-        type: "success",
-        text1: "Success",
-        text2: "Appointment cancelled successfully.",
-      });
-      fetchAppointments();
-    } catch (err: any) {
-      console.error("Delete Appointment Failed:", err);
-      Toast.show({
-        type: "error",
-        text1: "Cancellation Failed",
-        text2:
-          err.response?.data?.message ||
-          "Could not connect to the server to cancel the appointment.",
-      });
-    }
-  };
-
-  const handleDelete = (appointment: any) => {
-    Alert.alert(
-      "Cancel Appointment",
-      `Are you sure you want to cancel your appointment with ${appointment.doctorName}?`,
-      [
-        { text: "No, keep it", style: "cancel" },
-        {
-          text: "Yes, Cancel",
-          style: "destructive",
-          onPress: () => {
-            executeDeletion(appointment);
-          },
+  const handleEdit = useCallback(
+    (appointment: Appointment) => {
+      navigation.navigate("EditAppointment", {
+        appointmentData: {
+          appointmentCode: appointment.appointmentCode,
+          doctorEmployeeID: appointment.doctorEmployeeID,
+          date: appointment.date,
+          timeSlot: appointment.timeSlot,
         },
-      ],
-    );
-  };
+      });
+    },
+    [navigation],
+  );
+
+  const executeCancellation = useCallback(
+    async (appointment: Appointment) => {
+      try {
+        const payload = { status: "Cancelled" };
+        await appointmentService.updateAppointment(
+          appointment.appointmentCode,
+          payload,
+        );
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: "Appointment cancelled successfully.",
+        });
+        fetchAppointments();
+      } catch (err: any) {
+        console.error("Delete Appointment Failed:", err);
+        Toast.show({
+          type: "error",
+          text1: "Cancellation Failed",
+          text2:
+            err.response?.data?.message ||
+            "Could not connect to the server to cancel the appointment.",
+        });
+      }
+    },
+    [fetchAppointments],
+  );
+
+  const handleDelete = useCallback(
+    (appointment: Appointment) => {
+      const onConfirmDelete = () => executeCancellation(appointment);
+
+      Alert.alert(
+        "Cancel Appointment",
+        `Are you sure you want to cancel your appointment with ${appointment.doctorName}?`,
+        [
+          { text: "No, keep it", style: "cancel" },
+          {
+            text: "Yes, Cancel",
+            style: "destructive",
+            onPress: () => {
+              void onConfirmDelete();
+            },
+          },
+        ],
+      );
+    },
+    [executeCancellation],
+  );
+
+  const navigateToBookAppointment = useCallback(
+    () => navigation.navigate("BookAppointment"),
+    [navigation],
+  );
+
+  const renderAppointmentItem = useCallback<ListRenderItem<Appointment>>(
+    ({ item }) => (
+      <ManageAppointmentCard
+        appointment={item}
+        onEdit={() => handleEdit(item)}
+        onDelete={() => handleDelete(item)}
+      />
+    ),
+    [handleEdit, handleDelete],
+  );
 
   return (
     <ImageBackground
@@ -120,7 +168,7 @@ export default function ViewAppointmentsScreen() {
 
           <TouchableOpacity
             style={styles.bookTriggerBtn}
-            onPress={() => navigation.navigate("BookAppointment")}
+            onPress={navigateToBookAppointment}
           >
             <Text style={styles.bookTriggerText}>Book New Appointment</Text>
           </TouchableOpacity>
@@ -133,13 +181,7 @@ export default function ViewAppointmentsScreen() {
               keyExtractor={(item) => item.appointmentCode || item._id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.listContent}
-              renderItem={({ item }) => (
-                <ManageAppointmentCard
-                  appointment={item}
-                  onEdit={() => handleEdit(item)}
-                  onDelete={() => handleDelete(item)}
-                />
-              )}
+              renderItem={renderAppointmentItem}
               ListEmptyComponent={
                 <View style={styles.emptyListCard}>
                   <Text style={styles.emptyListText}>
@@ -147,6 +189,18 @@ export default function ViewAppointmentsScreen() {
                   </Text>
                 </View>
               }
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={["#4B1D76"]}
+                  tintColor="#4B1D76"
+                />
+              }
+              initialNumToRender={8}
+              maxToRenderPerBatch={8}
+              windowSize={11}
+              removeClippedSubviews={true}
             />
           )}
         </View>
@@ -170,11 +224,16 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 24,
   },
-  mainTitle: { fontSize: 36, fontWeight: "300", color: "#1E1E3F" },
+  mainTitle: {
+    fontSize: 36,
+    fontFamily: "Montserrat",
+    fontWeight: "300",
+    color: "#1E1E3F",
+  },
   boldTitle: {
     fontSize: 36,
     fontFamily: "Lexend",
-    color: "#4B1D76",
+    color: "#6C4EDB",
     marginBottom: 16,
   },
   bookTriggerBtn: {

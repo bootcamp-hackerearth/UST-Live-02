@@ -12,12 +12,12 @@ export const authService = {
 
         const data = response.data;
 
-        if (!data.token) {
+        if (!data.accessToken) {
             throw new Error("Server did not return a token.");
         }
 
         if (data.user?.profile) {
-            await SecureStore.setItemAsync("patient_jwt", data.token);
+            await SecureStore.setItemAsync("patient_jwt", data.accessToken);
             await SecureStore.setItemAsync(
                 "patient_profile",
                 JSON.stringify(data.user.profile)
@@ -30,4 +30,15 @@ export const authService = {
         const response = await apiClient.post("/api/patients/mobile-register", payload);
         return response.data;
     },
+
+    logout: async () => {
+        try {
+            await apiClient.post("/api/auth/logout");
+        } catch (error) {
+            console.error("Backend logout failed, proceeding with local clear.", error);
+        } finally {
+            await SecureStore.deleteItemAsync("patient_jwt");
+            await SecureStore.deleteItemAsync("patient_profile");
+        }
+    }
 };

@@ -26,8 +26,8 @@ export const appointmentService = {
         return response.data;
     },
 
-    deleteAppointment: async (appointmentCode: string) => {
-        const response = await apiClient.delete(`/api/appointment/${appointmentCode}`);
+    cancelAppointment: async (appointmentCode: string, payload: any) => {
+        const response = await apiClient.put(`/api/appointment/${appointmentCode}`, payload);
         return response.data;
     }
 };

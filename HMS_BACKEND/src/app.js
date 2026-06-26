@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 
@@ -17,8 +18,12 @@ app.use(
 
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => res.json({ message: "API running" }));
+
+const errorMiddleware = require("./middlewares/errorMiddleware");
+app.use(errorMiddleware);
 
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
@@ -43,6 +48,12 @@ app.use("/api/patients", patientRoutes);
 
 const verifyEmailRoutes = require("./routes/emailVerificationRoutes");
 app.use("/api/email", verifyEmailRoutes);
+
+const roleRoutes = require("./routes/roleRoutes");
+app.use("/api/roles", roleRoutes);
+
+const medicalRecordRoutes = require("./routes/medicalRecordRoutes");
+app.use("/api/records", medicalRecordRoutes);
 
 try {
   mongoose.connect(process.env.MONGO_URI);

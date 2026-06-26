@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, ChangeDetectorRef, PLATFORM_ID, Inject, HostListener, ElementRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -18,11 +18,13 @@ import {
 } from '../../utils/joiningDateValidator';
 import { ToastrService } from 'ngx-toastr';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
+import { environment } from '../../../environments';
 
 @Component({
   selector: 'app-employee',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, HasPermissionDirective],
   templateUrl: './employee.html',
   styleUrls: ['./employee.css'],
 })
@@ -41,6 +43,12 @@ export class Employee implements OnInit {
     total: 0
   };
 
+  currentPage = 1;
+  pageSize = environment.pageSize;
+  totalRecords = 0;
+  totalPages = 1;
+  visiblePages: (number | string)[] = [];
+
   searchTerm: string = '';
   selectedDepartment: string = '';
   selectedStatus: string = '';
@@ -51,10 +59,11 @@ export class Employee implements OnInit {
   modalError: string | null = null;
   newEmployeeForm!: FormGroup;
 
+  userPermissions: string[] = [];
+
   medicalRoles = ['DOCTOR', 'NURSE', 'LAB_TECH', 'PHARMACIST'];
 
-  availableRoles = [
-    { value: 'ADMIN', label: 'Admin' },
+  baseRoles = [
     { value: 'DOCTOR', label: 'Doctor' },
     { value: 'NURSE', label: 'Nurse' },
     { value: 'LAB_TECH', label: 'Lab Technician' },
@@ -62,6 +71,9 @@ export class Employee implements OnInit {
     { value: 'RECEPTIONIST', label: 'Receptionist' },
     { value: 'CASHIER', label: 'Cashier' },
   ];
+
+  availableRoles: any[] = [];
+
   rowSubSlotsMap: { [uniqueId: string]: GeneratedSlot[] } = {};
   availableHours: string[] = Array.from(
     { length: 24 },
@@ -79,11 +91,15 @@ export class Employee implements OnInit {
     private readonly cdr: ChangeDetectorRef,
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
+    @Inject(PLATFORM_ID) private readonly platformId: Object,
+    private readonly elementRef: ElementRef
   ) {
     this.initForm();
   }
 
   ngOnInit() {
+    this.setupAvailableRoles();
+
     this.route.data.subscribe(data => {
       if (data['openApprovalsByDefault']) {
         this.showPendingApprovals = true;
@@ -92,40 +108,100 @@ export class Employee implements OnInit {
         this.showPendingApprovals = false;
         this.selectedStatus = '';
       }
-      if (this.employees.length > 0) {
-        this.applyFilters();
-      }
+      this.applyFilters();
       this.cdr.detectChanges();
     });
-    this.fetchEmployees();
+  }
+
+  setupAvailableRoles() {
+
+    this.route.data.subscribe(data => {
+      if (data['openApprovalsByDefault']) {
+        this.showPendingApprovals = true;
+        this.selectedStatus = '';
+      } else {
+        this.showPendingApprovals = false;
+        this.selectedStatus = '';
+      }
+      this.applyFilters();
+      this.cdr.detectChanges();
+    });
+    this.availableRoles = [...this.baseRoles];
+
+    if (isPlatformBrowser(this.platformId)) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1].replaceAll('-', '+').replaceAll('_', '/')));
+
+          this.userPermissions = payload.permissions || [];
+
+          if (this.userPermissions.includes('CREATE_ADMIN')) {
+            this.availableRoles.unshift({ value: 'ADMIN', label: 'Admin' });
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    }
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  onGlobalClick(event: MouseEvent): void {
+    const modalOverlay = this.elementRef.nativeElement.querySelector('.modal-overlay');
+    if (this.showAddModal && event.target === modalOverlay) {
+      this.closeModal();
+    }
+  }
+
+  canEditEmployee(emp: any): boolean {
+    const role = this.getRoleString(emp.role).toUpperCase();
+    if (role === 'ADMIN') {
+      return this.userPermissions.includes('UPDATE_ADMIN');
+    }
+    return this.userPermissions.includes('UPDATE_EMPLOYEE');
+  }
+
+  canDeleteEmployee(emp: any): boolean {
+    const role = this.getRoleString(emp.role).toUpperCase();
+    if (role === 'ADMIN') {
+      return this.userPermissions.includes('DELETE_ADMIN');
+    }
+    return this.userPermissions.includes('DELETE_EMPLOYEE');
   }
 
   minDate = getMinDate();
   maxDate = getMaxDate();
 
   fetchEmployees() {
-    this.apiService.getAllEmployees().subscribe({
-      next: (data: any) => {
-        if (!Array.isArray(data)) {
-          console.error('Backend did not return an array. Data:', data);
-          this.isLoading = false;
-          this.cdr.detectChanges();
-          this.cdr.markForCheck();
-          return;
+    this.isLoading = true;
+
+    const params: any = {
+      page: this.currentPage,
+      limit: this.pageSize
+    };
+
+    if (this.searchTerm) params.search = this.searchTerm;
+    if (this.selectedDepartment) params.department = this.selectedDepartment;
+
+    if (this.showPendingApprovals) {
+      params.status = 'ADMIN_APPROVAL_PENDING';
+    } else if (this.selectedStatus) {
+      params.status = this.selectedStatus;
+    }
+
+    this.apiService.getAllEmployees(params).subscribe({
+      next: (res: any) => {
+        this.filteredEmployees = res.data || [];
+        this.totalRecords = res.pagination?.total || 0;
+        this.totalPages = res.pagination?.pages || 1;
+
+        if (res.stats) {
+          this.stats = res.stats;
+          this.pendingCount = this.stats.pending;
         }
 
-        this.employees = data;
-
-        this.stats = {
-          pending: data.filter((e: any) => e.status === 'ADMIN_APPROVAL_PENDING').length,
-          verified: data.filter((e: any) => e.status === 'ACTIVE').length,
-          inactive: data.filter((e: any) => e.status === 'INACTIVE').length,
-          firstLogin: data.filter((e: any) => e.status === 'PASSWORD_CHANGE_PENDING').length,
-          total: data.length
-        };
-        this.pendingCount = this.stats.pending;
-
-        this.applyFilters();
+        this.generatePagesArray();
         this.isLoading = false;
         this.cdr.markForCheck();
         this.cdr.detectChanges();
@@ -136,6 +212,45 @@ export class Employee implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  generatePagesArray() {
+    const total = this.totalPages;
+    const thisPage = this.currentPage;
+
+    if (total <= 6) {
+      this.visiblePages = Array.from({ length: total }, (_, i) => i + 1);
+      return;
+    }
+
+    if (thisPage <= 3) {
+      this.visiblePages = [1, 2, 3, 4, '...', total];
+    } else if (thisPage >= total - 2) {
+      this.visiblePages = [1, '...', total - 3, total - 2, total - 1, total];
+    } else {
+      this.visiblePages = [1, '...', thisPage - 1, thisPage, thisPage + 1, '...', total];
+    }
+  }
+
+  goToPage(page: number | string) {
+    if (typeof page === 'number' && page !== this.currentPage) {
+      this.currentPage = page;
+      this.fetchEmployees();
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.fetchEmployees();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.fetchEmployees();
+    }
   }
 
   filterByCard(statusType: string) {
@@ -159,6 +274,11 @@ export class Employee implements OnInit {
     this.applyFilters();
   }
 
+  applyFilters() {
+    this.currentPage = 1;
+    this.fetchEmployees();
+  }
+
   timeRangeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const start = control.get('startTime')?.value;
     const end = control.get('endTime')?.value;
@@ -166,28 +286,6 @@ export class Employee implements OnInit {
       return { timeRangeInvalid: true };
     }
     return null;
-  };
-
-  applyFilters() {
-    this.filteredEmployees = this.employees.filter((emp) => {
-      if (this.showPendingApprovals) return emp.status === 'ADMIN_APPROVAL_PENDING';
-      if (emp.status === 'ADMIN_APPROVAL_PENDING') return false;
-
-      const matchesSearch =
-        !this.searchTerm ||
-        emp.name?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        emp.email?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        emp.employeeCode?.toLowerCase().includes(this.searchTerm.toLowerCase());
-
-      const matchesDept = !this.selectedDepartment || emp.department === this.selectedDepartment;
-
-      let matchesStatus = true;
-      if (this.selectedStatus) {
-        matchesStatus = emp.status?.toUpperCase() === this.selectedStatus;
-      }
-
-      return matchesSearch && matchesDept && matchesStatus;
-    });
   }
 
   getRoleString(role: any): string {
@@ -199,12 +297,8 @@ export class Employee implements OnInit {
     return name ? name.substring(0, 2).toUpperCase() : 'NA';
   }
 
-
-
   deleteEmployee(id: string) {
-    if (
-      confirm(`Are you absolutely sure you want to delete employee ${id}? This cannot be undone.`)
-    ) {
+    if (confirm(`Are you absolutely sure you want to delete employee ${id}? This cannot be undone.`)) {
       this.apiService.deleteEmployee(id).subscribe({
         next: () => {
           this.toast.success('Employee deleted successfully.');
