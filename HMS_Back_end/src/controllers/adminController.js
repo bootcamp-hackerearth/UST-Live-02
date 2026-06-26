@@ -148,8 +148,7 @@ exports.getEmployees = async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query, 10);
 
   const status = req.query.status || "ACTIVE";
-  // Admins are managed on the dedicated owner-only admins page, so the
-  // employee list shows STAFF only regardless of who is requesting it.
+  // The employee list always returns staff only because admins live on the owner admins page
   const roleScope = ["STAFF"];
 
   // Employee-side filters: designation + free-text search

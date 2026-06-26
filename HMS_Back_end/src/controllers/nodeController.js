@@ -91,9 +91,7 @@ exports.createNode = async (req, res) => {
 // Update node
 exports.updateNode = async (req, res) => {
 
-    // path is intentionally NOT destructured/updated: a node's path is immutable once
-    // created. Keeping it fixed guarantees seedNodes (which matches defaults by path)
-    // can never create a duplicate of an existing node.
+    // A node path is immutable after creation so seedNodes can match defaults by path without ever creating duplicates
     const {
         name,
         icon,
@@ -159,14 +157,7 @@ exports.deleteNode = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.NODE.NOT_FOUND);
     }
 
-    // Unlike employees/patients/appointments/medical records — whose counters always
-    // move forward — node IDs are kept gapless and sequential. After a delete, renumber
-    // the remaining nodes 1..N (in creation order) and roll the counter back to N so the
-    // next created node continues the sequence with no gaps.
-    //
-    // nodeId is zero-padded, so a lexical sort on nodeId equals a numeric sort. Walking
-    // ascending guarantees each target slot is already free, so the unique index on
-    // nodeId never collides mid-renumber.
+    // After a delete the remaining nodes are renumbered in ascending creation order so node IDs stay gapless and sequential without colliding on the unique index
     const remainingNodes = await Node.find({}).sort({ nodeId: 1 });
 
     let seq = 0;

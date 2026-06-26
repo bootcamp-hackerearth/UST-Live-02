@@ -100,8 +100,7 @@ export class AppointmentsListComponent implements OnInit {
   });
 
   constructor() {
-    // Debounce the search box so we issue one request after the user stops typing,
-    // and skip the call entirely when the trimmed terms are unchanged.
+    // Debounce the search box to fire one request after typing stops and skip unchanged terms
     this.searchInput$
       .pipe(
         debounceTime(400),

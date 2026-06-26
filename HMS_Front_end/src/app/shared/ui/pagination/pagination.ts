@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-// Reusable offset-pagination control: Previous/Next buttons plus clickable page
-// numbers so the user can jump straight to a page. Leading/trailing ellipses keep
-// the strip compact when there are many pages.
+// Reusable offset pagination control with paging buttons and clickable page numbers that collapse behind ellipses when pages are many
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-pagination',
@@ -25,8 +23,7 @@ export class PaginationComponent {
   // Pages kept on each side of the current page before the strip collapses
   private readonly siblings = 1;
 
-  // Builds the visible strip: first and last pages are always shown, with a
-  // window around the current page and 'ellipsis' markers filling the gaps.
+  // Builds the visible strip showing the first and last pages plus a window around the current page with ellipsis markers filling gaps
   get pages(): (number | 'ellipsis')[] {
     const last = this.totalPages;
     if (last <= 1) {

@@ -143,8 +143,7 @@ export class EmployeesListComponent implements OnInit {
     });
   }
 
-  // Defensive: only staff rows are returned here, but never expose edit/delete
-  // for any privileged (OWNER/ADMIN) row that might slip through
+  // Never expose edit or delete for any privileged owner or admin row that slips through
   canEdit(item: EmployeeListItem): boolean {
     return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
   }

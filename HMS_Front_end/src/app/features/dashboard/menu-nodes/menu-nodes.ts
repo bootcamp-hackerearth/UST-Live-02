@@ -182,8 +182,7 @@ export class MenuNodesComponent implements OnInit {
       this.formError.set('Node name is required.');
       return;
     }
-    // Path is set only at creation and is immutable afterwards, so it is only
-    // required/validated when creating a new node
+    // Path is required only when creating a node because it is immutable afterwards
     if (!isEdit && !path?.startsWith('/')) {
       this.formError.set('Path is required and must start with /.');
       return;

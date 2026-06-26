@@ -184,10 +184,7 @@ export class SidebarComponent implements OnInit {
       `stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
       `${inner}</svg>`;
 
-    // SVG markup is hardcoded/trusted; bypass sanitization so Angular doesn't
-    // strip the <svg> (SVG elements are not on the HTML sanitizer allow-list).
-    // Safe: `svg` is built only from the constant `icons`/`fallbackIcon` strings;
-    // the user-influenced `node.icon` is used solely as a lookup key, never interpolated.
+    // Bypass sanitization because the svg comes only from trusted constant icon strings and never from user input
     const safe = this.sanitizer.bypassSecurityTrustHtml(svg); // NOSONAR only hardcoded icon constants reach this bypass
 
     this.iconCache.set(key, safe);
