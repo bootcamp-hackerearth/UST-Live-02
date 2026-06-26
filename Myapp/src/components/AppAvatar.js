@@ -1,0 +1,69 @@
+import React from "react";
+
+import {
+    Text,
+    View,
+    StyleSheet,
+} from "react-native";
+
+import COLORS from "../utils/colors";
+import PropTypes from "prop-types";
+
+export default function AppAvatar({
+    name = "",
+    size = 48,
+    backgroundColor = COLORS.primaryLight,
+    textColor = COLORS.primary,
+}) {
+    const initials = name
+        ?.split(" ")
+        .filter(Boolean)
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+
+    return (
+        <View
+            style={[
+                styles.avatar,
+                {
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    backgroundColor,
+                },
+            ]}
+        >
+            <Text
+                style={[
+                    styles.text,
+                    {
+                        color: textColor,
+                        fontSize: size * 0.35,
+                    },
+                ]}
+            >
+                {initials || "P"}
+            </Text>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    avatar: {
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    text: {
+        fontWeight: "900",
+    },
+});
+
+AppAvatar.propTypes = {
+    name: PropTypes.string,
+    size: PropTypes.number,
+    backgroundColor: PropTypes.string,
+    textColor: PropTypes.string,
+};
