@@ -4,6 +4,7 @@ const roles = [
     {
         roleCode: "OWN",
         name: "Owner",
+        basePath: "/admin"
     },
     {
         roleCode: "DOC",

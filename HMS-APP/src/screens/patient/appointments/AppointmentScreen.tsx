@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native'; // ← removed ScrollView
 import { useLocalSearchParams } from 'expo-router';
 
 import BookAppointmentForm from '../appointments/BookAppointmentForm';
@@ -13,10 +13,6 @@ export default function AppointmentScreen() {
   const doctorIdParam = params.doctorId ? String(params.doctorId) : '';
   const doctorNameParam = params.doctorName ? String(params.doctorName) : '';
   const screenKeyParam = params.screenKey ? String(params.screenKey) : '';
-
-  console.log('Appointment params:', params);
-console.log('viewParam:', viewParam);
-console.log('doctorIdParam:', doctorIdParam);
 
   const [activeTab, setActiveTab] = useState<'book' | 'view'>('view');
 
@@ -34,25 +30,17 @@ console.log('doctorIdParam:', doctorIdParam);
     if (doctorIdParam) {
       setActiveTab('book');
     }
-  }, [viewParam, doctorIdParam,screenKeyParam] );
+  }, [viewParam, doctorIdParam, screenKeyParam]);
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
+  const header = (
+    <>
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Appointments</Text>
         <Text style={styles.pageSubtitle}>
-          Book and view your hospital appointmets
+          Book and view your hospital appointments
         </Text>
       </View>
 
-<View style={{ backgroundColor: '#FFF3CD', padding: 10, marginTop: 10 }}>
-  <Text>DEBUG VIEW: {viewParam}</Text>
-  <Text>ACTIVE TAB: {activeTab}</Text>
-</View>
       <View style={styles.segmentContainer}>
         <TouchableOpacity
           style={[
@@ -89,16 +77,31 @@ console.log('doctorIdParam:', doctorIdParam);
         </TouchableOpacity>
       </View>
 
-      {activeTab === 'book' ? (
+      {activeTab === 'book' && (
         <BookAppointmentForm
           routeDoctorId={doctorIdParam}
           routeDoctorName={doctorNameParam}
-           routeKey={screenKeyParam}
+          routeKey={screenKeyParam}
           onAppointmentCreated={() => setActiveTab('view')}
         />
-      ) : (
-        <MyAppointmentsList />
       )}
-    </ScrollView>
+    </>
+  );
+
+  if (activeTab === 'book') {
+    return (
+      <FlatList
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        data={[]}
+        renderItem={null}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={header}
+      />
+    );
+  }
+
+  return (
+    <MyAppointmentsList header={header} />
   );
 }

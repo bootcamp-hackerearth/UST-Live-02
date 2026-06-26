@@ -56,6 +56,15 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
+  container: {
+  flex: 1,
+  backgroundColor: '#F5F4EF',
+},
+
+contentContainer: {
+  padding: 16,
+  paddingBottom: 32,
+},
 
   
 });

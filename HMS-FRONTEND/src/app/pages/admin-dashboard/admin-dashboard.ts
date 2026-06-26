@@ -11,6 +11,7 @@ import { environment } from '../../../environments/environment';
 export class AdminDashboard implements OnInit {
 
   readonly baseUrl=environment.apiUrl;
+  readonly dashboardPreviewLimit = 7;
 
   stats = {
     totalPatients: 0,
@@ -54,16 +55,19 @@ export class AdminDashboard implements OnInit {
         console.log('dashboard stats', this.employees);
       })
   }
-
-  showPatients() {
-    console.log('patients', this.patients);
+showPatients() {
   this.selectedSection = 'patients';
 
-  this.http.get(`${this.baseUrl}/patients/list`)
-    .subscribe((res: any) => {
-      this.patients = res.data;
-      this.cd.detectChanges();
-    });
+  this.http.get(`${this.baseUrl}/patients/list`, {
+    params: {
+      page: 1,
+      limit: this.dashboardPreviewLimit,
+      search: ''
+    }
+  }).subscribe((res: any) => {
+    this.patients = res.data;
+    this.cd.detectChanges();
+  });
 }
 
 showPendingRequests() {

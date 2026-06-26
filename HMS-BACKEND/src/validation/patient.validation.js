@@ -1,88 +1,273 @@
 const { body, param } = require('express-validator');
 
-// Returns validators for a field, making them optional when isUpdate=true
-const field = (chain, isUpdate) => isUpdate ? chain.optional() : chain;
+// Makes a field optional when used for an update request
+const field = (validationChain, isUpdate) =>
+  isUpdate
+    ? validationChain.optional()
+    : validationChain;
+
+const validStates = [
+  'Andaman and Nicobar Islands',
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chandigarh',
+  'Chhattisgarh',
+  'Dadra and Nagar Haveli and Daman and Diu',
+  'Delhi',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jammu and Kashmir',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Ladakh',
+  'Lakshadweep',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Puducherry',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal'
+];
 
 const patientFields = (isUpdate = false) => [
+  field(
+    body('firstName')
+      .trim()
+      .notEmpty()
+      .withMessage('First Name is required')
+      .isLength({ min: 2, max: 50 })
+      .withMessage(
+        'First Name must be between 2 and 50 characters'
+      ),
+    isUpdate
+  ),
 
-    field(body("firstName")
-        .trim()
-        .notEmpty().withMessage("First Name is required")
-        .isLength({ min: 2, max: 50 }).withMessage("First Name must be between 2 and 50 characters"),
-    isUpdate),
+  field(
+    body('lastName')
+      .trim()
+      .notEmpty()
+      .withMessage('Last Name is required')
+      .isLength({ min: 2, max: 50 })
+      .withMessage(
+        'Last Name must be between 2 and 50 characters'
+      ),
+    isUpdate
+  ),
 
-    field(body("lastName")
-        .trim()
-        .notEmpty().withMessage("Last Name is required")
-        .isLength({ min: 2, max: 50 }).withMessage("Last Name must be between 2 and 50 characters"),
-    isUpdate),
+  field(
+    body('phone')
+      .trim()
+      .notEmpty()
+      .withMessage('Phone is required')
+      .matches(/^[6-9]\d{9}$/)
+      .withMessage(
+        'Enter a valid 10-digit phone number'
+      ),
+    isUpdate
+  ),
 
-    field(body("phone")
-        .notEmpty().withMessage("Phone is required")
-        .matches(/^[6-9]\d{9}$/).withMessage("Enter a valid 10-digit phone number"),
-    isUpdate),
+  field(
+    body('gender')
+      .trim()
+      .notEmpty()
+      .withMessage('Gender is required')
+      .isIn(['MALE', 'FEMALE', 'OTHER'])
+      .withMessage(
+        'Gender must be MALE, FEMALE, or OTHER'
+      ),
+    isUpdate
+  ),
 
-    field(body("gender")
-        .notEmpty().withMessage("Gender is required")
-        .isIn(["MALE", "FEMALE", "OTHER"]).withMessage("Gender must be MALE, FEMALE, or OTHER"),
-    isUpdate),
+  field(
+    body('dob')
+      .notEmpty()
+      .withMessage('Date of Birth is required')
+      .isISO8601()
+      .withMessage('DOB must be a valid date')
+      .custom((value) => {
+        const dob = new Date(value);
+        const today = new Date();
 
-    field(body("dob")
-        .notEmpty().withMessage("Date of Birth is required")
-        .isISO8601().withMessage("DOB must be a valid date")
-        .custom((value) => {
-            if (new Date(value) > new Date()) throw new Error("DOB cannot be in the future");
-            return true;
-        }),
-    isUpdate),
+        if (dob > today) {
+          throw new Error(
+            'DOB cannot be in the future'
+          );
+        }
 
-    field(body("bloodGroup")
-        .notEmpty().withMessage("Blood Group is required")
-        .isIn(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]).withMessage("Invalid Blood Group"),
-    isUpdate),
+        return true;
+      }),
+    isUpdate
+  ),
 
-    // Address fields are always optional — no change needed
-    body("address.city").optional().trim()
-        .isLength({ max: 100 }).withMessage("City must not exceed 100 characters"),
+  field(
+    body('bloodGroup')
+      .trim()
+      .notEmpty()
+      .withMessage('Blood Group is required')
+      .isIn([
+        'A+',
+        'A-',
+        'B+',
+        'B-',
+        'AB+',
+        'AB-',
+        'O+',
+        'O-'
+      ])
+      .withMessage('Invalid Blood Group'),
+    isUpdate
+  ),
 
-    body("address.state").optional().trim()
-        .isLength({ max: 100 }).withMessage("State must not exceed 100 characters"),
+  /*
+   * Address is mandatory during creation and registration.
+   * It remains optional during profile updates.
+   */
+  field(
+    body('address')
+      .notEmpty()
+      .withMessage('Address is required')
+      .isObject()
+      .withMessage('Address must be an object'),
+    isUpdate
+  ),
 
-    body("address.pincode").optional()
-        .matches(/^\d{6}$/).withMessage("Pincode must be a valid 6-digit number"),
+  field(
+    body('address.city')
+      .trim()
+      .notEmpty()
+      .withMessage('City is required')
+      .isLength({ min: 2, max: 100 })
+      .withMessage(
+        'City must be between 2 and 100 characters'
+      ),
+    isUpdate
+  ),
 
-    field(body("emergencyContactName")
-        .trim()
-        .notEmpty().withMessage("Emergency Contact Name is required")
-        .isLength({ min: 2, max: 50 }).withMessage("Emergency Contact Name must be between 2 and 50 characters"),
-    isUpdate),
+  field(
+    body('address.state')
+      .trim()
+      .notEmpty()
+      .withMessage('State is required')
+      .isIn(validStates)
+      .withMessage('Select a valid state'),
+    isUpdate
+  ),
 
-    field(body("emergencyContactPhone")
-        .notEmpty().withMessage("Emergency Contact Phone is required")
-        .matches(/^[6-9]\d{9}$/).withMessage("Enter a valid 10-digit emergency contact phone number"),
-    isUpdate),
+  field(
+    body('address.pincode')
+      .trim()
+      .notEmpty()
+      .withMessage('Pincode is required')
+      .matches(/^\d{6}$/)
+      .withMessage(
+        'Pincode must be a valid 6-digit number'
+      ),
+    isUpdate
+  ),
+
+  field(
+    body('emergencyContactName')
+      .trim()
+      .notEmpty()
+      .withMessage(
+        'Emergency Contact Name is required'
+      )
+      .isLength({ min: 2, max: 50 })
+      .withMessage(
+        'Emergency Contact Name must be between 2 and 50 characters'
+      ),
+    isUpdate
+  ),
+
+  field(
+    body('emergencyContactPhone')
+      .trim()
+      .notEmpty()
+      .withMessage(
+        'Emergency Contact Phone is required'
+      )
+      .matches(/^[6-9]\d{9}$/)
+      .withMessage(
+        'Enter a valid 10-digit emergency contact phone number'
+      ),
+    isUpdate
+  )
 ];
 
-const validateCreatePatient = patientFields(false);
-const validateUpdatePatient = patientFields(true);
+/*
+ * Admin-created patient validation.
+ * Password is generated by the backend.
+ */
+const validateCreatePatient = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Enter a valid email address')
+    .normalizeEmail(),
 
+  ...patientFields(false)
+];
+
+/*
+ * Patient profile update validation.
+ * Patient fields are optional during an update.
+ */
+const validateUpdatePatient =
+  patientFields(true);
+
+/*
+ * Patient ID validation.
+ */
 const validatePatientId = [
-    param("id").isMongoId().withMessage("Invalid Patient ID")
+  param('id')
+    .isMongoId()
+    .withMessage('Invalid Patient ID')
 ];
 
-
+/*
+ * Patient self-registration validation.
+ */
 const validateRegisterPatient = [
-    body("email")
-        .trim()
-        .notEmpty().withMessage("Email is required")
-        .isEmail().withMessage("Enter a valid email address")
-        .normalizeEmail(),
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Enter a valid email address')
+    .normalizeEmail(),
 
-    body("password")
-        .notEmpty().withMessage("Password is required")
-        .isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage(
+      'Password must be at least 6 characters'
+    ),
 
-    ...patientFields(false),
+  ...patientFields(false)
 ];
 
-module.exports = { validateCreatePatient, validateUpdatePatient, validatePatientId , validateRegisterPatient};
+module.exports = {
+  validateCreatePatient,
+  validateUpdatePatient,
+  validatePatientId,
+  validateRegisterPatient
+};

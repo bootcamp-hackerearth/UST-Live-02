@@ -49,7 +49,7 @@ export interface Appointment {
   doctorId?: AppointmentDoctor;
   appointmentDate: string;
   timeSlot: string;
-  status: 'BOOKED' | 'COMPLETED' | 'CANCELLED';
+  status: 'BOOKED' | 'COMPLETED' | 'CANCELLED'|'UNATTENDED';
   reason?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -61,4 +61,16 @@ export interface CreateAppointmentPayload {
   appointmentDate: string;
   timeSlot: string;
   reason: string;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  totalRecords: number;
+  hasNextPage: boolean;
+}
+
+export interface AppointmentsResponse {
+  data: Appointment[];
+  pagination: PaginationMeta;
 }

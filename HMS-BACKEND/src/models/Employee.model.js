@@ -13,19 +13,19 @@ const employeeSchema = new mongoose.Schema(
             required: true,
             unique: true
         },
-    
+
         phone: {
             type: String,
             required: true
         },
-      
+
         department: {
             type: String,
-            enum: ['OPD', 'IPD', 'Lab', 'Pharmacy', 'Admin','Front Office']
+            enum: ['OPD', 'IPD', 'Lab', 'Pharmacy', 'Admin', 'Front Office']
         },
         designation: {
             type: String,
-            enum: ['Jr Doctor', 'Nurse', 'Receptionist','Administrator',]
+            enum: ['Jr Doctor', 'Nurse', 'Receptionist', 'Administrator','Owner']
         },
         status: {
             type: String,
@@ -36,10 +36,23 @@ const employeeSchema = new mongoose.Schema(
             type: Date,
             required: true
         },
-      
-    },{
-        timestamps:true
-    }
+        isDeleted: {
+            type: Boolean,
+            default: false
+        },
+        deletedAt: {
+            type: Date,
+            default: null
+        },
+        deletedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        }
+
+    }, {
+    timestamps: true
+}
 );
 
 employeeSchema.pre('save', async function () {
