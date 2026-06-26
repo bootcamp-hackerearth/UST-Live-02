@@ -176,6 +176,7 @@ const MESSAGES = Object.freeze({
         LIST_RETRIEVED: "Nodes retrieved successfully",
         NOT_FOUND: "Node not found",
         PATH_EXISTS: "Node path already exists",
+        SYSTEM_LOCKED: "This is a management node and can only be assigned to OWNER or ADMIN",
         UPDATED: "Node updated successfully"
     }),
 

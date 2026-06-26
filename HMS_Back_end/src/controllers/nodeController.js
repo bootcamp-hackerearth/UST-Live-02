@@ -6,8 +6,10 @@ const { sendSuccess } = require("../utils/apiResponse");
 const parsePagination = require("../utils/parsePagination");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const nodeAccessCache = require("../utils/nodeAccessCache");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
+const { CONTROL_PLANE_PATHS_SET, RESTRICTED_ROLES_SET } = require("../constants/domain");
 
 // Escapes user input so it can be used safely inside a RegExp
 const escapeRegex = (value) => value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
@@ -72,6 +74,9 @@ exports.createNode = async (req, res) => {
         allowedDesignations
     });
 
+    // Drop the access cache so the new node is enforced immediately
+    nodeAccessCache.invalidate();
+
     // Log the creation
     const actor = await resolveActor(req.user);
     await recordAudit({
@@ -109,6 +114,20 @@ exports.updateNode = async (req, res) => {
     }
 
     if (allowedDesignations !== undefined) {
+
+        // Management nodes stay OWNER/ADMIN-only so they never become dead links
+        const existing = await Node.findOne({ nodeId: req.params.nodeId }).select("path");
+
+        if (existing && CONTROL_PLANE_PATHS_SET.has(existing.path)) {
+            const hasStaffDesignation = allowedDesignations.some(
+                (designation) => !RESTRICTED_ROLES_SET.has(designation)
+            );
+
+            if (hasStaffDesignation) {
+                throw new AppError(STATUS.BAD_REQUEST, MESSAGES.NODE.SYSTEM_LOCKED);
+            }
+        }
+
         updateData.allowedDesignations = allowedDesignations;
     }
 
@@ -128,6 +147,9 @@ exports.updateNode = async (req, res) => {
     if (!updatedNode) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.NODE.NOT_FOUND);
     }
+
+    // Drop the access cache so the new designations are enforced immediately
+    nodeAccessCache.invalidate();
 
     // Log the update
     const actor = await resolveActor(req.user);
@@ -156,6 +178,9 @@ exports.deleteNode = async (req, res) => {
     if (!deletedNode) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.NODE.NOT_FOUND);
     }
+
+    // Drop the access cache so the removed node stops granting access immediately
+    nodeAccessCache.invalidate();
 
     // After a delete the remaining nodes are renumbered in ascending creation order so node IDs stay gapless and sequential without colliding on the unique index
     const remainingNodes = await Node.find({}).sort({ nodeId: 1 });

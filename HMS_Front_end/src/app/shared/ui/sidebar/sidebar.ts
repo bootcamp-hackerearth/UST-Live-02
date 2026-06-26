@@ -2,15 +2,18 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   EventEmitter,
   inject,
   Output,
   OnInit,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { EMPTY, interval, catchError, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { NodeService } from '../../../core/services/node.service';
 import { SidebarNode } from '../../../core/models/node.model';
@@ -28,6 +31,10 @@ export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly nodeService = inject(NodeService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly destroyRef = inject(DestroyRef);
+
+  // Re-poll interval so owner-granted nodes surface without a reload
+  private readonly nodeRefreshMs = 30_000;
 
   // Emitted when a nav link is activated so the parent can collapse the mobile overlay
   @Output() navigate = new EventEmitter<void>();
@@ -82,22 +89,25 @@ export class SidebarComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.nodeService.loadMyNodes().subscribe({
-      next: (nodes) => {
+    const defaultPaths = new Set(
+      this.defaultNodes.map((n) => n.path.toLowerCase()),
+    );
+
+    // Poll the backend so a newly granted node appears without a reload while a failed tick is swallowed so the current items stay put
+    interval(this.nodeRefreshMs)
+      .pipe(
+        startWith(0),
+        switchMap(() =>
+          this.nodeService.refreshMyNodes().pipe(catchError(() => EMPTY)),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((nodes) => {
         // Drop any backend node that collides with a default path
-        const defaultPaths = new Set(
-          this.defaultNodes.map((n) => n.path.toLowerCase()),
+        this.backendNodes.set(
+          nodes.filter((n) => !defaultPaths.has(n.path.toLowerCase())),
         );
-        const filtered = nodes.filter(
-          (n) => !defaultPaths.has(n.path.toLowerCase()),
-        );
-        this.backendNodes.set(filtered);
-      },
-      error: () => {
-        // On failure, defaults still render so the user is never stranded
-        this.backendNodes.set([]);
-      },
-    });
+      });
   }
 
   toggleUserMenu(): void {

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
-const authorizeDesignation = require("../middlewares/authorizeDesignations");
+const authorizeNode = require("../middlewares/authorizeNode");
 const authorizeRoles = require("../middlewares/authorizeRolesMiddleware");
 const controller = require("../controllers/patientController");
 const {
@@ -11,8 +11,8 @@ const {
     uhidValidation
 } = require("../validators/patientValidators");
 
-// All the routes require authentication and reception-level authorization
-router.use(auth, authorizeDesignation("OWNER", "ADMIN", "RECEPTIONIST"));
+// Module door is driven by the Patients sidebar node; delete keeps its own role check below
+router.use(auth, authorizeNode("/dashboard/patients"));
 
 // Patient CRUD routes
 router.post(

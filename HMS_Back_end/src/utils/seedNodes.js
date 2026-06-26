@@ -1,5 +1,12 @@
 const Node = require("../models/Nodes");
 
+// Paths enforced by authorizeNode where a missing node would lock everyone but the owner out of the module so seeding fails fast when one is gone
+const NODE_DRIVEN_PATHS = [
+    "/dashboard/patients",
+    "/dashboard/appointments",
+    "/dashboard/medical-records"
+];
+
 // Default sidebar nodes recreated on boot when missing where array order sets the sidebar order by creation time
 const DEFAULT_NODES = [
     {
@@ -67,6 +74,15 @@ const seedNodes = async () => {
     }
 
     console.log(`Nodes seeded. Created: ${created}, Skipped: ${skipped}`);
+
+    // Guard against a node-driven route losing its node and locking users out
+    for (const path of NODE_DRIVEN_PATHS) {
+        const node = await Node.findOne({ path });
+
+        if (!node) {
+            throw new Error(`Missing sidebar node for node-driven route ${path}`);
+        }
+    }
 };
 
 module.exports = seedNodes;

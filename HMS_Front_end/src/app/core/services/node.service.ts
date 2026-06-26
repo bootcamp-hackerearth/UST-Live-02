@@ -22,6 +22,10 @@ export class NodeService {
   // Sidebar nodes cached after the first load so navigation doesn't refetch
   private cachedNodes: SidebarNode[] | null = null;
 
+  // Timestamp of the cache fill where a short TTL lets owner grants reach already signed in users without forcing them to sign in again
+  private cachedAt = 0;
+  private readonly cacheTtlMs = 60_000;
+
   // Raw fetch of the logged-in user's sidebar nodes (already filtered by designation)
   getMyNodes(): Observable<MyNodesResponse> {
     return this.http.get<MyNodesResponse>(`${this.apiUrl}/my-nodes`);
@@ -67,19 +71,28 @@ export class NodeService {
       .pipe(tap(() => this.clearCache()));
   }
 
-  // Returns cached nodes if loaded, otherwise fetches once and caches them
+  // Returns cached nodes while fresh, otherwise fetches and caches them
   loadMyNodes(): Observable<SidebarNode[]> {
-    if (this.cachedNodes) {
+    if (this.cachedNodes && Date.now() - this.cachedAt < this.cacheTtlMs) {
       return of(this.cachedNodes);
     }
+    return this.refreshMyNodes();
+  }
+
+  // Always fetches fresh nodes and refreshes the cache (used by the sidebar poll)
+  refreshMyNodes(): Observable<SidebarNode[]> {
     return this.getMyNodes().pipe(
       map((res) => res.data?.nodes ?? []),
-      tap((nodes) => (this.cachedNodes = nodes)),
+      tap((nodes) => {
+        this.cachedNodes = nodes;
+        this.cachedAt = Date.now();
+      }),
     );
   }
 
-  // Clears the cached nodes (call on logout)
+  // Clears the cached nodes (call on logout and after node mutations)
   clearCache(): void {
     this.cachedNodes = null;
+    this.cachedAt = 0;
   }
 }

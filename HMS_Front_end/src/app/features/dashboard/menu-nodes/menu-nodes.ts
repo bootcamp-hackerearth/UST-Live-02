@@ -17,6 +17,7 @@ import { ConfirmModalService } from '../../../core/services/confirm-modal.servic
 import { APP_MESSAGES } from '../../../core/constants/messages';
 import { Designation } from '../../../core/models/employee.model';
 import {
+  CONTROL_PLANE_PATHS,
   MenuNode,
   NODE_DESIGNATIONS,
 } from '../../../core/models/node.model';
@@ -160,11 +161,19 @@ export class MenuNodesComponent implements OnInit {
     this.formOpen.set(false);
   }
 
+  // Management nodes stay OWNER/ADMIN-only so their designations can't be edited
+  isLockedNode(): boolean {
+    return CONTROL_PLANE_PATHS.has(this.formPath().trim());
+  }
+
   isDesignationSelected(d: Designation): boolean {
     return this.formDesignations().includes(d);
   }
 
   toggleDesignation(d: Designation, checked: boolean): void {
+    if (this.isLockedNode()) {
+      return;
+    }
     this.formDesignations.update((list) =>
       checked ? [...list, d] : list.filter((x) => x !== d),
     );

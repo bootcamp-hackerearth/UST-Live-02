@@ -3,6 +3,7 @@ const router = express.Router();
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeDesignation = require("../middlewares/authorizeDesignations");
+const authorizeNode = require("../middlewares/authorizeNode");
 const controller = require("../controllers/appointmentController");
 const {
     createAppointmentValidation,
@@ -11,24 +12,18 @@ const {
     cancelAppointmentValidation
 } = require("../validators/appointmentValidators");
 
-// All the routes require authentication
-router.use(auth);
+// The module door is driven by the Appointments sidebar node while stricter sub action rules stay layered on top
+router.use(auth, authorizeNode("/dashboard/appointments"));
 
-// Authorization level shortcuts used across appointment routes
+// Create/booking is reception-level even for designations granted the module
 const RECEPTION_LEVEL = authorizeDesignation(
     "OWNER",
     "ADMIN",
     "RECEPTIONIST"
 );
 
+// A doctor's own-appointments feed
 const DOCTOR_LEVEL = authorizeDesignation("DOCTOR");
-
-const VIEW_LEVEL = authorizeDesignation(
-    "OWNER",
-    "ADMIN",
-    "RECEPTIONIST",
-    "DOCTOR"
-);
 
 // Appointment CRUD routes
 router.post(
@@ -55,13 +50,11 @@ router.get(
 
 router.get(
     "/",
-    VIEW_LEVEL,
     controller.getAppointments
 );
 
 router.get(
     "/:appointmentId",
-    VIEW_LEVEL,
     appointmentIdValidation,
     validate,
     controller.getAppointmentById
@@ -69,7 +62,6 @@ router.get(
 
 router.put(
     "/:appointmentId",
-    VIEW_LEVEL,
     [...appointmentIdValidation, ...createAppointmentValidation],
     validate,
     controller.updateAppointment
@@ -77,7 +69,6 @@ router.put(
 
 router.put(
     "/:appointmentId/cancel",
-    VIEW_LEVEL,
     cancelAppointmentValidation,
     validate,
     controller.cancelAppointment
@@ -85,7 +76,6 @@ router.put(
 
 router.put(
     "/:appointmentId/unattended",
-    VIEW_LEVEL,
     appointmentIdValidation,
     validate,
     controller.markUnattended

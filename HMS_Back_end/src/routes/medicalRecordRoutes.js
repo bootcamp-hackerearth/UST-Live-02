@@ -3,6 +3,7 @@ const router = express.Router();
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
 const authorizeDesignation = require("../middlewares/authorizeDesignations");
+const authorizeNode = require("../middlewares/authorizeNode");
 const controller = require("../controllers/medicalRecordController");
 const {
     createMedicalRecordValidation,
@@ -11,23 +12,14 @@ const {
     appointmentIdParamValidation
 } = require("../validators/medicalRecordValidators");
 
-// All routes require authentication
-router.use(auth);
-
-// Roles permitted to work with medical records
-const STAFF_LEVEL = authorizeDesignation(
-    "OWNER",
-    "ADMIN",
-    "RECEPTIONIST",
-    "DOCTOR"
-);
+// Module door is driven by the Medical Records sidebar node; delete keeps its own check
+router.use(auth, authorizeNode("/dashboard/medical-records"));
 
 // Only Admin/Owner may delete (soft delete)
 const DELETE_LEVEL = authorizeDesignation("OWNER", "ADMIN");
 
 router.post(
     "/",
-    STAFF_LEVEL,
     createMedicalRecordValidation,
     validate,
     controller.createMedicalRecord
@@ -35,13 +27,11 @@ router.post(
 
 router.get(
     "/",
-    STAFF_LEVEL,
     controller.listMedicalRecords
 );
 
 router.get(
     "/by-appointment/:appointmentId",
-    STAFF_LEVEL,
     appointmentIdParamValidation,
     validate,
     controller.getMedicalRecordByAppointment
@@ -49,7 +39,6 @@ router.get(
 
 router.get(
     "/:medicalRecordId",
-    STAFF_LEVEL,
     medicalRecordIdValidation,
     validate,
     controller.getMedicalRecordById
@@ -57,7 +46,6 @@ router.get(
 
 router.put(
     "/:medicalRecordId",
-    STAFF_LEVEL,
     updateMedicalRecordValidation,
     validate,
     controller.updateMedicalRecord

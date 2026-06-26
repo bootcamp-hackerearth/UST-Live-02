@@ -209,12 +209,16 @@
                     <input
                       type="checkbox"
                       [checked]="isDesignationSelected(d)"
+                      [disabled]="isLockedNode()"
                       (change)="toggleDesignation(d, $any($event.target).checked)"
                     />
                     <span>{{ d }}</span>
                   </label>
                 }
               </div>
+              @if (isLockedNode()) {
+                <small class="form-hint">This is a management node; access is fixed to OWNER and ADMIN.</small>
+              }
             </div>
 
             @if (formError()) {
