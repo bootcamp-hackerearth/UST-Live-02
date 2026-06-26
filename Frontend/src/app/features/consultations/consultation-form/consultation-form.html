@@ -1,0 +1,223 @@
+<div class="consultation-container">
+  <!-- Header -->
+
+  <div class="top-section">
+    <h1>Consultation Form</h1>
+  </div>
+
+  <!-- Patient Card -->
+
+  @if(appointment){
+
+  <div class="patient-card">
+    <h2>{{ appointment?.patientId?.firstName }} {{ appointment?.patientId?.lastName }}</h2>
+
+    <div class="patient-info">
+      <p>
+        <strong>Patient ID:</strong>
+
+        {{ appointment?.patientId?.patientId }}
+      </p>
+
+      <p>
+        <strong>Appointment:</strong>
+
+        {{ appointment?.appointmentType }}
+      </p>
+
+      <p>
+        <strong>Time:</strong>
+
+        {{ appointment?.timeSlot }}
+      </p>
+    </div>
+  </div>
+
+  }
+
+  <!-- Form -->
+
+  <form [formGroup]="consultationForm" (ngSubmit)="onSubmit()">
+    <!-- Diagnosis -->
+
+    <div class="form-group">
+      <label>Diagnosis</label>
+
+      <textarea formControlName="diagnosis" placeholder="Enter diagnosis"></textarea>
+
+      @if(isFieldInvalid('diagnosis')) {
+      <small class="error-text">Diagnosis must be between 2 and 1000 characters.</small>
+      }
+    </div>
+
+    <!-- Symptoms -->
+
+    <div class="form-group">
+      <label>Symptoms</label>
+
+      <textarea formControlName="symptoms" placeholder="Fever, Cough, Headache"></textarea>
+
+      @if(isFieldInvalid('symptoms')) {
+      <small class="error-text">Symptoms cannot exceed 1000 characters.</small>
+      }
+    </div>
+
+    <!-- Doctor Notes -->
+
+    <div class="form-group">
+      <label>Doctor Notes</label>
+
+      <textarea formControlName="doctorNotes" placeholder="Enter doctor notes"></textarea>
+
+      @if(isFieldInvalid('doctorNotes')) {
+      <small class="error-text">Doctor notes cannot exceed 2000 characters.</small>
+      }
+    </div>
+
+    <!-- Vitals -->
+
+    <div formGroupName="vitals" class="vitals-grid">
+      <!-- Blood Pressure -->
+
+      <div class="form-group">
+        <label>Blood Pressure</label>
+
+        <input type="text" formControlName="bloodPressure" placeholder="120/80" />
+
+        @if(isVitalFieldInvalid('bloodPressure')) {
+        <small class="error-text">Use format like 120/80.</small>
+        }
+      </div>
+
+      <!-- Pulse Rate -->
+
+      <div class="form-group">
+        <label>Pulse Rate</label>
+
+        <input type="number" formControlName="pulseRate" placeholder="72" />
+
+        @if(isVitalFieldInvalid('pulseRate')) {
+        <small class="error-text">Pulse rate must be between 20 and 250.</small>
+        }
+      </div>
+
+      <!-- Oxygen Level -->
+
+      <div class="form-group">
+        <label>Oxygen Level</label>
+
+        <input type="number" formControlName="oxygenLevel" placeholder="98" />
+
+        @if(isVitalFieldInvalid('oxygenLevel')) {
+        <small class="error-text">Oxygen level must be between 0 and 100.</small>
+        }
+      </div>
+
+      <!-- Temperature -->
+
+      <div class="form-group">
+        <label>Temperature</label>
+
+        <input type="number" formControlName="temperature" placeholder="Celsius" />
+
+        @if(isVitalFieldInvalid('temperature')) {
+        <small class="error-text">Temperature must be between 30 and 45 Celsius.</small>
+        }
+      </div>
+
+      <!-- Weight -->
+
+      <div class="form-group">
+        <label>Weight</label>
+
+        <input type="number" formControlName="weight" placeholder="in kg" />
+
+        @if(isVitalFieldInvalid('weight')) {
+        <small class="error-text">Weight must be between 0.5 and 500 kg.</small>
+        }
+      </div>
+    </div>
+
+    <!-- Prescription Section -->
+
+    <div class="prescription-section">
+      <div class="prescription-top">
+        <h2>Prescriptions</h2>
+
+        <button type="button" class="add-btn" (click)="addPrescription()">+ Add Medicine</button>
+      </div>
+
+      <!-- Prescription Array -->
+
+      <div formArrayName="prescriptions">
+        @for( prescription of prescriptions.controls; track $index ){
+
+        <div class="prescription-card" [formGroupName]="$index">
+          <!-- Medicine Name -->
+
+          <div class="form-group">
+            <label>Medicine Name</label>
+
+            <input type="text" formControlName="medicineName" />
+
+            @if(isPrescriptionFieldInvalid($index, 'medicineName')) {
+            <small class="error-text">Medicine name is required and cannot exceed 100 characters.</small>
+            }
+          </div>
+
+          <!-- Dosage -->
+
+          <div class="form-group">
+            <label>Dosage</label>
+
+            <input type="text" formControlName="dosage" />
+
+            @if(isPrescriptionFieldInvalid($index, 'dosage')) {
+            <small class="error-text">Dosage is required and cannot exceed 100 characters.</small>
+            }
+          </div>
+
+          <!-- Frequency -->
+
+          <div class="form-group">
+            <label>Frequency/Day</label>
+
+            <input type="text" formControlName="frequency" />
+
+            @if(isPrescriptionFieldInvalid($index, 'frequency')) {
+            <small class="error-text">Frequency is required and cannot exceed 100 characters.</small>
+            }
+          </div>
+
+          <!-- Duration -->
+
+          <div class="form-group">
+            <label>Duration</label>
+
+            <input type="text" formControlName="duration" />
+
+            @if(isPrescriptionFieldInvalid($index, 'duration')) {
+            <small class="error-text">Duration is required and cannot exceed 100 characters.</small>
+            }
+          </div>
+
+          <!-- Remove Button -->
+
+          @if( prescriptions.length > 1 ){
+
+          <button type="button" class="remove-btn" (click)="removePrescription($index)">Remove</button>
+
+          }
+        </div>
+
+        }
+      </div>
+    </div>
+
+    <!-- Submit -->
+
+    <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+      @if(isSubmitting){ Saving... } @else { Complete Consultation }
+    </button>
+  </form>
+</div>

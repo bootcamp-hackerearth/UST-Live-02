@@ -1,0 +1,570 @@
+/*
+|--------------------------------------------------------------------------
+| Page
+|--------------------------------------------------------------------------
+*/
+.queue-page {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 24px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Glass
+|--------------------------------------------------------------------------
+*/
+.glass-card {
+  background: rgba(255, 255, 255, 0.68);
+
+  backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.45);
+
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Header
+|--------------------------------------------------------------------------
+*/
+.queue-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 24px;
+
+  padding: 34px;
+
+  border-radius: 32px;
+
+  flex-wrap: wrap;
+}
+
+.page-label {
+  color: #3b82f6;
+
+  font-size: var(--font-sm);
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 1px;
+
+  margin-bottom: 10px;
+}
+
+.queue-header h1 {
+  font-size: var(--font-hero);
+
+  color: #0f172a;
+
+  margin-bottom: 12px;
+}
+
+.page-subtitle {
+  color: #64748b;
+
+  line-height: 1.7;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Stats
+|--------------------------------------------------------------------------
+*/
+.stat-card {
+  padding: 20px 28px;
+
+  border-radius: 24px;
+
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  color: white;
+
+  min-width: 180px;
+
+  box-shadow: 0 18px 40px rgba(59, 130, 246, 0.22);
+}
+
+.stat-card span {
+  font-size: var(--font-sm);
+
+  opacity: 0.9;
+}
+
+.stat-card h2 {
+  margin-top: 10px;
+
+  font-size: var(--font-4xl);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Loading
+|--------------------------------------------------------------------------
+*/
+.loading-card {
+  border-radius: 28px;
+
+  padding: 50px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 18px;
+}
+
+.loader {
+  width: 50px;
+
+  height: 50px;
+
+  border-radius: 50%;
+
+  border: 4px solid #dbeafe;
+
+  border-top: 4px solid #2563eb;
+
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Empty
+|--------------------------------------------------------------------------
+*/
+.empty-card {
+  padding: 60px;
+
+  border-radius: 30px;
+
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: var(--font-hero);
+
+  margin-bottom: 18px;
+}
+
+.empty-card h2 {
+  margin-bottom: 10px;
+
+  color: #0f172a;
+}
+
+.empty-card p {
+  color: #64748b;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Queue Grid
+|--------------------------------------------------------------------------
+*/
+.queue-grid {
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+
+  gap: 24px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Queue Card
+|--------------------------------------------------------------------------
+*/
+.queue-card {
+  border-radius: 30px;
+
+  padding: 28px;
+
+  transition: all 0.3s ease;
+}
+
+.queue-card:hover {
+  transform: translateY(-5px);
+
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Card Top
+|--------------------------------------------------------------------------
+*/
+.card-top {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 26px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Token
+|--------------------------------------------------------------------------
+*/
+.token-box {
+  width: 95px;
+
+  height: 95px;
+
+  border-radius: 28px;
+
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  color: white;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  box-shadow: 0 18px 40px rgba(59, 130, 246, 0.22);
+}
+
+.token-box span {
+  font-size: var(--font-xs);
+
+  letter-spacing: 1px;
+}
+
+.token-box h2 {
+  margin-top: 6px;
+
+  font-size: var(--font-3xl);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Status
+|--------------------------------------------------------------------------
+*/
+.status-badge {
+  padding: 10px 16px;
+
+  border-radius: 999px;
+
+  font-size: var(--font-xs);
+
+  font-weight: 700;
+}
+
+.status-badge.booked {
+  background: rgba(59, 130, 246, 0.12);
+
+  color: #2563eb;
+}
+
+.status-badge.in-consultation {
+  background: rgba(245, 158, 11, 0.14);
+
+  color: #b45309;
+}
+
+.status-badge.completed {
+  background: rgba(34, 197, 94, 0.12);
+
+  color: #15803d;
+}
+
+.status-badge.cancelled {
+  background: rgba(239, 68, 68, 0.12);
+
+  color: #dc2626;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Patient
+|--------------------------------------------------------------------------
+*/
+.patient-profile {
+  display: flex;
+
+  align-items: center;
+
+  gap: 18px;
+
+  margin-bottom: 28px;
+}
+
+.avatar {
+  width: 62px;
+
+  height: 62px;
+
+  border-radius: 20px;
+
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: white;
+
+  font-size: var(--font-2xl);
+
+  font-weight: 700;
+}
+
+.patient-profile h3 {
+  color: #0f172a;
+
+  margin-bottom: 5px;
+}
+
+.patient-profile p {
+  color: #64748b;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Info Grid
+|--------------------------------------------------------------------------
+*/
+.info-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 14px;
+
+  margin-bottom: 28px;
+}
+
+.info-box {
+  padding: 16px;
+
+  border-radius: 18px;
+
+  background: rgba(248, 250, 252, 0.9);
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.info-box span {
+  color: #64748b;
+
+  font-size: var(--font-xs);
+}
+
+.info-box strong {
+  color: #0f172a;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Priority
+|--------------------------------------------------------------------------
+*/
+.priority-badge {
+  width: fit-content;
+
+  padding: 8px 12px;
+
+  border-radius: 999px;
+
+  font-size: var(--font-xs);
+
+  font-weight: 700;
+}
+
+.priority-badge.normal {
+  background: rgba(34, 197, 94, 0.12);
+
+  color: #15803d;
+}
+
+.priority-badge.urgent {
+  background: rgba(245, 158, 11, 0.14);
+
+  color: #b45309;
+}
+
+.priority-badge.critical {
+  background: rgba(239, 68, 68, 0.12);
+
+  color: #dc2626;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Symptoms
+|--------------------------------------------------------------------------
+*/
+.symptoms-section {
+  margin-bottom: 24px;
+}
+
+.symptoms-section h4 {
+  margin-bottom: 12px;
+
+  color: #0f172a;
+}
+
+.symptoms-list {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 10px;
+}
+
+.symptom-tag {
+  padding: 10px 14px;
+
+  border-radius: 999px;
+
+  background: rgba(59, 130, 246, 0.12);
+
+  color: #2563eb;
+
+  font-size: var(--font-xs);
+
+  font-weight: 700;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Notes
+|--------------------------------------------------------------------------
+*/
+.notes-box {
+  padding: 18px;
+
+  border-radius: 20px;
+
+  background: rgba(248, 250, 252, 0.9);
+
+  margin-bottom: 24px;
+}
+
+.notes-box h4 {
+  margin-bottom: 10px;
+
+  color: #0f172a;
+}
+
+.notes-box p {
+  color: #475569;
+
+  line-height: 1.7;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Actions
+|--------------------------------------------------------------------------
+*/
+.actions {
+  display: flex;
+
+  gap: 14px;
+}
+
+.start-btn,
+.complete-btn,
+.records-btn {
+  flex: 1;
+
+  border: none;
+
+  padding: 15px;
+
+  border-radius: 18px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+.records-btn {
+  background: #0f172a;
+
+  color: white;
+
+  text-align: center;
+
+  text-decoration: none;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+
+  color: white;
+}
+
+.complete-btn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+
+  color: white;
+}
+
+.start-btn:hover,
+.complete-btn:hover,
+.records-btn:hover {
+  transform: translateY(-3px);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Responsive
+|--------------------------------------------------------------------------
+*/
+@media (max-width: 768px) {
+  .queue-header {
+    padding: 26px;
+  }
+
+  .queue-header h1 {
+    font-size: var(--font-4xl);
+  }
+
+  .queue-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}
+

@@ -1,0 +1,254 @@
+/*
+|------------------------------------------------------------------
+| Page
+|------------------------------------------------------------------
+*/
+
+.edit-employee-page {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 24px;
+}
+
+/*
+|------------------------------------------------------------------
+| Glass Card
+|------------------------------------------------------------------
+*/
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.68);
+
+  backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.45);
+
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.06);
+}
+
+/*
+|------------------------------------------------------------------
+| Header
+|------------------------------------------------------------------
+*/
+
+.page-header {
+  padding: 34px;
+
+  border-radius: 30px;
+}
+
+.page-label {
+  color: #3b82f6;
+
+  font-size: var(--font-sm);
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  margin-bottom: 10px;
+}
+
+.page-header h1 {
+  font-size: var(--font-hero);
+
+  margin-bottom: 10px;
+
+  color: #0f172a;
+}
+
+.page-subtitle {
+  color: #64748b;
+
+  line-height: 1.7;
+}
+
+/*
+|------------------------------------------------------------------
+| Form
+|------------------------------------------------------------------
+*/
+
+.employee-form {
+  padding: 34px;
+
+  border-radius: 30px;
+}
+
+/*
+|------------------------------------------------------------------
+| Grid
+|------------------------------------------------------------------
+*/
+
+.form-grid {
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+
+  gap: 24px;
+}
+
+/*
+|------------------------------------------------------------------
+| Form Group
+|------------------------------------------------------------------
+*/
+
+.form-group {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.form-group label {
+  font-size: var(--font-md);
+
+  font-weight: 600;
+
+  color: #334155;
+}
+
+/*
+|------------------------------------------------------------------
+| Inputs
+|------------------------------------------------------------------
+*/
+
+input {
+  width: 100%;
+
+  padding: 18px;
+
+  border-radius: 18px;
+
+  border: 1px solid #dbe4f0;
+
+  background: rgba(255, 255, 255, 0.82);
+
+  font-size: var(--font-base);
+
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  outline: none;
+
+  border-color: #3b82f6;
+
+  box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.12);
+}
+
+/*
+|------------------------------------------------------------------
+| Buttons
+|------------------------------------------------------------------
+*/
+
+.button-group {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 16px;
+
+  margin-top: 36px;
+
+  flex-wrap: wrap;
+}
+
+.cancel-btn,
+.update-btn {
+  border: none;
+
+  padding: 16px 26px;
+
+  border-radius: 18px;
+
+  font-size: var(--font-md);
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+/*
+|------------------------------------------------------------------
+| Cancel
+|------------------------------------------------------------------
+*/
+
+.cancel-btn {
+  background: rgba(148, 163, 184, 0.16);
+
+  color: #334155;
+}
+
+.cancel-btn:hover {
+  transform: translateY(-2px);
+}
+
+/*
+|------------------------------------------------------------------
+| Update
+|------------------------------------------------------------------
+*/
+
+.update-btn {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  color: white;
+
+  box-shadow: 0 18px 35px rgba(59, 130, 246, 0.22);
+}
+
+.update-btn:hover {
+  transform: translateY(-3px);
+}
+
+/*
+|------------------------------------------------------------------
+| Responsive
+|------------------------------------------------------------------
+*/
+
+@media (max-width: 768px) {
+  .page-header,
+  .employee-form {
+    padding: 22px;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .cancel-btn,
+  .update-btn {
+    width: 100%;
+  }
+}
+/*
+|------------------------------------------------------------------|
+| Error Messages
+|------------------------------------------------------------------|
+*/
+
+.error-text {
+  color: #dc2626;
+
+  font-size: var(--font-sm);
+
+  font-weight: 500;
+
+  margin-top: 4px;
+
+  display: block;
+}
+

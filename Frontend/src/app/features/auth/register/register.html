@@ -1,0 +1,501 @@
+<div class="register-page">
+  <!-- Left Side -->
+
+  <div class="register-left">
+    <div class="brand-badge">BootStrap HMS</div>
+
+    <h1>Join the Smart Healthcare Workspace</h1>
+
+    <p class="left-subtitle">
+      Create your employee account to access hospital operations, appointments, patient records and real-time management
+      tools.
+    </p>
+
+    <div class="feature-list">
+      <div class="feature-card">
+        <span>🏥</span>
+
+        Smart Hospital Management
+      </div>
+
+      <div class="feature-card">
+        <span>🔒</span>
+
+        Secure Employee Access
+      </div>
+
+      <div class="feature-card">
+        <span>⚡</span>
+
+        Real-time Workflow System
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side -->
+
+  <div class="register-right glass-card">
+    <div class="register-card">
+      <h2>Employee Register</h2>
+
+      <p class="subtitle">Create your HMS account</p>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <div class="step-indicator">
+  <div
+    class="step"
+    [class.active]="currentStep === 1"
+    [class.completed]="currentStep > 1"
+  >
+    <div class="step-circle">1</div>
+    <p>Basic</p>
+  </div>
+
+  <div
+    class="step-line"
+    [class.completed]="currentStep > 1"
+  ></div>
+
+  <div
+    class="step"
+    [class.active]="currentStep === 2"
+    [class.completed]="currentStep > 2"
+  >
+    <div class="step-circle">2</div>
+    <p>Professional</p>
+  </div>
+
+  <div
+    class="step-line"
+    [class.completed]="currentStep > 2"
+  ></div>
+
+  <div
+    class="step"
+    [class.active]="currentStep === 3"
+  >
+    <div class="step-circle">3</div>
+    <p>Security</p>
+  </div>
+</div>
+@if(currentStep === 1){
+
+<div class="step-section">
+        <!-- Name -->
+
+        <div class="form-group">
+          <label>Full Name</label>
+
+          <input type="text" formControlName="name" placeholder="Enter full name" />
+
+          @if((registerForm.get('name')?.dirty || registerForm.get('name')?.touched) && registerForm.get('name')?.errors?.['required']){
+          <span class="error-text">Name is required</span>
+          } @if((registerForm.get('name')?.dirty || registerForm.get('name')?.touched) && registerForm.get('name')?.errors?.['pattern']){
+          <span class="error-text">Name can contain only alphabets</span>
+          }
+        </div>
+
+        <!-- Gender -->
+
+        <div class="form-group">
+          <label>Gender</label>
+
+          <select formControlName="gender">
+            <option value="" disabled>Select Gender</option>
+
+            <option [value]="'MALE'">Male</option>
+
+            <option [value]="'FEMALE'">Female</option>
+
+            <option [value]="'OTHER'">Other</option>
+          </select>
+
+          @if(registerForm.get('gender')?.invalid && (registerForm.get('gender')?.dirty || registerForm.get('gender')?.touched)){
+          <span class="error-text">Gender is required</span>
+          }
+        </div>
+
+        <!-- Email -->
+
+        <div class="form-group">
+          <label>Email</label>
+
+          <input type="email" formControlName="email" placeholder="Enter email" />
+
+          @if(registerForm.get('email')?.invalid && (registerForm.get('email')?.dirty || registerForm.get('email')?.touched)){
+          @if(registerForm.get('email')?.hasError('required')){
+          <span class="error-text">Email is required</span>
+          } } @if(registerForm.get('email')?.hasError('email')){
+          <span class="error-text">Enter a valid email address</span>
+          }
+        </div>
+
+        <!-- Phone -->
+
+        <div class="form-group">
+          <label>Phone Number</label>
+
+          <div class="phone-group">
+            <select formControlName="countryCode">
+              <option value="+91">+91 🇮🇳</option>
+
+              <option value="+1">+1 🇺🇸</option>
+
+              <option value="+44">+44 🇬🇧</option>
+            </select>
+
+            <input type="text" formControlName="phone" placeholder="9876543210" maxlength="10" />
+          </div>
+
+          @if( (registerForm .get('phone') ?.dirty || registerForm .get('phone') ?.touched) && registerForm .get('phone') ?.invalid ){
+
+          <p class="error-text">Enter valid 10 digit phone number</p>
+
+          }
+        </div>
+        <!-- Designation -->
+
+        <div class="form-group">
+          <label>Designation</label>
+
+          <select formControlName="designation">
+            <option value="">Select Designation</option>
+
+            <option value="DOCTOR">Doctor</option>
+
+            <option value="NURSE">Nurse</option>
+
+            <option value="RECEPTIONIST">Receptionist</option>
+
+            <option value="LAB_TECHNICIAN">Lab Technician</option>
+
+            <option value="PHARMACIST">Pharmacist</option>
+
+            <option value="ACCOUNTANT">Accountant</option>
+          </select>
+          @if(registerForm.get('designation')?.invalid && (registerForm.get('designation')?.dirty || registerForm.get('designation')?.touched)){
+          <span class="error-text">Designation is required</span>
+          }
+        </div>
+
+        <div class="input-group">
+          <label>Department</label>
+
+          <select formControlName="department">
+            <option value="">Select Department</option>
+
+            <option value="CARDIOLOGY">Cardiology</option>
+
+            <option value="ORTHOPEDICS">Orthopedics</option>
+
+            <option value="NEUROLOGY">Neurology</option>
+
+            <option value="PEDIATRICS">Pediatrics</option>
+
+            <option value="DERMATOLOGY">Dermatology</option>
+
+            <option value="GYNECOLOGY">Gynecology</option>
+
+            <option value="ONCOLOGY">Oncology</option>
+
+            <option value="RADIOLOGY">Radiology</option>
+
+            <option value="PATHOLOGY">Pathology</option>
+
+            <option value="EMERGENCY">Emergency</option>
+
+            <option value="ICU">ICU</option>
+
+            <option value="GENERAL_MEDICINE">General Medicine</option>
+
+            <option value="ENT">ENT</option>
+
+            <option value="UROLOGY">Urology</option>
+
+            <option value="PSYCHIATRY">Psychiatry</option>
+
+            <option value="PULMONOLOGY">Pulmonology</option>
+
+            <option value="GASTROENTEROLOGY">Gastroenterology</option>
+
+            <option value="NEPHROLOGY">Nephrology</option>
+
+            <option value="OPHTHALMOLOGY">Ophthalmology</option>
+
+            <option value="SURGERY">Surgery</option>
+
+            <option value="ADMINISTRATION">Administration</option>
+
+            <option value="PHARMACY">Pharmacy</option>
+
+            <option value="LABORATORY">Laboratory</option>
+
+            <option value="RECEPTION">Reception</option>
+
+            <option value="BILLING">Billing</option>
+
+            <option value="HR">Human Resources</option>
+          </select>
+          @if(registerForm.get('department')?.invalid && (registerForm.get('department')?.dirty || registerForm.get('department')?.touched)){
+          <span class="error-text">Department is required</span>
+          }
+        </div>
+        <!-- Joining Date -->
+
+        <div class="form-group">
+          <label>Joining Date</label>
+
+          <input type="date" formControlName="joiningDate" />
+
+          @if(registerForm.get('joiningDate')?.invalid && (registerForm.get('joiningDate')?.dirty || registerForm.get('joiningDate')?.touched)){
+          <span class="error-text">Joining date is required</span>
+          }
+        </div>
+        </div>
+
+<button
+  type="button"
+  class="submit-btn"
+  (click)="nextStep()"
+>
+  Next
+</button>
+
+}
+@if(currentStep === 2){
+
+<div class="step-section">
+
+        @if(isDoctor()){
+
+        <!-- Specialization -->
+
+        <div class="input-group">
+          <label>Specialization</label>
+
+          <select formControlName="specialization">
+            <option value="">Select Specialization</option>
+
+            <option value="GENERAL_PHYSICIAN">General Physician</option>
+
+            <option value="CARDIOLOGIST">Cardiologist</option>
+
+            <option value="ORTHOPEDIC_SURGEON">Orthopedic Surgeon</option>
+
+            <option value="NEUROLOGIST">Neurologist</option>
+
+            <option value="PEDIATRICIAN">Pediatrician</option>
+
+            <option value="DERMATOLOGIST">Dermatologist</option>
+
+            <option value="GYNECOLOGIST">Gynecologist</option>
+
+            <option value="ONCOLOGIST">Oncologist</option>
+
+            <option value="RADIOLOGIST">Radiologist</option>
+
+            <option value="ENT_SPECIALIST">ENT Specialist</option>
+
+            <option value="UROLOGIST">Urologist</option>
+
+            <option value="PSYCHIATRIST">Psychiatrist</option>
+
+            <option value="PULMONOLOGIST">Pulmonologist</option>
+
+            <option value="GASTROENTEROLOGIST">Gastroenterologist</option>
+
+            <option value="NEPHROLOGIST">Nephrologist</option>
+
+            <option value="OPHTHALMOLOGIST">Ophthalmologist</option>
+
+            <option value="ANESTHESIOLOGIST">Anesthesiologist</option>
+
+            <option value="PATHOLOGIST">Pathologist</option>
+
+            <option value="ENDOCRINOLOGIST">Endocrinologist</option>
+
+            <option value="RHEUMATOLOGIST">Rheumatologist</option>
+
+            <option value="PLASTIC_SURGEON">Plastic Surgeon</option>
+
+            <option value="CARDIAC_SURGEON">Cardiac Surgeon</option>
+
+            <option value="NEUROSURGEON">Neurosurgeon</option>
+
+            <option value="TRAUMA_SPECIALIST">Trauma Specialist</option>
+
+            <option value="EMERGENCY_PHYSICIAN">Emergency Physician</option>
+          </select>
+          @if(registerForm.get('specialization')?.invalid && (registerForm.get('specialization')?.dirty || registerForm.get('specialization')?.touched)){
+          <span class="error-text">specialization is required</span>
+          }
+        </div>
+
+        <!-- Qualification -->
+
+        <div class="form-group">
+          <label>Qualification</label>
+
+          <input type="text" formControlName="qualification" placeholder="Enter qualification" />
+
+          @if(registerForm.get('qualification')?.invalid && (registerForm.get('qualification')?.dirty || registerForm.get('qualification')?.touched)){
+          <span class="error-text">Qualification is required</span>
+          }
+        </div>
+
+        <!-- Registration -->
+
+        <div class="form-group">
+          <label>Medical Registration No</label>
+
+          <input type="text" formControlName="medicalRegistrationNo" placeholder="Enter registration number" />
+
+          @if(registerForm.get('medicalRegistrationNo')?.invalid &&
+          (registerForm.get('medicalRegistrationNo')?.dirty || registerForm.get('medicalRegistrationNo')?.touched)){
+          <span class="error-text">Medical Registration Number is required</span>
+          }
+        </div>
+        
+
+        }
+          @if(!isDoctor()){
+
+    <div class="feature-card">
+      No additional information required for this designation.
+    </div>
+
+  }
+
+</div>
+
+<div class="btn-row">
+
+  <button
+    type="button"
+    class="back-btn"
+    (click)="prevStep()"
+  >
+    Back
+  </button>
+
+  <button
+    type="button"
+    class="submit-btn"
+    (click)="nextStep()"
+  >
+    Next
+  </button>
+
+</div>
+
+}
+@if(currentStep === 3){
+
+<div class="step-section">
+        
+
+        <!-- Password -->
+
+        <div class="form-group">
+          <label>Password</label>
+
+          <input type="password" formControlName="password" placeholder="Enter password" />
+
+          @if((registerForm.get('password')?.dirty || registerForm.get('password')?.touched) && registerForm.get('password')?.errors?.['required']){
+          <span class="error-text">Password is required</span>
+          } @if((registerForm.get('password')?.dirty || registerForm.get('password')?.touched) && registerForm.get('password')?.errors?.['pattern']){
+          <span class="error-text">Password must contain uppercase, lowercase, number and special character</span>
+          }
+        </div>
+
+        <!-- Confirm Password -->
+
+        <div class="form-group">
+          <label>Confirm Password</label>
+
+          <input type="password" formControlName="confirmPassword" placeholder="Confirm password" />
+
+          @if((registerForm.get('confirmPassword')?.dirty || registerForm.get('confirmPassword')?.touched) && registerForm.get('confirmPassword')?.errors?.['required']){
+          <span class="error-text">Confirm Password is required</span>
+          }
+
+          @if( registerForm.value.password && registerForm.value.confirmPassword && registerForm.value.password !==
+          registerForm.value.confirmPassword ){
+          <span class="error-text">Passwords do not match</span>
+          }
+        </div>
+
+        <!-- Security Question -->
+
+        <div class="form-group">
+          <label>Security Question</label>
+
+          <select formControlName="securityQuestion">
+            <option value="">Select Question</option>
+
+            @for( question of securityQuestions; track question ){
+
+            <option [value]="question">{{ question }}</option>
+
+            }
+          </select>
+
+          @if((registerForm.get('securityQuestion')?.dirty || registerForm.get('securityQuestion')?.touched) && registerForm.get('securityQuestion')?.errors?.['required']){
+          <span class="error-text">Security Question is required</span>
+          }
+        </div>
+
+        <!-- Security Answer -->
+
+        <div class="form-group">
+          <label>Security Answer</label>
+
+          <input type="text" formControlName="securityAnswer" placeholder="Enter answer" />
+
+          @if(registerForm.get('securityAnswer')?.invalid && (registerForm.get('securityAnswer')?.dirty || registerForm.get('securityAnswer')?.touched)){
+          <span class="error-text">Security Answer is required</span>
+          }
+        </div>
+        </div>
+
+<div class="btn-row">
+
+  <button
+    type="button"
+    class="back-btn"
+    (click)="prevStep()"
+  >
+    Back
+  </button>
+
+  <button
+    type="submit"
+    class="submit-btn"
+    [disabled]="isSubmitting"
+  >
+    @if(isSubmitting){
+      Registering...
+    } @else {
+      Register
+    }
+  </button>
+
+</div>
+
+}
+
+@if(errorMessage){
+<div class="error-text">{{ errorMessage }}</div>
+}
+
+       
+      </form>
+
+      <p class="login-link">
+        Already have an account?
+
+        <a routerLink="/login">Login</a>
+      </p>
+    </div>
+  </div>
+</div>

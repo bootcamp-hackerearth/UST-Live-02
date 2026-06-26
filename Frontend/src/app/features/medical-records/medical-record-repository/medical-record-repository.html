@@ -1,0 +1,110 @@
+<div class="records-page">
+  <div class="records-header glass-card">
+    <div>
+      <p class="page-label">Patient Medical Records</p>
+
+      <h1>Medical Records</h1>
+
+      <p class="page-subtitle">Complete medical history and consultation records of patients.</p>
+    </div>
+
+    <div class="record-count">{{ pagination.totalRecords }} Patients</div>
+  </div>
+
+  <div class="search-card glass-card">
+    <label for="medicalRecordSearch">Search</label>
+
+    <div class="search-control">
+      <input
+        id="medicalRecordSearch"
+        type="text"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search patient name, UHID, phone, email, status..."
+      />
+
+      @if(search) {
+      <button type="button" (click)="clearSearch()">Clear</button>
+      }
+    </div>
+  </div>
+
+  @if(isLoading) {
+  <div class="loading-card glass-card">
+    <div class="loader"></div>
+
+    <p>Loading health records...</p>
+  </div>
+  } @else { @if(patients.length === 0) {
+  <div class="empty-state glass-card">
+    <div class="empty-icon">HR</div>
+
+    <h2>No Patients Found</h2>
+
+    <p>Patient records will appear here when available.</p>
+  </div>
+  } @else {
+  <div class="table-wrapper glass-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+
+          <th>UHID</th>
+
+          <th>Gender</th>
+
+          <th>Status</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for(patient of patients; track patient._id) {
+        <tr>
+          <td>
+            <div class="patient-info">
+              <div class="avatar">{{ patient?.firstName?.charAt(0) || 'P' }}</div>
+
+              <div>
+                <h4>{{ patient?.firstName }} {{ patient?.lastName }}</h4>
+
+                <span>Patient Record</span>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="patient-id">{{ patient?.patientId }}</span>
+          </td>
+
+          <td>{{ patient?.gender || 'N/A' }}</td>
+
+          <td>
+            <span class="status-badge">{{ patient?.status || 'ACTIVE' }}</span>
+          </td>
+
+          <td>
+            <a
+              class="view-record-btn"
+              [routerLink]="['/medical-records/patient', patient._id]"
+            >
+              View Record
+            </a>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [pagination]="pagination"
+    totalLabel="patients"
+    (pagePrevious)="previousPage()"
+    (pageNext)="nextPage()"
+    (pageSizeChange)="onLimitChange($event)"
+  ></app-pagination>
+  } }
+</div>

@@ -1,0 +1,74 @@
+<aside class="sidebar glass">
+  <div class="logo-section">
+    <div class="logo-circle">B</div>
+
+    <div>
+      <h2>BootStrap HMS</h2>
+
+      <p>Smart Healthcare</p>
+    </div>
+  </div>
+
+  @if(authService.currentUser | async; as user) {
+    <div class="profile-card">
+      <div class="avatar">{{ user.email?.charAt(0)?.toUpperCase() }}</div>
+
+      <div>
+        <h4>{{ user.roles?.[0] }}</h4>
+
+        <span>{{ user.email }}</span>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      @for(menu of menuNodes; track menu._id) {
+        @if(hasChildren(menu)) {
+          <div class="menu-group">
+            <button
+              type="button"
+              class="menu-parent"
+              [class.expanded]="isExpanded(menu._id)"
+              (click)="toggleMenu(menu._id)"
+            >
+              <span class="menu-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path [attr.d]="getIconPath(menu.icon)"></path>
+                </svg>
+              </span>
+
+              <strong>{{ menu.label }}</strong>
+
+              <small>{{ isExpanded(menu._id) ? "-" : "+" }}</small>
+            </button>
+
+            @if(isExpanded(menu._id)) {
+              <div class="submenu">
+                @for(child of menu.children; track child._id) {
+                  <a [routerLink]="child.path" routerLinkActive="active-link">
+                    <span class="menu-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24">
+                        <path [attr.d]="getIconPath(child.icon)"></path>
+                      </svg>
+                    </span>
+
+                    {{ child.label }}
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <a [routerLink]="menu.path" routerLinkActive="active-link">
+            <span class="menu-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path [attr.d]="getIconPath(menu.icon)"></path>
+              </svg>
+            </span>
+
+            {{ menu.label }}
+          </a>
+        }
+      }
+    </nav>
+  }
+</aside>

@@ -1,0 +1,479 @@
+.appointment-page {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 24px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Header
+|--------------------------------------------------------------------------
+*/
+.appointment-header {
+  padding: 32px;
+
+  border-radius: 30px;
+}
+
+.page-label {
+  color: #3b82f6;
+
+  font-size: var(--font-sm);
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  margin-bottom: 10px;
+}
+
+.appointment-header h1 {
+  font-size: var(--font-hero);
+
+  margin-bottom: 10px;
+
+  color: #0f172a;
+}
+
+.page-subtitle {
+  color: #64748b;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Form
+|--------------------------------------------------------------------------
+*/
+.appointment-form {
+  padding: 35px;
+
+  border-radius: 30px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 32px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Sections
+|--------------------------------------------------------------------------
+*/
+.form-section {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 24px;
+}
+
+.section-title h2 {
+  color: #0f172a;
+
+  margin-bottom: 6px;
+}
+
+.section-title p {
+  color: #64748b;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Grid
+|--------------------------------------------------------------------------
+*/
+.grid-2 {
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+
+  gap: 22px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Form Group
+|--------------------------------------------------------------------------
+*/
+.form-group {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.form-group label {
+  font-size: var(--font-md);
+
+  font-weight: 600;
+
+  color: #334155;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Inputs
+|--------------------------------------------------------------------------
+*/
+input,
+select,
+textarea {
+  width: 100%;
+
+  padding: 16px 18px;
+
+  border-radius: 18px;
+
+  border: 1px solid rgba(148, 163, 184, 0.25);
+
+  background: rgba(255, 255, 255, 0.65);
+
+  font-size: var(--font-base);
+
+  transition: all 0.3s ease;
+
+  box-sizing: border-box;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+
+  border-color: #3b82f6;
+
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.search-dropdown {
+  position: relative;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.14);
+}
+
+.dropdown-option {
+  width: 100%;
+  border: 0;
+  padding: 12px 14px;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  font-size: var(--font-md);
+  text-align: left;
+}
+
+.dropdown-option:hover {
+  background: #eff6ff;
+}
+
+.dropdown-empty {
+  padding: 12px 14px;
+  color: #64748b;
+  font-size: var(--font-md);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Textarea
+|--------------------------------------------------------------------------
+*/
+textarea {
+  min-height: 120px;
+
+  resize: vertical;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Slots
+|--------------------------------------------------------------------------
+*/
+.slots-card {
+  padding: 28px;
+
+  border-radius: 24px;
+
+  background: rgba(248, 250, 252, 0.75);
+
+  border: 1px solid rgba(226, 232, 240, 0.8);
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 24px;
+}
+
+.slot-header h2 {
+  margin-bottom: 6px;
+
+  color: #0f172a;
+}
+
+.slot-header p {
+  color: #64748b;
+}
+
+.slots-container {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 14px;
+}
+
+.slot-btn {
+  border: none;
+
+  padding: 14px 20px;
+
+  border-radius: 16px;
+
+  background: rgba(59, 130, 246, 0.08);
+
+  color: #2563eb;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+.slot-btn:hover {
+  transform: translateY(-2px);
+
+  background: rgba(59, 130, 246, 0.14);
+}
+
+.slot-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  color: white;
+
+  box-shadow: 0 15px 30px rgba(59, 130, 246, 0.25);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Submit
+|--------------------------------------------------------------------------
+*/
+.submit-btn {
+  border: none;
+
+  padding: 18px;
+
+  border-radius: 20px;
+
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  color: white;
+
+  font-size: var(--font-lg);
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.22);
+}
+
+.submit-btn:hover {
+  transform: translateY(-3px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+
+  cursor: not-allowed;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Full Width
+|--------------------------------------------------------------------------
+*/
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Responsive
+|--------------------------------------------------------------------------
+*/
+@media (max-width: 768px) {
+  .appointment-form {
+    padding: 22px;
+  }
+
+  .slots-container {
+    gap: 10px;
+  }
+
+  .slot-btn {
+    width: 100%;
+  }
+}
+.consultation-fee {
+  margin-top: 14px;
+
+  font-size: var(--font-xl);
+
+  font-weight: 700;
+
+  color: #16a34a;
+}
+
+.available-from {
+  margin-top: 6px;
+
+  font-size: var(--font-md);
+
+  font-weight: 700;
+
+  color: #475569;
+}
+
+.slot-empty-message {
+  width: 100%;
+
+  padding: 16px 18px;
+
+  border-radius: 16px;
+
+  background: #fef2f2;
+
+  color: #991b1b;
+
+  font-size: var(--font-base);
+
+  font-weight: 700;
+}
+
+/* Toast Container */
+.toast-container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Base Toast */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  min-width: 380px;
+  max-width: 480px;
+  font-size: var(--font-md);
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  animation:
+    slideIn 0.3s ease,
+    fadeOut 0.4s ease 2.6s forwards;
+  border-left: 4px solid transparent;
+}
+
+/* Success Toast */
+.toast.success {
+  background-color: #f0fdf4;
+  color: #166534;
+  border-left-color: #22c55e;
+}
+
+.toast.success .toast-icon {
+  color: #22c55e;
+  font-size: var(--font-2xl);
+}
+
+/* Error Toast */
+.toast.error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border-left-color: #ef4444;
+}
+
+.toast.error .toast-icon {
+  color: #ef4444;
+  font-size: var(--font-2xl);
+}
+
+/* Toast Message Text */
+.toast-message {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Close Button */
+.toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-xl);
+  line-height: 1;
+  color: inherit;
+  opacity: 0.6;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+
+.error-text {
+  color: #e53e3e;
+  font-size: var(--font-lg);
+  margin-top: 6px;
+  display: block;
+  padding-left: 4px;
+}
+.toast-close:hover {
+  opacity: 1;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(110%);
+  }
+}
+
+
