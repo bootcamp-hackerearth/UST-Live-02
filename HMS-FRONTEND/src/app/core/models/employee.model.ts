@@ -56,6 +56,8 @@ export interface EmployeeProfile {
   // DOCTOR only
   consultationFee?: number;
   availabilitySlots?: AvailabilitySlot[];
+  // DOCTOR only — date on/after which no new appointments may be booked
+  bookingCutoffDate?: string;
 }
 export interface EmployeeListItem {
   employee: EmployeeProfile;
@@ -92,6 +94,7 @@ export interface UpdateEmployeePayload {
   specialization?: string;
   consultationFee?: number;
   availabilitySlots?: AvailabilitySlot[];
+  bookingCutoffDate?: string | null;
 }
 
 export const DEPARTMENTS: Department[] = [

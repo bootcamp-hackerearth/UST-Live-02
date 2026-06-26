@@ -1,4 +1,4 @@
-import { ApiResponse } from './api-response.model';
+import { ApiResponse, PaginatedData } from './api-response.model';
 
 export type ProfileChangeStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -26,7 +26,8 @@ export interface ProfileChangeRequest {
 }
 
 // GET /admin/profile-change-requests response
-export type ProfileChangeRequestsResponse = ApiResponse<{
-  total: number;
-  requests: ProfileChangeRequest[];
-}>;
+export type ProfileChangeRequestsResponse = ApiResponse<
+  PaginatedData & {
+    requests: ProfileChangeRequest[];
+  }
+>;

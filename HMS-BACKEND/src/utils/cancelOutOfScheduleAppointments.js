@@ -59,7 +59,7 @@ async function cancelOutOfScheduleAppointments(doctor, actor) {
     }
 
     try {
-      const patient = await Patient.findOne({ UHID: appointment.patientId }).select("name email");
+      const patient = await Patient.findOne({ UHID: appointment.patientUHID }).select("name email");
       if (patient?.email) {
         await sendEmail({
           to: patient.email,

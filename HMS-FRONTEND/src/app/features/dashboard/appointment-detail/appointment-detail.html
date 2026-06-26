@@ -28,17 +28,32 @@
                 }
               </button>
             }
-            @if (canComplete()) {
+            @if (canGenerateRecord()) {
+              <button class="btn btn-success" [disabled]="busy()" (click)="openCreateRecord()">
+                {{ isDoctor() ? 'Create Medical Record' : 'Generate Medical Record' }}
+              </button>
+            }
+            @if (canMarkUnattended()) {
               <button
-                class="btn btn-success"
-                [disabled]="busy() || !startTimePassed()"
-                [title]="!startTimePassed() ? 'Available once the appointment starts' : ''"
-                (click)="complete()">
-                @if (busyAction() === 'complete') {
-                  <span>Completing…</span>
+                class="btn btn-warning"
+                [disabled]="busy() || !endTimePassed()"
+                title="Available once the appointment end time has passed"
+                (click)="markUnattended()">
+                @if (busyAction() === 'unattended') {
+                  <span>Marking…</span>
                 } @else {
-                  <span>Mark Completed</span>
+                  <span>Mark Unattended</span>
                 }
+              </button>
+            }
+            @if (canEditRecord()) {
+              <button class="btn btn-primary" [disabled]="busy()" (click)="openEditRecord()">
+                Edit Medical Record
+              </button>
+            }
+            @if (canViewRecord()) {
+              <button class="btn btn-secondary" [disabled]="busy()" (click)="openViewRecord()">
+                View Medical Record
               </button>
             }
           </div>
@@ -118,4 +133,19 @@
       </div>
     }
   </div>
+
+  @if (showForm() && appointment(); as a) {
+    <app-medical-record-form-dialog
+      [appointment]="a"
+      [existingRecord]="medicalRecord()"
+      (saved)="onRecordSaved($event)"
+      (closed)="onFormClosed()" />
+  }
+
+  @if (showDetail() && medicalRecord(); as record) {
+    <app-medical-record-detail-dialog
+      [record]="record"
+      (closed)="onDetailClosed()"
+      (deleted)="onRecordDeleted()" />
+  }
 </app-dashboard-layout>

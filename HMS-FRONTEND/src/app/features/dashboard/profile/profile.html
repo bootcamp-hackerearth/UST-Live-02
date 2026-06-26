@@ -147,7 +147,7 @@
             <button
               type="submit"
               class="btn btn-primary"
-              [disabled]="saving()"
+              [disabled]="saving() || !hasChanges()"
             >
               @if (saving()) {
                 <span>Saving…</span>

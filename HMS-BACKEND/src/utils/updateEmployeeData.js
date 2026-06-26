@@ -4,7 +4,7 @@ const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 const { SPECIALIZATION_DESIGNATIONS_SET } = require("../constants/domain");
 
-const doctorOnlyFields = new Set(["consultationFee", "availabilitySlots"]);
+const doctorOnlyFields = new Set(["consultationFee", "availabilitySlots", "bookingCutoffDate"]);
 
 // Midnight epoch ms for the given date, for whole-day comparisons
 const startOfDayMs = (date) => {
@@ -26,6 +26,7 @@ const updateEmployeeData = (employee, updateData) => {
     "specialization",
     "consultationFee",
     "availabilitySlots",
+    "bookingCutoffDate",
   ];
 
   // Joining date is locked once reached (on or after the day itself); only block an actual change
@@ -76,6 +77,7 @@ const updateEmployeeData = (employee, updateData) => {
   if (updatedDesignation !== "DOCTOR") {
     employee.consultationFee = undefined;
     employee.availabilitySlots = undefined;
+    employee.bookingCutoffDate = undefined;
   }
 
   return employee;

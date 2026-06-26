@@ -12,7 +12,7 @@
         <h4 class="section-title">Personal Information</h4>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label" for="pc-name">Full Name *</label>
+            <label class="form-label" for="pc-name">Full Name <span class="form-required">*</span></label>
             <input id="pc-name" type="text" formControlName="name" class="form-input"
                    placeholder="Alice Johnson" />
             @if (form.get('name')?.touched && form.get('name')?.invalid) {
@@ -25,7 +25,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="pc-email">Email *</label>
+            <label class="form-label" for="pc-email">Email <span class="form-required">*</span></label>
             <input id="pc-email" type="email" formControlName="email" class="form-input"
                    placeholder="alice@example.com" />
             @if (form.get('email')?.touched) {
@@ -39,7 +39,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="pc-phone">Phone *</label>
+            <label class="form-label" for="pc-phone">Phone <span class="form-required">*</span></label>
             <input id="pc-phone" type="tel" formControlName="phone" class="form-input"
                    placeholder="+91 1234567890" />
             @if (form.get('phone')?.touched) {
@@ -55,7 +55,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="pc-gender">Gender *</label>
+            <label class="form-label" for="pc-gender">Gender <span class="form-required">*</span></label>
             <select id="pc-gender" formControlName="gender" class="form-select">
               <option value="">Select gender</option>
               @for (g of genders; track g) {
@@ -68,7 +68,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="pc-dob">Date of Birth *</label>
+            <label class="form-label" for="pc-dob">Date of Birth <span class="form-required">*</span></label>
             <input
               id="pc-dob"
               type="date"
@@ -90,7 +90,7 @@
         <h4 class="section-title">Address</h4>
         <div class="form-grid" formGroupName="address">
           <div class="form-group">
-            <label class="form-label" for="pc-house-name">House Name *</label>
+            <label class="form-label" for="pc-house-name">House Name <span class="form-required">*</span></label>
             <input id="pc-house-name" type="text" formControlName="houseName" class="form-input"
                    placeholder="Rose Villa" />
             @if (addressCtrl('houseName')?.touched && addressCtrl('houseName')?.invalid) {
@@ -98,7 +98,7 @@
             }
           </div>
           <div class="form-group">
-            <label class="form-label" for="pc-house-number">House Number *</label>
+            <label class="form-label" for="pc-house-number">House Number <span class="form-required">*</span></label>
             <input id="pc-house-number" type="text" formControlName="houseNumber" class="form-input"
                    placeholder="12B" />
             @if (addressCtrl('houseNumber')?.touched && addressCtrl('houseNumber')?.invalid) {
@@ -106,7 +106,7 @@
             }
           </div>
           <div class="form-group">
-            <label class="form-label" for="pc-city">City *</label>
+            <label class="form-label" for="pc-city">City <span class="form-required">*</span></label>
             <input id="pc-city" type="text" formControlName="city" class="form-input"
                    placeholder="Chennai" />
             @if (addressCtrl('city')?.touched && addressCtrl('city')?.invalid) {
@@ -114,7 +114,7 @@
             }
           </div>
           <div class="form-group">
-            <label class="form-label" for="pc-post-code">Post Code *</label>
+            <label class="form-label" for="pc-post-code">Post Code <span class="form-required">*</span></label>
             <input id="pc-post-code" type="text" formControlName="postCode" class="form-input"
                    placeholder="600001" />
             @if (addressCtrl('postCode')?.touched && addressCtrl('postCode')?.invalid) {
@@ -126,7 +126,7 @@
         <h4 class="section-title">Emergency Contact</h4>
         <div class="form-grid" formGroupName="emergencyContact">
           <div class="form-group">
-            <label class="form-label" for="pc-contact-name">Contact Name *</label>
+            <label class="form-label" for="pc-contact-name">Contact Name <span class="form-required">*</span></label>
             <input id="pc-contact-name" type="text" formControlName="contactName" class="form-input"
                    placeholder="Bob Johnson" />
             @if (emergencyCtrl('contactName')?.touched && emergencyCtrl('contactName')?.invalid) {
@@ -138,7 +138,7 @@
             }
           </div>
           <div class="form-group">
-            <label class="form-label" for="pc-relationship">Relationship *</label>
+            <label class="form-label" for="pc-relationship">Relationship <span class="form-required">*</span></label>
             <input id="pc-relationship" type="text" formControlName="relationship" class="form-input"
                    placeholder="Brother" />
             @if (emergencyCtrl('relationship')?.touched && emergencyCtrl('relationship')?.invalid) {
@@ -146,7 +146,7 @@
             }
           </div>
           <div class="form-group">
-            <label class="form-label" for="pc-contact-number">Contact Number *</label>
+            <label class="form-label" for="pc-contact-number">Contact Number <span class="form-required">*</span></label>
             <input id="pc-contact-number" type="tel" formControlName="contactNumber" class="form-input"
                    placeholder="+91 1234567890" />
             @if (emergencyCtrl('contactNumber')?.touched) {

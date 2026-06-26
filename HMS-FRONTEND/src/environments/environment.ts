@@ -1,4 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://vanguard-hms-rho.vercel.app/api',
+  // Same origin since Vercel rewrites /api to the backend so the refresh cookie stays first party instead of being dropped cross site
+  apiUrl: '/api',
 };

@@ -16,10 +16,25 @@ const auditActions = [
     "APPOINTMENT_UPDATED",
     "APPOINTMENT_CANCELED",
     "APPOINTMENT_COMPLETED",
+    "APPOINTMENT_UNATTENDED",
+    "MEDICAL_RECORD_CREATED",
+    "MEDICAL_RECORD_UPDATED",
+    "MEDICAL_RECORD_FINALIZED",
+    "MEDICAL_RECORD_DELETED",
+    "NODE_CREATED",
+    "NODE_UPDATED",
+    "NODE_DELETED",
     "PROFILE_CHANGE_REQUESTED",
     "PROFILE_CHANGE_APPROVED",
     "PROFILE_CHANGE_REJECTED",
-    "PROFILE_UPDATED"
+    "PROFILE_UPDATED",
+    "USER_LOGIN",
+    "USER_LOGIN_FAILED",
+    "USER_LOGOUT",
+    "PASSWORD_CHANGED",
+    "PASSWORD_RESET_REQUESTED",
+    "PASSWORD_RESET_COMPLETED",
+    "REFRESH_REUSE_DETECTED"
 ];
 
 const auditLogSchema = new mongoose.Schema(
@@ -35,6 +50,16 @@ const auditLogSchema = new mongoose.Schema(
             type: String
         },
         actorDesignation: {
+            type: String
+        },
+        actorType: {
+            type: String,
+            enum: ["EMPLOYEE", "PATIENT", "ANONYMOUS", "SYSTEM"]
+        },
+        actorId: {
+            type: String
+        },
+        ipAddress: {
             type: String
         },
         action: {
@@ -61,7 +86,6 @@ const auditLogSchema = new mongoose.Schema(
     }
 );
 
-// Pre-save hook to generate sequential audit record id
 auditLogSchema.pre("save", async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(

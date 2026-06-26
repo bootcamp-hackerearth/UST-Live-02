@@ -86,6 +86,7 @@ export default function PasswordScreen({
         <View style={styles.form}>
           <Textbox
             label={topField.label}
+            required
             placeholder={topField.placeholder}
             value={topValue}
             onChangeText={setTopValue}
@@ -98,6 +99,7 @@ export default function PasswordScreen({
           />
           <Textbox
             label="New password"
+            required
             placeholder="Create a new password"
             value={newPassword}
             onChangeText={setNewPassword}
@@ -108,6 +110,7 @@ export default function PasswordScreen({
           />
           <Textbox
             label="Confirm password"
+            required
             placeholder="Re-enter new password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}

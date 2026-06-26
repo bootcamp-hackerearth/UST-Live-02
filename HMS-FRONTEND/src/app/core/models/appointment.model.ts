@@ -3,12 +3,17 @@ import { ApiResponse, PaginatedData } from './api-response.model';
 
 // Appointment domain models aligned with the backend Appointments schema
 
-export type AppointmentStatus = 'BOOKED' | 'CANCELED' | 'COMPLETED';
+export type AppointmentStatus =
+  | 'BOOKED'
+  | 'CANCELED'
+  | 'COMPLETED'
+  | 'UNATTENDED';
 
 export const APPOINTMENT_STATUSES: AppointmentStatus[] = [
   'BOOKED',
   'CANCELED',
   'COMPLETED',
+  'UNATTENDED',
 ];
 
 // Lightweight patient info attached to an enriched appointment
@@ -30,7 +35,7 @@ export interface AppointmentDoctorRef {
 
 export interface Appointment {
   appointmentId: string;
-  patientId: string;
+  patientUHID: string;
   doctorEmployeeId: string;
   appointmentDate: string;
   timeSlot: string;
@@ -52,11 +57,13 @@ export interface DoctorOption {
   availabilitySlots?: AvailabilitySlot[];
   qualification?: string[];
   joiningDate?: string;
+  // Date on/after which this doctor accepts no new appointments
+  bookingCutoffDate?: string;
 }
 
 // Payload to create an appointment
 export interface CreateAppointmentPayload {
-  patientId: string;
+  patientUHID: string;
   doctorEmployeeId: string;
   appointmentDate: string;
   timeSlot: string;

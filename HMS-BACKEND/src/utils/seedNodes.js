@@ -1,7 +1,20 @@
 const Node = require("../models/Nodes");
 
-// Default sidebar menu items grouped by role
+// Paths enforced by authorizeNode where a missing node would lock everyone but the owner out of the module so seeding fails fast when one is gone
+const NODE_DRIVEN_PATHS = [
+    "/dashboard/patients",
+    "/dashboard/appointments",
+    "/dashboard/medical-records"
+];
+
+// Default sidebar nodes recreated on boot when missing where array order sets the sidebar order by creation time
 const DEFAULT_NODES = [
+    {
+        name: "Admins",
+        path: "/dashboard/admins",
+        icon: "shield",
+        allowedDesignations: ["OWNER"]
+    },
     {
         name: "Employees",
         path: "/dashboard/employees",
@@ -15,12 +28,6 @@ const DEFAULT_NODES = [
         allowedDesignations: ["OWNER", "ADMIN"]
     },
     {
-        name: "Admins",
-        path: "/dashboard/admins",
-        icon: "shield",
-        allowedDesignations: ["OWNER"]
-    },
-    {
         name: "Patients",
         path: "/dashboard/patients",
         icon: "user",
@@ -31,10 +38,23 @@ const DEFAULT_NODES = [
         path: "/dashboard/appointments",
         icon: "calendar",
         allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST", "DOCTOR"]
+    },
+    {
+        name: "Medical Records",
+        path: "/dashboard/medical-records",
+        icon: "file-text",
+        allowedDesignations: ["OWNER", "ADMIN", "RECEPTIONIST", "DOCTOR"]
+    },
+    {
+        // Owner-only page for managing the sidebar menu nodes themselves
+        name: "Menu Nodes",
+        path: "/dashboard/menu-nodes",
+        icon: "menu",
+        allowedDesignations: ["OWNER"]
     }
 ];
 
-// Inserts any missing default nodes; assumes an active mongoose connection and throws on failure
+// Inserts missing default nodes matched by their immutable path and never updates existing ones so dashboard edits survive restarts
 const seedNodes = async () => {
     let created = 0;
     let skipped = 0;
@@ -54,6 +74,15 @@ const seedNodes = async () => {
     }
 
     console.log(`Nodes seeded. Created: ${created}, Skipped: ${skipped}`);
+
+    // Guard against a node-driven route losing its node and locking users out
+    for (const path of NODE_DRIVEN_PATHS) {
+        const node = await Node.findOne({ path });
+
+        if (!node) {
+            throw new Error(`Missing sidebar node for node-driven route ${path}`);
+        }
+    }
 };
 
 module.exports = seedNodes;

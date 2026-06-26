@@ -1,13 +1,13 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { debounceTime, Subject } from 'rxjs';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { SortAvailabilitySlotsPipe } from '../../../shared/pipes/sort-availability-slots.pipe';
 import { AdminService } from '../../../core/services/admin.service';
-import { OwnerService } from '../../../core/services/owner.service';
-import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
 import { APP_MESSAGES } from '../../../core/constants/messages';
@@ -18,8 +18,9 @@ import {
   STAFF_DESIGNATIONS,
 } from '../../../core/models/employee.model';
 
-// Active employees list with search and designation filter (OWNER/ADMIN)
+// Active staff list with search and designation filter (OWNER/ADMIN viewers)
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-employees-list',
   standalone: true,
   imports: [
@@ -27,6 +28,7 @@ import {
     FormsModule,
     RouterLink,
     DashboardLayoutComponent,
+    PaginationComponent,
     DatePipe,
     LastLoginCellComponent,
     SortAvailabilitySlotsPipe,
@@ -36,89 +38,87 @@ import {
 })
 export class EmployeesListComponent implements OnInit {
   private readonly adminService = inject(AdminService);
-  private readonly ownerService = inject(OwnerService);
-  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly apiError = inject(ApiErrorHandlerService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly router = inject(Router);
 
   loading = signal(true);
+  // Active staff employees — paginated server-side (admins live on their own page)
   employees = signal<EmployeeListItem[]>([]);
-  admins = signal<EmployeeListItem[]>([]);
 
   searchTerm = signal('');
   designationFilter = signal<Designation | ''>('');
   designations: (Designation | 'ALL')[] = [
     'ALL',
     ...STAFF_DESIGNATIONS,
-    'ADMIN',
   ];
+
+  // Pagination
+  page = signal(1);
+  limit = 10;
+  total = signal(0);
+  totalPages = signal(0);
 
   selected = signal<EmployeeListItem | null>(null);
   deleting = signal(false);
 
-  isOwner = computed(
-    () => this.authService.getDesignation() === 'OWNER',
-  );
-
-  // Combined view = employees + admins (admins visible only to owner)
-  rows = computed<EmployeeListItem[]>(() => {
-    const term = this.searchTerm().trim().toLowerCase();
-    const filter = this.designationFilter();
-    const all = [...this.employees(), ...this.admins()];
-
-    return all.filter((item) => {
-      if (filter && item.employee.designation !== filter) {
-        return false;
-      }
-      if (term) {
-        const haystack =
-          `${item.employee.name} ${item.employee.employeeCode} ${item.employee.email}`.toLowerCase();
-        if (!haystack.includes(term)) {
-          return false;
-        }
-      }
-      return true;
-    });
-  });
+  // Debounce search input
+  private readonly searchSubject = new Subject<string>();
 
   ngOnInit(): void {
     this.load();
-  }
 
-  private load(): void {
-    this.loading.set(true);
-    this.adminService.getEmployees().subscribe({
-      next: (res) => {
-        this.employees.set(res.data.employees || []);
-        if (this.isOwner()) {
-          this.ownerService.getAdmins().subscribe({
-            next: (a) => {
-              this.admins.set(a.data.admins || []);
-              this.loading.set(false);
-            },
-            error: () => {
-              this.loading.set(false);
-            },
-          });
-        } else {
-          this.loading.set(false);
-        }
-      },
-      error: () => {
-        this.loading.set(false);
-        this.toast.error(APP_MESSAGES.LOAD_EMPLOYEES_FAILED);
-      },
+    this.searchSubject.pipe(debounceTime(300)).subscribe((term) => {
+      this.searchTerm.set(term);
+      this.page.set(1);
+      this.load();
     });
   }
 
+  load(): void {
+    this.loading.set(true);
+    this.adminService
+      .getEmployees(this.page(), this.limit, {
+        search: this.searchTerm() || undefined,
+        designation: this.designationFilter() || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.employees.set(res.data.employees || []);
+          this.total.set(res.data.total || 0);
+          this.totalPages.set(res.data.totalPages || 1);
+          // Re-clamp if the current page fell past the end after a shrink
+          if (this.total() > 0 && this.page() > this.totalPages()) {
+            this.page.set(this.totalPages());
+            this.load();
+            return;
+          }
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.toast.error(APP_MESSAGES.LOAD_EMPLOYEES_FAILED);
+        },
+      });
+  }
+
   onSearch(value: string): void {
-    this.searchTerm.set(value);
+    this.searchSubject.next(value);
   }
 
   onFilter(value: string): void {
     this.designationFilter.set(value === 'ALL' || !value ? '' : (value as Designation));
+    this.page.set(1);
+    this.load();
+  }
+
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages() || p === this.page()) {
+      return;
+    }
+    this.page.set(p);
+    this.load();
   }
 
   open(item: EmployeeListItem): void {
@@ -133,16 +133,29 @@ export class EmployeesListComponent implements OnInit {
     this.router.navigate(['/dashboard/employees', item.employee.employeeCode, 'edit']);
   }
 
-  // Only staff designations are editable; OWNER/ADMIN updates are rejected by the backend
+  // Open Medical Records scoped to this doctor (records they created/verified)
+  viewDoctorRecords(item: EmployeeListItem): void {
+    this.router.navigate(['/dashboard/medical-records'], {
+      queryParams: {
+        doctorEmployeeId: item.employee.employeeCode,
+        doctorName: item.employee.name,
+      },
+    });
+  }
+
+  // Never expose edit or delete for any privileged owner or admin row that slips through
   canEdit(item: EmployeeListItem): boolean {
     return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
   }
 
+  canDelete(item: EmployeeListItem): boolean {
+    return item.employee.designation !== 'OWNER' && item.employee.designation !== 'ADMIN';
+  }
+
   async deleteEmployee(item: EmployeeListItem): Promise<void> {
-    const isAdmin = item.employee.designation === 'ADMIN';
     const result = await this.confirmModal.open({
-      title: `Delete ${isAdmin ? 'Admin' : 'Employee'}`,
-      message: `Are you sure you want to delete ${item.employee.name} (${item.employee.employeeCode})? This cannot be undone.`,
+      title: 'Delete Employee',
+      message: `Are you sure you want to delete ${item.employee.name} (${item.employee.employeeCode})?`,
       confirmText: 'Delete',
       cancelText: 'Cancel',
       type: 'danger',
@@ -151,12 +164,8 @@ export class EmployeesListComponent implements OnInit {
       return;
     }
 
-    const obs = isAdmin
-      ? this.ownerService.deleteAdmin(item.employee.employeeCode)
-      : this.adminService.deleteEmployee(item.employee.employeeCode);
-
     this.deleting.set(true);
-    obs.subscribe({
+    this.adminService.deleteEmployee(item.employee.employeeCode).subscribe({
       next: (res) => {
         this.deleting.set(false);
         this.toast.success(res.message || APP_MESSAGES.EMPLOYEE_DELETED);

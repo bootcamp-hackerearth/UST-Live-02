@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -41,6 +41,7 @@ import { AvailabilitySlotsFormComponent } from '../../../shared/ui/availability-
 const DRAFT_KEY = 'draft:self-register';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-register',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, PasswordInputComponent, AvailabilitySlotsFormComponent],
@@ -133,6 +134,10 @@ export class RegisterComponent implements OnInit, CanComponentDeactivate {
   }
 
   removeSlot(index: number): void {
+    // Keep at least one slot — availability is required
+    if (this.availabilitySlots.length <= 1) {
+      return;
+    }
     this.availabilitySlots.removeAt(index);
   }
 

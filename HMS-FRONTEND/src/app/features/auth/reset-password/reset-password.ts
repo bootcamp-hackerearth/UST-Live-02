@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -18,6 +18,7 @@ import {
 import { PasswordInputComponent } from '../../../shared/ui/password-input/password-input';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-reset-password',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, PasswordInputComponent],
@@ -89,6 +90,8 @@ export class ResetPasswordComponent implements OnInit {
           this.toast.success(
             response?.message || APP_MESSAGES.PASSWORD_RESET,
           );
+          // Reset invalidates every server session so clear the local session too while staying on the success screen
+          this.authService.forceClearSession(false);
         },
         error: (error) => {
           this.loading = false;

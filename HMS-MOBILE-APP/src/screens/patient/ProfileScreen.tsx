@@ -14,6 +14,7 @@ import { errorMessage, showError, showSuccess } from "@/utils/alerts";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "@/store/AuthStore";
+import { RequiredMark } from "@/components/common/RequiredMark";
 import { BottomTabInset, KeyboardScrollPadding } from "@/constants/theme";
 import { useGuardedRouter } from "@/hooks/useGuardedRouter";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
@@ -237,10 +238,10 @@ const ProfileScreen = () => {
 
         {/* Save */}
         <TouchableOpacity
-          style={[styles.saveButton, saving && { opacity: 0.6 }]}
+          style={[styles.saveButton, (saving || !isDirty) && { opacity: 0.6 }]}
           activeOpacity={0.85}
           onPress={handleSave}
-          disabled={saving}
+          disabled={saving || !isDirty}
         >
           <Text style={styles.saveButtonText}>{saving ? "Saving…" : "Save changes"}</Text>
         </TouchableOpacity>
@@ -272,16 +273,18 @@ function Field({
   onChange,
   keyboardType,
   autoCapitalize,
+  required = true,
 }: Readonly<{
   label: string;
   value: string;
   onChange: (t: string) => void;
   keyboardType?: "default" | "email-address" | "phone-pad";
   autoCapitalize?: "none" | "sentences";
+  required?: boolean;
 }>) {
   return (
     <View style={styles.fieldGroup}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={styles.fieldLabel}>{label}{required ? <RequiredMark /> : null}</Text>
       <TextInput
         style={styles.fieldInput}
         value={value}

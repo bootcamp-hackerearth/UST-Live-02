@@ -1,8 +1,9 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../../../shared/ui/dashboard-layout/dashboard-layout';
 import { LastLoginCellComponent } from '../../../shared/ui/last-login-cell/last-login-cell';
+import { PaginationComponent } from '../../../shared/ui/pagination/pagination';
 import { OwnerService } from '../../../core/services/owner.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiErrorHandlerService } from '../../../core/services/api-error-handler.service';
@@ -12,9 +13,10 @@ import { EmployeeListItem } from '../../../core/models/employee.model';
 
 // Admin management list (OWNER only)
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-admins',
   standalone: true,
-  imports: [CommonModule, RouterLink, DashboardLayoutComponent, DatePipe, LastLoginCellComponent],
+  imports: [CommonModule, RouterLink, DashboardLayoutComponent, PaginationComponent, DatePipe, LastLoginCellComponent],
   templateUrl: './admins.html',
   styleUrl: './admins.css',
 })
@@ -28,15 +30,29 @@ export class AdminsComponent implements OnInit {
   loading = signal(true);
   selected = signal<EmployeeListItem | null>(null);
 
+  // Pagination
+  page = signal(1);
+  limit = 10;
+  total = signal(0);
+  totalPages = signal(0);
+
   ngOnInit(): void {
     this.load();
   }
 
-  private load(): void {
+  load(): void {
     this.loading.set(true);
-    this.ownerService.getAdmins().subscribe({
+    this.ownerService.getAdmins(this.page(), this.limit).subscribe({
       next: (res) => {
         this.admins.set(res.data.admins || []);
+        this.total.set(res.data.total || 0);
+        this.totalPages.set(res.data.totalPages || 1);
+        // Re-clamp if the current page fell past the end after a shrink
+        if (this.total() > 0 && this.page() > this.totalPages()) {
+          this.page.set(this.totalPages());
+          this.load();
+          return;
+        }
         this.loading.set(false);
       },
       error: () => {
@@ -44,6 +60,14 @@ export class AdminsComponent implements OnInit {
         this.toast.error(APP_MESSAGES.LOAD_ADMINS_FAILED);
       },
     });
+  }
+
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages() || p === this.page()) {
+      return;
+    }
+    this.page.set(p);
+    this.load();
   }
 
   open(item: EmployeeListItem): void {

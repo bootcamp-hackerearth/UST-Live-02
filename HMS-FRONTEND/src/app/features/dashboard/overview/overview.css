@@ -4,19 +4,6 @@
   gap: 1.5rem;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem 0 0.25rem;
-}
-
-.page-info {
-  font-size: 0.8125rem;
-  color: #64748b;
-}
-
 .greeting-card {
   background-color: #ffffff;
   border-radius: 0.75rem;
@@ -160,6 +147,12 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   flex-shrink: 0;
+}
+
+/* Failed/adverse events stand out in red; success keeps the default green */
+.activity-action--danger {
+  color: #b91c1c;
+  background-color: #fef2f2;
 }
 
 .activity-message {

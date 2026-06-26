@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Counter = require("./Counter");
+const softDeletePlugin = require("../utils/softDeletePlugin");
 
 const patientSchema = new mongoose.Schema({
     UHID: {
@@ -51,7 +52,10 @@ const patientSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    // Reset token stored only as a hash; absent until a reset is requested
+    tokenVersion: {
+        type: Number,
+        default: 0
+    },
     resetPasswordTokenHash: {
         type: String,
         default: undefined
@@ -65,16 +69,17 @@ const patientSchema = new mongoose.Schema({
     }
 });
 
-// Pre-save hook to generate sequential patient id as UHID
 patientSchema.pre('save', async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(
             { name: 'patients' },
-            { $inc: { seq: 1 } }, // Creates sequence
-            { new: true, upsert: true } // upsert is update and insert
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true }
         );
-        this.UHID = `UHID-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
+        this.UHID = `UHID-${String(counter.seq).padStart(6, '0')}`;
     }
 });
+
+patientSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model("Patients", patientSchema);

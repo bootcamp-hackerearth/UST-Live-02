@@ -1,10 +1,9 @@
 <div class="slots-section">
   <div class="slots-header">
-    <span class="form-label">Availability Slots *</span>
-    <button type="button" class="btn btn-secondary btn-sm" (click)="addSlot.emit()">+ Add Slot</button>
+    <span class="form-label">Availability Slots <span class="form-required">*</span></span>
   </div>
 
-  @for (slot of formArray.controls; track $index; let i = $index) {
+  @for (slot of formArray.controls; track slot; let i = $index) {
   <div class="slot-row" [formGroup]="slotGroup(i)">
     <label class="slot-field slot-field-day">
       <span class="slot-field-name">Day</span>
@@ -23,10 +22,12 @@
       <span class="slot-field-name">End time</span>
       <input type="time" formControlName="endTime" class="form-input" />
     </label>
+    @if (formArray.length > 1) {
     <button type="button" class="slot-remove" (click)="removeSlot.emit(i)">
       <span aria-hidden="true">✕</span>
       <span class="sr-only">Remove slot</span>
     </button>
+    }
   </div>
   @if (slot.hasError('slotTimeOrder')) {
   <p class="form-error slot-error">Start time must be before end time</p>
@@ -36,4 +37,6 @@
   @if (formArray.errors?.['slotConflict']; as slotConflict) {
   <p class="form-error slot-error">{{ slotConflict }}</p>
   }
+
+  <button type="button" class="btn btn-secondary btn-sm slots-add" (click)="addSlot.emit()">+ Add Slot</button>
 </div>

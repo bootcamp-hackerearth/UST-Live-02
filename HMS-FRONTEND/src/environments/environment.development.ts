@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000/api',
+  // Same origin since ng serve proxies /api to localhost matching the production rewrite so the refresh cookie stays first party
+  apiUrl: '/api',
 };

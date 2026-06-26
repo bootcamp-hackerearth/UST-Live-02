@@ -40,7 +40,7 @@ exports.getDoctors = async (req, res) => {
         designation: "DOCTOR",
         employeeCode: { $in: activeCodes }
     }).select(
-        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate"
+        "employeeCode name specialization department consultationFee availabilitySlots qualification joiningDate bookingCutoffDate"
     );
 
     return sendSuccess(res, STATUS.OK, MESSAGES.EMPLOYEE.DOCTORS_RETRIEVED, {
@@ -138,7 +138,7 @@ exports.profileUpdate = async (req, res) => {
         throw new Error("Failed to create profile change request");
     }
 
-    // Notify admins (best-effort)
+    // Notify admins
     try {
         const admins = await User.find({
             roles: { $in: ["ADMIN", "OWNER"] },

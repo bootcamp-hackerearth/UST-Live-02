@@ -4,7 +4,7 @@ const {
     cancelAppointmentValidation
 } = require("./appointmentValidators");
 
-// Patient booking/reschedule fields; patientId comes from the token, never the body
+// Patient booking/reschedule fields; patientUHID comes from the token, never the body
 const patientBookAppointmentValidation = [
     body("doctorEmployeeId")
         .notEmpty()

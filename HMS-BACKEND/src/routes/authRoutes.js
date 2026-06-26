@@ -3,6 +3,8 @@ const router = express.Router();
 const { body } = require("express-validator");
 const validate = require("../middlewares/validate");
 const auth = require("../middlewares/authMiddleware");
+const authOptional = require("../middlewares/optionalAuthMiddleware");
+const { loginLimiter, passwordResetLimiter } = require("../middlewares/rateLimiters");
 const controller = require("../controllers/authController");
 const {
   employeeBaseValidators,
@@ -56,7 +58,7 @@ const resetPasswordValidation = [
 ];
 
 // Auth routes
-router.post("/login", loginValidation, validate, controller.login);
+router.post("/login", loginLimiter, loginValidation, validate, controller.login);
 
 router.post(
   "/self-register",
@@ -75,6 +77,7 @@ router.put(
 
 router.post(
   "/forgot-password",
+  passwordResetLimiter,
   forgotPasswordValidation,
   validate,
   controller.forgotPassword,
@@ -82,12 +85,16 @@ router.post(
 
 router.post(
   "/reset-password",
+  passwordResetLimiter,
   resetPasswordValidation,
   validate,
   controller.resetPassword,
 );
 
-router.post("/logout", auth, controller.logout);
+// Logout uses optional auth so it still works after the access token expires while preferring the token identity for the audit
+router.post("/logout", authOptional, controller.logout);
+
+router.post("/refresh", controller.refresh);
 
 router.get("/me", auth, controller.me);
 

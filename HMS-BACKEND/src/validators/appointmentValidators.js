@@ -2,9 +2,9 @@ const { body, param, query } = require("express-validator");
 
 // Validates patient, doctor, date, and time slot fields for appointment creation/update
 const createAppointmentValidation = [
-    body("patientId")
+    body("patientUHID")
         .notEmpty()
-        .withMessage("Patient id is required"),
+        .withMessage("Patient UHID is required"),
 
     body("doctorEmployeeId")
         .notEmpty()

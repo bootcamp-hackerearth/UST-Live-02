@@ -46,6 +46,12 @@
   cursor: default;
 }
 
+.form-hint {
+  margin: 0.375rem 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
 .form-grid {
   display: grid;
   gap: 1.25rem;

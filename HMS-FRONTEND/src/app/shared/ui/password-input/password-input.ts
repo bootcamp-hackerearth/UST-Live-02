@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   forwardRef,
   Input,
@@ -9,6 +10,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 // Password input with a show/hide toggle; used only for primary password fields
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-password-input',
   standalone: true,
   imports: [CommonModule],

@@ -20,6 +20,7 @@ export const APP_MESSAGES = {
   LOAD_PATIENTS_FAILED: 'Failed to load patients.',
   LOAD_PATIENT_FAILED: 'Failed to load patient.',
   LOAD_EMPLOYEES_FAILED: 'Failed to load employees.',
+  LOAD_NODES_FAILED: 'Failed to load menu nodes.',
   LOAD_EMPLOYEE_FAILED: 'Failed to load employee data.',
   LOAD_ADMINS_FAILED: 'Failed to load admins.',
   LOAD_APPOINTMENTS_FAILED: 'Failed to load appointments.',
@@ -34,6 +35,8 @@ export const APP_MESSAGES = {
   PATIENT_CREATE_FAILED: 'Failed to create patient.',
   PATIENT_UPDATED: 'Patient updated.',
   PATIENT_UPDATE_FAILED: 'Failed to update patient.',
+  PATIENT_DELETED: 'Patient deleted.',
+  PATIENT_DELETE_FAILED: 'Failed to delete patient.',
 
   // Employees / admins
   EMPLOYEE_CREATED: 'Employee created. Credentials sent via email.',
@@ -47,6 +50,14 @@ export const APP_MESSAGES = {
   ADMIN_UPDATED: 'Admin updated.',
   ADMIN_UPDATE_FAILED: 'Failed to update admin.',
   ADMIN_DELETED: 'Admin deleted.',
+
+  // Menu nodes (sidebar node management)
+  NODE_CREATED: 'Menu node created.',
+  NODE_CREATE_FAILED: 'Failed to create menu node.',
+  NODE_UPDATED: 'Menu node updated.',
+  NODE_UPDATE_FAILED: 'Failed to update menu node.',
+  NODE_DELETED: 'Menu node deleted.',
+  NODE_DELETE_FAILED: 'Failed to delete menu node.',
   ADMIN_DELETE_FAILED: 'Failed to delete admin.',
 
   // Approvals / profile changes

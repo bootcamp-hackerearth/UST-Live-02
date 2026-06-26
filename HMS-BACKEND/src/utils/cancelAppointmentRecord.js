@@ -21,10 +21,10 @@ const cancelAppointmentRecord = async (appointment, cancellationReason) => {
     appointment.cancellationReason = cancellationReason;
     await appointment.save();
 
-    // Fetch patient and doctor to build the cancellation email (best-effort)
+    // Fetch patient and doctor to build the cancellation email
     try {
         const [patient, doctor] = await Promise.all([
-            Patient.findOne({ UHID: appointment.patientId }).select("name email"),
+            Patient.findOne({ UHID: appointment.patientUHID }).select("name email"),
             Employee.findOne({ employeeCode: appointment.doctorEmployeeId }).select("name")
         ]);
         if (patient?.email) {

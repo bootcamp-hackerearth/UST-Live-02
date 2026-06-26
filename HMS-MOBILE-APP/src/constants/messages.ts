@@ -22,6 +22,7 @@ export const MESSAGES = {
   GENERIC_ERROR: "Something went wrong",
   NETWORK_ERROR: "Network error. Please check your connection and try again.",
   REQUEST_FAILED: (status: number) => `Request failed (${status})`,
+  SESSION_EXPIRED: "Your session has expired. Please log in again.",
 
   REGISTER_SUCCESS: "Your account has been created. You can now log in.",
   FORGOT_PASSWORD_SENT: "If the email exists, a reset code has been sent.", // NOSONAR not a credential

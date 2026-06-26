@@ -6,7 +6,7 @@ const billSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
-    patientId: {
+    patientUHID: {
         type: String,
         required: true,
         ref: "Patients"
@@ -35,15 +35,14 @@ const billSchema = new mongoose.Schema({
     }
 });
 
-// Pre-save hook to generate sequential bill id
 billSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(
                 { name: 'bill' },
-                { $inc: { seq: 1 } }, // Creates sequence
-                { new: true, upsert: true } // upsert is update and insert
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
             );
-            this.billId = `B-${String(counter.seq).padStart(6, '0')}`; // create 6 digit sequence number
+            this.billId = `B-${String(counter.seq).padStart(6, '0')}`;
     }
 });
 

@@ -2,166 +2,78 @@ const Patient = require("../models/Patients");
 const Appointment = require("../models/Appointments");
 const User = require("../models/Users");
 const Employee = require("../models/Employees");
-const autoCompleteDueAppointments = require("../utils/autoCompleteDueAppointments");
+const ProfileChangeRequest = require("../models/ProfileChangeRequests");
+const resolveActor = require("../utils/resolveActor");
+const { getDoctorTabCounts } = require("../utils/doctorAppointmentTabs");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 
-// Get Admin Dashboard Statistics
+// Overview stats matching the Angular dashboard counts
 exports.getAdminDashboardStats = async (req, res) => {
+    const { designation } = await resolveActor(req.user);
+    const includeAdmins = designation === "OWNER";
 
-    await autoCompleteDueAppointments();
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // Get today's appointments
-    const todayAppointments = await Appointment.find({
-        appointmentDate: { $gte: today, $lt: tomorrow }
-    }).populate('patientId', 'name').populate('doctorEmployeeId', 'name');
-
-    // Get total patients
-    const totalPatients = await Patient.countDocuments({ status: 'ACTIVE' });
-
-    // Get pending employees
-    const pendingEmployees = await User.countDocuments({
-        roles: 'STAFF',
-        status: 'PENDING'
-    });
-
-    // Get today's completed appointments
-    const completedToday = await Appointment.countDocuments({
-        appointmentDate: { $gte: today, $lt: tomorrow },
-        status: 'COMPLETED'
-    });
-
-    // Get today's booked appointments
-    const bookedToday = await Appointment.countDocuments({
-        appointmentDate: { $gte: today, $lt: tomorrow },
-        status: 'BOOKED'
-    });
-
-    // Get total employees
-    const totalEmployees = await User.countDocuments({ roles: 'STAFF' });
+    const [activeStaff, adminCount, pendingStaff, pendingChanges, totalPatients, bookedAppointments] =
+        await Promise.all([
+            User.countDocuments({ roles: "STAFF", status: "ACTIVE" }),
+            includeAdmins ? User.countDocuments({ roles: "ADMIN" }) : Promise.resolve(0),
+            User.countDocuments({ roles: "STAFF", status: "PENDING" }),
+            ProfileChangeRequest.countDocuments({ status: "PENDING" }),
+            Patient.countDocuments({}),
+            Appointment.countDocuments({ status: "BOOKED" }),
+        ]);
 
     return sendSuccess(res, STATUS.OK, MESSAGES.DASHBOARD.ADMIN_STATS_RETRIEVED, {
         stats: {
+            activeEmployees: activeStaff + adminCount,
+            pendingApprovals: pendingStaff + pendingChanges,
             totalPatients,
-            totalEmployees,
-            pendingEmployees,
-            todayAppointments: todayAppointments.length,
-            completedToday,
-            bookedToday,
-            upcomingAppointments: todayAppointments
-        }
+            bookedAppointments,
+        },
     });
 };
 
-// Get Doctor Dashboard Statistics
-exports.getDoctorDashboardStats = async (req, res) => {
-
-    await autoCompleteDueAppointments();
-
-    const doctorEmployeeCode = req.user.employeeCode;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // Get doctor's today appointments
-    const todayAppointments = await Appointment.find({
-        doctorEmployeeId: doctorEmployeeCode,
-        appointmentDate: { $gte: today, $lt: tomorrow }
-    }).populate('patientId', 'name UHID');
-
-    // Get total patients seen by doctor
-    const totalPatientsSeen = await Appointment.distinct('patientId', {
-        doctorEmployeeId: doctorEmployeeCode,
-        status: 'COMPLETED'
-    });
-
-    // Get today's completed appointments
-    const completedToday = await Appointment.countDocuments({
-        doctorEmployeeId: doctorEmployeeCode,
-        appointmentDate: { $gte: today, $lt: tomorrow },
-        status: 'COMPLETED'
-    });
-
-    // Get pending appointments
-    const pendingAppointments = todayAppointments.filter(apt => apt.status === 'BOOKED').length;
-
-    return sendSuccess(res, STATUS.OK, MESSAGES.DASHBOARD.DOCTOR_STATS_RETRIEVED, {
-        stats: {
-            todayAppointments: todayAppointments.length,
-            completedToday,
-            pendingAppointments,
-            totalPatientsSeen: totalPatientsSeen.length,
-            upcomingAppointments: todayAppointments.filter(apt => apt.status === 'BOOKED')
-        }
-    });
-};
-
-// Get Receptionist Dashboard Statistics
+// Receptionist overview stats: total patients + all booked appointments.
 exports.getReceptionistDashboardStats = async (req, res) => {
-
-    await autoCompleteDueAppointments();
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // Get today's appointments
-    const todayAppointments = await Appointment.find({
-        appointmentDate: { $gte: today, $lt: tomorrow }
-    }).populate('patientId', 'name UHID').populate('doctorEmployeeId', 'name');
-
-    // Get total patients
-    const totalPatients = await Patient.countDocuments({ status: 'ACTIVE' });
-
-    // Get today's new check-ins
-    const newCheckIns = todayAppointments.filter(apt => apt.status === 'BOOKED').length;
-
-    // Get completed appointments today
-    const completedToday = await Appointment.countDocuments({
-        appointmentDate: { $gte: today, $lt: tomorrow },
-        status: 'COMPLETED'
-    });
+    const [totalPatients, bookedAppointments] = await Promise.all([
+        Patient.countDocuments({}),
+        Appointment.countDocuments({ status: "BOOKED" }),
+    ]);
 
     return sendSuccess(res, STATUS.OK, MESSAGES.DASHBOARD.RECEPTIONIST_STATS_RETRIEVED, {
-        stats: {
-            totalPatients,
-            todayAppointments: todayAppointments.length,
-            newCheckIns,
-            completedToday,
-            upcomingAppointments: todayAppointments.filter(apt => apt.status === 'BOOKED')
-        }
+        stats: { totalPatients, bookedAppointments },
     });
 };
 
-// Get General Dashboard Statistics
+// Doctor stats aligned with appointment tab counts
+exports.getDoctorDashboardStats = async (req, res) => {
+    const stats = await getDoctorTabCounts(req.user.employeeCode);
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.DASHBOARD.DOCTOR_STATS_RETRIEVED, {
+        stats,
+    });
+};
+
+// Dispatch dashboard stats based on employee designation
 exports.getDashboardStats = async (req, res) => {
+    const { designation } = await resolveActor(req.user);
 
-    const userRole = req.user.roles[0];
-
-    if (userRole === 'OWNER' || userRole === 'ADMIN') {
-        return this.getAdminDashboardStats(req, res);
-    } else if (userRole === 'DOCTOR') {
-        return this.getDoctorDashboardStats(req, res);
-    } else if (userRole === 'RECEPTIONIST') {
-        return this.getReceptionistDashboardStats(req, res);
-    } else {
-        throw new AppError(STATUS.FORBIDDEN, MESSAGES.DASHBOARD.UNAUTHORIZED);
+    if (designation === "OWNER" || designation === "ADMIN") {
+        return exports.getAdminDashboardStats(req, res);
     }
+    if (designation === "DOCTOR") {
+        return exports.getDoctorDashboardStats(req, res);
+    }
+    if (designation === "RECEPTIONIST") {
+        return exports.getReceptionistDashboardStats(req, res);
+    }
+    throw new AppError(STATUS.FORBIDDEN, MESSAGES.DASHBOARD.UNAUTHORIZED);
 };
 
 // Get Appointment Statistics
 exports.getAppointmentStats = async (req, res) => {
-
-    await autoCompleteDueAppointments();
 
     const { startDate, endDate } = req.query;
 

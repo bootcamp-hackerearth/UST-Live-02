@@ -14,7 +14,9 @@ export interface AppointmentFilters {
   status?: string;
   date?: string;
   doctorEmployeeId?: string;
-  patientId?: string;
+  patientUHID?: string;
+  // Doctor view tab: today | upcoming | past | completed
+  tab?: string;
 }
 
 @Injectable({
@@ -45,7 +47,7 @@ export class AppointmentService {
   // Doctor's own appointments
   getMyAppointments(
     page = 1,
-    limit = 100,
+    limit = 10,
     filters?: AppointmentFilters,
   ): Observable<AppointmentsResponse> {
     let params = this.buildListParams(page, limit, filters);
@@ -97,9 +99,9 @@ export class AppointmentService {
     );
   }
 
-  completeAppointment(appointmentId: string): Observable<AppointmentResponse> {
+  markUnattended(appointmentId: string): Observable<AppointmentResponse> {
     return this.http.put<AppointmentResponse>(
-      `${this.apiUrl}/${appointmentId}/complete`,
+      `${this.apiUrl}/${appointmentId}/unattended`,
       {},
     );
   }
@@ -122,8 +124,11 @@ export class AppointmentService {
     if (filters?.doctorEmployeeId) {
       params = params.set('doctorEmployeeId', filters.doctorEmployeeId);
     }
-    if (filters?.patientId) {
-      params = params.set('patientId', filters.patientId);
+    if (filters?.patientUHID) {
+      params = params.set('patientUHID', filters.patientUHID);
+    }
+    if (filters?.tab) {
+      params = params.set('tab', filters.tab);
     }
     return params;
   }

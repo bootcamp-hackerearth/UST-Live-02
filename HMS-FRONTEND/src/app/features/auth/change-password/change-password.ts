@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -20,6 +20,7 @@ import { PasswordInputComponent } from '../../../shared/ui/password-input/passwo
 
 // Change-password screen with forced (first-login) and voluntary modes
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-change-password',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, PasswordInputComponent],
@@ -75,23 +76,13 @@ export class ChangePasswordComponent implements OnInit {
       .changePassword(currentPassword, newPassword, confirmPassword)
       .subscribe({
         next: (response) => {
+          this.loading = false;
+          this.cdr.markForCheck();
           this.toast.success(
             response?.message || APP_MESSAGES.PASSWORD_CHANGED,
           );
-          // Refresh the cached user so mustChangePassword clears, then go to the dashboard
-          this.authService.refreshCurrentUser().subscribe({
-            next: () => {
-              this.loading = false;
-              this.cdr.markForCheck();
-              this.router.navigate(['/dashboard/overview']);
-            },
-            error: () => {
-              // Even if the refresh fails, the password changed; continue
-              this.loading = false;
-              this.cdr.markForCheck();
-              this.router.navigate(['/dashboard/overview']);
-            },
-          });
+          // Changing the password invalidates every server session so the user returns to login to sign in again
+          this.authService.forceClearSession();
         },
         error: (error) => {
           this.loading = false;

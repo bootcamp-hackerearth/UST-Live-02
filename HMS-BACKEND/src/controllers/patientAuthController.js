@@ -1,10 +1,19 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const crypto = require("node:crypto");
 const Patient = require("../models/Patients");
+const {
+    signAccessToken,
+    issueRefreshToken,
+    rotateRefreshToken,
+    findByHash,
+    revokeByHash,
+    revokeAllForSubject,
+    hashToken
+} = require("../utils/tokenService");
 const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
 const { toSafePatient } = require("../utils/toSafePatient");
+const recordAudit = require("../utils/recordAudit");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
@@ -13,7 +22,7 @@ require("dotenv").config();
 
 const SALT_ROUNDS = 12;
 
-// Hand-typed reset code alphabet; skips confusable chars, ~48 bits beats the 15-min expiry
+// Character set for user-friendly reset codes
 const RESET_CODE_ALPHABET =
     "ABCDEFGHJKMNPQRSTUVWXYZ" +
     "abcdefghjkmnpqrstuvwxyz" +
@@ -27,20 +36,15 @@ const generateResetCode = () =>
         () => RESET_CODE_ALPHABET[crypto.randomInt(RESET_CODE_ALPHABET.length)]
     ).join("");
 
-// Signs a patient JWT; the PATIENT type marker blocks use on employee routes
+// Short-lived patient access token; the PATIENT marker blocks use on employee routes
 const signPatientToken = (patient) =>
-    jwt.sign(
-        {
-            patientId: patient.UHID,
-            type: "PATIENT"
-        },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: process.env.JWT_EXPIRES_IN
-        }
-    );
+    signAccessToken({
+        patientUHID: patient.UHID,
+        type: "PATIENT",
+        tokenVersion: patient.tokenVersion
+    });
 
-// Self-service registration; own password, account immediately ACTIVE
+// Self register a new patient account
 exports.register = async (req, res) => {
 
     const {
@@ -82,40 +86,68 @@ exports.register = async (req, res) => {
     });
 };
 
-// Authenticate a patient by email + password and return a JWT
+// Authenticates a patient and issues tokens
 exports.login = async (req, res) => {
 
     const { email, password } = req.body;
 
+    // Records a failed attempt before the request is rejected
+    const auditFailedLogin = (actorType, actorId) =>
+        recordAudit({
+            actorType,
+            actorId,
+            action: "USER_LOGIN_FAILED",
+            ipAddress: req.ip,
+            message: MESSAGES.AUDIT.USER_LOGIN_FAILED(email)
+        });
+
     const patient = await Patient.findOne({ email });
     if (!patient) {
+        await auditFailedLogin("ANONYMOUS", email);
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
     const isMatch = Boolean(await bcrypt.compare(password, patient.passwordHash));
     if (!isMatch) {
+        await auditFailedLogin("ANONYMOUS", email);
         throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_CREDENTIALS);
     }
 
     if (patient.status !== "ACTIVE") {
+        await auditFailedLogin("PATIENT", patient.UHID);
         throw new AppError(STATUS.FORBIDDEN, MESSAGES.AUTH.ACCOUNT_INACTIVE);
     }
 
-    const token = signPatientToken(patient);
+    const accessToken = signPatientToken(patient);
+
+    const refreshToken = await issueRefreshToken({
+        subjectType: "PATIENT",
+        subjectId: patient.UHID,
+        req
+    });
+
+    await recordAudit({
+        actorType: "PATIENT",
+        actorId: patient.UHID,
+        action: "USER_LOGIN",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.USER_LOGIN(patient.UHID)
+    });
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGIN_SUCCESS, {
-        token,
+        accessToken,
+        refreshToken,
         patient: toSafePatient(patient)
     });
 };
 
-// Allow an authenticated patient to change their own password
+// Change password by authenticated user
 exports.changePassword = async (req, res) => {
 
-    const { patientId } = req.patient;
+    const { patientUHID } = req.patient;
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
-    const patient = await Patient.findOne({ UHID: patientId });
+    const patient = await Patient.findOne({ UHID: patientUHID });
     if (!patient) {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
     }
@@ -136,7 +168,20 @@ exports.changePassword = async (req, res) => {
 
     patient.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     patient.mustChangePassword = false;
+
+    // Invalidates all active sessions
+    patient.tokenVersion += 1;
     await patient.save();
+
+    await revokeAllForSubject("PATIENT", patient.UHID);
+
+    await recordAudit({
+        actorType: "PATIENT",
+        actorId: patient.UHID,
+        action: "PASSWORD_CHANGED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_CHANGED(patient.UHID)
+    });
 
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_CHANGED);
 };
@@ -148,6 +193,15 @@ exports.forgotPassword = async (req, res) => {
 
     const patient = await Patient.findOne({ email });
 
+    // Audits all password reset requests
+    await recordAudit({
+        actorType: patient ? "PATIENT" : "ANONYMOUS",
+        actorId: patient ? patient.UHID : email,
+        action: "PASSWORD_RESET_REQUESTED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_RESET_REQUESTED(email)
+    });
+
     // Same neutral response always, so registered emails are not leaked
     const neutralResponse = () =>
         sendSuccess(res, STATUS.OK, MESSAGES.AUTH.RESET_CODE_SENT);
@@ -156,7 +210,7 @@ exports.forgotPassword = async (req, res) => {
         return neutralResponse();
     }
 
-    // Store only the hash of the code; the raw value is emailed and never persisted.
+    // Stores only the hashed reset code
     const resetCode = generateResetCode();
     patient.resetPasswordTokenHash = crypto
         .createHash("sha256")
@@ -171,7 +225,7 @@ exports.forgotPassword = async (req, res) => {
         console.log(`\n[DEV] Patient reset code for ${patient.email}: ${resetCode}\n`);
     }
 
-    // Email failures must not break the neutral response
+    // Ignores email delivery failures
     try {
         await sendEmail({
             to: patient.email,
@@ -213,12 +267,97 @@ exports.resetPassword = async (req, res) => {
     }
 
     patient.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-    // Clear the reset fields back to undefined so they drop out of the document
+
+    // Clear the reset fields
     patient.resetPasswordTokenHash = undefined;
     patient.resetPasswordTokenExpiry = undefined;
     patient.mustChangePassword = false;
 
+    // Invalidates all active sessions
+    patient.tokenVersion += 1;
+
     await patient.save();
 
+    await revokeAllForSubject("PATIENT", patient.UHID);
+
+    await recordAudit({
+        actorType: "PATIENT",
+        actorId: patient.UHID,
+        action: "PASSWORD_RESET_COMPLETED",
+        ipAddress: req.ip,
+        message: MESSAGES.AUDIT.PASSWORD_RESET_COMPLETED(patient.UHID)
+    });
+
     return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.PASSWORD_RESET_SUCCESS);
+};
+
+// Refreshes and rotates authentication tokens
+exports.refresh = async (req, res) => {
+    const { refreshToken } = req.body || {};
+
+    if (!refreshToken) {
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    const result = await rotateRefreshToken({
+        rawToken: refreshToken,
+        subjectType: "PATIENT",
+        req
+    });
+
+    if (result.status !== "OK") {
+        if (result.status === "REUSE_DETECTED") {
+            await recordAudit({
+                actorType: "PATIENT",
+                actorId: result.subjectId,
+                action: "REFRESH_REUSE_DETECTED",
+                ipAddress: req.ip,
+                message: MESSAGES.AUDIT.REFRESH_REUSE_DETECTED(result.subjectId)
+            });
+        }
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    const patient = await Patient.findOne({ UHID: result.subjectId })
+        .select("UHID status tokenVersion");
+
+    // Rejects inactive or missing patients
+    if (!patient || patient.status !== "ACTIVE") {
+        await revokeAllForSubject("PATIENT", result.subjectId);
+        throw new AppError(STATUS.UNAUTHORIZED, MESSAGES.AUTH.INVALID_TOKEN);
+    }
+
+    const accessToken = signPatientToken(patient);
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.TOKEN_REFRESHED, {
+        accessToken,
+        refreshToken: result.newRefreshToken
+    });
+};
+
+// Logs out the patient by revoking the refresh token
+exports.logout = async (req, res) => {
+    const { refreshToken } = req.body || {};
+    const tokenHash = refreshToken ? hashToken(refreshToken) : null;
+
+    // Resolves logout actor from the refresh token
+    const record = tokenHash ? await findByHash(tokenHash) : null;
+
+    // Audits logout only when the actor is known
+    if (record) {
+        await recordAudit({
+            actorType: "PATIENT",
+            actorId: record.subjectId,
+            action: "USER_LOGOUT",
+            ipAddress: req.ip,
+            message: MESSAGES.AUDIT.USER_LOGOUT(record.subjectId)
+        });
+    }
+
+    // Revokes the refresh token if present
+    if (tokenHash) {
+        await revokeByHash(tokenHash);
+    }
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.AUTH.LOGOUT_SUCCESS);
 };

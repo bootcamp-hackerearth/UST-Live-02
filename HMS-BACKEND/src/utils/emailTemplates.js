@@ -8,6 +8,14 @@ const frontendUrl = () => {
 
 const loginUrl = () => `${frontendUrl()}/login`;
 
+// Patient mobile deep link base with an ensured trailing slash so paths append cleanly
+const patientAppUrl = () => {
+  const url = process.env.PATIENT_APP_URL || "hmsapp://";
+  return url.endsWith("/") ? url : `${url}/`;
+};
+
+const patientLoginUrl = () => `${patientAppUrl()}login`;
+
 // Shared wrapper so every email has a consistent signature/branding
 const wrap = (innerHtml) => `
   ${innerHtml}
@@ -21,6 +29,13 @@ const wrap = (innerHtml) => `
 const loginButton = (label = "Login to HMS") => `
   <p>
     <a href="${loginUrl()}">${label}</a>
+  </p>
+`;
+
+// Login link for patient emails — opens the patient mobile app, not the staff web
+const patientLoginButton = (label = "Open the HMS App") => `
+  <p>
+    <a href="${patientLoginUrl()}">${label}</a>
   </p>
 `;
 
@@ -72,7 +87,7 @@ const patientCredentials = ({ email, temporaryPassword }) => ({
     <p><strong>Email:</strong> ${email}</p>
     <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
     <p>Please login using the link below and change your password immediately.</p>
-    ${loginButton("Patient Login")}
+    ${patientLoginButton("Patient Login")}
   `),
 });
 
@@ -205,6 +220,73 @@ const appointmentCanceled = ({
   `),
 });
 
+// Doctor finalized a medical record- notification sent to patient
+const diagnosisReportAvailable = ({ patientName }) => ({
+  subject: "Diagnosis Report Available",
+  html: wrap(`
+    <h2>Diagnosis Report Available</h2>
+    ${patientName ? `<p>Dear ${patientName},</p>` : ""}
+    <p>Your diagnosis report has been completed. Please log in to the application to view your medical record details.</p>
+    ${patientLoginButton("Patient Login")}
+  `),
+});
+
+// Appointment marked unattended- notification sent to patient
+const appointmentUnattended = ({ patientName }) => ({
+  subject: "Appointment Marked Unattended",
+  html: wrap(`
+    <h2>Appointment Marked Unattended</h2>
+    ${patientName ? `<p>Dear ${patientName},</p>` : ""}
+    <p>Your scheduled appointment was marked as unattended because you were not present for the consultation. Please contact the hospital if you believe this was done in error.</p>
+  `),
+});
+
+// Admin/Owner/Receptionist created a DRAFT medical record- notification sent to assigned doctor
+const medicalRecordVerificationRequired = ({
+  doctorName,
+  patientName,
+  patientUHID,
+  appointmentId,
+  creatorRole,
+  creatorName,
+}) => ({
+  subject: "Medical Record Requires Verification",
+  html: wrap(`
+    <h2>Medical Record Requires Verification</h2>
+    ${doctorName ? `<p>Dear Dr. ${doctorName},</p>` : ""}
+    <p>A draft medical record has been created and requires your verification.</p>
+    <p><strong>Patient Name:</strong> ${patientName}</p>
+    <p><strong>Patient UHID:</strong> ${patientUHID}</p>
+    <p><strong>Appointment ID:</strong> ${appointmentId}</p>
+    <p><strong>Created By:</strong> ${creatorRole} ${creatorName}</p>
+    <p>Please log in to review, correct if needed, and finalize the record.</p>
+    ${loginButton("Open Dashboard")}
+  `),
+});
+
+// Admin/Owner/Receptionist updated a DRAFT medical record- notification sent to assigned doctor
+const medicalRecordVerificationUpdated = ({
+  doctorName,
+  patientName,
+  patientUHID,
+  appointmentId,
+  creatorRole,
+  creatorName,
+}) => ({
+  subject: "Medical Record Updated - Verification Required",
+  html: wrap(`
+    <h2>Medical Record Updated</h2>
+    ${doctorName ? `<p>Dear Dr. ${doctorName},</p>` : ""}
+    <p>A draft medical record has been updated and requires your verification.</p>
+    <p><strong>Patient Name:</strong> ${patientName}</p>
+    <p><strong>Patient UHID:</strong> ${patientUHID}</p>
+    <p><strong>Appointment ID:</strong> ${appointmentId}</p>
+    <p><strong>Updated By:</strong> ${creatorRole} ${creatorName}</p>
+    <p>Please log in to review, correct if needed, and finalize the record.</p>
+    ${loginButton("Open Dashboard")}
+  `),
+});
+
 // Password reset request by employee- email with resetToken embedded in url is sent to the employee
 const passwordReset = ({ resetToken }) => ({
   subject: "HMS Password Reset Request",
@@ -236,6 +318,8 @@ const patientPasswordResetCode = ({ resetCode }) => ({
 module.exports = {
   frontendUrl,
   loginUrl,
+  patientAppUrl,
+  patientLoginUrl,
   employeeCredentials,
   adminCredentials,
   patientCredentials,
@@ -248,6 +332,10 @@ module.exports = {
   appointmentScheduled,
   appointmentUpdated,
   appointmentCanceled,
+  diagnosisReportAvailable,
+  appointmentUnattended,
+  medicalRecordVerificationRequired,
+  medicalRecordVerificationUpdated,
   passwordReset,
   patientPasswordResetCode,
 };

@@ -4,11 +4,13 @@ const sendEmail = require("../utils/sendEmail");
 const generateTemporaryPassword = require("../utils/generateTemporaryPassword");
 const recordAudit = require("../utils/recordAudit");
 const resolveActor = require("../utils/resolveActor");
+const hasFieldChanges = require("../utils/hasFieldChanges");
 const emailTemplates = require("../utils/emailTemplates");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/apiResponse");
 const STATUS = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
+const parsePagination = require("../utils/parsePagination");
 
 // Fields a patient record exposes
 const PATIENT_PROJECTION = "-passwordHash -__v";
@@ -56,7 +58,7 @@ exports.createPatient = async (req, res) => {
     const patient = new Patient(patientData);
     await patient.save();
 
-    // Send email AFTER successful account creation (best-effort)
+    // Send email AFTER successful account creation
     try {
         await sendEmail({
             to: patient.email,
@@ -88,12 +90,7 @@ exports.createPatient = async (req, res) => {
 // Get all patients
 exports.getPatients = async (req, res) => {
 
-    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.min(
-        Math.max(Number.parseInt(req.query.limit, 10) || 10, 1),
-        100
-    );
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, 10);
 
     // Build filter
     const filter = {};
@@ -198,7 +195,12 @@ exports.updatePatient = async (req, res) => {
         "status"
     ];
 
-    // If email is being changed, ensure it stays unique
+    // Rejects updates with no actual changes
+    if (!hasFieldChanges(patient, req.body, [...allowedFields, "email"], { dateFields: ["dob"] })) {
+        throw new AppError(STATUS.BAD_REQUEST, MESSAGES.COMMON.NO_CHANGES);
+    }
+
+    // Ensures email uniqueness before updating
     if (req.body.email && req.body.email !== patient.email) {
         const existing = await Patient.findOne({
             email: req.body.email
@@ -235,5 +237,36 @@ exports.updatePatient = async (req, res) => {
 
     return sendSuccess(res, STATUS.OK, MESSAGES.PATIENT.UPDATED, {
         patient: safePatient
+    });
+};
+
+// Soft deletes a patient
+exports.deletePatient = async (req, res) => {
+
+    const { UHID } = req.params;
+
+    const patient = await Patient.findOne({ UHID });
+
+    if (!patient) {
+        throw new AppError(STATUS.NOT_FOUND, MESSAGES.PATIENT.NOT_FOUND);
+    }
+
+    const actor = await resolveActor(req.user);
+
+    patient.isDeleted = true;
+    patient.deletedAt = new Date();
+    patient.deletedBy = actor.employeeCode;
+    await patient.save();
+
+    await recordAudit({
+        actor,
+        action: "PATIENT_DELETED",
+        targetType: "PATIENT",
+        targetId: patient.UHID,
+        message: MESSAGES.AUDIT.PATIENT_DELETED(patient.name, patient.UHID)
+    });
+
+    return sendSuccess(res, STATUS.OK, MESSAGES.PATIENT.DELETED, {
+        patient: { UHID: patient.UHID }
     });
 };

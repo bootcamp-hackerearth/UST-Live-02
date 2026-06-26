@@ -11,9 +11,43 @@ const withExclusion = (filter, excludeAppointmentId) => {
   return { ...filter, appointmentId: { $ne: excludeAppointmentId } };
 };
 
+// Midnight (local) of the given date-ish value
+const startOfDay = (value) => {
+  const day = new Date(value);
+  day.setHours(0, 0, 0, 0);
+  return day;
+};
+
+// Human-friendly day label, e.g. "Jun 17, 2026"
+const formatDay = (day) =>
+  day.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+
+// Rejects appointment days before the doctor joined or on/after their booking cutoff
+const assertDoctorDateBounds = (doctor, apptDay) => {
+  if (doctor.joiningDate) {
+    const joinDay = startOfDay(doctor.joiningDate);
+    if (apptDay.getTime() < joinDay.getTime()) {
+      throw new AppError(
+        STATUS.CONFLICT,
+        MESSAGES.APPOINTMENT.DOCTOR_NOT_JOINED(formatDay(joinDay))
+      );
+    }
+  }
+
+  if (doctor.bookingCutoffDate) {
+    const cutoffDay = startOfDay(doctor.bookingCutoffDate);
+    if (apptDay.getTime() >= cutoffDay.getTime()) {
+      throw new AppError(
+        STATUS.CONFLICT,
+        MESSAGES.APPOINTMENT.AFTER_BOOKING_CUTOFF(formatDay(cutoffDay))
+      );
+    }
+  }
+};
+
 // Validates all booking rules; throws on the first violation, returns patient and doctor
 const checkAppointmentValidity = async ({
-  patientId,
+  patientUHID,
   doctorId,
   appointmentDate,
   timeSlot,
@@ -22,7 +56,7 @@ const checkAppointmentValidity = async ({
 
   // Verify the patient exists
   const patient = await Patient.findOne({
-    UHID: patientId,
+    UHID: patientUHID,
   });
 
   if (!patient) {
@@ -33,11 +67,8 @@ const checkAppointmentValidity = async ({
   const doctor = await validateEmployeeStatus(doctorId, "DOCTOR");
 
   // Reject past dates
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-
-  const apptDay = new Date(appointmentDate);
-  apptDay.setHours(0, 0, 0, 0);
+  const todayStart = startOfDay(new Date());
+  const apptDay = startOfDay(appointmentDate);
 
   if (apptDay.getTime() < todayStart.getTime()) {
     throw new AppError(STATUS.CONFLICT, MESSAGES.APPOINTMENT.PAST_DATE);
@@ -66,26 +97,8 @@ const checkAppointmentValidity = async ({
     }
   }
 
-  // Reject dates before the doctor's joining date
-  if (doctor.joiningDate) {
-    const apptDay = new Date(appointmentDate);
-    apptDay.setHours(0, 0, 0, 0);
-
-    const joinDay = new Date(doctor.joiningDate);
-    joinDay.setHours(0, 0, 0, 0);
-
-    if (apptDay.getTime() < joinDay.getTime()) {
-      const joinedOn = joinDay.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-      throw new AppError(
-        STATUS.CONFLICT,
-        MESSAGES.APPOINTMENT.DOCTOR_NOT_JOINED(joinedOn)
-      );
-    }
-  }
+  // Reject dates outside the doctor's joining / booking-cutoff window
+  assertDoctorDateBounds(doctor, apptDay);
 
   // Derive the day-of-week from the appointment date and match it against the doctor's schedule
   const appointmentDay = new Date(appointmentDate)
@@ -118,7 +131,7 @@ const checkAppointmentValidity = async ({
   // Ensure the patient does not already have a non-cancelled appointment at this slot
   const patientAppointment = await Appointment.findOne(
     withExclusion(
-      { patientId, appointmentDate, timeSlot, status: { $ne: "CANCELED" } },
+      { patientUHID, appointmentDate, timeSlot, status: { $ne: "CANCELED" } },
       excludeAppointmentId,
     ),
   );

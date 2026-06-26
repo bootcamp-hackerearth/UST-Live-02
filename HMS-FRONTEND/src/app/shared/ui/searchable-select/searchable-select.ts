@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   forwardRef,
@@ -16,6 +17,7 @@ import {
 
 // Generic searchable single-select dropdown (ControlValueAccessor) that stores the option id
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-searchable-select',
   standalone: true,
   imports: [CommonModule],
