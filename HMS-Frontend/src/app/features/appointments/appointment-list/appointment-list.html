@@ -1,0 +1,279 @@
+<div class="appointments-page">
+  <!-- Header -->
+
+  <div class="appointments-header glass-card">
+    <div>
+      <p class="page-label">Appointment Management</p>
+
+      <h1>Appointments</h1>
+
+      <p class="page-subtitle">Manage and monitor patient appointments.</p>
+    </div>
+
+  </div>
+
+  <!-- Filters -->
+
+  <div class="filters-wrapper glass-card">
+    <!-- Search -->
+
+    <div class="search-box">
+
+      <input
+        type="text"
+        placeholder="
+              Search patient or doctor
+              "
+        [(ngModel)]="
+              searchTerm
+              "
+        (input)="
+              onSearchInput()
+              "
+      />
+    </div>
+
+    <!-- Status -->
+
+    <select
+      [(ngModel)]="
+            selectedStatus
+            "
+      (change)="
+            onFilterChange()
+            "
+    >
+      <option value="">All Status</option>
+
+      <option value="PENDING">Pending</option>
+
+      <option value="BOOKED">Booked</option>
+
+      <option value="IN_CONSULTATION">In Consultation</option>
+
+      <option value="COMPLETED">Completed</option>
+
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+    <label class="date-filter">
+      <span>From Date</span>
+
+      <input
+        type="date"
+        [(ngModel)]="fromDate"
+        (change)="onFilterChange()"
+      />
+    </label>
+
+    <label class="date-filter">
+      <span>To Date</span>
+
+      <input
+        type="date"
+        [(ngModel)]="toDate"
+        (change)="onFilterChange()"
+      />
+    </label>
+  </div>
+
+  <!-- Table -->
+
+  <div class="table-wrapper glass-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Appointment</th>
+
+          <th>Patient</th>
+
+          <th>Doctor</th>
+
+          <th>Date & Time</th>
+
+          <th>Type</th>
+
+          <th>Priority</th>
+
+          <th>Status</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for ( appointment of filteredAppointments; track appointment._id ) {
+
+        <tr>
+          <!-- Appointment -->
+
+          <td>
+            <div class="appointment-id">
+              <h4>{{ appointment ?.appointmentId }}</h4>
+
+              <span>Token # {{ appointment ?.tokenNumber }}</span>
+            </div>
+          </td>
+
+          <!-- Patient -->
+
+          <td>
+            <div class="patient-info">
+              <div class="avatar">{{ appointment ?.patientId ?.firstName ?.charAt(0) }}</div>
+
+              <div>
+                <h4>{{ appointment ?.patientId ?.firstName }} {{ appointment ?.patientId ?.lastName }}</h4>
+
+                <span>Patient</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Doctor -->
+
+          <td>
+            <div class="doctor-name">{{ appointment ?.doctorEmployeeId ?.name }}</div>
+          </td>
+
+          <!-- Date -->
+
+          <td>
+            <div class="date-info">
+              <h4>{{ appointment ?.appointmentDate | date }}</h4>
+
+              <span>{{ appointment ?.timeSlot }}</span>
+            </div>
+          </td>
+
+          <!-- Type -->
+
+          <td>
+            <span class="type-badge">{{ appointment ?.appointmentType }}</span>
+          </td>
+
+          <!-- Priority -->
+
+          <td>
+            <span
+              class="priority-badge"
+              [class.normal]="
+                          appointment
+                          ?.priority
+                          === 'NORMAL'
+                          "
+              [class.urgent]="
+                          appointment
+                          ?.priority
+                          === 'URGENT'
+                          "
+              [class.critical]="
+                          appointment
+                          ?.priority
+                          === 'CRITICAL'
+                          "
+            >
+              {{ appointment ?.priority }}
+            </span>
+          </td>
+
+          <!-- Status -->
+
+          <td>
+            <span
+              class="status-badge"
+              [class.booked]="
+                          appointment
+                          ?.status
+                          === 'BOOKED'
+                          "
+              [class.completed]="
+                          appointment
+                          ?.status
+                          === 'COMPLETED'
+                          "
+              [class.cancelled]="
+                          appointment
+                          ?.status
+                          === 'CANCELLED'
+                          "
+              [class.consultation]="
+                          appointment
+                          ?.status
+                          === 'IN_CONSULTATION'
+                          "
+            >
+              {{ appointment ?.status }}
+            </span>
+          </td>
+
+          <!-- Actions -->
+
+          <td>
+            <div class="actions">
+              <!-- Admin -->
+
+              @if( canUpdateAppointment() ){
+
+              <button
+                class="action-btn edit"
+                [routerLink]="[
+                                '/appointments/edit',
+                                appointment._id
+                              ]"
+              >
+                Edit
+              </button>
+
+              }
+
+              @if( canDeleteAppointment() ){
+
+              <button
+                class="action-btn delete"
+                (click)="
+                              deleteAppointment(
+                                appointment._id
+                              )
+                              "
+              >
+                Delete
+              </button>
+
+              }
+
+              <!-- Doctor -->
+
+              @if( canViewPatient() ){
+
+              <button
+                class="action-btn view"
+                [routerLink]="[
+                                '/patients',
+                                appointment
+                                ?.patientId
+                                ?._id
+                              ]"
+              >
+                View Patient
+              </button>
+
+              }
+            </div>
+          </td>
+        </tr>
+
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [pagination]="pagination"
+    totalLabel="appointments"
+    (pagePrevious)="previousPage()"
+    (pageNext)="nextPage()"
+    (pageSizeChange)="changeLimit($event)"
+  ></app-pagination>
+</div>
+
+

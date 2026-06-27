@@ -1,0 +1,768 @@
+/* You can add global styles to this file, and also import other style files */
+@import 'ngx-toastr/toastr';
+/*
+|--------------------------------------------------------------------------
+| Root Variables
+|--------------------------------------------------------------------------
+*/
+:root {
+  /* Colors */
+
+  --primary: #3b82f6;
+
+  --primary-dark: #2563eb;
+
+  --secondary: #8b5cf6;
+
+  --success: #22c55e;
+
+  --danger: #ef4444;
+
+  --warning: #f59e0b;
+
+  --dark: #0f172a;
+
+  --dark-light: #1e293b;
+
+  --text: #0f172a;
+
+  --text-light: #64748b;
+
+  --border: rgba(255, 255, 255, 0.2);
+
+  /* Backgrounds */
+
+  --bg: #f4f7fb;
+
+  --card-bg: rgba(255, 255, 255, 0.65);
+
+  --glass-bg: rgba(255, 255, 255, 0.68);
+
+  --glass-bg-soft: rgba(255, 255, 255, 0.52);
+
+  --glass-border: rgba(255, 255, 255, 0.38);
+
+  /* Effects */
+
+  --blur: blur(16px);
+
+  --radius: 20px;
+
+  --radius-control: 12px;
+
+  --radius-card: 18px;
+
+  --radius-section: 24px;
+
+  --radius-page: 24px;
+
+  --radius-pill: 999px;
+
+  --space-sm: 12px;
+
+  --space-md: 16px;
+
+  --space-lg: 24px;
+
+  --space-xl: 28px;
+
+  --space-2xl: 32px;
+
+  --shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+
+  --shadow-card: 0 12px 30px rgba(15, 23, 42, 0.06);
+
+  --shadow-hover: 0 16px 36px rgba(15, 23, 42, 0.09);
+
+  --transition: all 0.3s ease;
+
+  /* Typography */
+
+  --font-xs: 14px;
+
+  --font-sm: 15px;
+
+  --font-md: 16px;
+
+  --font-base: 16px;
+
+  --font-lg: 19px;
+
+  --font-xl: 22px;
+
+  --font-2xl: 26px;
+
+  --font-3xl: 30px;
+
+  --font-4xl: 34px;
+
+  --font-hero: 42px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Global Reset
+|--------------------------------------------------------------------------
+*/
+* {
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+
+  max-width: 100%;
+
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  font-size: var(--font-base);
+
+  background: linear-gradient(135deg, #f8fbff, #eef4ff);
+
+  color: var(--text);
+
+  min-height: 100vh;
+
+  overflow-x: hidden;
+
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 0;
+}
+
+app-root {
+  display: block;
+  min-width: 0;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Scrollbar
+|--------------------------------------------------------------------------
+*/
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.25);
+
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.45);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Typography
+|--------------------------------------------------------------------------
+*/
+h1 {
+  font-size: var(--font-4xl);
+
+  font-weight: 700;
+
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: var(--font-2xl);
+
+  font-weight: 600;
+}
+
+h3 {
+  font-size: var(--font-xl);
+
+  font-weight: 600;
+}
+
+p {
+  color: var(--text-light);
+
+  line-height: 1.6;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Links
+|--------------------------------------------------------------------------
+*/
+a {
+  text-decoration: none;
+
+  color: inherit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Buttons
+|--------------------------------------------------------------------------
+*/
+button {
+  border: none;
+
+  outline: none;
+
+  cursor: pointer;
+
+  transition: var(--transition);
+
+  font-family: inherit;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+
+  color: white;
+
+  padding: 14px 24px;
+
+  border-radius: 14px;
+
+  font-weight: 600;
+
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
+
+  transition: var(--transition);
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.35);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Inputs
+|--------------------------------------------------------------------------
+*/
+input,
+select,
+textarea {
+  width: 100%;
+
+  padding: 14px 16px;
+
+  border: 1px solid rgba(148, 163, 184, 0.2);
+
+  background: rgba(255, 255, 255, 0.65);
+
+  backdrop-filter: var(--blur);
+
+  border-radius: 14px;
+
+  font-size: var(--font-md);
+
+  transition: var(--transition);
+
+  font-family: inherit;
+
+  color: var(--text);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+
+  border-color: rgba(59, 130, 246, 0.4);
+
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+}
+
+textarea {
+  resize: none;
+
+  min-height: 120px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Glass Card
+|--------------------------------------------------------------------------
+*/
+.glass-card {
+  background: var(--card-bg);
+
+  backdrop-filter: var(--blur);
+
+  border: 1px solid var(--border);
+
+  border-radius: var(--radius);
+
+  box-shadow: var(--shadow);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Responsive Application Guardrails
+|--------------------------------------------------------------------------
+*/
+.dashboard-shell,
+.main-content,
+.page-content,
+.patients-page,
+.appointments-page,
+.employees-page,
+.records-page,
+.medical-records-page,
+.dashboard-wrapper,
+.profile-page,
+.patient-profile-page,
+.employee-profile-page,
+.pending-page,
+.queue-page,
+.appointment-page,
+.employee-form-page,
+.edit-employee-page,
+.edit-appointment-container,
+.edit-patient-container,
+.consultation-container,
+.consultation-details-page {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.glass-card,
+.form-section,
+.employee-form,
+.patient-form,
+.appointment-form,
+.health-record-form,
+.consultation-card,
+.details-card,
+.profile-card,
+.stat-card,
+.employee-card,
+.queue-card,
+.search-card,
+.filters-wrapper,
+.table-wrapper,
+.table-container {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.table-wrapper,
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+table {
+  max-width: 100%;
+}
+
+.patients-header,
+.appointments-header,
+.page-header,
+.form-header,
+.hero-card,
+.header-actions,
+.header-right,
+.actions,
+.filters-wrapper,
+.stats-grid,
+.cards-grid,
+.details-grid,
+.form-grid {
+  min-width: 0 !important;
+}
+
+.patients-header,
+.appointments-header,
+.page-header,
+.form-header,
+.hero-card {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1280px) {
+  :root {
+    --space-lg: 20px;
+    --space-xl: 24px;
+    --space-2xl: 26px;
+    --font-4xl: 32px;
+    --font-hero: 38px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --font-base: 15px;
+    --font-lg: 17px;
+    --font-xl: 20px;
+    --font-2xl: 23px;
+    --font-3xl: 26px;
+    --font-4xl: 30px;
+    --font-hero: 34px;
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| 100% Zoom UI Normalization
+|--------------------------------------------------------------------------
+*/
+html,
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif !important;
+  font-style: normal;
+}
+
+*,
+*::before,
+*::after {
+  min-width: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+label,
+a,
+button,
+input,
+select,
+textarea,
+td,
+th {
+  font-family: inherit !important;
+  font-style: normal !important;
+  letter-spacing: 0 !important;
+}
+
+h1,
+.patients-header h1,
+.appointments-header h1,
+.employees-header h1,
+.records-header h1,
+.dashboard-hero h1,
+.form-header h1,
+.page-header h1,
+.hero-card h1,
+.profile-hero h1,
+.availability-header h1,
+.medical-records-page h1,
+.consultation-container h1 {
+  font-size: clamp(28px, 2.4vw, 36px) !important;
+  line-height: 1.18 !important;
+  overflow-wrap: anywhere;
+}
+
+h2,
+.card-header h2,
+.form-header h2,
+.profile-card h2,
+.details-card h2,
+.patient-card h2 {
+  font-size: clamp(22px, 1.8vw, 28px) !important;
+  line-height: 1.25 !important;
+}
+
+h3,
+.form-section h3,
+.availability-card h3,
+.medicine-card h3 {
+  font-size: clamp(18px, 1.35vw, 22px) !important;
+  line-height: 1.3 !important;
+}
+
+p,
+.page-subtitle,
+.form-subtitle,
+.card-header p,
+.dashboard-hero p {
+  font-size: 15px !important;
+  line-height: 1.55 !important;
+}
+
+label,
+th,
+.page-label {
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+}
+
+input,
+select,
+textarea,
+button,
+.action-btn,
+.primary-btn,
+.add-btn,
+.book-btn,
+.request-btn,
+.submit-btn,
+.cancel-btn,
+.save-btn {
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+}
+
+td,
+.patient-info h4,
+.appointment-id h4,
+.date-info h4,
+.employee-card h4,
+.doctor-name,
+.patient-id {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+
+.patients-header,
+.appointments-header,
+.employees-header,
+.records-header,
+.dashboard-hero,
+.page-header,
+.form-header,
+.hero-card,
+.profile-hero {
+  padding: clamp(20px, 2vw, 28px) !important;
+  gap: 18px !important;
+}
+
+.form-section,
+.employee-form,
+.patient-form,
+.appointment-form,
+.health-record-form,
+.consultation-card,
+.details-card,
+.profile-card,
+.search-card,
+.filters-wrapper,
+.table-wrapper,
+.table-container {
+  padding: clamp(16px, 1.8vw, 24px) !important;
+}
+
+.stats-grid,
+.cards-grid,
+.details-grid,
+.form-grid,
+.info-grid,
+.queue-grid,
+.appointments-grid,
+.employees-grid,
+.records-grid,
+.cards,
+.form-row {
+  gap: 18px !important;
+}
+
+.form-grid,
+.info-grid,
+.details-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)) !important;
+}
+
+.stats-grid,
+.cards-grid,
+.appointments-grid,
+.employees-grid,
+.records-grid,
+.queue-grid,
+.cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)) !important;
+}
+
+.filters-wrapper,
+.header-actions,
+.header-right,
+.actions,
+.hero-actions {
+  flex-wrap: wrap !important;
+}
+
+.filters-wrapper > *,
+.header-actions > *,
+.header-right > *,
+.actions > *,
+.hero-actions > * {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
+button,
+.action-btn,
+.primary-btn,
+.add-btn,
+.book-btn,
+.request-btn,
+.submit-btn,
+.cancel-btn,
+.save-btn {
+  min-height: 40px;
+  white-space: normal !important;
+}
+
+.table-wrapper,
+.table-container {
+  margin-inline: 0 !important;
+  border-radius: var(--radius-card);
+}
+
+.table-wrapper table,
+.table-container table {
+  width: 100% !important;
+}
+
+.table-wrapper th,
+.table-wrapper td,
+.table-container th,
+.table-container td {
+  padding: 12px 14px !important;
+}
+
+.table-wrapper .actions,
+.table-container .actions {
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+}
+
+.table-wrapper .action-btn,
+.table-container .action-btn {
+  min-height: 34px;
+  padding: 7px 10px !important;
+  white-space: nowrap !important;
+}
+
+.table-wrapper::-webkit-scrollbar,
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.toast-container,
+.global-toast,
+.global-toast-wrapper {
+  max-width: calc(100vw - 32px) !important;
+}
+
+@media (max-width: 1180px) {
+  .system-status span {
+    display: none;
+  }
+
+  .table-wrapper table,
+  .table-container table {
+    min-width: 760px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .patients-header,
+  .appointments-header,
+  .employees-header,
+  .records-header,
+  .dashboard-hero,
+  .page-header,
+  .form-header,
+  .hero-card,
+  .profile-hero {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .form-section,
+  .employee-form,
+  .patient-form,
+  .appointment-form,
+  .health-record-form,
+  .consultation-card,
+  .details-card,
+  .profile-card,
+  .search-card,
+  .filters-wrapper,
+  .table-wrapper,
+  .table-container {
+    padding: 16px !important;
+  }
+
+  .table-wrapper table,
+  .table-container table {
+    min-width: 680px !important;
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Utility Classes
+|--------------------------------------------------------------------------
+*/
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-20 {
+  gap: 20px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Fade Animation
+|--------------------------------------------------------------------------
+*/
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}

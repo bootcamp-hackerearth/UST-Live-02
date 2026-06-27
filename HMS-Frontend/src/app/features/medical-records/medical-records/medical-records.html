@@ -1,0 +1,514 @@
+<div class="medical-records-page">
+  <div class="top-section">
+    <div>
+      <p class="section-label">Patient Health Records</p>
+
+      <h1>Medical Records</h1>
+
+      @if(patientId) {
+      <p class="page-subtitle">Showing medical record history for the selected patient.</p>
+      }
+    </div>
+
+    <div class="record-count">Total: {{ getTotalRecords() }}</div>
+  </div>
+
+  <div class="tabs">
+    <button
+      type="button"
+      [class.active]="activeTab === 'prescriptions'"
+      (click)="setActiveTab('prescriptions')"
+    >
+      Prescriptions
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab === 'healthRecords'"
+      (click)="setActiveTab('healthRecords')"
+    >
+      Health Records
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab === 'labReports'"
+      (click)="setActiveTab('labReports')"
+    >
+      Lab Reports
+    </button>
+  </div>
+
+  @if(activeTab === 'prescriptions') {
+  @if(isLoading) {
+  <div class="loading-card">
+    <div class="loader"></div>
+
+    <p>Loading prescriptions...</p>
+  </div>
+  } @else { @if(prescriptions.length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon">Rx</div>
+
+    <h2>No Prescriptions Found</h2>
+
+    <p>Doctor consultation prescriptions will appear here.</p>
+  </div>
+  } @else {
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+
+          <th>Doctor</th>
+
+          <th>Department</th>
+
+          <th>Date</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for(record of prescriptions; track record._id) {
+        <tr>
+          <td>
+            <div class="patient-info">
+              <div class="patient-avatar">
+                {{ record?.patientId?.firstName?.charAt(0) || 'P' }}
+              </div>
+
+              <div>
+                <h4>
+                  {{ record?.patientId?.firstName }}
+                  {{ record?.patientId?.lastName }}
+                </h4>
+
+                <p>{{ record?.patientId?.patientId }}</p>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="doctor-badge">{{ record?.doctorEmployeeId?.name }}</span>
+          </td>
+
+          <td>
+            <span class="department-badge">
+              {{ record?.doctorEmployeeId?.department || 'Not added' }}
+            </span>
+          </td>
+
+          <td>
+            <span class="date-text">{{ record?.createdAt | date: 'mediumDate' }}</span>
+          </td>
+
+          <td>
+            <a class="view-btn" [routerLink]="['/consultations', record._id]">
+              View
+            </a>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [pagination]="prescriptionPagination"
+    totalLabel="prescriptions"
+    (pagePrevious)="previousPage()"
+    (pageNext)="nextPage()"
+    (pageSizeChange)="onLimitChange($event)"
+  ></app-pagination>
+  } } }
+
+  @if(activeTab === 'healthRecords') {
+  @if(canShowHealthRecordForm() && patientId) {
+  <form
+    class="health-record-form"
+    (ngSubmit)="saveHealthRecord()"
+    enctype="multipart/form-data"
+  >
+    <div class="form-header">
+      <div>
+        <h2>
+          {{ editingHealthRecordId ? 'Edit Health Record' : 'Add Health Record' }}
+        </h2>
+
+        <p>Upload discharge summaries, lab reports, scan reports or other documents.</p>
+      </div>
+
+      @if(editingHealthRecordId) {
+      <button type="button" class="secondary-btn" (click)="resetHealthRecordForm()">
+        Cancel Edit
+      </button>
+      }
+    </div>
+
+    @if(healthRecordMessage) {
+    <div class="form-message success">{{ healthRecordMessage }}</div>
+    }
+
+    @if(healthRecordError) {
+    <div class="form-message error">{{ healthRecordError }}</div>
+    }
+
+    <div class="form-grid">
+      <label>
+        <span>Title</span>
+
+        <input
+          type="text"
+          [(ngModel)]="healthRecordForm.title"
+          name="title"
+          placeholder="Eg: Previous discharge summary"
+          required
+        />
+      </label>
+
+      <label>
+        <span>Type</span>
+
+        <select
+          [(ngModel)]="healthRecordForm.documentType"
+          name="documentType"
+          required
+        >
+          <option value="">Select Type</option>
+
+          @for(type of documentTypes; track type) {
+          <option [value]="type">{{ formatOption(type) }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Document Date</span>
+
+        <input
+          type="date"
+          [(ngModel)]="healthRecordForm.documentDate"
+          name="documentDate"
+          required
+        />
+      </label>
+
+      <label>
+        <span>Attach Document</span>
+
+        <input
+          type="file"
+          name="documentFile"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+          (change)="onHealthRecordFileSelected($event)"
+          [required]="!editingHealthRecordId"
+        />
+
+        @if(editingHealthRecordId) {
+        <small>Leave empty to keep the existing document.</small>
+        }
+      </label>
+
+      <label class="wide-field">
+        <span>Notes</span>
+
+        <textarea
+          [(ngModel)]="healthRecordForm.notes"
+          name="notes"
+          rows="3"
+          placeholder="Optional"
+        ></textarea>
+      </label>
+    </div>
+
+    <button type="submit" class="primary-btn" [disabled]="isSavingHealthRecord">
+      {{ isSavingHealthRecord ? 'Saving...' : editingHealthRecordId ? 'Update Record' : 'Add Record' }}
+    </button>
+  </form>
+  }
+
+  @if(isLoading) {
+  <div class="loading-card">
+    <div class="loader"></div>
+
+    <p>Loading health records...</p>
+  </div>
+  } @else { @if(healthRecords.length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon">DOC</div>
+
+    <h2>No Health Records Found</h2>
+
+    <p>Uploaded patient documents will appear here.</p>
+  </div>
+  } @else {
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Document</th>
+
+          <th>Type</th>
+
+          <th>File</th>
+
+          <th>Date</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for(record of healthRecords; track record._id) {
+        <tr>
+          <td>
+            <div>
+              <h4>{{ record.title }}</h4>
+
+              <p class="muted-text">
+                {{ record.notes || 'No notes added' }}
+              </p>
+            </div>
+          </td>
+
+          <td>
+            <span class="record-type-badge">
+              {{ formatOption(record.documentType) }}
+            </span>
+          </td>
+
+          <td>
+            <a class="file-link" [href]="getDocumentUrl(record)" target="_blank">
+              {{ record.originalFileName || 'Open document' }}
+            </a>
+          </td>
+
+          <td>
+            <span class="date-text">
+              {{ (record.documentDate || record.createdAt) | date: 'mediumDate' }}
+            </span>
+          </td>
+
+          <td>
+            <div class="action-group">
+              @if(canUpdateHealthRecords()) {
+              <button
+                type="button"
+                class="edit-btn"
+                (click)="startEditHealthRecord(record)"
+              >
+                Edit
+              </button>
+              }
+
+              @if(canDeleteHealthRecords()) {
+              <button
+                type="button"
+                class="delete-btn"
+                (click)="deleteHealthRecord(record)"
+              >
+                Delete
+              </button>
+              }
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [pagination]="healthRecordPagination"
+    totalLabel="health records"
+    (pagePrevious)="previousPage()"
+    (pageNext)="nextPage()"
+    (pageSizeChange)="onLimitChange($event)"
+  ></app-pagination>
+  } } }
+
+  @if(activeTab === 'labReports') {
+  @if(canShowLabReportForm() && patientId) {
+  <form
+    class="health-record-form"
+    (ngSubmit)="saveLabReport()"
+    enctype="multipart/form-data"
+  >
+    <div class="form-header">
+      <div>
+        <h2>
+          {{ editingLabReportId ? 'Edit Lab Report' : 'Add Lab Report' }}
+        </h2>
+
+        <p>Upload patient lab report documents.</p>
+      </div>
+
+      @if(editingLabReportId) {
+      <button type="button" class="secondary-btn" (click)="resetLabReportForm()">
+        Cancel Edit
+      </button>
+      }
+    </div>
+
+    @if(labReportMessage) {
+    <div class="form-message success">{{ labReportMessage }}</div>
+    }
+
+    @if(labReportError) {
+    <div class="form-message error">{{ labReportError }}</div>
+    }
+
+    <div class="form-grid">
+      <label>
+        <span>Title</span>
+
+        <input
+          type="text"
+          [(ngModel)]="labReportForm.title"
+          name="labReportTitle"
+          placeholder="Eg: Blood test report"
+          required
+        />
+      </label>
+
+      <label>
+        <span>Report Date</span>
+
+        <input
+          type="date"
+          [(ngModel)]="labReportForm.documentDate"
+          name="labReportDate"
+          required
+        />
+      </label>
+
+      <label>
+        <span>Attach Report</span>
+
+        <input
+          type="file"
+          name="labReportFile"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+          (change)="onLabReportFileSelected($event)"
+          [required]="!editingLabReportId"
+        />
+
+        @if(editingLabReportId) {
+        <small>Leave empty to keep the existing document.</small>
+        }
+      </label>
+
+      <label class="wide-field">
+        <span>Notes</span>
+
+        <textarea
+          [(ngModel)]="labReportForm.notes"
+          name="labReportNotes"
+          rows="3"
+          placeholder="Optional"
+        ></textarea>
+      </label>
+    </div>
+
+    <button type="submit" class="primary-btn" [disabled]="isSavingLabReport">
+      {{ isSavingLabReport ? 'Saving...' : editingLabReportId ? 'Update Report' : 'Add Report' }}
+    </button>
+  </form>
+  }
+
+  @if(isLoading) {
+  <div class="loading-card">
+    <div class="loader"></div>
+
+    <p>Loading lab reports...</p>
+  </div>
+  } @else { @if(labReports.length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon">LAB</div>
+
+    <h2>No Lab Reports Found</h2>
+
+    <p>Uploaded lab reports will appear here.</p>
+  </div>
+  } @else {
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Report</th>
+
+          <th>File</th>
+
+          <th>Date</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for(report of labReports; track report._id) {
+        <tr>
+          <td>
+            <div>
+              <h4>{{ report.title }}</h4>
+
+              <p class="muted-text">
+                {{ report.notes || 'No notes added' }}
+              </p>
+            </div>
+          </td>
+
+          <td>
+            <a class="file-link" [href]="getDocumentUrl(report)" target="_blank">
+              {{ report.originalFileName || 'Open report' }}
+            </a>
+          </td>
+
+          <td>
+            <span class="date-text">
+              {{ (report.documentDate || report.createdAt) | date: 'mediumDate' }}
+            </span>
+          </td>
+
+          <td>
+            <div class="action-group">
+              @if(canUpdateLabReports()) {
+              <button
+                type="button"
+                class="edit-btn"
+                (click)="startEditLabReport(report)"
+              >
+                Edit
+              </button>
+              }
+
+              @if(canDeleteLabReports()) {
+              <button
+                type="button"
+                class="delete-btn"
+                (click)="deleteLabReport(report)"
+              >
+                Delete
+              </button>
+              }
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination
+    [pagination]="labReportPagination"
+    totalLabel="lab reports"
+    (pagePrevious)="previousPage()"
+    (pageNext)="nextPage()"
+    (pageSizeChange)="onLimitChange($event)"
+  ></app-pagination>
+  } }
+  }
+</div>
