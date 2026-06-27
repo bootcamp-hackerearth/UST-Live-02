@@ -97,16 +97,112 @@ const consultationSchema = new mongoose.Schema(
       enum: ["IN_PROGRESS", "COMPLETED"],
       default: "IN_PROGRESS",
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    followUpDate: {
+      type: Date,
+      default: null,
+    },
+
+    diagnosisCategory: {
+      type: String,
+      trim: true,
+    },
+
+    labRecommendations: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    labReports: [
+      {
+        reportName: {
+          type: String,
+          trim: true,
+        },
+
+        uploadedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    attachments: [
+      {
+        fileName: String,
+        fileUrl: String,
+        type: String,
+        trim: true,
+
+        uploadedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
+consultationSchema.index({
+  patientId: 1,
+  isDeleted: 1,
+});
 
-const Consultation = mongoose.model(
-  "Consultation",
-  consultationSchema
-);
+consultationSchema.index({
+  appointmentId: 1,
+  isDeleted: 1,
+});
+consultationSchema.index({
+  doctorEmployeeId: 1,
+  isDeleted: 1,
+});
+
+consultationSchema.index({
+  status: 1,
+  isDeleted: 1,
+});
+
+const Consultation = mongoose.model("Consultation", consultationSchema);
 
 module.exports = Consultation;

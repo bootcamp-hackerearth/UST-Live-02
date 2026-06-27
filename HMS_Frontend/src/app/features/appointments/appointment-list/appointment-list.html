@@ -9,23 +9,7 @@
 
       <p class="page-subtitle">Manage and monitor patient appointments.</p>
     </div>
-
-    <!-- Button -->
-
-    @if( authService.hasRole( 'ADMIN' ) || authService.hasRole( 'RECEPTIONIST' ) ){
-
-    <a routerLink="/appointments/book" class="book-btn">
-      <span>+</span>
-
-      Book Appointment
-    </a>
-  <a
-    routerLink="/appointments/requests"
-    class="request-btn"
-  >
-    Pending Requests
-  </a>
-    }
+    <div class="appointment-count">{{ totalRecords }} Appointments</div>
   </div>
 
   <!-- Filters -->
@@ -38,15 +22,13 @@
 
       <input
         type="text"
-        placeholder="
-              Search patient or doctor
-              "
+        placeholder="Search patient or doctor"
         [(ngModel)]="
-              searchTerm
-              "
+        search
+      "
         (input)="
-              filterAppointments()
-              "
+        onFilterChange()
+      "
       />
     </div>
 
@@ -54,11 +36,11 @@
 
     <select
       [(ngModel)]="
-            selectedStatus
-            "
+      status
+    "
       (change)="
-            filterAppointments()
-            "
+      onFilterChange()
+    "
     >
       <option value="">All Status</option>
 
@@ -70,6 +52,59 @@
 
       <option value="CANCELLED">Cancelled</option>
     </select>
+
+    <!-- Priority -->
+
+    <select
+      [(ngModel)]="
+      priority
+    "
+      (change)="
+      onFilterChange()
+    "
+    >
+      <option value="">All Priorities</option>
+
+      <option value="NORMAL">Normal</option>
+
+      <option value="URGENT">Urgent</option>
+
+      <option value="CRITICAL">Critical</option>
+    </select>
+
+    <!-- Date -->
+
+    <div class="date-range">
+      <div>
+        <label for="filter-start-date">From</label>
+
+        <input
+          id="filter-start-date"
+          type="date"
+          [(ngModel)]="
+        startDate
+      "
+          (change)="
+        onFilterChange()
+      "
+        />
+      </div>
+
+      <div>
+        <label for="filter-end-date">To</label>
+
+        <input
+          id="filter-end-date"
+          type="date"
+          [(ngModel)]="
+        endDate
+      "
+          (change)="
+        onFilterChange()
+      "
+        />
+      </div>
+    </div>
   </div>
 
   <!-- Table -->
@@ -97,7 +132,7 @@
       </thead>
 
       <tbody>
-        @for ( appointment of filteredAppointments; track appointment._id ) {
+        @for ( appointment of appointments; track appointment._id ) {
 
         <tr>
           <!-- Appointment -->
@@ -207,7 +242,7 @@
             <div class="actions">
               <!-- Admin -->
 
-              @if( authService.hasRole( 'ADMIN' ) || authService.hasRole( 'RECEPTIONIST' ) ){
+              @if(nodeService.canUseApi('PUT', '/api/appointments/:id')){
 
               <button
                 class="action-btn edit"
@@ -218,6 +253,10 @@
               >
                 Edit
               </button>
+
+              }
+
+              @if(nodeService.canUseApi('DELETE', '/api/appointments/:id')){
 
               <button
                 class="action-btn delete"
@@ -234,7 +273,7 @@
 
               <!-- Doctor -->
 
-              @if( authService.hasRole( 'DOCTOR' ) ){
+              @if(nodeService.canAccessPath('/patients')){
 
               <button
                 class="action-btn view"
@@ -257,4 +296,17 @@
       </tbody>
     </table>
   </div>
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalRecords]="totalRecords"
+    [limit]="limit"
+    (previous)="previousPage()"
+    (next)="nextPage()"
+    (pageSizeChange)="
+    limit = $event;
+    page = 1;
+    loadAppointments()
+  "
+  ></app-pagination>
 </div>

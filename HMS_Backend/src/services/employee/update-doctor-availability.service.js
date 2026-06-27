@@ -1,46 +1,37 @@
 const Employee = require("../../models/Employee");
 const User = require("../../models/User");
+const ApiError = require("../../utils/ApiError");
 
-const updateDoctorAvailabilityService =
-  async (
-    userId,
-    availabilityData
-  ) => {
+const updateDoctorAvailabilityService = async (
+  userId,
+  availabilityData,
+  updatedBy,
+) => {
+  const user = await User.findOne({
+    _id: userId,
+    isDeleted: false,
+  });
 
-    const user =
-      await User.findById(
-        userId
-      );
+  if (!user) {
+    throw new ApiError(404, "User account not found", "USER_NOT_FOUND");
+  }
 
-    if (!user) {
-      throw new Error(
-        "User account not found"
-      );
-    }
+  const doctor = await Employee.findOne({
+    _id: user.employeeId,
+    isDeleted: false,
+  });
 
-    const doctor =
-      await Employee.findByIdAndUpdate(
-        user.employeeId,
-        {
-          $set: {
-            availability:
-              availabilityData,
-          },
-        },
-        {
-          returnDocument:
-            "after",
-        }
-      );
+  if (!doctor) {
+    throw new ApiError(404, "Doctor not found", "DOCTOR_NOT_FOUND");
+  }
 
-    if (!doctor) {
-      throw new Error(
-        "Doctor not found"
-      );
-    }
+  doctor.availability = availabilityData;
 
-    return doctor;
-  };
+  doctor.updatedBy = updatedBy;
 
-module.exports =
-  updateDoctorAvailabilityService;
+  await doctor.save();
+
+  return doctor;
+};
+
+module.exports = updateDoctorAvailabilityService;

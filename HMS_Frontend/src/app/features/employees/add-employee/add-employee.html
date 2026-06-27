@@ -32,7 +32,10 @@
           <input type="text" placeholder="Enter full name" formControlName="name" />
           @if(employeeForm.get('name')?.invalid && employeeForm.get('name')?.touched){
           <span class="error-text">
-            @if(employeeForm.get('name')?.errors?.['required']){ Name is required } @else if(employeeForm.get('name')?.errors?.['minlength']){ Name must be at least 2 characters } @else if(employeeForm.get('name')?.errors?.['maxlength']){ Name cannot exceed 100 characters } @else if(employeeForm.get('name')?.errors?.['pattern']){ Name can contain only letters and spaces }
+            @if(employeeForm.get('name')?.errors?.['required']){ Name is required }
+             @else if(employeeForm.get('name')?.errors?.['minlength']){ Name must be at least 2 characters }
+             @else if(employeeForm.get('name')?.errors?.['maxlength']){ Name cannot exceed 100 characters } 
+             @else if(employeeForm.get('name')?.errors?.['pattern']){ Name can contain only letters and spaces }
           </span>
           }
         </div>
@@ -79,8 +82,8 @@
           </div>
           @if(employeeForm.get('phone')?.invalid && employeeForm.get('phone')?.touched){
           <span class="error-text">
-            @if(employeeForm.get('phone')?.errors?.['required']){ Phone Number is required }
-             @else if(employeeForm.get('phone')?.errors?.['pattern']){ Please enter a valid phone number }
+            @if(employeeForm.get('phone')?.errors?.['required']){ Phone Number is required } 
+            @else if(employeeForm.get('phone')?.errors?.['pattern']){ Please enter a valid phone number }
           </span>
           }
         </div>
@@ -123,13 +126,9 @@
           <select formControlName="designation">
             <option value="">Select Designation</option>
 
-            <option value="DOCTOR">Doctor</option>
-
-            <option value="NURSE">Nurse</option>
-
-            <option value="RECEPTIONIST">Receptionist</option>
-
-            <option value="ADMIN">Admin</option>
+            @for ( designation of designations; track designation ) {
+            <option [value]="designation">{{ designation .replaceAll( '_', ' ' ) }}</option>
+            }
           </select>
           @if(employeeForm.get('designation')?.invalid && employeeForm.get('designation')?.touched){
           <span class="error-text">Designation is required</span>
@@ -317,10 +316,10 @@
           @if(employeeForm.get('qualification')?.invalid && employeeForm.get('qualification')?.touched){
 
           <span class="error-text">
-            @if(employeeForm.get('qualification')?.errors?.['required']){ Qualification is required }
-             @else if(employeeForm.get('qualification')?.errors?.['minlength']){ Minimum 2 characters required }
-              @else if(employeeForm.get('qualification')?.errors?.['maxlength']){ Maximum 100 characters allowed }
-               @else if(employeeForm.get('qualification')?.errors?.['pattern']){ Invalid qualification format }
+            @if(employeeForm.get('qualification')?.errors?.['required']){ Qualification is required } 
+            @else if(employeeForm.get('qualification')?.errors?.['minlength']){ Minimum 2 characters required }
+             @else if(employeeForm.get('qualification')?.errors?.['maxlength']){ Maximum 100 characters allowed }
+              @else if(employeeForm.get('qualification')?.errors?.['pattern']){ Invalid qualification format }
           </span>
 
           }

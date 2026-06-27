@@ -1,9 +1,4 @@
-const pendingApprovalTemplate = ({
-  name,
-  email,
-  designation,
-  department,
-}) => {
+const pendingApprovalTemplate = ({ name, email, designation, department }) => {
   return `
     <div style="font-family: Arial, sans-serif; padding: 20px;">
       <h2>New Employee Registration</h2>

@@ -4,10 +4,10 @@ import Dashboard from "../screens/DashboardScreen";
 
 import Appointments from "../screens/AppointmentScreen";
 
-import Profile from "../screens/ProfileScren";
+import Profile from "../screens/ProfileScreen";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
-
+import HealthRecordsScreen from "../screens/HealthRecordScreen";
 const Tab = createBottomTabNavigator();
 
 export default function PatientTabs() {
@@ -57,13 +57,14 @@ export default function PatientTabs() {
           paddingBottom: 8,
         },
 
-        tabBarLabelStyle: {
-          tabBarItemStyle: {
-            borderRadius: 20,
-            marginVertical: 8,
-          },
-          tabBarActiveBackgroundColor: "rgba(37,99,235,0.08)",
+        tabBarItemStyle: {
+          borderRadius: 20,
+          marginVertical: 8,
+        },
 
+        tabBarActiveBackgroundColor: "rgba(37,99,235,0.08)",
+
+        tabBarLabelStyle: {
           fontSize: 11,
 
           fontWeight: "700",
@@ -85,6 +86,9 @@ export default function PatientTabs() {
           if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline";
           }
+          if (route.name === "HealthRecords") {
+            iconName = focused ? "medical" : "medical-outline";
+          }
 
           return <Ionicons name={iconName} size={26} color={color} />;
         },
@@ -102,6 +106,13 @@ export default function PatientTabs() {
         component={Appointments}
         options={{
           tabBarLabel: "Appointments",
+        }}
+      />
+      <Tab.Screen
+        name="HealthRecords"
+        component={HealthRecordsScreen}
+        options={{
+          tabBarLabel: "Records",
         }}
       />
 

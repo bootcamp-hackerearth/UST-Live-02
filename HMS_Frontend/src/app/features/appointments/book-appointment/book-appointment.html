@@ -120,7 +120,6 @@
           <p class="consultation-fee">Consultation Fee: ₹{{ selectedDoctor ?.consultationFee || 0 }}</p>
 
           }
-         
         </div>
 
         <!-- Appointment Date -->
@@ -128,7 +127,13 @@
         <div class="form-group">
           <label for="appointmentDate">Appointment Date</label>
 
-          <input id="appointmentDate" type="date" formControlName="appointmentDate" [min]="minDate" (change)="fetchAvailableSlots()" />
+          <input
+            id="appointmentDate"
+            type="date"
+            formControlName="appointmentDate"
+            [min]="minDate"
+            (change)="fetchAvailableSlots()"
+          />
           @if(appointmentForm.get('appointmentDate')?.invalid && appointmentForm.get('appointmentDate')?.touched){
           <span class="error-text">Appointment Date is required</span>
           } @if(noSlotsError){

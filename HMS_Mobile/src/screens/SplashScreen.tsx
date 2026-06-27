@@ -1,23 +1,33 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import { View, ActivityIndicator } from "react-native";
 
 import { getToken } from "../storage/token.storage";
 
+import { getCurrentUser } from "../services/auth.service";
+
 export default function SplashScreen({ navigation }: any) {
-  useEffect(() => {
-    checkAuth();
-  }, []);
+  const checkAuth = useCallback(async () => {
+    try {
+      const token = await getToken();
 
-  const checkAuth = async () => {
-    const token = await getToken();
+      if (!token) {
+        navigation.replace("Login");
 
-    if (token) {
+        return;
+      }
+
+      await getCurrentUser();
+
       navigation.replace("PatientTabs");
-    } else {
+    } catch {
       navigation.replace("Login");
     }
-  };
+  }, [navigation]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
     <View

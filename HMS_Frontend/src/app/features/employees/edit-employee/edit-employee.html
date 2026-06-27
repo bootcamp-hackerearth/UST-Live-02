@@ -21,7 +21,9 @@
         @if(employeeForm.get('name')?.touched && employeeForm.get('name')?.invalid){
 
         <span class="error-text">
-          @if(employeeForm.get('name')?.errors?.['required']){ Name is required } @else if(employeeForm.get('name')?.errors?.['minlength']){ Name must be at least 2 characters } @else if(employeeForm.get('name')?.errors?.['pattern']){ Only alphabets are allowed }
+          @if(employeeForm.get('name')?.errors?.['required']){ Name is required } 
+          @else if(employeeForm.get('name')?.errors?.['minlength']){ Name must be at least 2 characters } 
+          @else if(employeeForm.get('name')?.errors?.['pattern']){ Only alphabets are allowed }
         </span>
         }
       </div>
@@ -44,7 +46,8 @@
         @if(employeeForm.get('phone')?.touched && employeeForm.get('phone')?.invalid){
 
         <span class="error-text">
-          @if(employeeForm.get('phone')?.errors?.['required']){ Phone number is required } @else if(employeeForm.get('phone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
+          @if(employeeForm.get('phone')?.errors?.['required']){ Phone number is required } 
+          @else if(employeeForm.get('phone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
         </span>
         }
       </div>

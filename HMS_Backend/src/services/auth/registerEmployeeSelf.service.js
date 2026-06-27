@@ -8,7 +8,8 @@ const EMPLOYEE_PREFIX = require("../../constants/employee-prefix");
 
 const generateSequentialId = require("../../utils/generateSequentialId");
 const sendEmail = require("../../utils/sendEmail");
-
+const ApiError = require("../../utils/ApiError");
+const ROLES = require("../../constants/roles");
 const pendingApprovalTemplate = require("../../templates/pendingApprovalTemplate");
 
 const registerEmployeeSelf = async (employeeData) => {
@@ -29,53 +30,58 @@ const registerEmployeeSelf = async (employeeData) => {
     securityAnswer,
   } = employeeData;
 
-  // Check if email is already registered
+  if (designation === ROLES.ADMIN) {
+    throw new ApiError(403, "Admin cannot self register", "FORBIDDEN");
+  }
+
   const existingUser = await User.findOne({
     email: email.toLowerCase(),
+    isDeleted: false,
   });
 
   if (existingUser) {
-    throw new Error("Email is already registered");
+    throw new ApiError(409, "Email is already registered", "CONFLICT");
   }
 
-  // Check if phone number is already registered
   const existingPhone = await Employee.findOne({
     phone,
+    isDeleted: false,
   });
 
   if (existingPhone) {
-    throw new Error("Phone number is already registered");
+    throw new ApiError(409, "Phone number is already registered", "CONFLICT");
   }
 
-  // Check doctor registration number
-  if (designation === "DOCTOR") {
+  if (designation === "DOCTOR" && medicalRegistrationNo) {
     const existingDoctor = await Employee.findOne({
       medicalRegistrationNo,
+      isDeleted: false,
     });
 
     if (existingDoctor) {
-      throw new Error("Medical registration number already exists");
+      throw new ApiError(
+        409,
+        "Medical registration number already exists",
+        "CONFLICT",
+      );
     }
   }
 
-  // Generate employee code
   const prefix = EMPLOYEE_PREFIX[designation];
 
   if (!prefix) {
-    throw new Error("Invalid designation");
+    throw new ApiError(400, "Invalid designation", "BAD_REQUEST");
   }
 
   const employeeCode = await generateSequentialId(prefix);
 
-  // Hash password and security answer
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const hashedSecurityAnswer = await bcrypt.hash(
     securityAnswer.trim().toLowerCase(),
-    10
+    10,
   );
 
-  // Create employee record
   const employee = await Employee.create({
     employeeCode,
     name,
@@ -90,9 +96,9 @@ const registerEmployeeSelf = async (employeeData) => {
     medicalRegistrationNo,
     consultationFee,
     status: STATUS.PENDING,
+    createdBy: null,
   });
 
-  // Create user account
   await User.create({
     email: email.toLowerCase(),
     passwordHash: hashedPassword,
@@ -104,7 +110,6 @@ const registerEmployeeSelf = async (employeeData) => {
     securityAnswer: hashedSecurityAnswer,
   });
 
-  // Notify admin about pending approval
   const htmlContent = pendingApprovalTemplate({
     name,
     email,

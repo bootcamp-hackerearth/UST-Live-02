@@ -1,13 +1,12 @@
 import { useState } from "react";
 import {
-  View,
   Text,
   Alert,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useNavigation } from "@react-navigation/native";
 
@@ -104,6 +103,7 @@ export default function Register() {
         email,
         phone,
         password,
+        confirmPassword,
       });
 
       Alert.alert("Success", "Account created successfully", [
@@ -113,7 +113,14 @@ export default function Register() {
         },
       ]);
     } catch (error: any) {
-      Alert.alert("Registration Failed", error?.message || "Please try again");
+      console.log("REGISTER ERROR", error);
+
+      console.log("REGISTER RESPONSE", error?.response?.data);
+
+      Alert.alert(
+        "Registration Failed",
+        JSON.stringify(error?.response?.data, null, 2),
+      );
     } finally {
       setLoading(false);
     }

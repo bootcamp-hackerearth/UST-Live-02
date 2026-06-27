@@ -1,23 +1,25 @@
-import { Component, HostListener, ElementRef, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, HostListener, ElementRef, ChangeDetectorRef, OnInit, ChangeDetectionStrategy} from '@angular/core';
 
-import { Router, RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
-
+import { NodeService } from '../../core/services/node';
 import { AuthService } from '../../core/services/auth';
 import { TokenService } from '../../core/services/token';
 import { ToastService } from '../../core/services/toast';
+import { Sidebar } from '../../shared/components/sidebar/sidebar';
 
 @Component({
   selector: 'app-dashboard-layout',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, AsyncPipe, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, AsyncPipe, Sidebar],
   templateUrl: './dashboard-layout.html',
-  styleUrl: './dashboard-layout.css'
+  styleUrl: './dashboard-layout.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardLayout implements OnInit {
   isProfileOpen = false;
 
   constructor(
+    public readonly nodeService: NodeService,
     public authService: AuthService,
     private readonly tokenService: TokenService,
     private readonly router: Router,
@@ -28,7 +30,13 @@ export class DashboardLayout implements OnInit {
 
   // Load current user details
   ngOnInit(): void {
-    this.authService.loadCurrentUser();
+    const token = this.tokenService.getAccessToken();
+
+    if (token) {
+      this.authService.loadCurrentUser();
+
+      this.nodeService.loadNodes();
+    }
   }
 
   // Close active toast
@@ -53,16 +61,18 @@ export class DashboardLayout implements OnInit {
 
   // Logout user
   logout(): void {
-   const refreshToken =
-  this.tokenService.getRefreshToken();
+    const refreshToken = this.tokenService.getRefreshToken();
 
-this.authService
-  .logout(refreshToken!)
-  .subscribe();
+    this.authService.logout(refreshToken!).subscribe();
 
-this.tokenService.removeTokens();
+    this.tokenService.removeTokens();
 
     this.authService.currentUser.next(null);
+
+    this.nodeService.clearNodes();
+
+    localStorage.removeItem('role');
+    localStorage.removeItem('loginId');
 
     this.router.navigate(['/login']);
 

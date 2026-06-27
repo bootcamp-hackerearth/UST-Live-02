@@ -67,21 +67,10 @@
 .pending-count {
   padding: 14px 24px;
   border-radius: 18px;
-  background: linear-gradient(
-    135deg,
-    #3b82f6,
-    #8b5cf6
-  );
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: white;
   font-weight: 700;
-  box-shadow:
-    0 15px 35px
-    rgba(
-      59,
-      130,
-      246,
-      0.25
-    );
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.25);
 }
 
 /*

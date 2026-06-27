@@ -10,27 +10,61 @@
       <p class="page-subtitle">Manage doctors, nurses and hospital staff.</p>
     </div>
 
-    <div class="employee-count">{{ filteredEmployees.length }} Employees</div>
+    <div class="header-actions">
+      <div class="employee-count">{{ total }} Employees</div>
+    </div>
   </div>
 
   <!-- Search -->
 
   <div class="filters-wrapper glass-card">
-    <div class="search-box">
-      <span>🔍</span>
+    <div class="filters-row">
+      <div class="search-box">
+        <span>🔍</span>
+
+        <input type="text" placeholder="Search employee..." [(ngModel)]="search" (input)="onSearch()" />
+      </div>
+
+      <select [(ngModel)]="status" (change)="onFilterChange()">
+        <option value="">All Status</option>
+
+        <option value="ACTIVE">Active</option>
+
+        <option value="INACTIVE">Inactive</option>
+
+        <option value="PENDING">Pending</option>
+      </select>
 
       <input
         type="text"
-        placeholder="
-              Search employee...
-              "
+        placeholder="Department"
         [(ngModel)]="
-              searchText
-              "
+        department
+      "
         (input)="
-              onSearch()
-              "
+        onFilterChange()
+      "
       />
+
+      <input
+        type="text"
+        placeholder="Designation"
+        [(ngModel)]="
+        designation
+      "
+        (input)="
+        onFilterChange()
+      "
+      />
+
+      <button
+        class="action-btn view"
+        (click)="
+        resetFilters()
+      "
+      >
+        Reset
+      </button>
     </div>
   </div>
 
@@ -58,7 +92,7 @@
         <tr
           *ngFor="
                   let employee
-                  of filteredEmployees
+                 of employees
                   "
         >
           <!-- Employee -->
@@ -118,62 +152,86 @@
           <!-- Actions -->
 
           <td>
-            <div class="actions">
-              <!-- View -->
+  <div class="actions">
 
-              <a
-                [routerLink]="[
-                                '/employees',
-                                employee._id
-                              ]"
-                class="action-btn view"
-              >
-                View
-              </a>
+    <!-- View -->
+    <a
+      [routerLink]="['/employees', employee._id]"
+      class="action-btn view"
+    >
+      View
+    </a>
 
-              <!-- Edit -->
+    <!-- Edit -->
+    @if(nodeService.canUseApi('PUT', '/api/employees/:id')){
+      <a
+        [routerLink]="['/employees/edit', employee._id]"
+        class="action-btn edit"
+      >
+        Edit
+      </a>
+    }
 
-              <a
-                [routerLink]="[
-                                '/employees/edit',
-                                employee._id
-                              ]"
-                class="action-btn edit"
-              >
-                Edit
-              </a>
+    <!-- Activate -->
+    @if(
+      employee.status === 'INACTIVE' &&
+      (
+        nodeService.canUseApi('PATCH', '/api/employees/:id/activate')
+      )
+    ){
+      <button
+        type="button"
+        class="action-btn activate"
+        (click)="activateEmployee(employee._id)"
+      >
+        Activate
+      </button>
+    }
 
-              <!-- Deactivate -->
+    <!-- Deactivate -->
+    @if(
+      employee.status === 'ACTIVE' &&
+      (
+        nodeService.canUseApi('PATCH', '/api/employees/:id/deactivate')
+      )
+    ){
+      <button
+        type="button"
+        class="action-btn deactivate"
+        (click)="deactivateEmployee(employee._id)"
+      >
+        Deactivate
+      </button>
+    }
 
-              <button
-                type="button"
-                (click)="
-                              deactivateEmployee(
-                                employee._id
-                              )
-                              "
-                class="action-btn deactivate"
-              >
-                Deactivate
-              </button>
+    <!-- Delete -->
+    @if(nodeService.canUseApi('DELETE', '/api/employees/:id')){
+      <button
+        type="button"
+        class="action-btn delete"
+        (click)="deleteEmployee(employee._id)"
+      >
+        Delete
+      </button>
+    }
 
-              <!-- Activate -->
-
-              <button
-                type="button"
-                (click)="
-                              activateEmployee(
-                                employee._id
-                              )
-                              "
-                class="action-btn activate"
-              >
-                Activate
-              </button>
-            </div>
-          </td>
+  </div>
+</td>
         </tr>
       </tbody>
     </table>
   </div>
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalRecords]="total"
+    [limit]="limit"
+    (previous)="previousPage()"
+    (next)="nextPage()"
+    (pageSizeChange)="
+    limit = $event;
+    page = 1;
+    loadEmployees(false)
+  "
+  ></app-pagination>
 </div>

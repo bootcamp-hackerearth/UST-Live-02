@@ -1,15 +1,8 @@
-import {
-  HttpInterceptorFn,
-  HttpErrorResponse
-} from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 
 import { inject } from '@angular/core';
 
-import {
-  catchError,
-  switchMap,
-  throwError
-} from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
 
 import { Router } from '@angular/router';
 
@@ -23,8 +16,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const router = inject(Router);
 
-  const accessToken =
-    tokenService.getAccessToken();
+  const accessToken = tokenService.getAccessToken();
 
   let authReq = req;
 
@@ -38,56 +30,41 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      const refreshToken =
-        tokenService.getRefreshToken();
+      const refreshToken = tokenService.getRefreshToken();
 
-      const isRefreshCall =
-        req.url.includes('/auth/refresh-token');
+      const isRefreshCall = req.url.includes('/auth/refresh-token');
 
-      if (
-        error.status !== 401 ||
-        !refreshToken ||
-        isRefreshCall
-      ) {
+      if (error.status !== 401 || !refreshToken || isRefreshCall) {
         return throwError(() => error);
       }
 
-      return authService
-        .refreshToken(refreshToken)
-        .pipe(
-          switchMap((response: any) => {
-            const newAccessToken =
-              response.data.accessToken;
+      return authService.refreshToken(refreshToken).pipe(
+        switchMap((response: any) => {
+          const newAccessToken = response.data.accessToken;
 
-            tokenService.setAccessToken(
-              newAccessToken
-            );
+          tokenService.setAccessToken(newAccessToken);
 
-            const retryRequest =
-              req.clone({
-                setHeaders: {
-                  Authorization:
-                    `Bearer ${newAccessToken}`
-                }
-              });
+          const retryRequest = req.clone({
+            setHeaders: {
+              Authorization: `Bearer ${newAccessToken}`
+            }
+          });
 
-            return next(retryRequest);
-          }),
+          return next(retryRequest);
+        }),
 
-          catchError((refreshError) => {
-            tokenService.removeTokens();
+        catchError((refreshError) => {
+          tokenService.removeTokens();
 
-            localStorage.removeItem('role');
+          localStorage.removeItem('role');
 
-            authService.currentUser.next(null);
+          authService.currentUser.next(null);
 
-            router.navigate(['/login']);
+          router.navigate(['/login']);
 
-            return throwError(
-              () => refreshError
-            );
-          })
-        );
+          return throwError(() => refreshError);
+        })
+      );
     })
   );
 };

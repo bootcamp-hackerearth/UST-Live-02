@@ -4,16 +4,15 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Alert,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigation } from "@react-navigation/native";
 
 import { getDashboard } from "../../src/services/patient.service";
-
+import DashboardSkeleton from "../../src/components/loaders/DashboardSkeleton";
 import GlassCard from "../../src/components/cards/GlassCard";
 import StatCard from "../../src/components/cards/StatCard";
 import QuickActionCard from "../../src/components/cards/QuickActionCard";
@@ -22,19 +21,10 @@ export default function Dashboard() {
   const navigation = useNavigation<any>();
   const [refreshing, setRefreshing] = useState(false);
   const [dashboard, setDashboard] = useState<any>(null);
-  const onRefresh = async () => {
-    setRefreshing(true);
 
-    await loadDashboard();
-
-    setRefreshing(false);
-  };
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    loadDashboard();
-  }, []);
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -46,35 +36,100 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  const onRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
+
+      await loadDashboard();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadDashboard]);
+  const goToBook = useCallback(
+    () => navigation.navigate("BookAppointment"),
+    [navigation],
+  );
+
+  const goToAppointments = useCallback(
+    () => navigation.navigate("Appointments"),
+    [navigation],
+  );
+
+  const goToProfile = useCallback(
+    () => navigation.navigate("Profile"),
+    [navigation],
+  );
+
+  const goToRecords = useCallback(
+    () => navigation.navigate("HealthRecords"),
+    [navigation],
+  );
+  const goToUpcomingAppointment = useCallback(() => {
+    const id = dashboard?.upcomingAppointment?._id;
+
+    if (!id) {
+      return;
+    }
+
+    navigation.navigate("AppointmentDetail", {
+      id,
+    });
+  }, [dashboard, navigation]);
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return "Good Morning 👋";
+    }
+
+    if (hour < 18) {
+      return "Good Afternoon ☀️";
+    }
+
+    return "Good Evening 🌙";
+  }, []);
+
+  const appointmentText = useMemo(() => {
+    if (!dashboard?.upcomingAppointment) {
+      return "Upcoming Consultation";
+    }
+
+    const today = new Date();
+
+    const appointment = new Date(dashboard.upcomingAppointment.appointmentDate);
+
+    const diff = Math.ceil(
+      (appointment.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    if (diff <= 0) {
+      return "Today";
+    }
+
+    if (diff === 1) {
+      return "Tomorrow";
+    }
+
+    return `In ${diff} days`;
+  }, [dashboard]);
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View
-          style={{
-            padding: 20,
-          }}
-        >
-          <GlassCard>
-            <Text>Loading Dashboard...</Text>
-          </GlassCard>
-        </View>
+        <DashboardSkeleton />
       </SafeAreaView>
     );
-  }
-
-  const hour = new Date().getHours();
-  let greeting = "Good Evening 🌙";
-  if (hour < 12) {
-    greeting = "Good Morning 👋";
-  } else if (hour < 18) {
-    greeting = "Good Afternoon ☀️";
   }
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -94,27 +149,14 @@ export default function Dashboard() {
         <Text style={styles.section}>Quick Actions</Text>
 
         <View style={styles.quickRow}>
-          <QuickActionCard
-            title="Book"
-            onPress={() => navigation.navigate("BookAppointment")}
-          />
+          <QuickActionCard title="Book" onPress={goToBook} />
 
-          <QuickActionCard
-            title="Appointments"
-            onPress={() => navigation.navigate("Appointments")}
-          />
+          <QuickActionCard title="Appointments" onPress={goToAppointments} />
         </View>
 
         <View style={styles.quickRow}>
-          <QuickActionCard
-            title="Profile"
-            onPress={() => navigation.navigate("Profile")}
-          />
-
-          <QuickActionCard
-            title="Records"
-            onPress={() => Alert.alert("Coming Soon")}
-          />
+          <QuickActionCard title="Profile" onPress={goToProfile} />
+          <QuickActionCard title="Records" onPress={goToRecords} />
         </View>
 
         <Text style={styles.section}>Appointment Summary</Text>
@@ -142,8 +184,61 @@ export default function Dashboard() {
             value={dashboard?.appointmentSummary?.completed || 0}
           />
         </View>
+        <View
+          style={{
+            flexDirection: "row",
+            marginTop: 18,
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              flex: 1,
+              backgroundColor: "#2563EB",
+              padding: 12,
+              borderRadius: 12,
+              alignItems: "center",
+              marginRight: 10,
+            }}
+            onPress={goToUpcomingAppointment}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontWeight: "700",
+              }}
+            >
+              View
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{
+              flex: 1,
+              backgroundColor: "#EFF6FF",
+              padding: 12,
+              borderRadius: 12,
+              alignItems: "center",
+            }}
+            onPress={goToAppointments}
+          >
+            <Text
+              style={{
+                color: "#2563EB",
+                fontWeight: "700",
+              }}
+            >
+              All Appointments
+            </Text>
+          </TouchableOpacity>
+        </View>
         <GlassCard>
-          <Text style={styles.cardTitle}>Upcoming Appointment</Text>
+          <Text
+            style={{
+              color: "#64748B",
+            }}
+          >
+            {appointmentText}
+          </Text>
 
           {dashboard?.upcomingAppointment ? (
             <View>
@@ -182,7 +277,9 @@ export default function Dashboard() {
                       fontSize: 16,
                     }}
                   >
-                    Dr. {dashboard?.upcomingAppointment?.doctorEmployeeId?.name}
+                    Dr.{" "}
+                    {dashboard?.upcomingAppointment?.doctorEmployeeId?.name ||
+                      "Not Assigned"}
                   </Text>
 
                   <Text
@@ -207,22 +304,6 @@ export default function Dashboard() {
           ) : (
             <Text style={styles.empty}>No upcoming appointment</Text>
           )}
-        </GlassCard>
-
-        <GlassCard>
-          <Text style={styles.cardTitle}>Healthcare Journey</Text>
-
-          <Text style={styles.journeyText}>
-            Stay on top of your appointments and manage your healthcare
-            seamlessly.
-          </Text>
-
-          <TouchableOpacity
-            style={styles.bookButton}
-            onPress={() => navigation.navigate("BookAppointment")}
-          >
-            <Text style={styles.bookText}>Book Appointment</Text>
-          </TouchableOpacity>
         </GlassCard>
       </ScrollView>
     </SafeAreaView>
@@ -316,5 +397,8 @@ const styles = StyleSheet.create({
   bookText: {
     color: "#fff",
     fontWeight: "700",
+  },
+  scrollContent: {
+    paddingBottom: 120,
   },
 });

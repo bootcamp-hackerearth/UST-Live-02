@@ -44,6 +44,9 @@
       <label>Diagnosis</label>
 
       <textarea formControlName="diagnosis" placeholder="Enter diagnosis"></textarea>
+      @if(consultationForm.get('diagnosis')?.invalid && consultationForm.get('diagnosis')?.touched){
+      <span class="error-text">Diagnosis is required</span>
+      }
     </div>
 
     <!-- Symptoms -->
@@ -71,6 +74,10 @@
         <label>Blood Pressure</label>
 
         <input type="text" formControlName="bloodPressure" placeholder="120/80" />
+        @if(consultationForm.get('vitals.bloodPressure')?.invalid &&
+        consultationForm.get('vitals.bloodPressure')?.touched){
+        <span class="error-text">Enter blood pressure in 120/80 format</span>
+        }
       </div>
 
       <!-- Pulse Rate -->
@@ -79,6 +86,10 @@
         <label>Pulse Rate</label>
 
         <input type="number" formControlName="pulseRate" placeholder="72" />
+        @if(consultationForm.get('vitals.pulseRate')?.invalid &&
+        consultationForm.get('vitals.pulseRate')?.touched){
+        <span class="error-text">Pulse rate must be between 1 and 250</span>
+        }
       </div>
 
       <!-- Oxygen Level -->
@@ -87,6 +98,10 @@
         <label>Oxygen Level</label>
 
         <input type="number" formControlName="oxygenLevel" placeholder="98" />
+        @if(consultationForm.get('vitals.oxygenLevel')?.invalid &&
+        consultationForm.get('vitals.oxygenLevel')?.touched){
+        <span class="error-text">Oxygen level must be between 0 and 100</span>
+        }
       </div>
 
       <!-- Temperature -->
@@ -95,6 +110,10 @@
         <label>Temperature</label>
 
         <input type="number" formControlName="temperature" placeholder="Celsius" />
+        @if(consultationForm.get('vitals.temperature')?.invalid &&
+        consultationForm.get('vitals.temperature')?.touched){
+        <span class="error-text">Temperature must be between 30 and 45 Celsius</span>
+        }
       </div>
 
       <!-- Weight -->
@@ -103,6 +122,9 @@
         <label>Weight</label>
 
         <input type="number" formControlName="weight" placeholder="in kg" />
+        @if(consultationForm.get('vitals.weight')?.invalid && consultationForm.get('vitals.weight')?.touched){
+        <span class="error-text">Weight must be between 0 and 500 kg</span>
+        }
       </div>
     </div>
 
@@ -127,6 +149,9 @@
             <label>Medicine Name</label>
 
             <input type="text" formControlName="medicineName" />
+            @if(prescription.get('medicineName')?.invalid && prescription.get('medicineName')?.touched){
+            <span class="error-text">Medicine name is required</span>
+            }
           </div>
 
           <!-- Dosage -->
@@ -135,6 +160,9 @@
             <label>Dosage</label>
 
             <input type="text" formControlName="dosage" />
+            @if(prescription.get('dosage')?.invalid && prescription.get('dosage')?.touched){
+            <span class="error-text">Dosage is required</span>
+            }
           </div>
 
           <!-- Frequency -->
@@ -143,6 +171,9 @@
             <label>Frequency/Day</label>
 
             <input type="text" formControlName="frequency" />
+            @if(prescription.get('frequency')?.invalid && prescription.get('frequency')?.touched){
+            <span class="error-text">Frequency is required</span>
+            }
           </div>
 
           <!-- Duration -->
@@ -151,6 +182,9 @@
             <label>Duration</label>
 
             <input type="text" formControlName="duration" />
+            @if(prescription.get('duration')?.invalid && prescription.get('duration')?.touched){
+            <span class="error-text">Duration is required</span>
+            }
           </div>
 
           <!-- Remove Button -->

@@ -1,0 +1,105 @@
+.pagination-card {
+  margin-top: 12px;
+
+  padding: 10px 14px;
+
+  border-radius: 12px;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 12px;
+
+  flex-wrap: wrap;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  backdrop-filter: none;
+
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.total-records {
+  font-size: 14px;
+
+  font-weight: 700;
+
+  color: #475569;
+}
+
+.pagination-controls {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  flex-wrap: wrap;
+}
+
+.pagination-controls span {
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #475569;
+}
+
+.pagination-controls button {
+  border: none;
+
+  padding: 8px 12px;
+
+  border-radius: 8px;
+
+  background: rgba(59, 130, 246, 0.12);
+
+  color: #2563eb;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+.pagination-controls select {
+  padding: 8px 10px;
+
+  border-radius: 8px;
+
+  border: 1px solid #cbd5e1;
+
+  background: #ffffff;
+
+  font-weight: 600;
+
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .pagination-card {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .pagination-controls {
+    justify-content: center;
+  }
+}

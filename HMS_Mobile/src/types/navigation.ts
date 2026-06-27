@@ -1,3 +1,4 @@
+import { PrescriptionGroup } from "./HealthRecord";
 export type RootStackParamList = {
   Splash: undefined;
 
@@ -17,5 +18,8 @@ export type RootStackParamList = {
 
   EditAppointment: {
     id: string;
+  };
+  PrescriptionDetails: {
+    prescription: PrescriptionGroup;
   };
 };

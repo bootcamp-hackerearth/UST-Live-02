@@ -1,14 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  FormBuilder,
-  FormGroup,
-  FormArray,
-  Validators,
-  ReactiveFormsModule
-} from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-
+import { ToastService } from '../../../core/services/toast';
 import { ConsultationService } from '../../../core/services/consultation';
 import { AppointmentService } from '../../../core/services/appointment';
 import { AuthService } from '../../../core/services/auth';
@@ -18,7 +12,8 @@ import { AuthService } from '../../../core/services/auth';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './consultation-form.html',
-  styleUrls: ['./consultation-form.css']
+  styleUrls: ['./consultation-form.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConsultationForm implements OnInit {
   consultationForm!: FormGroup;
@@ -34,7 +29,8 @@ export class ConsultationForm implements OnInit {
     private readonly consultationService: ConsultationService,
     private readonly appointmentService: AppointmentService,
     private readonly authService: AuthService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly toastService: ToastService
   ) {}
 
   // Initialize form and load appointment
@@ -56,16 +52,14 @@ export class ConsultationForm implements OnInit {
       doctorNotes: [''],
 
       vitals: this.fb.group({
-        bloodPressure: [''],
-        pulseRate: [''],
-        oxygenLevel: [''],
-        temperature: [''],
-        weight: ['']
+        bloodPressure: ['', Validators.pattern(/^\d{2,3}\/\d{2,3}$/)],
+        pulseRate: ['', [Validators.min(1), Validators.max(250)]],
+        oxygenLevel: ['', [Validators.min(0), Validators.max(100)]],
+        temperature: ['', [Validators.min(30), Validators.max(45)]],
+        weight: ['', [Validators.min(0), Validators.max(500)]]
       }),
 
-      prescriptions: this.fb.array([
-        this.createPrescription()
-      ])
+      prescriptions: this.fb.array([this.createPrescription()])
     });
   }
 
@@ -118,20 +112,15 @@ export class ConsultationForm implements OnInit {
 
     this.isSubmitting = true;
 
-    const currentUser = JSON.parse(
-      localStorage.getItem('user') || '{}'
-    );
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
     const consultationData = {
       appointmentId: this.appointment?._id,
       patientId: this.appointment?.patientId?._id,
-      doctorEmployeeId: currentUser?.employeeId?._id,
 
       diagnosis: this.consultationForm.value.diagnosis,
 
-      symptoms: this.consultationForm.value.symptoms
-        ?.split(',')
-        .map((symptom: string) => symptom.trim()),
+      symptoms: this.consultationForm.value.symptoms?.split(',').map((symptom: string) => symptom.trim()),
 
       doctorNotes: this.consultationForm.value.doctorNotes,
 
@@ -146,18 +135,17 @@ export class ConsultationForm implements OnInit {
       next: (response) => {
         console.log(response);
 
-        alert('Consultation completed successfully');
+        this.toastService.success('Consultation completed successfully');
 
         this.isSubmitting = false;
 
-        this.router.navigate([
-          '/consultations',
-          response.data._id
-        ]);
+        this.router.navigate(['/doctor-queue']);
       },
 
       error: (error) => {
         console.log(error);
+
+        this.toastService.error(error?.error?.message ?? 'Failed to create consultation');
 
         this.isSubmitting = false;
       }

@@ -177,6 +177,18 @@ textarea {
   transition: all 0.3s ease;
   box-sizing: border-box;
   font-family: inherit;
+  line-height: 1.2;
+}
+
+select {
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.location-select {
+  padding-right: 42px;
 }
 
 input:focus,
@@ -325,10 +337,7 @@ input.ng-invalid.ng-touched,
 select.ng-invalid.ng-touched,
 textarea.ng-invalid.ng-touched {
   border: 1px solid #ef4444 !important;
-  box-shadow: 0 0 0 3px rgba(
-    239,
-    68,
-    68,
-    0.1
-  );
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
+
+ 

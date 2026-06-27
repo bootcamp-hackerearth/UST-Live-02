@@ -1,60 +1,39 @@
 const bcrypt = require("bcryptjs");
 
 const Patient = require("../../models/Patient");
+
 const User = require("../../models/User");
 
 const ROLES = require("../../constants/roles");
+
 const STATUS = require("../../constants/status");
 
 const generatePatientId = require("../../utils/generatePatientId");
+const ApiError = require("../../utils/ApiError");
 
 const selfRegisterPatient = async (patientData) => {
-  const {
-    firstName,
-    lastName,
-    email,
-    phone,
-    password,
-  } = patientData;
+  const { firstName, lastName, email, phone, password } = patientData;
 
-  /*
-  |--------------------------------------------------------------------------
-  | Duplicate Email Check
-  |--------------------------------------------------------------------------
-  */
   const existingUser = await User.findOne({
     email: email.toLowerCase(),
+    isDeleted: false,
   });
 
   if (existingUser) {
-    throw new Error("Email already registered");
+    throw new ApiError(409, "Email already registered", "EMAIL_ALREADY_REGISTERED");
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Duplicate Phone Check
-  |--------------------------------------------------------------------------
-  */
   const existingPatient = await Patient.findOne({
     phone,
+    isDeleted: false,
   });
 
   if (existingPatient) {
-    throw new Error("Phone number already registered");
+    throw new ApiError(409, "Phone number already registered", "PHONE_ALREADY_REGISTERED");
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Generate Patient ID
-  |--------------------------------------------------------------------------
-  */
   const patientId = await generatePatientId();
 
-  /*
-  |--------------------------------------------------------------------------
-  | Create Patient
-  |--------------------------------------------------------------------------
-  */
   const patient = await Patient.create({
     patientId,
 
@@ -62,30 +41,21 @@ const selfRegisterPatient = async (patientData) => {
 
     lastName,
 
-    email,
+    email: email.toLowerCase(),
 
     phone,
 
     gender: "OTHER",
 
     dateOfBirth: new Date(),
+
+    status: STATUS.ACTIVE,
+
+    createdBy: null,
   });
 
-  /*
-  |--------------------------------------------------------------------------
-  | Hash Password
-  |--------------------------------------------------------------------------
-  */
-  const passwordHash = await bcrypt.hash(
-    password,
-    10,
-  );
+  const passwordHash = await bcrypt.hash(password, 10);
 
-  /*
-  |--------------------------------------------------------------------------
-  | Create User
-  |--------------------------------------------------------------------------
-  */
   await User.create({
     email: email.toLowerCase(),
 

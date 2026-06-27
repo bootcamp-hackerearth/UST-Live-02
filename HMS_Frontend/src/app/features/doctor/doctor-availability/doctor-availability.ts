@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
@@ -9,22 +9,15 @@ import { EmployeeService } from '../../../core/services/employee';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './doctor-availability.html',
-  styleUrls: ['./doctor-availability.css']
+  styleUrls: ['./doctor-availability.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DoctorAvailability implements OnInit {
   isSubmitting = false;
 
   availabilityForm: any;
 
-  workingDays = [
-    'MONDAY',
-    'TUESDAY',
-    'WEDNESDAY',
-    'THURSDAY',
-    'FRIDAY',
-    'SATURDAY',
-    'SUNDAY'
-  ];
+  workingDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
   constructor(
     private readonly fb: FormBuilder,
@@ -108,24 +101,22 @@ export class DoctorAvailability implements OnInit {
 
     this.isSubmitting = true;
 
-    this.employeeService
-      .updateDoctorAvailability(this.availabilityForm.value)
-      .subscribe({
-        next: () => {
-          this.isSubmitting = false;
+    this.employeeService.updateDoctorAvailability(this.availabilityForm.value).subscribe({
+      next: () => {
+        this.isSubmitting = false;
 
-          this.cdr.detectChanges();
+        this.cdr.detectChanges();
 
-          alert('Availability updated successfully');
-        },
+        alert('Availability updated successfully');
+      },
 
-        error: (error) => {
-          console.log(error);
+      error: (error) => {
+        console.log(error);
 
-          this.isSubmitting = false;
+        this.isSubmitting = false;
 
-          this.cdr.detectChanges();
-        }
-      });
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

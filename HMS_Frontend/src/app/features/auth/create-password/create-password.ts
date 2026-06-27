@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -9,7 +9,8 @@ import { AuthService } from '../../../core/services/auth';
   selector: 'app-create-password',
   imports: [ReactiveFormsModule],
   templateUrl: './create-password.html',
-  styleUrl: './create-password.css'
+  styleUrl: './create-password.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CreatePassword {
   passwordForm: FormGroup;
@@ -26,7 +27,8 @@ export class CreatePassword {
     private readonly fb: FormBuilder,
     private readonly router: Router,
     private readonly tokenService: TokenService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.passwordForm = this.fb.group({
       temporaryPassword: ['', Validators.required],
@@ -78,6 +80,7 @@ export class CreatePassword {
       error: (error) => {
         console.log(error);
         console.log(error.error.errors);
+        this.cdr.markForCheck();
       }
     });
   }

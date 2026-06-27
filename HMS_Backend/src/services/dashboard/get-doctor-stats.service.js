@@ -1,18 +1,22 @@
 const Appointment = require("../../models/Appointment");
+const STATUS = require("../../constants/status");
 
 const getDoctorStatsService = async (doctorEmployeeId) => {
   const totalAppointments = await Appointment.countDocuments({
     doctorEmployeeId,
+    isDeleted: false,
   });
 
   const completedConsultations = await Appointment.countDocuments({
     doctorEmployeeId,
-    status: "COMPLETED",
+    status: STATUS.COMPLETED,
+    isDeleted: false,
   });
 
   const pendingConsultations = await Appointment.countDocuments({
     doctorEmployeeId,
-    status: "BOOKED",
+    status: STATUS.BOOKED,
+    isDeleted: false,
   });
 
   const today = new Date();
@@ -24,6 +28,7 @@ const getDoctorStatsService = async (doctorEmployeeId) => {
   const todayPatients = await Appointment.countDocuments({
     doctorEmployeeId,
     appointmentDate: todayString,
+    isDeleted: false,
   });
 
   return {

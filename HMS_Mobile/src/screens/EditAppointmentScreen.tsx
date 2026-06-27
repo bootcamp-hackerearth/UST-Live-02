@@ -4,18 +4,19 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  StyleSheet,
+  View,
 } from "react-native";
-import { SafeAreaView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import GlassCard from "../../src/components/cards/GlassCard";
 
 import PrimaryButton from "../../src/components/buttons/PrimaryButton";
 
 import TimeSlotSelector from "../../src/components/selectors/TimeSlotSelectors";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { useRoute } from "@react-navigation/native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { minLength } from "../../src/utils/validators";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -24,7 +25,9 @@ import {
   getAppointmentById,
   getAvailableSlots,
   updateMyAppointment,
+  clearAppointmentCache,
 } from "../../src/services/appointment.service";
+import { formatLocalDate } from "../../src/utils/date";
 
 export default function EditAppointment() {
   const navigation = useNavigation<any>();
@@ -44,12 +47,9 @@ export default function EditAppointment() {
   const [errors, setErrors] = useState<any>({});
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadAppointment();
-  }, []);
-
-  const loadAppointment = async () => {
+  const loadAppointment = useCallback(async () => {
     try {
       const response = await getAppointmentById(id as string);
 
@@ -65,10 +65,20 @@ export default function EditAppointment() {
     } catch {
       Alert.alert("Failed to load appointment");
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    loadAppointment();
+  }, [loadAppointment]);
 
   const loadSlots = async () => {
     try {
+      if (!appointment || !appointmentDate) {
+        Alert.alert("Please select an appointment date");
+
+        return;
+      }
+
       const response = await getAvailableSlots(
         appointment.doctorEmployeeId._id,
 
@@ -105,6 +115,12 @@ export default function EditAppointment() {
   };
   const handleUpdate = async () => {
     try {
+      if (!validateForm()) {
+        return;
+      }
+
+      setSubmitting(true);
+
       await updateMyAppointment(
         id as string,
 
@@ -116,7 +132,7 @@ export default function EditAppointment() {
           symptoms: symptoms ? [symptoms] : [],
         },
       );
-
+      clearAppointmentCache();
       Alert.alert(
         "Success",
 
@@ -136,6 +152,8 @@ export default function EditAppointment() {
 
         error?.response?.data?.message || "Update failed",
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -211,13 +229,16 @@ export default function EditAppointment() {
                 setShowDatePicker(false);
 
                 if (selectedDate) {
-                  const date = selectedDate.toISOString().split("T")[0];
+                  const date = formatLocalDate(selectedDate);
 
                   setAppointmentDate(date);
+                  setSlots([]);
+                  setAppointmentTime("");
 
                   setErrors({
                     ...errors,
                     appointmentDate: "",
+                    appointmentTime: "",
                   });
                 }
               }}
@@ -297,7 +318,11 @@ export default function EditAppointment() {
           <Text style={styles.summary}>Time: {appointmentTime}</Text>
         </GlassCard>
 
-        <PrimaryButton title="Save Changes" onPress={handleUpdate} />
+        <PrimaryButton
+          title="Save Changes"
+          loading={submitting}
+          onPress={handleUpdate}
+        />
       </ScrollView>
     </SafeAreaView>
   );

@@ -61,7 +61,6 @@ const employeeSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Medical registration number for doctors
     medicalRegistrationNo: {
       type: String,
       trim: true,
@@ -83,12 +82,7 @@ const employeeSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        STATUS.ACTIVE,
-        STATUS.INACTIVE,
-        STATUS.PENDING,
-        STATUS.REJECTED,
-      ],
+      enum: [STATUS.ACTIVE, STATUS.INACTIVE, STATUS.PENDING, STATUS.REJECTED],
       default: STATUS.PENDING,
     },
 
@@ -102,52 +96,112 @@ const employeeSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // Doctor availability configuration
     availability: {
       workingDays: [
         {
           type: String,
         },
       ],
-
       startTime: {
         type: String,
       },
-
       endTime: {
         type: String,
       },
-
       slotDuration: {
         type: Number,
         default: 15,
       },
-
       breakStartTime: {
         type: String,
       },
-
       breakEndTime: {
         type: String,
       },
-
       maxPatientsPerDay: {
         type: Number,
         default: 40,
       },
-
       isAvailable: {
         type: Boolean,
         default: true,
       },
     },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    approvalDate: {
+      type: Date,
+      default: null,
+    },
+
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    rejectedDate: {
+      type: Date,
+      default: null,
+    },
+
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
-const Employee = mongoose.model("Employee", employeeSchema);
+employeeSchema.index({
+  status: 1,
+  isDeleted: 1,
+});
+employeeSchema.index({
+  designation: 1,
+  isDeleted: 1,
+});
 
-module.exports = Employee;
+employeeSchema.index({
+  status: 1,
+  department: 1,
+  isDeleted: 1,
+});
+module.exports = mongoose.model("Employee", employeeSchema);

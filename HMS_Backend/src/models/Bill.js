@@ -18,7 +18,7 @@ const billItemSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const billSchema = new mongoose.Schema(
@@ -69,7 +69,7 @@ const billSchema = new mongoose.Schema(
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
 const Bill = mongoose.model("Bill", billSchema);

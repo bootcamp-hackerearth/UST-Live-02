@@ -1,0 +1,23 @@
+<div class="pagination-card">
+  <div class="total-records">Total: {{ totalRecords }}</div>
+
+  <div class="pagination-controls">
+    <button type="button" (click)="previous.emit()" [disabled]="page === 1">Previous</button>
+
+    <span>Page {{ page }} of {{ totalPages }}</span>
+
+    <button type="button" (click)="next.emit()" [disabled]="page === totalPages">Next</button>
+
+    @if(showPageSize){
+
+    <select [value]="limit" (change)="changePageSize($event)">
+      <option value="10">10</option>
+
+      <option value="20">20</option>
+
+      <option value="50">50</option>
+    </select>
+
+    }
+  </div>
+</div>

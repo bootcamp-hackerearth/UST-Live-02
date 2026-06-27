@@ -1,46 +1,93 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
+
 import { RouterLink } from '@angular/router';
 
 import { PatientService } from '../../../core/services/patient';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { NodeService } from '../../../core/services/node';
 
 @Component({
   selector: 'app-patient-list',
+
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+
+  imports: [CommonModule, FormsModule, RouterLink, PaginationComponent],
+
   templateUrl: './patient-list.html',
-  styleUrls: ['./patient-list.css']
+
+  styleUrls: ['./patient-list.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PatientList implements OnInit {
   patients: any[] = [];
-  filteredPatients: any[] = [];
 
-  searchTerm = '';
   userRole = '';
+
+  search = '';
+  gender = '';
+  bloodGroup = '';
+
+  startDate = '';
+  endDate = '';
+
+  page = 1;
+  limit = 10;
+
+  totalRecords = 0;
+  totalPages = 0;
 
   constructor(
     private readonly patientService: PatientService,
+    public readonly nodeService: NodeService,
+
     private readonly cdr: ChangeDetectorRef
   ) {}
 
-  // Load patients on page load
   ngOnInit(): void {
     this.userRole = localStorage.getItem('role') || '';
-
-    console.log('ROLE:', this.userRole);
 
     this.loadPatients();
   }
 
-  // Get all patients
   loadPatients(): void {
-    this.patientService.getPatients().subscribe({
+    const params: any = {
+      page: this.page,
+      limit: this.limit
+    };
+
+    if (this.search.trim()) {
+      params.search = this.search;
+    }
+
+    if (this.gender) {
+      params.gender = this.gender;
+    }
+
+    if (this.bloodGroup) {
+      params.bloodGroup = this.bloodGroup;
+    }
+
+    if (this.startDate) {
+      params.startDate = this.startDate;
+    }
+
+    if (this.endDate) {
+      params.endDate = this.endDate;
+    }
+
+    this.patientService.getPatients(params).subscribe({
       next: (response) => {
         console.log(response);
 
         this.patients = response.data;
-        this.filteredPatients = response.data;
+
+        this.totalRecords = response.meta?.total || 0;
+
+        this.totalPages = response.meta?.totalPages || 0;
 
         this.cdr.detectChanges();
       },
@@ -51,17 +98,56 @@ export class PatientList implements OnInit {
     });
   }
 
-  // Search patients
-  searchPatients(): void {
-    const search = this.searchTerm.toLowerCase();
+  onFilterChange(): void {
+    this.page = 1;
 
-    this.filteredPatients = this.patients.filter((patient) => {
-      return (
-        patient.firstName?.toLowerCase().includes(search) ||
-        patient.lastName?.toLowerCase().includes(search) ||
-        patient.patientId?.toLowerCase().includes(search) ||
-        patient.phone?.includes(search)
-      );
-    });
+    this.loadPatients();
   }
+
+  previousPage(): void {
+    if (this.page > 1) {
+      this.page--;
+
+      this.loadPatients();
+    }
+  }
+
+  nextPage(): void {
+    if (this.page < this.totalPages) {
+      this.page++;
+
+      this.loadPatients();
+    }
+  }
+
+  changePageSize(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+
+    this.limit = Number(select.value);
+
+    this.page = 1;
+
+    this.loadPatients();
+  }
+  deletePatient(id: string): void {
+  if (
+    !confirm(
+      'Delete this patient?'
+    )
+  ) {
+    return;
+  }
+
+  this.patientService
+    .deletePatient(id)
+    .subscribe({
+      next: () => {
+        this.loadPatients();
+      },
+
+      error: (error) => {
+        console.log(error);
+      }
+    });
+}
 }

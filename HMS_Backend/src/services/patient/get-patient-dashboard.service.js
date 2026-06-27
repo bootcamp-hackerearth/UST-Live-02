@@ -1,113 +1,84 @@
-const Patient =
-require("../../models/Patient");
+const Patient = require("../../models/Patient");
+const ApiError = require("../../utils/ApiError");
+const Appointment = require("../../models/Appointment");
+const STATUS = require("../../constants/status");
 
-const Appointment =
-require("../../models/Appointment");
-
-const getPatientDashboard =
-async (patientId) => {
-
-  const patient =
-    await Patient.findById(
-      patientId
-    );
+const getPatientDashboard = async (patientId) => {
+  const patient = await Patient.findOne({
+    _id: patientId,
+    isDeleted: false,
+  });
 
   if (!patient) {
-
-    throw new Error(
-      "Patient not found"
-    );
+    throw new ApiError(404, "Patient not found", "PATIENT_NOT_FOUND");
   }
 
-  const pendingCount =
-    await Appointment.countDocuments({
+  const baseFilter = {
+    patientId,
+    isDeleted: false,
+  };
 
-      patientId,
+  const pendingCount = await Appointment.countDocuments({
+    ...baseFilter,
+    status: STATUS.PENDING,
+  });
 
-      status:
-        "PENDING",
-    });
+  const bookedCount = await Appointment.countDocuments({
+    ...baseFilter,
+    status: STATUS.BOOKED,
+  });
 
-  const bookedCount =
-    await Appointment.countDocuments({
+  const completedCount = await Appointment.countDocuments({
+    ...baseFilter,
+    status: STATUS.COMPLETED,
+  });
 
-      patientId,
+  const cancelledCount = await Appointment.countDocuments({
+    ...baseFilter,
+    status: STATUS.CANCELLED,
+  });
 
-      status:
-        "BOOKED",
-    });
+  const upcomingAppointment = await Appointment.findOne({
+    ...baseFilter,
 
-  const completedCount =
-    await Appointment.countDocuments({
+    status: {
+      $in: [STATUS.PENDING, STATUS.BOOKED],
+    },
+  })
+    .populate({
+      path: "doctorEmployeeId",
 
-      patientId,
+      select: "name department specialization",
 
-      status:
-        "COMPLETED",
-    });
-
-  const cancelledCount =
-    await Appointment.countDocuments({
-
-      patientId,
-
-      status:
-        "CANCELLED",
-    });
-
-  const upcomingAppointment =
-    await Appointment.findOne({
-
-      patientId,
-
-      status: {
-        $in: [
-          "PENDING",
-          "BOOKED",
-        ],
+      match: {
+        isDeleted: false,
       },
     })
-
-      .populate(
-        "doctorEmployeeId"
-      )
-
-      .sort({
-        appointmentDate: 1,
-      });
+    .sort({
+      appointmentDate: 1,
+    });
 
   return {
-
     patient: {
+      firstName: patient.firstName,
 
-      firstName:
-        patient.firstName,
+      lastName: patient.lastName,
 
-      lastName:
-        patient.lastName,
-
-      patientId:
-        patient.patientId,
+      patientId: patient.patientId,
     },
 
     appointmentSummary: {
+      pending: pendingCount,
 
-      pending:
-        pendingCount,
+      booked: bookedCount,
 
-      booked:
-        bookedCount,
+      completed: completedCount,
 
-      completed:
-        completedCount,
-
-      cancelled:
-        cancelledCount,
+      cancelled: cancelledCount,
     },
 
     upcomingAppointment,
   };
 };
 
-module.exports =
-  getPatientDashboard;
+module.exports = getPatientDashboard;

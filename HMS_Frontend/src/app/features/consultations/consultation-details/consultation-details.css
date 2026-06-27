@@ -446,7 +446,6 @@
 }
 
 @media print {
-
   /* Hide everything first */
   body * {
     visibility: hidden;

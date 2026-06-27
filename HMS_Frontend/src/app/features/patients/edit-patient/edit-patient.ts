@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,7 +10,8 @@ import { PatientService } from '../../../core/services/patient';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './edit-patient.html',
-  styleUrls: ['./edit-patient.css']
+  styleUrls: ['./edit-patient.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditPatient implements OnInit {
   patientId = '';
@@ -23,7 +24,8 @@ export class EditPatient implements OnInit {
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly patientService: PatientService
+    private readonly patientService: PatientService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.patientForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -53,10 +55,12 @@ export class EditPatient implements OnInit {
     this.patientService.getDoctors().subscribe({
       next: (response) => {
         this.doctors = response.data;
+        this.cdr.markForCheck();
       },
 
       error: (error) => {
         console.log(error);
+        this.cdr.markForCheck();
       }
     });
   }
@@ -82,10 +86,13 @@ export class EditPatient implements OnInit {
           patientType: patient.patientType,
           assignedDoctor: patient?.assignedDoctor?._id
         });
+
+        this.cdr.markForCheck();
       },
 
       error: (error) => {
         console.log(error);
+        this.cdr.markForCheck();
       }
     });
   }
@@ -97,17 +104,16 @@ export class EditPatient implements OnInit {
     }
 
     this.isSubmitting = true;
+    this.cdr.markForCheck();
 
-    this.patientService.updatePatient(
-      this.patientId,
-      this.patientForm.value
-    ).subscribe({
+    this.patientService.updatePatient(this.patientId, this.patientForm.value).subscribe({
       next: (response) => {
         console.log(response);
 
         alert('Patient Updated Successfully');
 
         this.isSubmitting = false;
+        this.cdr.markForCheck();
 
         this.router.navigate(['/patients']);
       },
@@ -116,6 +122,7 @@ export class EditPatient implements OnInit {
         console.log(error);
 
         this.isSubmitting = false;
+        this.cdr.markForCheck();
       }
     });
   }

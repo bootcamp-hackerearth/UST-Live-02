@@ -29,11 +29,15 @@ const registerPatientMobileValidation = [
     .matches(/^\d{10}$/)
     .withMessage("Phone number must be 10 digits"),
 
-  body("password")
+    body("newPassword")
     .notEmpty()
-    .withMessage("Password is required")
-    .isLength({ min: 8 })
-    .withMessage("Password must be at least 8 characters"),
+    .withMessage("New password is required")
+    .isLength({ min: 8, max: 20 })
+    .withMessage("Password must be between 8 and 20 characters")
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
+    .withMessage(
+      "Password must contain uppercase, lowercase, number and special character",
+    ),
 
   body("confirmPassword")
     .notEmpty()

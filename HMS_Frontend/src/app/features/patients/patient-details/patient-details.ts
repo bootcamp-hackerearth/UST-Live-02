@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
@@ -9,7 +9,8 @@ import { PatientService } from '../../../core/services/patient';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './patient-details.html',
-  styleUrls: ['./patient-details.css']
+  styleUrls: ['./patient-details.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PatientDetails implements OnInit {
   patient: any = {};

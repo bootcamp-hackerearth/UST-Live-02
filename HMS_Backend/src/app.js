@@ -1,17 +1,21 @@
 const express = require("express");
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 const authRoutes = require("./routes/auth.routes");
-
+const path = require("node:path");
+const upload = require("../src/middleware/upload.middleware");
 const employeeRoutes = require("./routes/employee.routes");
 const appointmentRoutes = require("./routes/appointment.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const consultationRoutes = require("./routes/consultation.routes");
 const patientRoutes = require("./routes/patient.routes");
-
+const errorMiddleware = require("./middleware/error.middleware");
+const nodeRoutes = require("./routes/node.routes");
+const healthRecordRoutes = require("./routes/health-record.routes");
+const locationRoutes = require("../src/routes/loaction.routes");
 const cors = require("cors");
 const app = express();
-app.disable('x-powered-by');
-app.use(cors({origin: ["http://localhost:4200"],credentials: true}));
+app.disable("x-powered-by");
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 app.use(
@@ -40,7 +44,7 @@ app.use(
 
   appointmentRoutes,
 );
-
+app.use("/api/locations", locationRoutes);
 app.use(
   "/api/patients",
 
@@ -52,12 +56,11 @@ app.use(
 
   consultationRoutes,
 );
+app.use("/api/health-records", healthRecordRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-app.use((error, req, res, next) => {
-  return res.status(500).json({
-    success: false,
-    message: error.message || "Internal server error",
-  });
-});
+app.use("/api/nodes", nodeRoutes);
+
+app.use(errorMiddleware);
 
 module.exports = app;

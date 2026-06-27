@@ -55,5 +55,4 @@ const appointmentApprovedTemplate = ({
   `;
 };
 
-module.exports =
-  appointmentApprovedTemplate;
+module.exports = appointmentApprovedTemplate;

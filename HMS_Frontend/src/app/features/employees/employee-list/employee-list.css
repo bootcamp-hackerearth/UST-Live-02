@@ -115,6 +115,26 @@ button {
   box-shadow: 0 15px 35px rgba(59, 130, 246, 0.25);
 }
 
+.filters-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filters-row input,
+.filters-row select {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 24px;
+}
 /*
 |--------------------------------------------------------------------------
 | Search
@@ -213,6 +233,46 @@ tbody td:last-child {
   border-bottom-right-radius: 22px;
 }
 
+.appointment-count {
+  padding: 14px 22px;
+
+  border-radius: 18px;
+
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  color: white;
+
+  font-weight: 700;
+
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.25);
+}
+
+.filters-wrapper select,
+.filters-wrapper input[type='date'] {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #dbe3ee;
+}
+
+.pagination-wrapper {
+  margin-top: 24px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.pagination-controls button,
+.pagination-controls select {
+  padding: 10px 16px;
+  border-radius: 12px;
+}
 /*
 |--------------------------------------------------------------------------
 | Employee
@@ -252,6 +312,158 @@ tbody td:last-child {
   margin-bottom: 5px;
 
   color: #0f172a;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Compact HMS Employee List Redesign
+|--------------------------------------------------------------------------
+*/
+.employees-page {
+  width: 100%;
+  gap: 14px;
+}
+
+p,
+span,
+a,
+li,
+td,
+label {
+  margin-left: 0;
+  font-size: 14px;
+}
+
+.employees-header {
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.page-label {
+  margin-bottom: 4px;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+}
+
+.employees-header h1 {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.employee-count,
+.appointment-count {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #2563eb;
+  box-shadow: none;
+}
+
+.filters-wrapper,
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.search-box {
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.filters-row input,
+.filters-row select,
+.filters-wrapper select,
+.filters-wrapper input[type='date'] {
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.table-wrapper {
+  padding: 0;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+thead {
+  background: #f8fafc;
+}
+
+thead th {
+  padding: 12px 14px;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+}
+
+tbody tr {
+  background: #ffffff;
+}
+
+tbody tr:hover {
+  transform: none;
+  box-shadow: none;
+  background: #f8fafc;
+}
+
+tbody td {
+  padding: 12px 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+tbody td:first-child,
+tbody td:last-child {
+  border-radius: 0;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #2563eb;
+  font-size: 16px;
+}
+
+.pagination,
+.pagination-wrapper {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.pagination-controls {
+  gap: 10px;
+}
+
+.pagination-controls button,
+.pagination-controls select {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+@media (max-width: 992px) {
+  .filters-wrapper,
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .employee-info span {
@@ -322,7 +534,58 @@ tbody td:last-child {
 
   color: #b45309;
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
 
+.pending-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 14px 22px;
+  border-radius: 18px;
+
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+
+  transition: all 0.3s ease;
+
+  box-shadow: 0 15px 35px rgba(245, 158, 11, 0.25);
+}
+
+.pending-btn:hover {
+  transform: translateY(-3px);
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 14px 22px;
+  border-radius: 18px;
+
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+
+  transition: all 0.3s ease;
+
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.25);
+}
+
+.add-btn:hover {
+  transform: translateY(-3px);
+}
 /*
 |--------------------------------------------------------------------------
 | Actions
@@ -396,5 +659,295 @@ tbody td:last-child {
 
   table {
     min-width: 1100px;
+  }
+}
+.action-btn.delete {
+  background: rgba(
+    220,
+    53,
+    69,
+    0.15
+  );
+
+  color: #dc3545;
+
+  border: 1px solid
+    rgba(
+      220,
+      53,
+      69,
+      0.3
+    );
+
+  transition: 0.25s ease;
+}
+
+.action-btn.delete:hover {
+  background: #dc3545;
+
+  color: #fff;
+
+  border-color: #dc3545;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Final Appointment-Style Alignment
+|--------------------------------------------------------------------------
+*/
+.employees-page {
+  gap: 14px;
+}
+
+.employees-header {
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.employees-header h1 {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.header-actions {
+  gap: 8px;
+}
+
+.add-btn,
+.pending-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.add-btn {
+  background: #2563eb;
+}
+
+.pending-btn {
+  background: #d97706;
+}
+
+.add-btn:hover,
+.pending-btn:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.filters-wrapper,
+.filters-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.search-box {
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.search-box input {
+  padding: 10px 0;
+}
+
+.filters-row input,
+.filters-row select,
+.filters-wrapper select,
+.filters-wrapper input[type='date'] {
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.table-wrapper {
+  padding: 0;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+thead {
+  background: #f8fafc;
+}
+
+thead th {
+  padding: 12px 14px;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+}
+
+tbody tr {
+  background: #ffffff;
+}
+
+tbody tr:hover {
+  transform: none;
+  box-shadow: none;
+  background: #f8fafc;
+}
+
+tbody td {
+  padding: 12px 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+tbody td:first-child,
+tbody td:last-child {
+  border-radius: 0;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #2563eb;
+  font-size: 16px;
+}
+
+.designation-badge,
+.department-badge,
+.status-badge {
+  padding: 5px 9px;
+}
+
+.action-btn {
+  padding: 7px 10px;
+  border-radius: 8px;
+}
+
+.action-btn:hover,
+.action-btn.delete:hover {
+  transform: none;
+}
+
+.pagination,
+.pagination-wrapper {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.pagination-controls {
+  gap: 10px;
+}
+
+.pagination-controls button,
+.pagination-controls select {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+@media (max-width: 992px) {
+  .filters-wrapper,
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Final Filter And Column Alignment
+|--------------------------------------------------------------------------
+*/
+.filters-wrapper {
+  display: block !important;
+}
+
+.filters-row {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: minmax(260px, 1.3fr) minmax(140px, 0.75fr) minmax(160px, 0.85fr) minmax(160px, 0.85fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.filters-row > * {
+  min-width: 0 !important;
+}
+
+.table-wrapper table {
+  table-layout: fixed !important;
+}
+
+.table-wrapper th:nth-child(1),
+.table-wrapper td:nth-child(1) {
+  width: 26%;
+}
+
+.table-wrapper th:nth-child(2),
+.table-wrapper td:nth-child(2) {
+  width: 14%;
+}
+
+.table-wrapper th:nth-child(3),
+.table-wrapper td:nth-child(3),
+.table-wrapper th:nth-child(4),
+.table-wrapper td:nth-child(4),
+.table-wrapper th:nth-child(5),
+.table-wrapper td:nth-child(5) {
+  width: 14%;
+}
+
+.table-wrapper th:nth-child(6),
+.table-wrapper td:nth-child(6) {
+  width: 18%;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+  text-align: left !important;
+}
+
+.employee-info {
+  min-width: 0 !important;
+}
+
+.employee-info h4 {
+  margin: 0 0 3px !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+}
+
+.employee-info span {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  font-size: 12px !important;
+}
+
+.actions {
+  justify-content: flex-start !important;
+}
+
+@media (max-width: 900px) {
+  .filters-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .table-wrapper table {
+    min-width: 980px;
   }
 }

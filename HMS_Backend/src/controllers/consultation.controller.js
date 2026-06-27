@@ -1,216 +1,96 @@
 const mongoose = require("mongoose");
 
+const asyncHandler = require("../utils/asyncHandler");
+const ApiError = require("../utils/ApiError");
+const ApiResponse = require("../utils/ApiResponse");
+
 const createConsultationService = require("../services/consultation/create-consultation.service");
 const getConsultationByIdService = require("../services/consultation/get-consultation-by-id.service");
 const getConsultationByAppointmentService = require("../services/consultation/get-consultation-by-appointment.service");
 const updateConsultationService = require("../services/consultation/update-consultation.service");
 const getConsultationsService = require("../services/consultation/get-consultations.service");
 const getPrescriptionDataService = require("../services/consultation/download-prescription-pdf.service");
-
+const deleteConsultationService = require("../services/consultation/delete-consultation.service");
 const generatePrescriptionPdf = require("../utils/generatePrescriptionPdf");
 
-const createConsultation = async (req, res) => {
-  try {
-    const consultation = await createConsultationService(req.body);
-
-    return res.status(201).json({
-      success: true,
-      message: "Consultation created successfully",
-      data: consultation,
-    });
-  } catch (error) {
-    console.error("CREATE CONSULTATION ERROR:", error);
-
-    if (error.message === "Consultation already exists") {
-      return res.status(409).json({
-        success: false,
-        message: "A consultation already exists for this appointment",
-      });
-    }
-
-    if (error.message === "Appointment not found") {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found",
-      });
-    }
-
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create consultation",
-    });
+const validateObjectId = (id, message) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, message, "INVALID_ID");
   }
 };
 
-const getConsultationByAppointment = async (req, res) => {
-  try {
-    const { appointmentId } = req.params;
+const createConsultation = asyncHandler(async (req, res) => {
+  const consultation = await createConsultationService(req.body, req.user.userId);
 
-    if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid appointment ID",
-      });
-    }
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Consultation created successfully", consultation));
+});
 
-    const consultation =
-      await getConsultationByAppointmentService(appointmentId);
+const getConsultationByAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
 
-    return res.status(200).json({
-      success: true,
-      message: "Consultation retrieved successfully",
-      data: consultation,
-    });
-  } catch (error) {
-    console.error("GET CONSULTATION BY APPOINTMENT ERROR:", error);
+  validateObjectId(appointmentId, "Invalid appointment ID");
 
-    if (error.message === "Consultation not found") {
-      return res.status(404).json({
-        success: false,
-        message: "No consultation found for the provided appointment",
-      });
-    }
+  const consultation = await getConsultationByAppointmentService(appointmentId);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve consultation details",
-    });
-  }
-};
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Consultation retrieved successfully", consultation));
+});
 
-const updateConsultation = async (req, res) => {
-  try {
-    const { id } = req.params;
+const updateConsultation = asyncHandler(async (req, res) => {
+  const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid consultation ID",
-      });
-    }
+  validateObjectId(id, "Invalid consultation ID");
 
-    const consultation = await updateConsultationService(id, req.body);
+  const consultation = await updateConsultationService(
+    id,
+    req.body,
+    req.user.userId,
+  );
 
-    return res.status(200).json({
-      success: true,
-      message: "Consultation updated successfully",
-      data: consultation,
-    });
-  } catch (error) {
-    console.error("UPDATE CONSULTATION ERROR:", error);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Consultation updated successfully", consultation));
+});
 
-    if (error.message === "Consultation not found") {
-      return res.status(404).json({
-        success: false,
-        message: "Consultation not found",
-      });
-    }
+const getConsultations = asyncHandler(async (req, res) => {
+  const result = await getConsultationsService(req.user, req.query);
 
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
+  return res.status(200).json({
+    ...new ApiResponse(200, "Consultations retrieved successfully", result.data),
+    meta: result.meta,
+  });
+});
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update consultation",
-    });
-  }
-};
+const downloadPrescriptionPdf = asyncHandler(async (req, res) => {
+  const { consultationId } = req.params;
 
-const getConsultations = async (req, res) => {
-  try {
-    const consultations = await getConsultationsService();
+  validateObjectId(consultationId, "Invalid consultation ID");
 
-    return res.status(200).json({
-      success: true,
-      message: "Consultations retrieved successfully",
-      data: consultations,
-    });
-  } catch (error) {
-    console.error("GET CONSULTATIONS ERROR:", error);
+  const consultation = await getPrescriptionDataService(consultationId);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve consultations",
-    });
-  }
-};
+  generatePrescriptionPdf(consultation, res);
+});
 
-const downloadPrescriptionPdf = async (req, res) => {
-  try {
-    const { consultationId } = req.params;
+const getConsultationById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(consultationId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid consultation ID",
-      });
-    }
+  validateObjectId(id, "Invalid consultation ID");
 
-    const consultation = await getPrescriptionDataService(consultationId);
+  const consultation = await getConsultationByIdService(id);
 
-    generatePrescriptionPdf(consultation, res);
-  } catch (error) {
-    console.error("DOWNLOAD PRESCRIPTION PDF ERROR:", error);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Consultation retrieved successfully", consultation));
+});
 
-    if (error.message === "Consultation not found") {
-      return res.status(404).json({
-        success: false,
-        message: "Consultation not found",
-      });
-    }
+const deleteConsultation = asyncHandler(async (req, res) => {
+  const result = await deleteConsultationService(req.params.id, req.user.userId);
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to generate prescription PDF",
-    });
-  }
-};
-
-const getConsultationById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid consultation ID",
-      });
-    }
-
-    const consultation = await getConsultationByIdService(id);
-
-    return res.status(200).json({
-      success: true,
-      message: "Consultation retrieved successfully",
-      data: consultation,
-    });
-  } catch (error) {
-    console.error("GET CONSULTATION BY ID ERROR:", error);
-
-    if (error.message === "Consultation not found") {
-      return res.status(404).json({
-        success: false,
-        message: "Consultation not found",
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve consultation details",
-    });
-  }
-};
+  return res.status(200).json(new ApiResponse(200, result.message, result));
+});
 
 module.exports = {
   createConsultation,
@@ -219,4 +99,5 @@ module.exports = {
   updateConsultation,
   getConsultations,
   downloadPrescriptionPdf,
+  deleteConsultation,
 };

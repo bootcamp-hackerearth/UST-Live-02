@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { AuthService } from '../../../core/services/auth';
@@ -8,12 +8,16 @@ import { AuthService } from '../../../core/services/auth';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './my-profile.html',
-  styleUrl: './my-profile.css'
+  styleUrl: './my-profile.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MyProfile implements OnInit {
   user: any;
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
   // Load logged-in user profile
   ngOnInit(): void {
@@ -34,10 +38,13 @@ export class MyProfile implements OnInit {
             joiningDate: response?.createdAt
           };
         }
+
+        this.cdr.markForCheck();
       },
 
       error: (error) => {
         console.log(error);
+        this.cdr.markForCheck();
       }
     });
   }

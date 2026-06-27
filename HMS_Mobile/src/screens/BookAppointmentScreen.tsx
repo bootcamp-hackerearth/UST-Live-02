@@ -1,15 +1,14 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import {
-  SafeAreaView,
   StyleSheet,
-  View,
   Text,
   ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { minLength } from "../../src/utils/validators";
 import GlassCard from "../../src/components/cards/GlassCard";
 import ChipSelector from "../../src/components/selectors/ChipSelector";
@@ -17,13 +16,14 @@ import DoctorCard from "../../src/components/cards/DoctorCard";
 import TimeSlotSelector from "../../src/components/selectors/TimeSlotSelectors";
 import PrimaryButton from "../../src/components/buttons/PrimaryButton";
 import { useEffect, useState } from "react";
-
 import { getDoctors } from "../../src/services/employee.service";
 
 import {
   getAvailableSlots,
   bookAppointment,
+  clearAppointmentCache,
 } from "../../src/services/appointment.service";
+import { formatLocalDate } from "../../src/utils/date";
 
 export default function BookAppointment() {
   const navigation = useNavigation<any>();
@@ -42,6 +42,7 @@ export default function BookAppointment() {
 
   const [slots, setSlots] = useState<string[]>([]);
   const [errors, setErrors] = useState<any>({});
+  const [submitting, setSubmitting] = useState(false);
   useEffect(() => {
     loadDoctors();
   }, []);
@@ -78,7 +79,9 @@ export default function BookAppointment() {
     } catch (error: any) {
       Alert.alert(
         "Failed",
-        error?.response?.data?.message || "Failed to load slots",
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load slots",
       );
     }
   };
@@ -121,6 +124,8 @@ export default function BookAppointment() {
         return;
       }
 
+      setSubmitting(true);
+
       await bookAppointment({
         doctorId,
 
@@ -130,6 +135,7 @@ export default function BookAppointment() {
 
         symptoms: symptoms.trim() ? [symptoms] : [],
       });
+      clearAppointmentCache();
 
       Alert.alert("Success", "Appointment request sent", [
         {
@@ -140,6 +146,8 @@ export default function BookAppointment() {
       ]);
     } catch (error: any) {
       Alert.alert("Failed", error?.response?.data?.message || "Booking failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -251,9 +259,16 @@ export default function BookAppointment() {
                 setShowDatePicker(false);
 
                 if (selectedDate) {
-                  const date = selectedDate.toISOString().split("T")[0];
+                  const date = formatLocalDate(selectedDate);
 
                   setAppointmentDate(date);
+                  setSlots([]);
+                  setAppointmentTime("");
+                  setErrors({
+                    ...errors,
+                    appointmentDate: "",
+                    appointmentTime: "",
+                  });
                 }
               }}
             />
@@ -277,21 +292,27 @@ export default function BookAppointment() {
               </Text>
 
               <TimeSlotSelector
-                {...(errors.appointmentTime && (
-                  <Text
-                    style={{
-                      color: "#EF4444",
-                      fontSize: 12,
-                      marginTop: 10,
-                    }}
-                  >
-                    {errors.appointmentTime}
-                  </Text>
-                ))}
                 slots={slots}
                 selectedSlot={appointmentTime}
-                onSelect={setAppointmentTime}
+                onSelect={(slot) => {
+                  setAppointmentTime(slot);
+                  setErrors({
+                    ...errors,
+                    appointmentTime: "",
+                  });
+                }}
               />
+              {errors.appointmentTime && (
+                <Text
+                  style={{
+                    color: "#EF4444",
+                    fontSize: 12,
+                    marginTop: 10,
+                  }}
+                >
+                  {errors.appointmentTime}
+                </Text>
+              )}
             </>
           )}
         </GlassCard>
@@ -340,6 +361,7 @@ export default function BookAppointment() {
 
         <PrimaryButton
           title="Book Appointment"
+          loading={submitting}
           onPress={handleBookAppointment}
         />
       </ScrollView>

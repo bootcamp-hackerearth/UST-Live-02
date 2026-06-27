@@ -1,14 +1,16 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ToastService } from '../../../core/services/toast';
 import { EmployeeService } from '../../../core/services/employee';
+import { NodeService } from '../../../core/services/node';
 
 @Component({
   selector: 'app-pending-employees',
   imports: [CommonModule],
   templateUrl: './pending-employees.html',
-  styleUrl: './pending-employees.css'
+  styleUrl: './pending-employees.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PendingEmployees implements OnInit {
   pendingEmployees: any[] = [];
@@ -17,6 +19,7 @@ export class PendingEmployees implements OnInit {
   constructor(
     private readonly employeeService: EmployeeService,
     private readonly toastService: ToastService,
+    public readonly nodeService: NodeService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -57,31 +60,30 @@ export class PendingEmployees implements OnInit {
       consultationFee = Number(fee);
     }
 
-    this.employeeService.approveEmployee(employee._id, {
-      consultationFee
-    }).subscribe({
-      next: (response: any) => {
-        console.log(response);
+    this.employeeService
+      .approveEmployee(employee._id, {
+        consultationFee
+      })
+      .subscribe({
+        next: (response: any) => {
+          console.log(response);
 
-        this.toastService.show(
-          employee.designation === 'DOCTOR'
-            ? `Doctor approved with consultation fee ₹${consultationFee}`
-            : 'Employee approved successfully',
-          'success'
-        );
+          this.toastService.show(
+            employee.designation === 'DOCTOR'
+              ? `Doctor approved with consultation fee ₹${consultationFee}`
+              : 'Employee approved successfully',
+            'success'
+          );
 
-        this.loadPendingEmployees();
-      },
+          this.loadPendingEmployees();
+        },
 
-      error: (error) => {
-        console.log(error);
+        error: (error) => {
+          console.log(error);
 
-        this.toastService.show(
-          error?.error?.message || 'Failed to approve employee',
-          'error'
-        );
-      }
-    });
+          this.toastService.show(error?.error?.message || 'Failed to approve employee', 'error');
+        }
+      });
   }
 
   // Reject employee

@@ -23,19 +23,11 @@ const registerValidation = [
     .matches(/^\d{10}$/)
     .withMessage("Phone number must contain exactly 10 digits"),
 
-  body("gender")
-    .notEmpty()
-    .withMessage("Gender is required"),
+  body("gender").notEmpty().withMessage("Gender is required"),
 
-  body("department")
-    .trim()
-    .notEmpty()
-    .withMessage("Department is required"),
+  body("department").trim().notEmpty().withMessage("Department is required"),
 
-  body("designation")
-    .trim()
-    .notEmpty()
-    .withMessage("Designation is required"),
+  body("designation").trim().notEmpty().withMessage("Designation is required"),
 
   body("joiningDate")
     .notEmpty()
@@ -50,7 +42,7 @@ const registerValidation = [
     .withMessage("Password must be between 8 and 20 characters")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
     .withMessage(
-      "Password must contain uppercase, lowercase, number and special character"
+      "Password must contain uppercase, lowercase, number and special character",
     ),
 
   body("confirmPassword")
@@ -75,20 +67,13 @@ const registerValidation = [
 ];
 
 const loginValidation = [
-  body("loginId")
-    .notEmpty()
-    .withMessage("Email/EmpId is required"),
+  body("loginId").notEmpty().withMessage("Email/EmpId is required"),
 
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required"),
+  body("password").notEmpty().withMessage("Password is required"),
 ];
 
 const createPasswordValidation = [
-  body("loginId")
-    .trim()
-    .notEmpty()
-    .withMessage("Login ID is required"),
+  body("loginId").trim().notEmpty().withMessage("Login ID is required"),
 
   body("temporaryPassword")
     .notEmpty()
@@ -101,7 +86,7 @@ const createPasswordValidation = [
     .withMessage("Password must be between 8 and 20 characters")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
     .withMessage(
-      "Password must contain uppercase, lowercase, number and special character"
+      "Password must contain uppercase, lowercase, number and special character",
     ),
 
   body("confirmPassword")
@@ -160,7 +145,7 @@ const resetPasswordValidation = [
     .withMessage("Password must be between 8 and 20 characters")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
     .withMessage(
-      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
     ),
 
   body("confirmPassword")

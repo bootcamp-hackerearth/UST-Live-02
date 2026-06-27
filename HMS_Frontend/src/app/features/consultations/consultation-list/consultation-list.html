@@ -10,6 +10,51 @@
 
     <div class="consultation-count">Total: {{ consultations.length }}</div>
   </div>
+  <div class="filters-wrapper">
+    <input type="text" placeholder="Search consultation" [(ngModel)]="search" (input)="onFilterChange()" />
+
+    <select [(ngModel)]="doctor" (change)="onFilterChange()">
+      <option value="">All Doctors</option>
+
+      @for( doctor of doctors; track doctor._id ){
+
+      <option [value]="doctor._id">{{ doctor.name }}</option>
+
+      }
+    </select>
+
+    <select [(ngModel)]="patient" (change)="onFilterChange()">
+      <option value="">All Patients</option>
+
+      @for( patient of patients; track patient._id ){
+
+      <option [value]="patient._id">{{ patient.firstName }} {{ patient.lastName }}</option>
+
+      }
+    </select>
+
+    <select [(ngModel)]="status" (change)="onFilterChange()">
+      <option value="">All Status</option>
+
+      <option value="ACTIVE">Active</option>
+
+      <option value="COMPLETED">Completed</option>
+
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+    <input type="date" [(ngModel)]="startDate" (change)="onFilterChange()" />
+
+    <input type="date" [(ngModel)]="endDate" (change)="onFilterChange()" />
+
+    <select [(ngModel)]="limit" (change)="onFilterChange()">
+      <option [value]="10">10</option>
+
+      <option [value]="20">20</option>
+
+      <option [value]="50">50</option>
+    </select>
+  </div>
 
   <!-- Loading -->
 
@@ -127,6 +172,19 @@
       </tbody>
     </table>
   </div>
+  <app-pagination
+    [page]="page"
+    [totalPages]="meta.totalPages || 1"
+    [totalRecords]="meta.total || 0"
+    [limit]="limit"
+    (previous)="previousPage()"
+    (next)="nextPage()"
+    (pageSizeChange)="
+    limit = $event;
+    page = 1;
+    loadConsultations(false)
+  "
+  ></app-pagination>
 
   } }
 </div>

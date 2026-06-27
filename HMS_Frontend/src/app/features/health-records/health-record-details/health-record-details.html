@@ -1,0 +1,581 @@
+<div class="health-record-details-page">
+  @if (isLoading) {
+
+  <div class="loading-card">Loading Health Record...</div>
+
+  } @else {
+
+  <!-- =========================
+       Patient Information
+  ========================== -->
+
+  <div class="glass-card section-card">
+    <div class="section-header">
+      <div>
+        <p class="section-label">Patient Information</p>
+
+        <h2>{{ patient?.firstName }} {{ patient?.lastName }}</h2>
+      </div>
+
+      <div class="avatar">{{ patient?.firstName?.charAt(0) }}</div>
+    </div>
+
+    <div class="patient-grid">
+      <div class="info-item">
+        <span>UHID</span>
+        <strong>{{ patient?.patientId }}</strong>
+      </div>
+
+      <div class="info-item">
+        <span>Gender</span>
+        <strong>{{ patient?.gender }}</strong>
+      </div>
+
+      <div class="info-item">
+        <span>Blood Group</span>
+        <strong>{{ patient?.bloodGroup || 'N/A' }}</strong>
+      </div>
+
+      <div class="info-item">
+        <span>Date Of Birth</span>
+        <strong>{{ patient?.dateOfBirth | date }}</strong>
+      </div>
+
+      <div class="info-item">
+        <span>Phone</span>
+        <strong>{{ patient?.phone }}</strong>
+      </div>
+    </div>
+
+    <div class="chips-section">
+      <div class="chip-box">
+        <h4>Allergies</h4>
+
+        <div class="chips">
+          @for ( item of patient?.allergies; track $index ) {
+
+          <span class="chip">{{ item }}</span>
+
+          }
+        </div>
+      </div>
+
+      <div class="chip-box">
+        <h4>Chronic Diseases</h4>
+
+        <div class="chips">
+          @for ( item of patient?.chronicDiseases; track $index ) {
+
+          <span class="chip">{{ item }}</span>
+
+          }
+        </div>
+      </div>
+
+      <div class="chip-box">
+        <h4>Current Medications</h4>
+
+        <div class="chips">
+          @for ( item of patient?.currentMedications; track $index ) {
+
+          <span class="chip">{{ item }}</span>
+
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+       Medical Timeline
+  ========================== -->
+
+  <div class="glass-card section-card">
+    <div class="title-row">
+      <h2>Medical Timeline</h2>
+    </div>
+
+    <div class="timeline-container">
+      @if(consultations.length){ @for ( consultation of consultations; track consultation._id ) {
+
+      <div class="timeline-card">
+        <div class="timeline-header">
+          <div class="timeline-left">
+            <div class="timeline-date">
+              <div class="timeline-dot"></div>
+
+              <span>{{ consultation.createdAt | date:'mediumDate' }}</span>
+            </div>
+
+            <h3>Dr. {{ consultation ?.doctorEmployeeId ?.name }}</h3>
+
+            <p>{{ consultation ?.doctorEmployeeId ?.department }}</p>
+
+            <div class="diagnosis-chip">{{ consultation?.diagnosis || 'No diagnosis'}}</div>
+          </div>
+
+          <div class="timeline-actions">
+            <button
+              class="secondary-btn"
+              (click)="
+              toggleTimeline(
+                consultation._id
+              )
+            "
+            >
+              {{ expandedTimeline[ consultation._id ] ? 'Hide Details' : 'View Details' }}
+            </button>
+
+            <button
+              class="primary-btn"
+              (click)="
+              downloadPdf(
+                consultation._id
+              )
+            "
+            >
+              PDF
+            </button>
+          </div>
+        </div>
+
+        @if( expandedTimeline[ consultation._id ] ){
+
+        <div class="timeline-details">
+          <!-- Symptoms -->
+
+          <div class="detail-section">
+            <h4>Symptoms</h4>
+
+            <div class="chips">
+              @for( symptom of consultation?.symptoms; track $index ){
+
+              <span class="chip">{{ symptom }}</span>
+
+              }
+            </div>
+          </div>
+
+          <!-- Vitals -->
+
+          <div class="detail-section">
+            <h4>Vitals</h4>
+
+            <div class="vitals-grid">
+              <div class="vital-card">
+                <span>BP</span>
+
+                <strong>{{ consultation ?.vitals ?.bloodPressure || 'N/A' }}</strong>
+              </div>
+
+              <div class="vital-card">
+                <span>Pulse</span>
+
+                <strong>{{ consultation ?.vitals ?.pulseRate || 'N/A' }}</strong>
+              </div>
+
+              <div class="vital-card">
+                <span>Temp</span>
+
+                <strong>{{ consultation ?.vitals ?.temperature || 'N/A' }}</strong>
+              </div>
+
+              <div class="vital-card">
+                <span>Weight</span>
+
+                <strong>{{ consultation ?.vitals ?.weight || 'N/A' }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Doctor Notes -->
+
+          <div class="detail-section">
+            <h4>Doctor Notes</h4>
+
+            <p>{{ consultation ?.doctorNotes || 'No notes added' }}</p>
+          </div>
+
+          <!-- Prescriptions -->
+
+          <div class="detail-section">
+            <h4>Prescriptions</h4>
+
+            <div class="medicine-list">
+              @for( medicine of consultation ?.prescriptions; track $index ){
+
+              <div class="medicine-card">
+                <h5>{{ medicine ?.medicineName }}</h5>
+
+                <p>Dosage: {{ medicine ?.dosage }}</p>
+
+                <p>Frequency: {{ medicine ?.frequency }}</p>
+
+                <p>Duration: {{ medicine ?.duration }}</p>
+              </div>
+
+              }
+            </div>
+          </div>
+        </div>
+
+        }
+      </div>
+
+      } }@else {
+
+      <div class="empty-state">
+        <div class="empty-icon">🩺</div>
+
+        <h3>No Medical Timeline Available</h3>
+
+        <p>No consultations have been recorded for this patient yet.</p>
+      </div>
+
+      }
+    </div>
+  </div>
+
+  @if( timelineMeta?.totalPages > 1 ){
+
+  <app-pagination
+    [page]="
+    timelineMeta.page
+  "
+    [totalPages]="
+    timelineMeta.totalPages
+  "
+    [totalRecords]="
+    timelineMeta.totalRecords
+  "
+    [limit]="5"
+    [showPageSize]="false"
+    (previous)="
+    onTimelinePageChange(
+      timelinePage - 1
+    )
+  "
+    (next)="
+    onTimelinePageChange(
+      timelinePage + 1
+    )
+  "
+  ></app-pagination>
+
+  }
+  <!-- =========================
+       Lab Reports
+  ========================== -->
+
+  <div class="glass-card section-card">
+    <div class="title-row">
+      <h2>Lab Reports</h2>
+
+      <button class="primary-btn" (click)="openLabModal()">+ Add Report</button>
+    </div>
+
+    <div class="document-list">
+      @if(patient?.labReports?.length){ @for ( report of patient?.labReports; track report._id ) {
+
+      <div class="document-card">
+        <h4>{{ report.title }}</h4>
+
+        <p>{{ report.reportType }}</p>
+
+        <span>{{ report.reportDate | date }}</span>
+
+        <div class="document-actions">
+          @if(report.documentUrl){
+
+          <button
+            class="view-btn"
+            (click)="
+      viewFile(
+        report.documentUrl
+      )
+    "
+          >
+            View
+          </button>
+
+          }
+          <button class="view-btn" (click)="editLabReport(report)">Edit</button>
+          <button
+            class="delete-btn"
+            (click)="
+      deleteLabReport(
+        report._id
+      )
+    "
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      } }@else {
+
+      <div class="empty-state">
+        <div class="empty-icon">🧪</div>
+
+        <h3>No Lab Reports Available</h3>
+
+        <p>No lab reports have been uploaded for this patient.</p>
+      </div>
+
+      }
+    </div>
+  </div>
+  @if( labMeta?.totalPages > 1 ){
+
+  <app-pagination
+    [page]="
+    labMeta.page
+  "
+    [totalPages]="
+    labMeta.totalPages
+  "
+    [totalRecords]="
+    labMeta.totalRecords
+  "
+    [limit]="5"
+    [showPageSize]="false"
+    (previous)="
+    onLabPageChange(
+      labPage - 1
+    )
+  "
+    (next)="
+    onLabPageChange(
+      labPage + 1
+    )
+  "
+  ></app-pagination>
+
+  }
+
+  <!-- =========================
+       Medical Documents
+  ========================== -->
+
+  <div class="glass-card section-card">
+    <div class="title-row">
+      <h2>Medical Documents</h2>
+
+      <button
+        class="primary-btn"
+        (click)="
+          openDocumentModal()
+        "
+      >
+        + Add Document
+      </button>
+    </div>
+
+    <div class="document-list">
+      @if( patient?.medicalDocuments?.length ){ @for ( document of patient?.medicalDocuments; track document._id ) {
+
+      <div class="document-card">
+        <h4>{{ document.title }}</h4>
+
+        <p>{{ document.documentType }}</p>
+
+        <span>{{ document.recordDate | date }}</span>
+        <div class="document-actions">
+          @if(document.documentUrl){
+
+          <button
+            class="view-btn"
+            (click)="
+      viewFile(
+        document.documentUrl
+      )
+    "
+          >
+            View
+          </button>
+
+          }
+          <button class="view-btn" (click)="editMedicalDocument(document)">Edit</button>
+
+          <button
+            class="delete-btn"
+            (click)="
+      deleteMedicalDocument(
+        document._id
+      )
+    "
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      } } @else {
+
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+
+        <h3>No Medical Documents Available</h3>
+
+        <p>No medical documents have been uploaded for this patient.</p>
+      </div>
+
+      }
+    </div>
+  </div>
+
+  }
+</div>
+@if( documentMeta?.totalPages > 1 ){
+
+<app-pagination
+  [page]="
+    documentMeta.page
+  "
+  [totalPages]="
+    documentMeta.totalPages
+  "
+  [totalRecords]="
+    documentMeta.totalRecords
+  "
+  [limit]="5"
+  [showPageSize]="false"
+  (previous)="
+    onDocumentPageChange(
+      documentPage - 1
+    )
+  "
+  (next)="
+    onDocumentPageChange(
+      documentPage + 1
+    )
+  "
+></app-pagination>
+
+} @if(showLabReportModal){
+
+<div class="modal-backdrop">
+  <div class="modal-card">
+    <h2>{{ editingLabReportId ? 'Edit Lab Report' : 'Add Lab Report' }}</h2>
+    <form [formGroup]="labReportForm">
+      <input type="text" placeholder="Title" formControlName="title" />
+      @if(labReportForm.get('title')?.invalid && labReportForm.get('title')?.touched){
+      <span class="error-text">Title is required</span>
+      }
+
+      <input type="text" placeholder="Report Type" formControlName="reportType" />
+      @if(labReportForm.get('reportType')?.invalid && labReportForm.get('reportType')?.touched){
+      <span class="error-text">Report type is required</span>
+      }
+
+      <input type="date" formControlName="reportDate" [max]="todayDate" />
+      @if(labReportForm.get('reportDate')?.invalid && labReportForm.get('reportDate')?.touched){
+        @if(labReportForm.get('reportDate')?.errors?.['required']){
+        <span class="error-text">Report date is required</span>
+        }
+        @if(labReportForm.get('reportDate')?.errors?.['futureDate']){
+        <span class="error-text">Report date cannot be in the future</span>
+        }
+      }
+
+      <input type="text" placeholder="Lab Name" formControlName="labName" />
+
+      <input type="text" placeholder="Doctor Name" formControlName="doctorName" />
+
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onLabFileChange($event)" />
+      @if(labFileError){
+      <span class="error-text">Report file is required</span>
+      }
+      @if(editingLabReportId){
+
+      <p class="file-name">Leave empty to keep the existing file.</p>
+
+      } @if(selectedLabFile){
+      <p class="file-name">{{ selectedLabFile.name }}</p>
+      }
+
+      <textarea placeholder="Notes" formControlName="notes"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeLabModal()">Cancel</button>
+
+        <button
+          class="primary-btn"
+          (click)="saveLabReport()"
+          [disabled]="
+    isUploadingLabReport
+  "
+        >
+          {{ isUploadingLabReport ? ( editingLabReportId ? 'Updating...' : 'Uploading...' ) : ( editingLabReportId ?
+          'Update Report' : 'Save Report' ) }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+} @if(showMedicalDocumentModal){
+
+<div class="modal-backdrop">
+  <div class="modal-card">
+    <h2>{{ editingMedicalDocumentId ? 'Edit Medical Document' : 'Add Medical Document' }}</h2>
+
+    <form [formGroup]="medicalDocumentForm">
+      <input type="text" placeholder="Title" formControlName="title" />
+      @if(medicalDocumentForm.get('title')?.invalid && medicalDocumentForm.get('title')?.touched){
+      <span class="error-text">Title is required</span>
+      }
+
+      <input type="text" placeholder="Document Type" formControlName="documentType" />
+      @if(medicalDocumentForm.get('documentType')?.invalid && medicalDocumentForm.get('documentType')?.touched){
+      <span class="error-text">Document type is required</span>
+      }
+
+      <input type="text" placeholder="Hospital Name" formControlName="hospitalName" />
+
+      <input type="text" placeholder="Doctor Name" formControlName="doctorName" />
+
+      <input type="date" formControlName="recordDate" [max]="todayDate" />
+      @if(medicalDocumentForm.get('recordDate')?.invalid && medicalDocumentForm.get('recordDate')?.touched){
+        @if(medicalDocumentForm.get('recordDate')?.errors?.['required']){
+        <span class="error-text">Record date is required</span>
+        }
+        @if(medicalDocumentForm.get('recordDate')?.errors?.['futureDate']){
+        <span class="error-text">Record date cannot be in the future</span>
+        }
+      }
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onMedicalFileChange($event)" />
+      @if(medicalFileError){
+      <span class="error-text">Document file is required</span>
+      }
+      @if(editingMedicalDocumentId){
+
+      <p class="file-name">Leave empty to keep the existing file.</p>
+
+      } @if(selectedMedicalFile){
+      <p class="file-name">{{ selectedMedicalFile.name }}</p>
+      }
+
+      <textarea rows="4" placeholder="Notes" formControlName="notes"></textarea>
+
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="closeDocumentModal()">Cancel</button>
+
+        <button
+          class="primary-btn"
+          (click)="
+    saveMedicalDocument()
+  "
+          [disabled]="
+    isUploadingDocument
+  "
+        >
+          {{ isUploadingDocument ? ( editingMedicalDocumentId ? 'Updating...' : 'Uploading...' ) : (
+          editingMedicalDocumentId ? 'Update Document' : 'Save Document' ) }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+}

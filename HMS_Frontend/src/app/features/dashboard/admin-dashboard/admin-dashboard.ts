@@ -1,16 +1,18 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 
 import { AuthService } from '../../../core/services/auth';
 import { DashboardService } from '../../../core/services/dashboard';
+import { NodeService } from '../../../core/services/node';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
   imports: [RouterLink, AsyncPipe],
   templateUrl: './admin-dashboard.html',
-  styleUrl: './admin-dashboard.css'
+  styleUrl: './admin-dashboard.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminDashboard implements OnInit {
   stats: any = {};
@@ -19,6 +21,7 @@ export class AdminDashboard implements OnInit {
 
   constructor(
     public readonly authService: AuthService,
+    public readonly nodeService: NodeService,
     private readonly dashboardService: DashboardService,
     private readonly cdr: ChangeDetectorRef
   ) {}

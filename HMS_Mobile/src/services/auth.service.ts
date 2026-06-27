@@ -1,13 +1,26 @@
-import axios from "axios";
+import api from "./api.service";
 
-import { API_BASE_URL } from "../constants/api";
+import { getRefreshToken } from "../storage/token.storage";
 
-export const login = async (email: string, password: string) => {
-  return axios.post(`${API_BASE_URL}/auth/login`, {
+export const login = (email: string, password: string) => {
+  return api.post("/auth/login", {
     loginId: email,
     password,
   });
 };
+
 export const createPassword = (data: any) => {
-  return axios.post(`${API_BASE_URL}/auth/create-password`, data);
+  return api.post("/auth/create-password", data);
+};
+
+export const getCurrentUser = () => {
+  return api.get("/auth/me");
+};
+
+export const logout = async () => {
+  const refreshToken = await getRefreshToken();
+
+  return api.post("/auth/logout", {
+    refreshToken,
+  });
 };

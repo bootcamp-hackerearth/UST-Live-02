@@ -9,7 +9,7 @@ import EditAppointment from "../screens/EditAppointmentScreen";
 import EditProfile from "../screens/EditProfileScreen";
 import { RootStackParamList } from "../types/navigation";
 import CreatePasswordScreen from "../screens/CreatePasswordScreen";
-
+import PrescriptionDetailsScreen from "../screens/PrescriptionDetailsScreen";
 type AppNavigatorParamList = RootStackParamList & {
   CreatePassword: undefined;
 };
@@ -34,7 +34,10 @@ export default function AppNavigator() {
       <Stack.Screen name="BookAppointment" component={BookAppointment} />
 
       <Stack.Screen name="AppointmentDetail" component={AppointmentDetail} />
-
+      <Stack.Screen
+        name="PrescriptionDetails"
+        component={PrescriptionDetailsScreen}
+      />
       <Stack.Screen name="EditAppointment" component={EditAppointment} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="CreatePassword" component={CreatePasswordScreen} />

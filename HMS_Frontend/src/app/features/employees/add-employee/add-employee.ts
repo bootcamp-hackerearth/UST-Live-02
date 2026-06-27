@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -10,15 +10,25 @@ import { EmployeeService } from '../../../core/services/employee';
   standalone: true,
   imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './add-employee.html',
-  styleUrl: './add-employee.css'
+  styleUrl: './add-employee.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AddEmployee {
+export class AddEmployee implements OnInit {
   employeeForm: FormGroup;
 
   successMessage = '';
   errorMessage = '';
 
   isSubmitting = false;
+  designations = ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'LAB_TECHNICIAN', 'PHARMACIST'];
+
+  ngOnInit(): void {
+    const role = localStorage.getItem('role');
+
+    if (role !== 'SUPER_ADMIN') {
+      this.designations = this.designations.filter((designation) => designation !== 'ADMIN');
+    }
+  }
 
   constructor(
     private readonly fb: FormBuilder,
@@ -30,12 +40,7 @@ export class AddEmployee {
       // Basic Details
       name: [
         '',
-        [
-          Validators.required,
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[A-Za-z\s]+$/)
-        ]
+        [Validators.required, Validators.minLength(2), Validators.maxLength(100), Validators.pattern(/^[A-Za-z\s]+$/)]
       ],
 
       email: ['', [Validators.required, Validators.email]],
@@ -55,22 +60,14 @@ export class AddEmployee {
       // Doctor Details
       medicalRegistrationNo: [
         '',
-        [
-          Validators.minLength(5),
-          Validators.maxLength(50),
-          Validators.pattern(/^[A-Za-z0-9\-/]+$/)
-        ]
+        [Validators.minLength(5), Validators.maxLength(50), Validators.pattern(/^[A-Za-z0-9\-/]+$/)]
       ],
 
       specialization: [''],
 
       qualification: [
         '',
-        [
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[A-Za-z0-9\s.,()-]+$/)
-        ]
+        [Validators.minLength(2), Validators.maxLength(100), Validators.pattern(/^[A-Za-z0-9\s.,()-]+$/)]
       ],
 
       consultationFee: [0, [Validators.min(0)]],
@@ -106,40 +103,33 @@ export class AddEmployee {
       ];
 
       if (designation === 'DOCTOR') {
-        this.employeeForm.get('medicalRegistrationNo')?.setValidators([
-          Validators.required,
-          Validators.minLength(5),
-          Validators.maxLength(50),
-          Validators.pattern(/^[A-Za-z0-9\-/]+$/)
-        ]);
+        this.employeeForm
+          .get('medicalRegistrationNo')
+          ?.setValidators([
+            Validators.required,
+            Validators.minLength(5),
+            Validators.maxLength(50),
+            Validators.pattern(/^[A-Za-z0-9\-/]+$/)
+          ]);
 
-        this.employeeForm.get('qualification')?.setValidators([
-          Validators.required,
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[A-Za-z0-9\s.,()-]+$/)
-        ]);
+        this.employeeForm
+          .get('qualification')
+          ?.setValidators([
+            Validators.required,
+            Validators.minLength(2),
+            Validators.maxLength(100),
+            Validators.pattern(/^[A-Za-z0-9\s.,()-]+$/)
+          ]);
 
-        this.employeeForm.get('specialization')?.setValidators([
-          Validators.required
-        ]);
+        this.employeeForm.get('specialization')?.setValidators([Validators.required]);
 
-        this.employeeForm.get('consultationFee')?.setValidators([
-          Validators.required,
-          Validators.min(0)
-        ]);
+        this.employeeForm.get('consultationFee')?.setValidators([Validators.required, Validators.min(0)]);
 
-        this.employeeForm.get('startTime')?.setValidators([
-          Validators.required
-        ]);
+        this.employeeForm.get('startTime')?.setValidators([Validators.required]);
 
-        this.employeeForm.get('endTime')?.setValidators([
-          Validators.required
-        ]);
+        this.employeeForm.get('endTime')?.setValidators([Validators.required]);
 
-        this.employeeForm.get('slotDuration')?.setValidators([
-          Validators.required
-        ]);
+        this.employeeForm.get('slotDuration')?.setValidators([Validators.required]);
 
         doctorFields.forEach((field) => {
           this.employeeForm.get(field)?.updateValueAndValidity();
@@ -203,10 +193,7 @@ export class AddEmployee {
     // Prepare API payload
     const payload: any = {
       ...this.employeeForm.value,
-      qualification: this.employeeForm.value.qualification
-        ? [this.employeeForm.value.qualification]
-        : [],
-      role: this.employeeForm.value.designation
+      qualification: this.employeeForm.value.qualification ? [this.employeeForm.value.qualification] : []
     };
 
     if (this.designation !== 'DOCTOR') {
@@ -231,10 +218,7 @@ export class AddEmployee {
 
         this.isSubmitting = false;
 
-        this.toastService.show(
-          'Employee created successfully',
-          'success'
-        );
+        this.toastService.show('Employee created successfully', 'success');
 
         this.cdr.detectChanges();
 
@@ -258,10 +242,7 @@ export class AddEmployee {
 
         this.isSubmitting = false;
 
-        this.toastService.show(
-          error?.error?.message || 'Failed to create employee',
-          'error'
-        );
+        this.toastService.show(error?.error?.message || 'Failed to create employee', 'error');
 
         this.cdr.detectChanges();
       }
@@ -270,8 +251,7 @@ export class AddEmployee {
 
   // Handle working day checkbox selection
   onWorkingDayChange(event: any): void {
-    const workingDays =
-      this.employeeForm.get('workingDays')?.value || [];
+    const workingDays = this.employeeForm.get('workingDays')?.value || [];
 
     if (event.target.checked) {
       workingDays.push(event.target.value);

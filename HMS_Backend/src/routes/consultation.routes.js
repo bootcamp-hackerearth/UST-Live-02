@@ -1,5 +1,11 @@
 const express = require("express");
+
 const router = express.Router();
+
+const authMiddleware = require("../middleware/auth.middleware");
+const nodePermissionMiddleware = require("../middleware/node-permission.middleware");
+const validateMiddleware = require("../middleware/validate.middleware");
+
 const {
   createConsultation,
   getConsultationByAppointment,
@@ -7,57 +13,79 @@ const {
   getConsultations,
   downloadPrescriptionPdf,
   getConsultationById,
+  deleteConsultation,
 } = require("../controllers/consultation.controller");
 
-const authMiddleware = require("../middleware/auth.middleware");
-const roleMiddleware = require("../middleware/role.middleware");
+const {
+  createConsultationValidation,
+  updateConsultationValidation,
+} = require("../validations/consultation.validation");
 
-//CREATE CONSULTATION
+// Create consultation
+
 router.post(
   "/",
   authMiddleware,
-  roleMiddleware("DOCTOR"),
+  nodePermissionMiddleware,
+  createConsultationValidation,
+  validateMiddleware,
   createConsultation,
 );
 
-//Get All Consultations
+// Get all consultations
 
 router.get(
   "/",
   authMiddleware,
+  nodePermissionMiddleware,
   getConsultations,
 );
 
-//Download Prescription PDF
-
-router.get(
-  "/pdf/:consultationId",
-  authMiddleware,
-  downloadPrescriptionPdf,
-);
-
-//Get Consultation By Appointment
+// Get consultation by appointment
 
 router.get(
   "/appointment/:appointmentId",
   authMiddleware,
+  nodePermissionMiddleware,
   getConsultationByAppointment,
 );
 
-//Update Consultation
+// Download prescription
+
+router.get(
+  "/prescription/:consultationId",
+  authMiddleware,
+  nodePermissionMiddleware,
+  downloadPrescriptionPdf,
+);
+
+// Get consultation by id
+
+router.get(
+  "/:id",
+  authMiddleware,
+  nodePermissionMiddleware,
+  getConsultationById,
+);
+
+// Update consultation
 
 router.put(
   "/:id",
   authMiddleware,
-  roleMiddleware("DOCTOR"),
+  nodePermissionMiddleware,
+  updateConsultationValidation,
+  validateMiddleware,
   updateConsultation,
 );
 
-router.get(
-  "/prescription/:consultationId",
-  downloadPrescriptionPdf,
-);
+// Delete consultation
 
-router.get("/:id", getConsultationById);
+router.delete(
+  "/:id",
+  authMiddleware,
+  nodePermissionMiddleware,
+  deleteConsultation,
+);
 
 module.exports = router;

@@ -8,9 +8,10 @@ const User = require("../../models/User");
 const ROLES = require("../../constants/roles");
 
 const STATUS = require("../../constants/status");
-const sendEmail =require("../../utils/sendEmail");
+const sendEmail = require("../../utils/sendEmail");
 const patientCreatedTemplate = require("../../templates/patient-created.template");
 const generateTemporaryPassword = require("../../utils/generateTemporaryPassword");
+const ApiError = require("../../utils/ApiError");
 const registerPatient = async (patientData) => {
   const {
     // Basic information
@@ -57,24 +58,27 @@ const registerPatient = async (patientData) => {
 
   // Generate unique patient ID
   const patientId = await generatePatientId();
-  if (
-  dateOfBirth &&
-  new Date(dateOfBirth) > new Date()
-) {
+  if (dateOfBirth && new Date(dateOfBirth) > new Date()) {
+    throw new ApiError(
+      422,
+      "Date of Birth cannot be in the future",
+      "INVALID_DATE_OF_BIRTH",
+    );
+  }
 
-  throw new Error(
-    "Date of Birth cannot be in the future"
-  );
-}
-
-  // check duplicate 
+  // check duplicate
   const existingUser = await User.findOne({
-  email: email.toLowerCase(),
-});
+    email: email.toLowerCase(),
+    isDeleted: false,
+  });
 
-if (existingUser) {
-  throw new Error("User with this email already exists");
-}
+  if (existingUser) {
+    throw new ApiError(
+      409,
+      "User with this email already exists",
+      "EMAIL_ALREADY_EXISTS",
+    );
+  }
 
   // Create patient record
   const patient = await Patient.create({
@@ -114,53 +118,42 @@ if (existingUser) {
     assignedDoctor,
     department,
     patientType,
+    createdBy: null,
   });
 
-const temporaryPassword =
-  generateTemporaryPassword();
-  const temporaryPasswordHash =
-  await bcrypt.hash(
-    temporaryPassword,
-    10,
-  );
-  
+  const temporaryPassword = generateTemporaryPassword();
+  const temporaryPasswordHash = await bcrypt.hash(temporaryPassword, 10);
+
   await User.create({
-  email: email.toLowerCase(),
+    email: email.toLowerCase(),
 
-  temporaryPasswordHash,
+    temporaryPasswordHash,
 
-  patientId: patient._id,
+    patientId: patient._id,
 
-  roles: [ROLES.PATIENT],
+    roles: [ROLES.PATIENT],
 
-  isFirstLogin: true,
+    isFirstLogin: true,
 
-  status: STATUS.ACTIVE,
-});
-if (patient.email) {
+    status: STATUS.ACTIVE,
+  });
+  if (patient.email) {
+    const htmlContent = patientCreatedTemplate({
+      patientName: `${patient.firstName} ${patient.lastName}`,
 
-  const htmlContent =
-    patientCreatedTemplate({
-
-      patientName:
-        `${patient.firstName} ${patient.lastName}`,
-
-      email:
-        patient.email,
+      email: patient.email,
 
       temporaryPassword,
     });
 
-  await sendEmail({
+    await sendEmail({
+      to: patient.email,
 
-    to: patient.email,
+      subject: "Your HMS Account Credentials",
 
-    subject:
-      "Your HMS Account Credentials",
-
-    htmlContent,
-  });
-}
+      htmlContent,
+    });
+  }
 
   return {
     message: "Patient registered successfully",

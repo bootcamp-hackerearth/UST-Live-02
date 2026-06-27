@@ -1,7 +1,24 @@
-import axios from "axios";
+import api from "./api.service";
+import { registerCacheClear } from "./cache.service";
 
-import { API_BASE_URL } from "../constants/api";
-import { getToken } from "../storage/token.storage";
+let doctorsCache: any[] | null = null;
 export const getDoctors = async () => {
-  return axios.get(`${API_BASE_URL}/employees/doctors`);
+  if (doctorsCache) {
+    return {
+      data: {
+        data: doctorsCache,
+      },
+    };
+  }
+
+  const response = await api.get("/employees/doctors");
+
+  doctorsCache = response.data.data;
+
+  return response;
 };
+export const clearDoctorsCache = () => {
+  doctorsCache = null;
+};
+
+registerCacheClear(clearDoctorsCache);

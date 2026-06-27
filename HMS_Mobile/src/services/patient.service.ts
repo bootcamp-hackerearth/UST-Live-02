@@ -1,42 +1,9 @@
-import axios from "axios";
+import api from "./api.service";
 
-import { API_BASE_URL } from "../constants/api";
+export const getDashboard = () => api.get("/patients/dashboard");
 
-import { getToken } from "../storage/token.storage";
+export const registerPatient = (data: any) =>
+  api.post("/patients/register", data);
+export const getProfile = () => api.get("/patients/profile");
 
-export const getDashboard = async () => {
-  const token = await getToken();
-  console.log("DASHBOARD TOKEN", await getToken());
-  return axios.get(
-    `${API_BASE_URL}/patients/dashboard`,
-
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
-};
-
-export const registerPatient = (data: any) => {
-  return axios.post(`${API_BASE_URL}/patients/register`, data);
-};
-export const getProfile = async () => {
-  const token = await getToken();
-
-  return axios.get(`${API_BASE_URL}/patients/profile`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
-
-export const updateProfile = async (data: any) => {
-  const token = await getToken();
-
-  return axios.put(`${API_BASE_URL}/patients/profile`, data, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
+export const updateProfile = (data: any) => api.put("/patients/profile", data);

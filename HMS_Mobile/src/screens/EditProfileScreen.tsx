@@ -1,10 +1,10 @@
 import {
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   Alert,
   View,
+  StyleSheet,
 } from "react-native";
 
 import { useEffect, useState } from "react";
@@ -17,7 +17,6 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { getProfile, updateProfile } from "../../src/services/patient.service";
-import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import GlassCard from "../../src/components/cards/GlassCard";
@@ -215,8 +214,10 @@ export default function EditProfile() {
 
       Alert.alert("Profile updated successfully");
       navigation.goBack();
-    } catch (e) {
-      Alert.alert("Failed to update profile");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to update profile";
+      Alert.alert("Failed to update profile", message);
     } finally {
       setLoading(false);
     }

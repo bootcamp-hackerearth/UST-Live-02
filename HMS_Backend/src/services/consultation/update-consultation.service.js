@@ -1,18 +1,22 @@
-const Consultation = require("../../models/consultation");
+const Consultation = require("../../models/Consultation");
+const ApiError = require("../../utils/ApiError");
 
-const updateConsultationService = async (consultationId, data) => {
-  const consultation = await Consultation.findByIdAndUpdate(
-    consultationId,
-    data,
-    {
-      new: true,
-      runValidators: true,
-    },
-  );
+const updateConsultationService = async (consultationId, data, updatedBy) => {
+  const consultation = await Consultation.findOne({
+    _id: consultationId,
+
+    isDeleted: false,
+  });
 
   if (!consultation) {
-    throw new Error("Consultation not found");
+    throw new ApiError(404, "Consultation not found", "CONSULTATION_NOT_FOUND");
   }
+
+  Object.assign(consultation, data);
+
+  consultation.updatedBy = updatedBy;
+
+  await consultation.save();
 
   return consultation;
 };

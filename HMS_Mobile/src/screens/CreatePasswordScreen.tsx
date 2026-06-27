@@ -158,13 +158,7 @@ export default function CreatePasswordScreen() {
 
         securityAnswer,
       });
-      console.log({
-        loginId,
-        temporaryPassword,
-        newPassword,
-        securityQuestion,
-        securityAnswer,
-      });
+
       Alert.alert("Success", "Password created successfully", [
         {
           text: "OK",

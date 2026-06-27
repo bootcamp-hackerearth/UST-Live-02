@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy} from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 
 import { AuthService } from '../../../core/services/auth';
@@ -10,17 +10,11 @@ import { ReceptionistDashboard } from '../receptionist-dashboard/receptionist-da
 @Component({
   selector: 'app-dashboard-home',
   standalone: true,
-  imports: [
-    AsyncPipe,
-    AdminDashboard,
-    DoctorDashboard,
-    ReceptionistDashboard
-  ],
+  imports: [AsyncPipe, AdminDashboard, DoctorDashboard, ReceptionistDashboard],
   templateUrl: './dashboard-home.html',
-  styleUrl: './dashboard-home.css'
+  styleUrl: './dashboard-home.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardHome {
-  constructor(
-    public readonly authService: AuthService
-  ) {}
+  constructor(public readonly authService: AuthService) {}
 }

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { API_BASE_URL } from '../constants/api.constants';
 
 @Injectable({
@@ -9,7 +8,7 @@ import { API_BASE_URL } from '../constants/api.constants';
 })
 export class AuthService {
   currentUser = new BehaviorSubject<any>(null);
-
+  currentUser$ = this.currentUser.asObservable();
   constructor(private readonly http: HttpClient) {}
 
   login(data: { loginId: string; password: string }): Observable<any> {
@@ -50,33 +49,29 @@ export class AuthService {
     return user.roles?.includes(role);
   }
   refreshToken(refreshToken: string): Observable<any> {
-  return this.http.post(
-    `${API_BASE_URL}/auth/refresh-token`,
-    {
+    return this.http.post(`${API_BASE_URL}/auth/refresh-token`, {
       refreshToken
-    }
-  );
-}
+    });
+  }
 
-logout(refreshToken: string): Observable<any> {
-  return this.http.post(
-    `${API_BASE_URL}/auth/logout`,
-    {
+  logout(refreshToken: string): Observable<any> {
+    return this.http.post(`${API_BASE_URL}/auth/logout`, {
       refreshToken
-    }
-  );
-}
+    });
+  }
 
   // Get security question for password recovery
   forgotPassword(email: string): Observable<any> {
     return this.http.post(`${API_BASE_URL}/auth/forgot-password`, {
-      email
+      email: email.trim().toLowerCase()
     });
   }
 
   // Reset password using security answer
   resetPassword(data: any): Observable<any> {
-    return this.http.post(`${API_BASE_URL}/auth/reset-password`, data);
+    return this.http.post(`${API_BASE_URL}/auth/reset-password`, {
+      ...data,
+      email: data.email?.trim().toLowerCase()
+    });
   }
-  
 }

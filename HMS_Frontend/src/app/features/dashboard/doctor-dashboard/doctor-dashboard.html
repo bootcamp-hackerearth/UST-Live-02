@@ -112,29 +112,37 @@
       </div>
 
       <div class="quick-grid">
+        @if(nodeService.canAccessPath('/doctor-queue')){
         <a routerLink="/doctor-queue" class="quick-card">
           <span>🩺</span>
 
           Queue
         </a>
+        }
 
+        @if(nodeService.canAccessPath('/appointments')){
         <a routerLink="/appointments" class="quick-card">
           <span>📅</span>
 
           Appointments
         </a>
+        }
 
+        @if(nodeService.canAccessPath('/patients')){
         <a routerLink="/patients" class="quick-card">
           <span>🧑</span>
 
           Patients
         </a>
+        }
 
+        @if(nodeService.canAccessPath('/doctor-availability')){
         <a routerLink="/doctor-availability" class="quick-card">
           <span>⏰</span>
 
           Availability
         </a>
+        }
       </div>
     </div>
   </div>

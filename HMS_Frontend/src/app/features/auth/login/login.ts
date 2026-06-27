@@ -1,17 +1,21 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+
 import { Router, RouterLink } from '@angular/router';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { AuthService } from '../../../core/services/auth';
 import { TokenService } from '../../../core/services/token';
 import { ToastService } from '../../../core/services/toast';
+import { NodeService } from '../../../core/services/node';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+  styleUrl: './login.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Login {
   loginForm: FormGroup;
@@ -25,7 +29,8 @@ export class Login {
     private readonly tokenService: TokenService,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
-    private readonly toastService: ToastService
+    private readonly toastService: ToastService,
+    private readonly nodeService: NodeService
   ) {
     this.loginForm = this.fb.group({
       loginId: ['', Validators.required],
@@ -33,12 +38,12 @@ export class Login {
     });
   }
 
-  // Login user
   onSubmit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
 
       this.toastService.show('Please enter valid credentials', 'error');
+
       return;
     }
 
@@ -46,61 +51,86 @@ export class Login {
 
     this.authService.login(this.loginForm.value).subscribe({
       next: (response: any) => {
-        console.log('API SUCCESS');
-        console.log(response);
+        console.log('LOGIN RESPONSE', response);
 
-        const accessToken =response?.data?.accessToken;
+        console.log('USER', response.data.user);
 
-const refreshToken =response?.data?.refreshToken;
+        console.log('ROLES', response.data.user?.roles);
 
-       this.tokenService.setAccessToken(
-  accessToken
-);
+        console.log('ACCESS TOKEN', response.data.accessToken);
+        const accessToken = response.data.accessToken;
 
-this.tokenService.setRefreshToken(
-  refreshToken
-);
-        this.authService.currentUser.next(response.data.user);
+        const refreshToken = response.data.refreshToken;
 
-        this.toastService.show('Login successful', 'success');
+        const user = response.data.user;
 
-        localStorage.setItem('role', response.data.user.roles?.[0]);
+        this.tokenService.setAccessToken(accessToken);
+
+        this.tokenService.setRefreshToken(refreshToken);
+
+        this.authService.currentUser.next(user);
+
+        localStorage.setItem('role', user.roles?.[0]);
 
         localStorage.setItem('loginId', this.loginForm.value.loginId);
 
-        const isFirstLogin = response.data.user.isFirstLogin;
-
-        if (isFirstLogin) {
+        if (user.isFirstLogin) {
           this.isSubmitting = false;
+
+          this.toastService.show('Login successful', 'success');
+
           this.router.navigate(['/create-password']);
+
           return;
         }
 
-        const role = response.data.user.roles?.[0];
+        // Load nodes before navigation
+        this.nodeService.getNodes().subscribe({
+          next: (nodeResponse: any) => {
+            this.nodeService.nodes.next(nodeResponse.data);
 
-        this.isSubmitting = false;
+            localStorage.setItem('nodes', JSON.stringify(nodeResponse.data));
 
-        if (role === 'ADMIN') {
-          this.router.navigate(['/dashboard/admin']);
-        } else if (role === 'DOCTOR') {
-          this.router.navigate(['/dashboard/doctor']);
-        } else if (role === 'RECEPTIONIST') {
-          this.router.navigate(['/dashboard/receptionist']);
-        } else {
-          this.router.navigate(['/login']);
-        }
+            this.toastService.show('Login successful', 'success');
+
+            this.isSubmitting = false;
+
+            const role = user.roles?.[0];
+
+            switch (role) {
+              case 'SUPER_ADMIN':
+              case 'ADMIN':
+                this.router.navigate(['/dashboard/admin']);
+                break;
+
+              case 'DOCTOR':
+                this.router.navigate(['/dashboard/doctor']);
+                break;
+
+              case 'RECEPTIONIST':
+                this.router.navigate(['/dashboard/receptionist']);
+                break;
+
+              default:
+                this.toastService.show('Invalid role', 'error');
+
+                this.router.navigate(['/login']);
+            }
+          },
+
+          error: () => {
+            this.isSubmitting = false;
+
+            this.toastService.show('Failed to load menu permissions', 'error');
+          }
+        });
       },
 
       error: (error) => {
-        console.log('API ERROR');
-        console.log(error);
-
-        this.toastService.show(
-          error?.error?.message || 'Login failed',
-          'error'
-        );
+        this.toastService.show(error?.error?.message || 'Login failed', 'error');
 
         this.isSubmitting = false;
+
         this.cdr.detectChanges();
       }
     });

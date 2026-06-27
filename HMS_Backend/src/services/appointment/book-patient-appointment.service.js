@@ -1,25 +1,25 @@
 const Appointment = require("../../models/Appointment");
 const Employee = require("../../models/Employee");
 const Patient = require("../../models/Patient");
-
+const STATUS = require("../../constants/status");
 const generateAppointmentId = require("../../utils/generateAppointmentId");
+const ApiError = require("../../utils/ApiError");
 
 const bookPatientAppointment = async (appointmentData, user) => {
- const {
-  doctorId,
-  appointmentDate,
-  appointmentTime,
-  reason,
-  notes,
-  appointmentType,
-  priority,
-  paymentStatus,
-  visitMode,
-  symptoms,
-} = appointmentData;
+  const {
+    doctorId,
+    appointmentDate,
+    appointmentTime,
+    reason,
+    notes,
+    appointmentType,
+    priority,
+    paymentStatus,
+    visitMode,
+    symptoms,
+  } = appointmentData;
 
-const patientId =
-  user.patientId;
+  const patientId = user.patientId;
 
   // Prevent booking appointments for past dates
   const selectedDate = new Date(appointmentDate);
@@ -29,26 +29,40 @@ const patientId =
   selectedDate.setHours(0, 0, 0, 0);
 
   if (selectedDate < today) {
-    throw new Error("Cannot book appointment for past dates");
+    throw new ApiError(
+      422,
+      "Cannot book appointment for past dates",
+      "PAST_DATE_NOT_ALLOWED",
+    );
   }
 
   // Verify patient exists
-  const patient = await Patient.findById(patientId);
+  const patient = await Patient.findOne({
+    _id: patientId,
+    isDeleted: false,
+  });
 
   if (!patient) {
-    throw new Error("Patient not found");
+    throw new ApiError(404, "Patient not found", "PATIENT_NOT_FOUND");
   }
 
   // Verify doctor exists
-  const doctor = await Employee.findById(doctorId);
+  const doctor = await Employee.findOne({
+    _id: doctorId,
+    isDeleted: false,
+  });
 
   if (!doctor) {
-    throw new Error("Doctor not found");
+    throw new ApiError(404, "Doctor not found", "DOCTOR_NOT_FOUND");
   }
 
   // Check if doctor is currently available
   if (!doctor?.availability?.isAvailable) {
-    throw new Error("Doctor is currently unavailable");
+    throw new ApiError(
+      400,
+      "Doctor is currently unavailable",
+      "DOCTOR_UNAVAILABLE",
+    );
   }
 
   // Ensure appointment is on a doctor's working day
@@ -59,7 +73,11 @@ const patientId =
     .toUpperCase();
 
   if (!doctor?.availability?.workingDays?.includes(appointmentDay)) {
-    throw new Error(`Doctor is not available on ${appointmentDay}`);
+    throw new ApiError(
+      400,
+      `Doctor is not available on ${appointmentDay}`,
+      "DOCTOR_NOT_AVAILABLE_ON_DAY",
+    );
   }
 
   // Prevent booking during break hours
@@ -68,7 +86,11 @@ const patientId =
 
   if (breakStartTime && breakEndTime) {
     if (appointmentTime >= breakStartTime && appointmentTime < breakEndTime) {
-      throw new Error("Selected slot falls during doctor break time");
+      throw new ApiError(
+        400,
+        "Selected slot falls during doctor break time",
+        "SLOT_DURING_BREAK_TIME",
+      );
     }
   }
 
@@ -90,10 +112,15 @@ const patientId =
     status: {
       $ne: "CANCELLED",
     },
+    isDeleted: false,
   });
 
   if (totalAppointments >= doctor?.availability?.maxPatientsPerDay) {
-    throw new Error("Maximum patient limit reached for this doctor");
+    throw new ApiError(
+      400,
+      "Maximum patient limit reached for this doctor",
+      "DOCTOR_DAILY_LIMIT_REACHED",
+    );
   }
 
   // Prevent double-booking of doctor slot
@@ -107,10 +134,15 @@ const patientId =
     status: {
       $nin: ["CANCELLED", "NO_SHOW"],
     },
+    isDeleted: false,
   });
 
   if (existingAppointment) {
-    throw new Error("Selected slot already booked");
+    throw new ApiError(
+      409,
+      "Selected slot already booked",
+      "SLOT_ALREADY_BOOKED",
+    );
   }
 
   // Prevent patient from booking multiple appointments at same time
@@ -124,10 +156,15 @@ const patientId =
     status: {
       $nin: ["CANCELLED", "NO_SHOW"],
     },
+    isDeleted: false,
   });
 
   if (existingPatientAppointment) {
-    throw new Error("Patient already has an appointment at this time");
+    throw new ApiError(
+      409,
+      "Patient already has an appointment at this time",
+      "PATIENT_APPOINTMENT_CONFLICT",
+    );
   }
 
   // Generate unique appointment ID
@@ -140,6 +177,7 @@ const patientId =
       $gte: normalizedDate,
       $lt: nextDay,
     },
+    isDeleted: false,
   });
 
   const tokenNumber = todayAppointmentsCount + 1;
@@ -159,8 +197,8 @@ const patientId =
     reason,
     notes,
     tokenNumber: null,
-   createdByPatientId: user.patientId,
-    status: "PENDING",
+    createdByPatientId: user.patientId,
+    status: STATUS.PENDING,
   });
 
   return appointment;

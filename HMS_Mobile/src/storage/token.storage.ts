@@ -1,15 +1,39 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const TOKEN_KEY = "token";
+const ACCESS_TOKEN_KEY = "accessToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
 
 export const saveToken = async (token: string) => {
-  await AsyncStorage.setItem(TOKEN_KEY, token);
+  await AsyncStorage.setItem(ACCESS_TOKEN_KEY, token);
 };
 
 export const getToken = async () => {
-  return AsyncStorage.getItem(TOKEN_KEY);
+  return AsyncStorage.getItem(ACCESS_TOKEN_KEY);
 };
 
 export const removeToken = async () => {
-  await AsyncStorage.removeItem(TOKEN_KEY);
+  await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+};
+
+export const saveRefreshToken = async (token: string) => {
+  await AsyncStorage.setItem(REFRESH_TOKEN_KEY, token);
+};
+
+export const getRefreshToken = async () => {
+  return AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+};
+
+export const removeRefreshToken = async () => {
+  await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+};
+
+export const saveTokens = async (accessToken: string, refreshToken: string) => {
+  await AsyncStorage.multiSet([
+    [ACCESS_TOKEN_KEY, accessToken],
+    [REFRESH_TOKEN_KEY, refreshToken],
+  ]);
+};
+
+export const removeTokens = async () => {
+  await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
 };

@@ -14,7 +14,7 @@ import { useNavigation } from "@react-navigation/native";
 
 import { login } from "../services/auth.service";
 
-import { saveToken } from "../storage/token.storage";
+import { saveToken, saveRefreshToken } from "../storage/token.storage";
 import { isEmail } from "../utils/validators";
 import AppInput from "../components/inputs/AppInput";
 import PrimaryButton from "../components/buttons/PrimaryButton";
@@ -63,7 +63,13 @@ export default function Login() {
 
       const loginResponse = response.data.data;
 
-      await saveToken(loginResponse.accessToken);
+      const accessToken = response.data.data.accessToken;
+
+      const refreshToken = response.data.data.refreshToken;
+
+      await saveToken(accessToken);
+
+      await saveRefreshToken(refreshToken);
 
       if (loginResponse.user?.isFirstLogin) {
         navigation.replace("CreatePassword", {

@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    
 
     passwordHash: {
       type: String,
@@ -34,11 +33,12 @@ const userSchema = new mongoose.Schema(
       ref: "Employee",
       default: null,
     },
+
     patientId: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Patient",
-  default: null,
-},
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Patient",
+      default: null,
+    },
 
     // Tracks whether the user has completed first-time login setup
     isFirstLogin: {
@@ -56,29 +56,65 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    //refresh tokens 
-    refreshToken: {
-  type: String,
-  default: null,
-},
 
-    // Password recovery question
+    // Refresh token for authentication
+    refreshToken: {
+      type: String,
+      default: null,
+    },
+
+    // Password recovery
     securityQuestion: {
       type: String,
       default: null,
     },
 
-    // Hashed answer for password recovery
     securityAnswer: {
       type: String,
+      default: null,
+    },
+
+    // Audit fields
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    deletedAt: {
+      type: Date,
       default: null,
     },
   },
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
+
+// Indexes
+
+userSchema.index({ status: 1 });
+userSchema.index({ employeeId: 1 });
+userSchema.index({ patientId: 1 });
+userSchema.index({ status: 1, isDeleted: 1 });
 
 const User = mongoose.model("User", userSchema);
 

@@ -1,112 +1,67 @@
-import {
-  Component,
-  OnInit,
-  ChangeDetectorRef
-} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
 
-import {
-  CommonModule,
-} from '@angular/common';
+import { CommonModule } from '@angular/common';
 
-import {
-  AppointmentService,
-} from '../../../core/services/appointment';
+import { AppointmentService } from '../../../core/services/appointment';
+import { NodeService } from '../../../core/services/node';
 
 @Component({
-  selector:
-    'app-appointment-requests',
+  selector: 'app-appointment-requests',
 
   standalone: true,
 
-  imports: [
-    CommonModule,
-  ],
+  imports: [CommonModule],
 
-  templateUrl:
-    './appointment-requests.html',
+  templateUrl: './appointment-requests.html',
 
-  styleUrls: [
-    './appointment-requests.css',
-  ],
+  styleUrls: ['./appointment-requests.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppointmentRequestsComponent
-implements OnInit {
+export class AppointmentRequestsComponent implements OnInit {
+  appointments: any[] = [];
 
-  appointments:
-    any[] = [];
-
-  loading =
-    false;
+  loading = false;
 
   constructor(
-    private readonly appointmentService:
-      AppointmentService,
-      private readonly cdr: ChangeDetectorRef  ) {}
+    private readonly appointmentService: AppointmentService,
+    public readonly nodeService: NodeService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-
     this.loadPendingAppointments();
-
   }
 
   loadPendingAppointments(): void {
+    this.loading = true;
 
-    this.loading =
-      true;
+    this.appointmentService.getPendingAppointments().subscribe({
+      next: (response) => {
+        this.appointments = response.data;
 
-    this.appointmentService
-      .getPendingAppointments()
-      .subscribe({
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
 
-        next:
-          (response) => {
-
-            this.appointments =
-              response.data;
-
-            this.loading =
-              false;
-              this.cdr.detectChanges();
-          },
-
-        error:
-          () => {
-
-            this.loading =
-              false;
-          },
-      });
+      error: () => {
+        this.loading = false;
+      }
+    });
   }
 
-  approve(
-    id: string
-  ): void {
-
-    this.appointmentService
-      .approveAppointment(id)
-      .subscribe({
-
-        next:
-          () => {
-
-            this.loadPendingAppointments();
-          },
-      });
+  approve(id: string): void {
+    this.appointmentService.approveAppointment(id).subscribe({
+      next: () => {
+        this.loadPendingAppointments();
+      }
+    });
   }
 
-  reject(
-    id: string
-  ): void {
-
-    this.appointmentService
-      .rejectAppointment(id)
-      .subscribe({
-
-        next:
-          () => {
-
-            this.loadPendingAppointments();
-          },
-      });
+  reject(id: string): void {
+    this.appointmentService.rejectAppointment(id).subscribe({
+      next: () => {
+        this.loadPendingAppointments();
+      }
+    });
   }
 }

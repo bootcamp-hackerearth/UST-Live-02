@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -11,7 +11,8 @@ import { AuthService } from '../../../core/services/auth';
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './doctor-queue.html',
-  styleUrls: ['./doctor-queue.css']
+  styleUrls: ['./doctor-queue.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DoctorQueue implements OnInit {
   appointments: any[] = [];
@@ -30,8 +31,6 @@ export class DoctorQueue implements OnInit {
   ngOnInit(): void {
     this.authService.currentUser.subscribe({
       next: (user: any) => {
-        console.log(user);
-
         this.doctorEmployeeId = user?.employeeId?._id;
 
         if (this.doctorEmployeeId) {
@@ -45,24 +44,22 @@ export class DoctorQueue implements OnInit {
   loadQueue(): void {
     this.isLoading = true;
 
-    this.appointmentService
-      .getDoctorQueue(this.doctorEmployeeId)
-      .subscribe({
-        next: (response) => {
-          console.log(response);
+    this.appointmentService.getDoctorQueue(this.doctorEmployeeId).subscribe({
+      next: (response) => {
+        console.log(response);
 
-          this.appointments = response.data;
+        this.appointments = response.data;
 
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        },
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
 
-        error: (error) => {
-          console.log(error);
+      error: (error) => {
+        console.log(error);
 
-          this.isLoading = false;
-        }
-      });
+        this.isLoading = false;
+      }
+    });
   }
 
   // Mark appointment as completed
@@ -72,24 +69,19 @@ export class DoctorQueue implements OnInit {
       status: 'COMPLETED'
     };
 
-    this.appointmentService
-      .updateAppointment(
-        appointment._id,
-        updatedData
-      )
-      .subscribe({
-        next: (response) => {
-          console.log(response);
+    this.appointmentService.updateAppointment(appointment._id, updatedData).subscribe({
+      next: (response) => {
+        console.log(response);
 
-          alert('Consultation completed');
+        alert('Consultation completed');
 
-          this.loadQueue();
-        },
+        this.loadQueue();
+      },
 
-        error: (error) => {
-          console.log(error);
-        }
-      });
+      error: (error) => {
+        console.log(error);
+      }
+    });
   }
 
   // Move appointment to consultation state
@@ -99,23 +91,18 @@ export class DoctorQueue implements OnInit {
       status: 'IN_CONSULTATION'
     };
 
-    this.appointmentService
-      .updateAppointment(
-        appointment._id,
-        updatedData
-      )
-      .subscribe({
-        next: (response) => {
-          console.log(response);
+    this.appointmentService.updateAppointment(appointment._id, updatedData).subscribe({
+      next: (response) => {
+        console.log(response);
 
-          alert('Consultation started');
+        alert('Consultation started');
 
-          this.loadQueue();
-        },
+        this.loadQueue();
+      },
 
-        error: (error) => {
-          console.log(error);
-        }
-      });
+      error: (error) => {
+        console.log(error);
+      }
+    });
   }
 }

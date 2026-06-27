@@ -49,5 +49,4 @@ const appointmentRejectedTemplate = ({
   `;
 };
 
-module.exports =
-  appointmentRejectedTemplate;
+module.exports = appointmentRejectedTemplate;

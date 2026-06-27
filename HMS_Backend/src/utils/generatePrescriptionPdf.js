@@ -7,15 +7,9 @@ const generatePrescriptionPdf = (consultation, res) => {
   });
 
   // Set response headers
-  res.setHeader(
-    "Content-Type",
-    "application/pdf"
-  );
+  res.setHeader("Content-Type", "application/pdf");
 
-  res.setHeader(
-    "Content-Disposition",
-    "inline; filename=prescription.pdf"
-  );
+  res.setHeader("Content-Disposition", "inline; filename=prescription.pdf");
 
   doc.pipe(res);
 
@@ -37,11 +31,13 @@ const generatePrescriptionPdf = (consultation, res) => {
 
   doc.moveDown(0.5);
 
-  doc.fontSize(12).text(
-    `Patient Name: ${consultation?.patientId?.firstName} ${
-      consultation?.patientId?.lastName
-    }`
-  );
+  doc
+    .fontSize(12)
+    .text(
+      `Patient Name: ${consultation?.patientId?.firstName} ${
+        consultation?.patientId?.lastName
+      }`,
+    );
 
   doc.text(`Patient ID: ${consultation?.patientId?.patientId}`);
   doc.text(`Gender: ${consultation?.patientId?.gender}`);
@@ -54,9 +50,7 @@ const generatePrescriptionPdf = (consultation, res) => {
   doc.moveDown(0.5);
 
   doc.text(`Doctor Name: ${consultation?.doctorEmployeeId?.name}`);
-  doc.text(
-    `Specialization: ${consultation?.doctorEmployeeId?.specialization}`
-  );
+  doc.text(`Specialization: ${consultation?.doctorEmployeeId?.specialization}`);
 
   doc.moveDown();
 
@@ -74,9 +68,7 @@ const generatePrescriptionPdf = (consultation, res) => {
 
   doc.moveDown(0.5);
 
-  doc.text(
-    `Blood Pressure: ${consultation?.vitals?.bloodPressure || "N/A"}`
-  );
+  doc.text(`Blood Pressure: ${consultation?.vitals?.bloodPressure || "N/A"}`);
 
   doc.text(`Pulse Rate: ${consultation?.vitals?.pulseRate || "N/A"}`);
   doc.text(`Oxygen Level: ${consultation?.vitals?.oxygenLevel || "N/A"}`);

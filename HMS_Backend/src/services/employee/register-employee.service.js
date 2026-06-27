@@ -9,11 +9,12 @@ const STATUS = require("../../constants/status");
 
 const generateTemporaryPassword = require("../../utils/generateTemporaryPassword");
 const generateSequentialId = require("../../utils/generateSequentialId");
+const ApiError = require("../../utils/ApiError");
 
 const sendEmail = require("../../utils/sendEmail");
 const employeeWelcomeTemplate = require("../../templates/employeeWelcomeTemplate");
 
-const registerEmployee = async (employeeData) => {
+const registerEmployee = async (employeeData, currentUser) => {
   const {
     name,
     email,
@@ -35,36 +36,63 @@ const registerEmployee = async (employeeData) => {
     breakEndTime,
     maxPatientsPerDay,
     securityQuestion,
-    securityAnswer,
+    securityAnswer: hashedSecurityAnswer,
     role,
   } = employeeData;
+
+  // Super admin authorization
+  if (
+    designation === ROLES.ADMIN &&
+    !currentUser.roles?.includes(ROLES.SUPER_ADMIN)
+  ) {
+    throw new ApiError(
+      403,
+      "Only Super Admin can create Admin",
+      "FORBIDDEN",
+    );
+  }
 
   // Check if email is already in use
   const existingUser = await User.findOne({
     email: email.toLowerCase(),
+    isDeleted: false,
   });
 
   if (existingUser) {
-    throw new Error("Employee already exists with this email");
+    throw new ApiError(
+      409,
+      "Employee already exists with this email",
+      "EMAIL_ALREADY_EXISTS",
+    );
   }
 
   // Check if phone number is already in use
   const existingPhone = await Employee.findOne({
     phone,
+    isDeleted: false,
   });
 
   if (existingPhone) {
-    throw new Error("Employee already exists with this phone number");
+    throw new ApiError(
+      409,
+      "Employee already exists with this phone number",
+      "PHONE_ALREADY_EXISTS",
+    );
   }
 
   // Validate doctor's registration number
   if (designation === "DOCTOR") {
     const existingDoctor = await Employee.findOne({
       medicalRegistrationNo,
+      isDeleted: false,
     });
 
     if (existingDoctor) {
-      throw new Error("Medical registration number already exists");
+      throw new ApiError(
+        409,
+        "Medical registration number already exists",
+        "MEDICAL_REGISTRATION_EXISTS",
+      );
     }
   }
 
@@ -72,7 +100,11 @@ const registerEmployee = async (employeeData) => {
   const prefix = EMPLOYEE_PREFIX[designation];
 
   if (!prefix) {
-    throw new Error("Invalid employee designation");
+    throw new ApiError(
+      400,
+      "Invalid employee designation",
+      "INVALID_DESIGNATION",
+    );
   }
 
   const employeeCode = await generateSequentialId(prefix);
@@ -102,26 +134,25 @@ const registerEmployee = async (employeeData) => {
       maxPatientsPerDay: maxPatientsPerDay || 40,
     },
     status: STATUS.ACTIVE,
+    createdBy: currentUser.userId,
   });
 
   // Generate temporary password for first login
   const temporaryPassword = generateTemporaryPassword();
 
-  const hashedTemporaryPassword = await bcrypt.hash(
-    temporaryPassword,
-    10
-  );
+  const hashedTemporaryPassword = await bcrypt.hash(temporaryPassword, 10);
 
   // Create user account
   await User.create({
     email: email.toLowerCase(),
     temporaryPasswordHash: hashedTemporaryPassword,
-    roles: [role || designation || ROLES.DOCTOR],
+    roles: [designation],
     employeeId: employee._id,
     isFirstLogin: true,
     status: STATUS.ACTIVE,
     securityQuestion,
-    securityAnswer,
+    securityAnswer: hashedSecurityAnswer,
+    createdBy: currentUser.userId,
   });
 
   // Send welcome email with login details
