@@ -1,14 +1,14 @@
-import { Image } from "expo-image";
+// import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 
 export default function LoadingScreen() {
   return (
     <View style={styles.container}>
-      <Image
+      {/* <Image
         source={require("@/assets/images/loading.gif")}
         contentFit="contain"
         style={styles.image}
-      />
+      /> */}
     </View>
   );
 }
