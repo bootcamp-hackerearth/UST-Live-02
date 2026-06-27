@@ -1,5 +1,6 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
 import { ApprovalsService } from '../../services/approval.service';
 import { ApprovalRequest } from '../../models/approval.model';
 
@@ -10,67 +11,131 @@ import { ApprovalRequest } from '../../models/approval.model';
   styleUrl: './approvals.css',
 })
 export class Approvals implements OnInit {
+  pendingRequests = signal<ApprovalRequest[]>([]);
+  expandedRequestId = signal<string | null>(null);
 
-  pendingRequests: ApprovalRequest[] = [];
-  expandedRequestId: string | null = null;
+  searchText = signal('');
+
+  currentPage = signal(1);
+  pageSize = 10;
+  totalRecords = signal(0);
+  totalPages = signal(0);
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
-    readonly approvalsService: ApprovalsService,
-    readonly cd: ChangeDetectorRef
+    readonly approvalsService: ApprovalsService
   ) {}
 
   ngOnInit(): void {
     this.getPendingRequests();
   }
 
-  getPendingRequests() {
-    this.approvalsService.getPendingRequests()
+  getPendingRequests(): void {
+    this.approvalsService
+      .getPendingRequests(
+        this.currentPage(),
+        this.pageSize,
+        this.searchText().trim()
+      )
       .subscribe({
         next: (res) => {
-          this.pendingRequests = res.data;
-          this.cd.detectChanges();
+          this.pendingRequests.set(res.data);
+
+          this.totalRecords.set(res.pagination.totalRecords);
+          this.totalPages.set(res.pagination.totalPages);
+          this.currentPage.set(res.pagination.page);
         },
-        error: (err) => {}
+        error: (err) => {
+          console.error('Error fetching pending approvals:', err);
+        }
       });
   }
 
-  toggleDetails(requestId: string) {
-    if (this.expandedRequestId === requestId) {
-      this.expandedRequestId = null;
-    } else {
-      this.expandedRequestId = requestId;
+  filterRequests(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
     }
+
+    this.searchTimer = setTimeout(() => {
+      this.currentPage.set(1);
+      this.getPendingRequests();
+    }, 300);
   }
 
-  approveRequest(requestId: string) {
-    this.approvalsService.approveRequest(requestId)
-      .subscribe({
-        next: (res) => {
-          this.pendingRequests = this.pendingRequests.filter(
-            request => request._id !== requestId
-          );
-          this.cd.detectChanges();
-        },
-        error: (err) => {}
-      });
+  get startRecord(): number {
+    if (this.totalRecords() === 0) {
+      return 0;
+    }
+
+    return (this.currentPage() - 1) * this.pageSize + 1;
   }
 
-  rejectRequest(requestId: string) {
-    const rejectionReason = prompt('Enter rejection reason');
+  get endRecord(): number {
+    return Math.min(
+      this.currentPage() * this.pageSize,
+      this.totalRecords()
+    );
+  }
 
-    if (!rejectionReason) {
+  goToPreviousPage(): void {
+    if (this.currentPage() <= 1) {
       return;
     }
 
-    this.approvalsService.rejectRequest(requestId, rejectionReason)
+    this.currentPage.update(page => page - 1);
+    this.getPendingRequests();
+  }
+
+  goToNextPage(): void {
+    if (this.currentPage() >= this.totalPages()) {
+      return;
+    }
+
+    this.currentPage.update(page => page + 1);
+    this.getPendingRequests();
+  }
+
+  toggleDetails(requestId: string): void {
+    if (this.expandedRequestId() === requestId) {
+      this.expandedRequestId.set(null);
+      return;
+    }
+
+    this.expandedRequestId.set(requestId);
+  }
+
+  approveRequest(requestId: string): void {
+    this.approvalsService.approveRequest(requestId)
       .subscribe({
-        next: (res) => {
-          this.pendingRequests = this.pendingRequests.filter(
-            request => request._id !== requestId
-          );
-          this.cd.detectChanges();
+        next: () => {
+          this.expandedRequestId.set(null);
+          this.getPendingRequests();
         },
-        error: (err) => {}
+        error: (err) => {
+          console.error('Approval failed:', err);
+        }
       });
+  }
+
+  rejectRequest(requestId: string): void {
+    const rejectionReason = prompt('Enter rejection reason');
+
+    if (!rejectionReason?.trim()) {
+      return;
+    }
+
+    this.approvalsService.rejectRequest(
+      requestId,
+      rejectionReason.trim()
+    ).subscribe({
+      next: () => {
+        this.expandedRequestId.set(null);
+        this.getPendingRequests();
+      },
+      error: (err) => {
+        console.error('Rejection failed:', err);
+      }
+    });
   }
 }

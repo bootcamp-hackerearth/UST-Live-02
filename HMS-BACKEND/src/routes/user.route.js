@@ -36,6 +36,13 @@ router.put(
   userController.updateEmployee
 );
 
+router.delete(
+  '/delete/:employeeId',
+  authMiddleware,
+  authRoles(permissions.DELETE_EMPLOYEE),
+  userController.softDeleteEmployee
+);
+
 module.exports = router;
 
 

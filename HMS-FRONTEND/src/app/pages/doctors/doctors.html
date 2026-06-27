@@ -15,8 +15,8 @@
     <!-- Search -->
     <div class="table-toolbar">
         <div class="search-box">
-            <input type="text" placeholder="Search doctors..." [value]="searchText"
-                (input)="searchText = $any($event.target).value; filterDoctors()" />
+            <input type="text" placeholder="Search doctors..." [value]="searchText()"
+                (input)="searchText.set($any($event.target).value); filterDoctors()" />
         </div>
     </div>
 
@@ -41,7 +41,7 @@
             </thead>
 
             <tbody>
-                @for (doctor of paginatedDoctors; track doctor.doctorId) {
+                @for (doctor of doctors(); track doctor.doctorId) {
                 <tr>
                     <td>{{ doctor.employeeCode }}</td>
                     <td>{{ doctor.firstName }} {{ doctor.lastName }}</td>
@@ -66,13 +66,17 @@
                             <i class="bi bi-pencil-square"></i>
                             Edit
                         </button>
+                        <button class="action-btn delete-btn" type="button" title="Delete doctor"
+                            (click)="deleteDoctor(doctor)">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </td>
                 </tr>
                 }
             </tbody>
         </table>
 
-        @if (filteredDoctors.length === 0) {
+        @if (doctors().length === 0) {
         <div class="empty-state">
             <p>No data available in table</p>
 
@@ -91,35 +95,38 @@
     <!-- Footer -->
     <div class="table-footer">
         <p>
-            Records: {{ startRecord }} - {{ endRecord }} of {{ filteredDoctors.length }}
+            Records: {{ startRecord }} - {{ endRecord }} of {{ totalRecords() }}
         </p>
 
         <div class="pagination">
-            <i class="bi bi-chevron-left" [class.disabled]="currentPage === 1" (click)="goToPreviousPage()"
-                (keypress)="goToPreviousPage()" (keydown)="goToPreviousPage()" (keyup)="goToPreviousPage()">
-            </i>
+            <button type="button" class="pagination-icon-button" [class.disabled]="currentPage() === 1"
+                [disabled]="currentPage() === 1" aria-label="Go to previous page" (click)="goToPreviousPage()">
+                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+            </button>
 
             <span class="page-info">
-                Page {{ currentPage }} of {{ totalPages }}
+                Page {{ currentPage() }} of {{ totalPages() }}
             </span>
 
-            <i class="bi bi-chevron-right" [class.disabled]="currentPage === totalPages || totalPages === 0"
-                (click)="goToNextPage()" (keypress)="goToNextPage()" (keydown)="goToNextPage()"
-                (keyup)="goToNextPage()">
-            </i>
+            <button type="button" class="pagination-icon-button"
+                [class.disabled]="currentPage() === totalPages() || totalPages() === 0"
+                [disabled]="currentPage() === totalPages() || totalPages() === 0" aria-label="Go to next page"
+                (click)="goToNextPage()">
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            </button>
         </div>
     </div>
 
 </div>
 
 <!-- Add Doctor Modal -->
-@if (showAddDoctorModal) {
+@if (showAddDoctorModal()) {
 <div class="modal-overlay">
 
     <div class="modal-box">
 
         <div class="modal-header">
-            <h2>{{ isEditMode ? 'Edit Doctor' : 'Add Doctor' }}</h2>
+            <h2>{{ isEditMode() ? 'Edit Doctor' : 'Add Doctor' }}</h2>
 
             <button class="close-btn" (click)="closeAddDoctorModal()">
                 <i class="bi bi-x-lg"></i>

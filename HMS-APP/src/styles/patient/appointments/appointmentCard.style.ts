@@ -61,47 +61,68 @@ export const styles = StyleSheet.create({
     color: '#2C2C2A',
     lineHeight: 18,
   },
-appointmentInfo: {
-  flex: 1,
-  paddingRight: 12,
-},
+  appointmentInfo: {
+    flex: 1,
+    paddingRight: 12,
+  },
 
-bottomRow: {
-  marginTop: 12,
-  flexDirection: 'row',
-  alignItems: 'flex-end',
-  justifyContent: 'space-between',
-  gap: 12,
-},
-cancelButton: {
-  marginTop: 8,
-  backgroundColor: '#FCEBEB',
-  paddingHorizontal: 12,
-  paddingVertical: 5,
-  borderRadius: 20,
-  alignSelf: 'flex-end',
-},
+  bottomRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cancelButton: {
+    marginTop: 8,
+    backgroundColor: '#FCEBEB',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    alignSelf: 'flex-end',
+  },
 
-cancelButtonText: {
-  fontSize: 12,
-  fontWeight: '700',
-  color: '#A32D2D',
-},
+  cancelButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#A32D2D',
+  },
 
-statusCancelled: {
-  backgroundColor: '#FCEBEB',
-},
+  statusCancelled: {
+    backgroundColor: '#FCEBEB',
+  },
 
-statusCancelledText: {
-  color: '#A32D2D',
-},
+  statusCancelledText: {
+    color: '#A32D2D',
+  },
 
-statusCompleted: {
-  backgroundColor: '#E6F1FB',
-},
+  statusCompleted: {
+    backgroundColor: '#E6F1FB',
+  },
 
-statusCompletedText: {
-  color: '#0C447C',
-},
+  statusCompletedText: {
+    color: '#0C447C',
+  },
+
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  healthRecordButton: {
+    backgroundColor: '#E6F1FB',
+    borderWidth: 1,
+    borderColor: '#185FA5',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+
+  healthRecordButtonText: {
+    color: '#185FA5',
+    fontSize: 12,
+    fontWeight: '600',
+  },
 });
 

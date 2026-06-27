@@ -1,107 +1,189 @@
-const User = require('../models/User.model')
+const User = require("../models/User.model");
 
-const bcrypt = require('bcrypt');
-const {generateToken,verifyToken}=require('../utils/jwt')
-const ApiError=require('../utils/ApiError');
+const bcrypt = require("bcrypt");
 
+const {
+  generateToken,
+  verifyToken,
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} = require("../utils/jwt");
 
+const ApiError = require("../utils/ApiError");
 
-exports.loginEmployee=async({email,password})=>
-{
-    const user=await User.findOne({email}).populate("roleId");
+exports.loginEmployee = async ({ email, password }) => {
+ const normalizedEmail = email.trim().toLowerCase();
 
-    if(!user)
-    {
-        throw new ApiError(404,"Employee Not Found");
-    }
+const user = await User.findOne({
+  email: normalizedEmail,
+}).populate("roleId");
 
-    const isPasswordMatch=await bcrypt.compare(password,user.passwordHash);
+  if (!user) {
+    throw new ApiError(404, "Employee Not Found");
+  }
+  
+  if (user.status !== "ACTIVE") {
+  throw new ApiError(403, "This account is inactive");
+}
 
-    if(!isPasswordMatch)
-    {
-        throw new ApiError(401,"Invalid Credentials");
-    }
+  const isPasswordMatch = await bcrypt.compare(password, user.passwordHash);
 
-    if(!user.isVerified)
-    {
-        throw new ApiError(401,"Please verify your mail before login");
-    }
+  if (!isPasswordMatch) {
+    throw new ApiError(401, "Invalid Credentials");
+  }
 
-    const loginToken=generateToken({
-        userId:user._id,
-        role:user.roleId.name,
-        rolecode:user.roleId.roleCode,
-        basePath:user.roleId.basePath
+  if (!user.isVerified) {
+    throw new ApiError(401, "Please verify your mail before login");
+  }
 
-    },'1d');
+  const accessToken = generateAccessToken({
+    userId: user._id,
+    role: user.roleId.name,
+    rolecode: user.roleId.roleCode,
+    basePath: user.roleId.basePath,
+  });
 
-    //this login token contains the user id and role id as the payload for the jwt token
-    user.lastLoginAt=new Date();
+  const refreshToken = generateRefreshToken({
+    userId: user._id,
+  });
 
-    await user.save();
+  //this login token contains the user id and role id as the payload for the jwt token
+  user.lastLoginAt = new Date();
 
+  await user.save();
 
-    return {
-        token:loginToken,
-        user:{
-            id:user._id,
-            firstName:user.firstName,
-            lastName:user.lastName,
-            email:user.email,
-            roleId:user.roleId,
-            status:user.status,
-             mustChangePassword: user.mustChangePassword
-
-        }
-    };
-
-    
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      roleId: user.roleId,
+      status: user.status,
+           mustChangePassword: user.mustChangePassword,
+    },
+  };
 };
+  
+  exports.changeFirstLoginPassword = async (
+  userId,
+  newPassword
+) => {
+  const user = await User.findById(userId);
 
+  if (!user) {
+    throw new ApiError(
+      404,
+      "User not found"
+    );
+  }
 
+  if (!user.mustChangePassword) {
+    throw new ApiError(
+      400,
+      "First-login password change is not required"
+    );
+  }
 
-exports.verifyEmployeeEmail=async(token)=>
-{
+  const isTemporaryPasswordReused =
+    await bcrypt.compare(
+      newPassword,
+      user.passwordHash
+    );
 
-    const decoded=verifyToken(token);
-    const user=await User.findById(decoded.userId);
+  if (isTemporaryPasswordReused) {
+    throw new ApiError(
+      400,
+      "New password cannot be the same as the temporary password"
+    );
+  }
 
-    if(!user){
-        throw new ApiError(404,"User Not Found");
-    }
+  user.passwordHash =
+    await bcrypt.hash(newPassword, 10);
 
-    user.isVerified=true;
-    await user.save();
+  user.mustChangePassword = false;
 
-    return {
-        email:user.email,
-        isVerified:user.isVerified,
-        message:"Employee Email Verified successfully"
-    };
+  await user.save();
+
+  return {
+    email: user.email,
+    mustChangePassword:
+      user.mustChangePassword,
+  };
+};
+ 
+
+exports.verifyEmployeeEmail = async (token) => {
+  const decoded = verifyToken(token);
+  const user = await User.findById(decoded.userId);
+
+  if (!user) {
+    throw new ApiError(404, "User Not Found");
+  }
+
+  user.isVerified = true;
+  await user.save();
+
+  return {
+    email: user.email,
+    isVerified: user.isVerified,
+    message: "Employee Email Verified successfully",
+  };
 };
 
 exports.changePassword = async (userId, { oldPassword, newPassword }) => {
-    const user = await User.findById(userId);
+  const user = await User.findById(userId);
 
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
-    const isOldPasswordMatch = await bcrypt.compare(oldPassword, user.passwordHash);
+  const isOldPasswordMatch = await bcrypt.compare(
+    oldPassword,
+    user.passwordHash,
+  );
 
-    if (!isOldPasswordMatch) {
-        throw new ApiError(401, "Old password is incorrect");
-    }
+  if (!isOldPasswordMatch) {
+    throw new ApiError(401, "Old password is incorrect");
+  }
 
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
 
-    user.passwordHash = newPasswordHash;
-    user.mustChangePassword = false;
+  user.passwordHash = newPasswordHash;
+  user.mustChangePassword = false;
 
-    await user.save();
+  await user.save();
 
-    return {
-        email: user.email,
-        mustChangePassword: user.mustChangePassword
-    };
+  return {
+    email: user.email,
+    mustChangePassword: user.mustChangePassword,
+  };
+};
+
+exports.refreshAccessToken = async (refreshToken) => {
+  const decoded = verifyRefreshToken(refreshToken);
+
+  const user = await User.findById(decoded.userId).populate("roleId");
+
+  if (!user.isVerified) {
+    throw new ApiError(401, "User is not verified");
+  }
+
+  if (user.status !== "ACTIVE") {
+    throw new ApiError(401, "User account is inactive");
+  }
+
+  const accessToken = generateAccessToken({
+    userId: user._id,
+    role: user.roleId.name,
+    rolecode: user.roleId.roleCode,
+    basePath: user.roleId.basePath,
+  });
+
+  return {
+    accessToken,
+  };
 };

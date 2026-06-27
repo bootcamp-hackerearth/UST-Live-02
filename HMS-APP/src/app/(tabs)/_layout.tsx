@@ -19,6 +19,9 @@ const ProfileTabIcon = ({ color, size }: TabIconProps) => {
 const AppointmentsTabIcon = ({ color, size }: TabIconProps) => {
   return <Ionicons name="calendar" color={color} size={size} />;
 };
+const HealthRecordsTabIcon = ({ color, size }: TabIconProps) => {
+  return <Ionicons name="document-text" color={color} size={size} />;
+};
 
 export default function TabLayout() {
   return (
@@ -57,6 +60,13 @@ export default function TabLayout() {
         options={{
           title: 'Appointments',
           tabBarIcon: AppointmentsTabIcon,
+        }}
+      />
+      <Tabs.Screen
+        name="health-records"
+        options={{
+          title: 'Records',
+          tabBarIcon: HealthRecordsTabIcon,
         }}
       />
     </Tabs>

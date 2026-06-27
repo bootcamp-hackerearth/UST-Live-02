@@ -46,4 +46,9 @@ router.put(
     appointmentController.cancelAppointment
 );
 
+router.get('/details/:id',
+     authMiddleware,
+     authRoles(permissions.VIEW_APPOINTMENT),
+      appointmentController.getAppointmentDetails);
+
 module.exports = router;

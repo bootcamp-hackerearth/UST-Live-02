@@ -15,7 +15,8 @@ export interface Employee {
   isVerified: boolean;
   status: string;
 }
-
+
+
 export interface CreateEmployeePayload {
   firstName: string;
   lastName: string;
@@ -36,4 +37,21 @@ export interface UpdateEmployeePayload {
   designation?: string;
   joiningDate?: string;
   status?: string;
+}
+
+export interface PaginationData {
+  page: number;
+  limit: number;
+  totalRecords: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedEmployeeResponse {
+  success: boolean;
+  statusCode?: number;
+  message: string;
+  data: Employee[];
+  pagination: PaginationData;
 }

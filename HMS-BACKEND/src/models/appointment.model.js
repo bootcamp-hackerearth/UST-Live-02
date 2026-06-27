@@ -32,7 +32,7 @@ const appointmentSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["BOOKED", "COMPLETED", "CANCELLED"],
+            enum: ["BOOKED", "COMPLETED", "CANCELLED","UNATTENDED"],
             default: "BOOKED"
         },
 
@@ -67,4 +67,5 @@ appointmentSchema.pre('save', async function () {
     }
 });
 
-module.exports = mongoose.model("Appointment", appointmentSchema);
+module.exports =
+  mongoose.models.Appointment || mongoose.model('Appointment', appointmentSchema);

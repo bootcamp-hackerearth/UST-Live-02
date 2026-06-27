@@ -60,7 +60,28 @@ export interface CreateAppointmentPayload {
 export interface SlotResponse {
   availabilityStart: string;
   availabilityEnd: string;
+
   totalSlots: number;
   bookedCount: number;
+
+  allSlots: string[];
+  bookedSlots: string[];
   availableSlots: string[];
+}
+
+export interface PaginationData {
+  page: number;
+  limit: number;
+  totalRecords: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedAppointmentResponse {
+  success: boolean;
+  statusCode?: number;
+  message: string;
+  data: Appointment[];
+  pagination: PaginationData;
 }
