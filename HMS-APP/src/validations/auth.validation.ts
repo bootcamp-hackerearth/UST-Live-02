@@ -1,4 +1,4 @@
-export const validateEmailFormat = (email: string) => {
+export const validateEmailFormat = (email: string): boolean => {
   const trimmedEmail = email.trim();
 
   const emailRegex =
@@ -7,19 +7,32 @@ export const validateEmailFormat = (email: string) => {
   return emailRegex.test(trimmedEmail);
 };
 
-export const hasSpaces = (value: string) => {
+export const hasSpaces = (value: string): boolean => {
   return /\s/.test(value);
 };
 
-const commonDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
+const commonDomains = [
+  "gmail.com",
+  "yahoo.com",
+  "outlook.com",
+  "hotmail.com",
+];
 
-const getDifferenceCount = (value: string, target: string) => {
-  let differences = Math.abs(value.length - target.length);
+const getDifferenceCount = (
+  value: string,
+  target: string
+): number => {
+  let differences = Math.abs(
+    value.length - target.length
+  );
 
-  const minLength = Math.min(value.length, target.length);
+  const minLength = Math.min(
+    value.length,
+    target.length
+  );
 
-  for (let i = 0; i < minLength; i++) {
-    if (value[i] !== target[i]) {
+  for (let index = 0; index < minLength; index++) {
+    if (value[index] !== target[index]) {
       differences++;
     }
   }
@@ -27,215 +40,287 @@ const getDifferenceCount = (value: string, target: string) => {
   return differences;
 };
 
-const getSuggestedDomain = (domain: string) => {
+const getSuggestedDomain = (
+  domain: string
+): string => {
   for (const commonDomain of commonDomains) {
-    const difference = getDifferenceCount(domain, commonDomain);
+    const difference = getDifferenceCount(
+      domain,
+      commonDomain
+    );
 
-    if (difference <= 2 && domain !== commonDomain) {
+    if (
+      difference <= 2 &&
+      domain !== commonDomain
+    ) {
       return commonDomain;
     }
   }
 
-  return '';
+  return "";
 };
 
-const validateBasicEmailRules = (email: string) => {
+const validateBasicEmailRules = (
+  email: string
+): string => {
   if (!email) {
-    return 'Email is required';
+    return "Email is required";
   }
 
   if (hasSpaces(email)) {
-    return 'Email should not contain spaces';
+    return "Email should not contain spaces";
   }
 
   if (!validateEmailFormat(email)) {
-    return 'Please enter a valid email address';
+    return "Please enter a valid email address";
   }
 
-  return '';
+  return "";
 };
 
-const validateEmailUserName = (localPart: string) => {
+const validateEmailUserName = (
+  localPart: string
+): string => {
   if (!localPart) {
-    return 'Please enter a valid email address';
+    return "Please enter a valid email address";
   }
 
-  if (localPart.startsWith('.') || localPart.endsWith('.')) {
-    return 'Email username is not valid';
+  if (
+    localPart.startsWith(".") ||
+    localPart.endsWith(".")
+  ) {
+    return "Email username is not valid";
   }
 
-  if (localPart.includes('..')) {
-    return 'Email username should not contain consecutive dots';
+  if (localPart.includes("..")) {
+    return "Email username should not contain consecutive dots";
   }
 
-  return '';
+  return "";
 };
 
-const validateEmailDomain = (domain: string) => {
+const validateEmailDomain = (
+  domain: string
+): string => {
   if (!domain) {
-    return 'Please enter a valid email address';
+    return "Please enter a valid email address";
   }
 
-  if (domain.includes('..')) {
-    return 'Email domain should not contain consecutive dots';
+  if (domain.includes("..")) {
+    return "Email domain should not contain consecutive dots";
   }
 
-  if (domain.startsWith('-') || domain.endsWith('-')) {
-    return 'Email domain is not valid';
+  if (
+    domain.startsWith("-") ||
+    domain.endsWith("-")
+  ) {
+    return "Email domain is not valid";
   }
 
-  return '';
+  return "";
 };
 
-const validateDomainExtension = (domainParts: string[]) => {
+const validateDomainExtension = (
+  domainParts: string[]
+): string => {
   if (domainParts.length < 2) {
-    return 'Please enter a valid email address';
+    return "Please enter a valid email address";
   }
 
-  const extension = domainParts.at(-1) ?? '';
+  const extension =
+    domainParts.at(-1) ?? "";
 
   if (extension.length > 3) {
-    return 'Email domain extension looks invalid';
+    return "Email domain extension looks invalid";
   }
 
-  return '';
+  return "";
 };
 
-const validateGmailDomain = (domain: string, localPart: string) => {
-  if (domain !== 'gmail.com') {
-    return 'Please check your email domain. Did you mean gmail.com?';
+const validateGmailDomain = (
+  domain: string,
+  localPart: string
+): string => {
+  if (domain !== "gmail.com") {
+    return "Please check your email domain. Did you mean gmail.com?";
   }
 
-  const gmailRegex = /^(?!\.)(?!.*\.\.)(?!.*\.$)[a-z0-9.]{6,30}$/;
+  const gmailRegex =
+    /^(?!\.)(?!.*\.\.)(?!.*\.$)[a-z0-9.]{6,30}$/;
 
   if (!gmailRegex.test(localPart)) {
-    return 'Email is invalid';
+    return "Email is invalid";
   }
 
-  return '';
+  return "";
 };
 
 const validateKnownProviderDomain = (
   providerName: string,
   domain: string,
   localPart: string
-) => {
-  if (providerName === 'gmail') {
-    return validateGmailDomain(domain, localPart);
+): string => {
+  if (providerName === "gmail") {
+    return validateGmailDomain(
+      domain,
+      localPart
+    );
   }
 
-  const validProviderDomains: Record<string, string> = {
-    yahoo: 'yahoo.com',
-    outlook: 'outlook.com',
-    hotmail: 'hotmail.com',
+  const validProviderDomains: Record<
+    string,
+    string
+  > = {
+    yahoo: "yahoo.com",
+    outlook: "outlook.com",
+    hotmail: "hotmail.com",
   };
 
-  const expectedDomain = validProviderDomains[providerName];
+  const expectedDomain =
+    validProviderDomains[providerName];
 
-  if (expectedDomain && domain !== expectedDomain) {
+  if (
+    expectedDomain &&
+    domain !== expectedDomain
+  ) {
     return `Please check your email domain. Did you mean ${expectedDomain}?`;
   }
 
-  return '';
+  return "";
 };
 
-const validateDomainSuggestion = (domain: string) => {
-  const suggestedDomain = getSuggestedDomain(domain);
+const validateDomainSuggestion = (
+  domain: string
+): string => {
+  const suggestedDomain =
+    getSuggestedDomain(domain);
 
   if (suggestedDomain) {
     return `Please check your email domain. Did you mean ${suggestedDomain}?`;
   }
 
-  return '';
+  return "";
 };
 
-export const validateLoginEmail = (email: string) => {
-  const trimmedEmail = email.trim().toLowerCase();
- 
-  if (!trimmedEmail) {
-    return 'Email is required';
+export const validateLoginEmail = (
+  email: string
+): string => {
+  const trimmedEmail = email
+    .trim()
+    .toLowerCase();
+
+  const basicError =
+    validateBasicEmailRules(trimmedEmail);
+
+  if (basicError) {
+    return basicError;
   }
- 
-  if (hasSpaces(trimmedEmail)) {
-    return 'Email should not contain spaces';
+
+  const [localPart, domain] =
+    trimmedEmail.split("@");
+
+  const userNameError =
+    validateEmailUserName(localPart);
+
+  if (userNameError) {
+    return userNameError;
   }
- 
-  if (!validateEmailFormat(trimmedEmail)) {
-    return 'Please enter a valid email address';
+
+  const domainError =
+    validateEmailDomain(domain);
+
+  if (domainError) {
+    return domainError;
   }
- 
-  const [localPart, domain] = trimmedEmail.split('@');
- 
-  if (!localPart || !domain) {
-    return 'Please enter a valid email address';
+
+  const domainParts = domain.split(".");
+
+  const extensionError =
+    validateDomainExtension(domainParts);
+
+  if (extensionError) {
+    return extensionError;
   }
- 
-  if (localPart.startsWith('.') || localPart.endsWith('.')) {
-    return 'Email username is not valid';
-  }
- 
-  if (localPart.includes('..')) {
-    return 'Email username should not contain consecutive dots';
-  }
- 
-  if (domain.includes('..')) {
-    return 'Email domain should not contain consecutive dots';
-  }
- 
-  if (domain.startsWith('-') || domain.endsWith('-')) {
-    return 'Email domain is not valid';
-  }
- 
-  const domainParts = domain.split('.');
- 
-  if (domainParts.length < 2) {
-    return 'Please enter a valid email address';
-  }
- 
+
   const providerName = domainParts[0];
-  const extension = domainParts[domainParts.length - 1];
- 
-  if (providerName === 'gmail') {
-  if (domain !== 'gmail.com') {
-    return 'Please check your email domain. Did you mean gmail.com?';
+
+  const providerError =
+    validateKnownProviderDomain(
+      providerName,
+      domain,
+      localPart
+    );
+
+  if (providerError) {
+    return providerError;
   }
- 
-  const gmailRegex = /^(?!\.)(?!.*\.\.)(?!.*\.$)[a-z0-9.]{6,30}$/;
- 
-  if (!gmailRegex.test(localPart)) {
-    return 'Email is invalid';
-  }
-}
- 
-  if (providerName === 'yahoo' && domain !== 'yahoo.com') {
-    return 'Please check your email domain. Did you mean yahoo.com?';
-  }
- 
-  if (providerName === 'outlook' && domain !== 'outlook.com') {
-    return 'Please check your email domain. Did you mean outlook.com?';
-  }
- 
-  if (providerName === 'hotmail' && domain !== 'hotmail.com') {
-    return 'Please check your email domain. Did you mean hotmail.com?';
-  }
- 
-  if (extension.length > 3) {
-    return 'Email domain extension looks invalid';
-  }
- 
-  const suggestedDomain = getSuggestedDomain(domain);
- 
-  if (suggestedDomain) {
-    return `Please check your email domain. Did you mean ${suggestedDomain}?`;
-  }
- 
-  return '';
+
+  return validateDomainSuggestion(domain);
 };
 
-export const validateLoginPassword = (password: string) => {
+export const validateLoginPassword = (
+  password: string
+): string => {
   if (!password.trim()) {
-    return 'Password is required';
+    return "Password is required";
   }
 
-  return '';
+  return "";
+};
+
+/*
+ * First-login password-change validation
+ */
+
+export const validateNewPassword = (
+  password: string
+): string => {
+  if (!password) {
+    return "New password is required";
+  }
+
+  if (hasSpaces(password)) {
+    return "Password should not contain spaces";
+  }
+
+  if (password.length < 8) {
+    return "Password must contain at least 8 characters";
+  }
+
+  if (password.length > 64) {
+    return "Password must not exceed 64 characters";
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return "Password must contain at least one uppercase letter";
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return "Password must contain at least one lowercase letter";
+  }
+
+  if (!/\d/.test(password)) {
+    return "Password must contain at least one number";
+  }
+
+  if (!/[^A-Za-z0-9\s]/.test(password)) {
+    return "Password must contain at least one special character";
+  }
+
+  return "";
+};
+
+export const validateConfirmPassword = (
+  newPassword: string,
+  confirmPassword: string
+): string => {
+  if (!confirmPassword) {
+    return "Confirm password is required";
+  }
+
+  if (newPassword !== confirmPassword) {
+    return "Passwords do not match";
+  }
+
+  return "";
 };

@@ -1,22 +1,18 @@
-const app=require('./app');
+const app = require("./app");
 
-const connection=require('./src/config/db')
-const connectDB=require('./src/config/db')
-const seedAdmin=require('./src/utils/seedAdmin')
-const seedData=require('./src/utils/seedData')
-const seedMenu=require('./src/utils/seedMenu')
+const connection = require("./src/config/db");
+const connectDB = require("./src/config/db");
+const seedOwner = require("./src/utils/seedOwner");
+const seedData = require("./src/utils/seedData");
+const seedMenus = require("./src/utils/seedMenus");
+
 connectDB();
 
+const PORT = process.env.PORT || 5000;
 
-
-const PORT=process.env.PORT||5000;
-
-
-
-app.listen(PORT,'0.0.0.0',()=>
-{
-    console.log(`Server running on http://localhost:${PORT}`);
-})
-seedMenu();
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+seedMenus();
 seedData();
-seedAdmin();
+seedOwner();

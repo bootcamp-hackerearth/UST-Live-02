@@ -1,19 +1,26 @@
 import * as SecureStore from 'expo-secure-store';
 
-const TOKEN_KEY = 'hms_auth_token';
+const ACCESS_TOKEN_KEY = 'hms_access_token';
+const REFRESH_TOKEN_KEY = 'hms_refresh_token';
 
 export const tokenStorage = {
 
-  async saveToken(token: string): Promise<void> {
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
+  async saveTokens(accessToken: string, refreshToken: string): Promise<void> {
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
   },
 
-  async getToken(): Promise<string | null> {
-    return await SecureStore.getItemAsync(TOKEN_KEY);
+  async getAccessToken(): Promise<string | null> {
+    return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  },
+
+  async getRefreshToken(): Promise<string | null> {
+    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
   },
 
   async clear(): Promise<void> {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
   },
 
 };

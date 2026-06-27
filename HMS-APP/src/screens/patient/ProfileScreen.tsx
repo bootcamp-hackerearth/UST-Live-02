@@ -210,6 +210,13 @@ export default function ProfileScreen() {
       </View>
     );
   }
+  if (!profile) {
+  return (
+    <View style={styles.centered}>
+      <Text>Unable to load profile. Please try again.</Text>
+    </View>
+  );
+}
 
   return (
     <ScrollView style={styles.container}>
@@ -252,11 +259,11 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <Text style={styles.name}>
-            {profile.firstName} {profile.lastName}
+            {profile?.firstName} {profile?.lastName}
           </Text>
         )}
 
-        <Text style={styles.uhid}>UHID: {profile.UHID}</Text>
+        <Text style={styles.uhid}>UHID: {profile?.UHID}</Text>
       </View>
 
       <View style={styles.card}>

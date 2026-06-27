@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient ,HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-import { Appointment, CreateAppointmentPayload,SlotResponse } from '../models/appointments.model';
+import { Appointment, CreateAppointmentPayload,SlotResponse,PaginatedAppointmentResponse } from '../models/appointments.model';
 import { Patient } from '../models/patients.model';
 import { ApiResponse } from '../models/api-response.model';
 import { Doctor } from '../models/doctor.model';
+import { AppointmentDetailsResponse } from '../models/appointment-details.model';
+import { PaginatedResponse } from '../models/pagination.model';
+
 
 @Injectable({
   providedIn: 'root'
@@ -17,21 +20,48 @@ export class AppointmentService {
 
   constructor(readonly http: HttpClient) {}
 
-  getAppointments(): Observable<ApiResponse<Appointment[]>> {
-    return this.http.get<ApiResponse<Appointment[]>>(`${this.baseUrl}/appointments/list`);
-  }
+getAppointments(
+  page: number,
+  limit: number,
+  search: string
+): Observable<PaginatedAppointmentResponse> {
+  const params = new HttpParams()
+    .set('page', page)
+    .set('limit', limit)
+    .set('search', search);
+
+  return this.http.get<PaginatedAppointmentResponse>(
+    `${this.baseUrl}/appointments/list`,
+    { params }
+  );
+}
 
   createAppointment(payload: CreateAppointmentPayload): Observable<ApiResponse<Appointment>> {
     return this.http.post<ApiResponse<Appointment>>(`${this.baseUrl}/appointments/create`, payload);
   }
 
-  getPatients(): Observable<ApiResponse<Patient[]>> {
-    return this.http.get<ApiResponse<Patient[]>>(`${this.baseUrl}/patients/list`);
-  }
+getPatients(): Observable<PaginatedResponse<Patient>> {
+  const params = new HttpParams()
+    .set('page', '1')
+    .set('limit', '100')
+    .set('search', '');
 
-   getDoctors(): Observable<ApiResponse<Doctor[]>> {
-    return this.http.get<ApiResponse<Doctor[]>>(`${this.baseUrl}/doctors/list`);
-  }
+  return this.http.get<PaginatedResponse<Patient>>(
+    `${this.baseUrl}/patients/list`,
+    { params }
+  );
+}
+  getDoctors(): Observable<PaginatedResponse<Doctor>> {
+  const params = new HttpParams()
+    .set('page', '1')
+    .set('limit', '100')
+    .set('search', '');
+
+  return this.http.get<PaginatedResponse<Doctor>>(
+    `${this.baseUrl}/doctors/list`,
+    { params }
+  );
+}
 
   getAvailableSlots(doctorId: string, appointmentDate: string): Observable<ApiResponse<SlotResponse>> {
     return this.http.get<ApiResponse<SlotResponse>>(
@@ -39,11 +69,21 @@ export class AppointmentService {
     );
 }
 
- getMyAppointments(): Observable<ApiResponse<Appointment[]>> {
-    return this.http.get<ApiResponse<Appointment[]>>(
-      `${this.baseUrl}/appointments/my-appointments`
-    );
-  }
+getMyAppointments(
+  page: number,
+  limit: number,
+  search: string
+): Observable<PaginatedAppointmentResponse> {
+  const params = new HttpParams()
+    .set('page', page)
+    .set('limit', limit)
+    .set('search', search);
+
+  return this.http.get<PaginatedAppointmentResponse>(
+    `${this.baseUrl}/appointments/my-appointments`,
+    { params }
+  );
+}
 
   cancelAppointment(appointmentId: string) {
   return this.http.put(
@@ -51,5 +91,9 @@ export class AppointmentService {
     {}
   );
 }
-
+getAppointmentDetails(id: string): Observable<AppointmentDetailsResponse> {
+  return this.http.get<AppointmentDetailsResponse>(
+    `${this.baseUrl}/appointments/details/${id}`
+  );
+}
 }

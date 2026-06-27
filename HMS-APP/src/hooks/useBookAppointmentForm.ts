@@ -78,7 +78,7 @@ export function useBookAppointmentForm(
         return d;
     }, []);
 
-    // ─── Data loading ─────────────────────────────────────────────────────────
+    //Data loading
 
     useEffect(() => {
         loadInitialData();
@@ -194,7 +194,7 @@ export function useBookAppointmentForm(
         }
     };
 
-    // ─── Handlers ─────────────────────────────────────────────────────────────
+    // Handlers 
 
     const handleSelectDoctor = (doctor: AppointmentDoctor) => {
         setSelectedDoctorId(getDoctorId(doctor));

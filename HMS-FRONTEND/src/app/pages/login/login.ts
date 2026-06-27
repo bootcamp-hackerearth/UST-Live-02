@@ -68,7 +68,6 @@ export class Login {
         timeout(5000),
         finalize(() => {
           this.isLoading = false;
-          this.cd.detectChanges();
         })
       )
       .subscribe({
@@ -78,7 +77,6 @@ export class Login {
           const user = res.data.user;
           const basePath = user.roleId.basePath;
 
-          localStorage.setItem('token', res.data.token);
           localStorage.setItem('role', user.roleId.name);
           localStorage.setItem('user', JSON.stringify(user));
           localStorage.setItem('basePath', basePath);
@@ -88,7 +86,7 @@ export class Login {
             return;
           }
 
-          if (user.roleId.name === 'Admin') {
+          if (user.roleId.name === 'Admin' || user.roleId.name === 'Owner') {
             this.router.navigate(['/admin/dashboard']);
           } else if (user.roleId.name === 'Receptionist') {
             this.router.navigate([`${basePath}/patients`]);
@@ -107,18 +105,8 @@ export class Login {
             return;
           }
 
-          // ✅ HANDLE 403 FORBIDDEN
-          if (err?.status === 403) {
-            this.errorMessage = err?.error?.message || 'Access Denied';
-            return;
-          }
-
           this.errorMessage =
-            err?.error?.message ||
-            err?.error?.data?.message ||
-            err?.message ||
-            'Invalid email or password';
-          console.log('LOGIN ERROR MESSAGE:', this.errorMessage);
+            err?.error?.message || 'Invalid email or password';
         }
       });
   }

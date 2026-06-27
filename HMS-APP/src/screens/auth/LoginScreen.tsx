@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { router } from "expo-router";
-import { login } from "@/services/auth.service";
+
 import {
   View,
   Text,
@@ -11,8 +11,11 @@ import {
   Alert,
 } from "react-native";
 
+import { login } from "@/services/auth.service";
+
 import AppInput from "@/components/common/AppInput";
 import PrimaryButton from "@/components/common/PrimaryButton";
+
 import { loginStyles as styles } from "@/styles/auth/login.style";
 
 import {
@@ -20,6 +23,7 @@ import {
   validateLoginPassword,
   validateEmailFormat,
 } from "@/validations/auth.validation";
+
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,60 +34,117 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const validateForm = () => {
-    const emailValidationError = validateLoginEmail(email);
-    const passwordValidationError = validateLoginPassword(password);
+  const validateForm = (): boolean => {
+    const emailValidationError =
+      validateLoginEmail(email);
+
+    const passwordValidationError =
+      validateLoginPassword(password);
 
     let finalEmailError = emailValidationError;
 
-    if (!finalEmailError && !validateEmailFormat(email)) {
-      finalEmailError = "Please enter a valid email address";
+    if (
+      !finalEmailError &&
+      !validateEmailFormat(email)
+    ) {
+      finalEmailError =
+        "Please enter a valid email address";
     }
-
-
 
     setEmailError(finalEmailError);
     setPasswordError(passwordValidationError);
 
-    return !finalEmailError && !passwordValidationError;
+    return (
+      !finalEmailError &&
+      !passwordValidationError
+    );
   };
 
-  const handleLogin = async () => {
-    if (!validateForm()) return;
+  const handleLogin = async (): Promise<void> => {
+    if (!validateForm()) {
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const user = await login(email, password);
-      console.log("Logged in user:", user);
+      const user = await login(
+        email.trim().toLowerCase(),
+        password
+      );
 
-      Alert.alert("Login Success", `Welcome ${user.firstName}!`);
-      router.replace("/(tabs)/home");
-    } catch (error: any) {
-      Alert.alert("Login Failed", error.message);
+      console.log("Logged in user:", user);
+      console.log(
+        "Must change password:",
+        user.mustChangePassword
+      );
+
+      /*
+       * Admin-created patients receive a temporary password.
+       * They must change it before accessing the home page.
+       */
+      if (user.mustChangePassword === true) {
+        router.replace("/change-password");
+        return;
+      }
+
+      Alert.alert(
+        "Login Success",
+        `Welcome ${user.firstName}!`,
+        [
+          {
+            text: "Continue",
+            onPress: () => {
+              router.replace("/(tabs)/home");
+            },
+          },
+        ]
+      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Unable to log in. Please try again.";
+
+      Alert.alert(
+        "Login Failed",
+        errorMessage
+      );
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <KeyboardAvoidingView
       style={styles.keyboardView}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={
+        Platform.OS === "ios"
+          ? "padding"
+          : "height"
+      }
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={
+          styles.scrollContainer
+        }
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.loginCard}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>HMS</Text>
+            <Text style={styles.logoText}>
+              HMS
+            </Text>
           </View>
 
-          <Text style={styles.title}>Patient Login</Text>
+          <Text style={styles.title}>
+            Patient Login
+          </Text>
 
           <Text style={styles.subtitle}>
-            Login to view your profile and manage appointments
+            Login to view your profile and manage
+            appointments
           </Text>
 
           <View style={styles.formContainer}>
@@ -93,7 +154,10 @@ export default function LoginScreen() {
               value={email}
               onChangeText={(value) => {
                 setEmail(value);
-                if (emailError) setEmailError("");
+
+                if (emailError) {
+                  setEmailError("");
+                }
               }}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -107,22 +171,36 @@ export default function LoginScreen() {
               value={password}
               onChangeText={(value) => {
                 setPassword(value);
-                if (passwordError) setPasswordError("");
+
+                if (passwordError) {
+                  setPasswordError("");
+                }
               }}
               secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
               error={passwordError}
               rightElement={
                 <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
+                  onPress={() =>
+                    setShowPassword(
+                      (currentValue) =>
+                        !currentValue
+                    )
+                  }
                 >
-                  <Text style={styles.showPasswordText}>
-                    {showPassword ? "Hide" : "Show"}
+                  <Text
+                    style={
+                      styles.showPasswordText
+                    }
+                  >
+                    {showPassword
+                      ? "Hide"
+                      : "Show"}
                   </Text>
                 </TouchableOpacity>
               }
             />
-
-
 
             <PrimaryButton
               title="Login"
@@ -131,11 +209,26 @@ export default function LoginScreen() {
             />
           </View>
 
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>New patient?</Text>
+          <View
+            style={styles.registerContainer}
+          >
+            <Text
+              style={styles.registerText}
+            >
+              New patient?
+            </Text>
 
-            <TouchableOpacity onPress={() => router.push("/register")}>
-              <Text style={styles.registerLink}> Register here</Text>
+            <TouchableOpacity
+              onPress={() =>
+                router.push("/register")
+              }
+            >
+              <Text
+                style={styles.registerLink}
+              >
+                {" "}
+                Register here
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { Auth } from '../../services/auth';
 
 @Component({
   selector: 'app-change-password',
@@ -10,16 +10,16 @@ import { Router } from '@angular/router';
   styleUrl: './change-password.css',
 })
 export class ChangePassword {
-
   oldPassword = '';
   newPassword = '';
   confirmPassword = '';
 
   message = '';
   errorMessage = '';
+  isLoading = false;
 
   constructor(
-    readonly http: HttpClient,
+    readonly auth: Auth,
     readonly router: Router
   ) {}
 
@@ -37,41 +37,41 @@ export class ChangePassword {
       return;
     }
 
-    const token = localStorage.getItem('token');
+    this.isLoading = true;
 
-    if (!token) {
-      this.errorMessage = 'Session expired. Please login again.';
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`
-    });
-
-    const body = {
-      oldPassword: this.oldPassword,
-      newPassword: this.newPassword
-    };
-
-    this.http.post('http://localhost:5000/api/auth/change-password', body, { headers })
+    this.auth.changePassword(this.oldPassword, this.newPassword)
       .subscribe({
-        next: (res: any) => {
+        next: (res) => {
           console.log('Password changed:', res);
+
+          const storedUser = localStorage.getItem('user');
+
+          if (storedUser) {
+            const user = JSON.parse(storedUser);
+
+            user.mustChangePassword = false;
+
+            localStorage.setItem('user', JSON.stringify(user));
+          }
 
           this.message = 'Password changed successfully';
 
-          const user = JSON.parse(localStorage.getItem('user') || '{}');
-          user.mustChangePassword = false;
-          localStorage.setItem('user', JSON.stringify(user));
+          this.oldPassword = '';
+          this.newPassword = '';
+          this.confirmPassword = '';
 
-          setTimeout(() => {
-            this.router.navigate(['/admin/dashboard']);
-          }, 1000);
+          this.isLoading = false;
+
+          this.router.navigate(['/login']);
         },
+
         error: (err) => {
           console.log('Change password error:', err);
-          this.errorMessage = err.error?.message || 'Password change failed';
+
+          this.errorMessage =
+            err?.error?.message || 'Password change failed';
+
+          this.isLoading = false;
         }
       });
   }

@@ -17,8 +17,8 @@
     <!-- Search -->
     <div class="table-toolbar">
         <div class="search-box">
-            <input type="text" placeholder="Search appointments..." [value]="searchText"
-                (input)="searchText = $any($event.target).value; filterAppointments()" />
+            <input type="text" placeholder="Search appointments..." [value]="searchText()"
+                (input)="searchText.set($any($event.target).value); filterAppointments()" />
         </div>
     </div>
 
@@ -76,22 +76,27 @@
                     </td>
 
                     <td>{{ appointment.reason }}</td>
-                    @if (canCreateAppointment) {
+
                     <td class="appointment-actions-cell">
-                        @if (canCancelAppointment(appointment)) {
-                        <button type="button" class="appointment-cancel-btn"
-                            (click)="cancelAppointment(appointment._id)">
-                            Cancel
-                        </button>
-                        }
+                        <div class="appointment-actions">
+                            <button type="button" class="appointment-view-btn" (click)="viewDetails(appointment._id)">
+                                View
+                            </button>
+
+                            @if (canCancelAppointment(appointment)) {
+                            <button type="button" class="appointment-cancel-btn"
+                                (click)="cancelAppointment(appointment._id)">
+                                Cancel
+                            </button>
+                            }
+                        </div>
                     </td>
-                    }
                 </tr>
                 }
             </tbody>
         </table>
 
-        @if (filteredAppointments.length === 0) {
+        @if (filteredAppointments().length === 0) {
         <div class="empty-state">
             <p>No appointment data available</p>
 
@@ -110,21 +115,22 @@
     <!-- Footer -->
     <div class="table-footer">
         <p>
-            Records: {{ startRecord }} - {{ endRecord }} of {{ filteredAppointments.length }}
+            Records: {{ startRecord }} - {{ endRecord }} of {{ totalRecords() }}
         </p>
 
         <div class="pagination">
-            <button type="button" class="pagination-icon-button" [class.disabled]="currentPage === 1"
-                [disabled]="currentPage === 1" aria-label="Go to previous page" (click)="goToPreviousPage()">
+            <button type="button" class="pagination-icon-button" [class.disabled]="currentPage() === 1"
+                [disabled]="currentPage() === 1" aria-label="Go to previous page" (click)="goToPreviousPage()">
                 <i class="bi bi-chevron-left" aria-hidden="true"></i>
             </button>
+
             <span class="page-info">
-                Page {{ currentPage }} of {{ totalPages }}
+                Page {{ currentPage() }} of {{ totalPages() }}
             </span>
 
             <button type="button" class="pagination-icon-button"
-                [class.disabled]="currentPage === totalPages || totalPages === 0"
-                [disabled]="currentPage === totalPages || totalPages === 0" aria-label="Go to next page"
+                [class.disabled]="currentPage() === totalPages() || totalPages() === 0"
+                [disabled]="currentPage() === totalPages() || totalPages() === 0" aria-label="Go to next page"
                 (click)="goToNextPage()">
                 <i class="bi bi-chevron-right" aria-hidden="true"></i>
             </button>
@@ -133,7 +139,7 @@
 </div>
 
 <!-- Add Appointment Modal -->
-@if (showAddAppointmentModal) {
+@if (showAddAppointmentModal()) {
 <div class="modal-overlay">
 
     <div class="modal-box">
@@ -157,17 +163,30 @@
                     </div>
 
                     <!-- Patient -->
-                    <div class="form-group">
-                        <label for="selectPatient">Patient <span>*</span></label>
-                        <select formControlName="patientId">
-                            <option value="">Select Patient</option>
+                    <div class="form-group search-select-wrapper">
+                        <label for="patientText">Patient <span>*</span></label>
 
-                            @for (patient of patients; track patient.patientId) {
-                            <option [value]="patient.patientId">
+                        <input type="text" placeholder="Search or select patient" [value]="patientSearch()"
+                            (focus)="showPatientDropdown()"
+                            (input)="patientSearch.set($any($event.target).value); filterPatients()" />
+                        @if (showPatientSuggestions() && filteredPatients().length > 0) {
+                        <div class="suggestion-list">
+                            @for (patient of filteredPatients(); track patient.patientId) {
+                            <div class="suggestion-item" (click)="selectPatient(patient)"
+                                (keydown.enter)="selectPatient(patient)" (keydown.space)="selectPatient(patient)">
                                 {{ patient.firstName }} {{ patient.lastName }} - {{ patient.UHID }}
-                            </option>
+                            </div>
                             }
-                        </select>
+                        </div>
+                        }
+
+                        @if (showPatientSuggestions() && patientSearch() && filteredPatients().length === 0) {
+                        <div class="suggestion-list">
+                            <div class="suggestion-item no-result">
+                                No patient found
+                            </div>
+                        </div>
+                        }
 
                         @if (appointmentForm.get('patientId')?.invalid &&
                         appointmentForm.get('patientId')?.touched) {
@@ -176,17 +195,31 @@
                     </div>
 
                     <!-- Doctor -->
-                    <div class="form-group">
-                        <label for="selectDoctor">Doctor <span>*</span></label>
-                        <select formControlName="doctorId">
-                            <option value="">Select Doctor</option>
+                    <div class="form-group search-select-wrapper">
+                        <label for="doctorText">Doctor <span>*</span></label>
 
-                            @for (doctor of doctors; track doctor.doctorId) {
-                            <option [value]="doctor.employeeId">
+                        <input type="text" placeholder="Search or select doctor" [value]="doctorSearch()"
+                            (focus)="showDoctorDropdown()"
+                            (input)="doctorSearch.set($any($event.target).value); filterDoctorsSearch()" />
+
+                        @if (showDoctorSuggestions() && filteredDoctors().length > 0) {
+                        <div class="suggestion-list">
+                            @for (doctor of filteredDoctors(); track doctor.doctorId) {
+                            <div class="suggestion-item" (click)="selectDoctor(doctor)"
+                                (keydown.enter)="selectDoctor(doctor)" (keydown.space)="selectDoctor(doctor)">
                                 Dr. {{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialization }}
-                            </option>
+                            </div>
                             }
-                        </select>
+                        </div>
+                        }
+
+                        @if (showDoctorSuggestions() && doctorSearch() && filteredDoctors().length === 0) {
+                        <div class="suggestion-list">
+                            <div class="suggestion-item no-result">
+                                No doctor found
+                            </div>
+                        </div>
+                        }
 
                         @if (appointmentForm.get('doctorId')?.invalid &&
                         appointmentForm.get('doctorId')?.touched) {
@@ -197,6 +230,7 @@
                     <!-- Date -->
                     <div class="form-group">
                         <label for="appointmentDate">Appointment Date <span>*</span></label>
+
                         <input type="date" formControlName="appointmentDate" [min]="todayDate" />
 
                         @if (appointmentForm.get('appointmentDate')?.hasError('required') &&
@@ -210,17 +244,17 @@
                     </div>
 
                     <!-- Doctor Availability Info -->
-                    @if (doctorAvailability) {
+                    @if (doctorAvailability()) {
                     <div class="form-group">
                         <div class="availability-info">
                             <i class="bi bi-clock"></i>
-                            Doctor available: {{ doctorAvailability }}
+                            Doctor available: {{ doctorAvailability() }}
                         </div>
                     </div>
                     }
 
                     <!-- Time Slot -->
-                    <div class="form-group">
+                    <div class="form-group full-width">
                         <label for="timeSlot">Time Slot <span>*</span></label>
 
                         @if (!appointmentForm.get('doctorId')?.value ||
@@ -231,39 +265,41 @@
                         <small class="info-msg">Please select doctor and date to see available slots</small>
                         }
 
-                        @if (loadingSlots) {
+                        @if (loadingSlots()) {
                         <select disabled>
                             <option>Loading slots...</option>
                         </select>
                         }
 
-                        @if (!loadingSlots &&
+                        @if (!loadingSlots() &&
                         appointmentForm.get('doctorId')?.value &&
                         appointmentForm.get('appointmentDate')?.value) {
 
-                        @if (availableSlots.length > 0) {
-                        <select formControlName="timeSlot">
-                            <option value="">Select Time Slot</option>
-
-                            @for (slot of availableSlots; track slot) {
-                            <option [value]="slot">{{ slot }}</option>
+                        @if (allSlots().length > 0) {
+                        <div class="slot-grid">
+                            @for (slot of allSlots(); track slot) {
+                            <button type="button" class="slot-btn" [class.slot-available]="!isBookedSlot(slot)"
+                                [class.slot-booked]="isBookedSlot(slot)" [class.slot-selected]="isSelectedSlot(slot)"
+                                [disabled]="isBookedSlot(slot)" (click)="selectSlot(slot)">
+                                {{ slot }}
+                            </button>
                             }
-                        </select>
+                        </div>
 
-                        @if (bookedCount > 0) {
+                        @if (bookedCount() > 0) {
                         <small class="booked-info">
                             <i class="bi bi-info-circle"></i>
-                            {{ bookedCount }} slot(s) already booked
+                            {{ bookedCount() }} slot(s) already booked
                         </small>
                         }
                         }
 
-                        @if (availableSlots.length === 0) {
+                        @if (allSlots().length === 0) {
                         <select disabled>
                             <option>No slots available</option>
                         </select>
                         <small class="error-msg">
-                            All slots are booked for this doctor on selected date.
+                            No slots available for this doctor on selected date.
                             Please choose another date.
                         </small>
                         }
@@ -271,7 +307,7 @@
 
                         @if (appointmentForm.get('timeSlot')?.invalid &&
                         appointmentForm.get('timeSlot')?.touched &&
-                        availableSlots.length > 0) {
+                        allSlots().length > 0) {
                         <small class="error-msg">Time slot is required</small>
                         }
                     </div>
@@ -279,8 +315,9 @@
                     <!-- Reason -->
                     <div class="form-group full-width">
                         <label for="reason">Reason <span>*</span></label>
-                        <textarea rows="3" placeholder="Enter reason for appointment" formControlName="reason">
-                        </textarea>
+
+                        <textarea rows="3" placeholder="Enter reason for appointment"
+                            formControlName="reason"></textarea>
 
                         @if (appointmentForm.get('reason')?.hasError('required') &&
                         appointmentForm.get('reason')?.touched) {
@@ -301,11 +338,11 @@
                 </div>
 
             </form>
-            @if (errorMessage) {
-            <p class="error-msg" style="margin-top: 10px;">{{ errorMessage }}</p>
+
+            @if (errorMessage()) {
+            <p class="error-msg" style="margin-top: 10px;">{{ errorMessage() }}</p>
             }
         </div>
-
 
         <div class="modal-footer">
             <button class="cancel-btn" (click)="closeAddAppointmentModal()">
@@ -313,7 +350,7 @@
             </button>
 
             <button class="save-btn" (click)="saveAppointment()"
-                [disabled]="appointmentForm.invalid || availableSlots.length === 0">
+                [disabled]="appointmentForm.invalid || availableSlots().length === 0">
                 Save
             </button>
         </div>
