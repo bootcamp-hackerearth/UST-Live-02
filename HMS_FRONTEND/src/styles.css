@@ -1,0 +1,338 @@
+/* You can add global styles to this file, and also import other style files */
+@import 'ngx-toastr/toastr';
+/*
+|--------------------------------------------------------------------------
+| Root Variables
+|--------------------------------------------------------------------------
+*/
+:root {
+  /* Colors */
+
+  --primary: #3b82f6;
+
+  --primary-dark: #2563eb;
+
+  --secondary: #8b5cf6;
+
+  --success: #22c55e;
+
+  --danger: #ef4444;
+
+  --warning: #f59e0b;
+
+  --dark: #0f172a;
+
+  --dark-light: #1e293b;
+
+  --text: #0f172a;
+
+  --text-light: #64748b;
+
+  --border: rgba(255, 255, 255, 0.2);
+
+  /* Backgrounds */
+
+  --bg: #f4f7fb;
+
+  --card-bg: rgba(255, 255, 255, 0.65);
+
+  --glass-bg: rgba(255, 255, 255, 0.68);
+
+  --glass-bg-soft: rgba(255, 255, 255, 0.52);
+
+  --glass-border: rgba(255, 255, 255, 0.38);
+
+  /* Effects */
+
+  --blur: blur(16px);
+
+  --radius: 20px;
+
+  --radius-control: 12px;
+
+  --radius-card: 18px;
+
+  --radius-section: 24px;
+
+  --radius-page: 24px;
+
+  --radius-pill: 999px;
+
+  --space-sm: 12px;
+
+  --space-md: 16px;
+
+  --space-lg: 24px;
+
+  --space-xl: 28px;
+
+  --space-2xl: 32px;
+
+  --shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+
+  --shadow-card: 0 12px 30px rgba(15, 23, 42, 0.06);
+
+  --shadow-hover: 0 16px 36px rgba(15, 23, 42, 0.09);
+
+  --transition: all 0.3s ease;
+
+  /* Typography */
+
+  --font-xs: 14px;
+
+  --font-sm: 15px;
+
+  --font-md: 16px;
+
+  --font-base: 17px;
+
+  --font-lg: 19px;
+
+  --font-xl: 22px;
+
+  --font-2xl: 26px;
+
+  --font-3xl: 32px;
+
+  --font-4xl: 38px;
+
+  --font-hero: 48px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Global Reset
+|--------------------------------------------------------------------------
+*/
+* {
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  font-size: var(--font-base);
+
+  background: linear-gradient(135deg, #f8fbff, #eef4ff);
+
+  color: var(--text);
+
+  min-height: 100vh;
+
+  scroll-behavior: smooth;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Scrollbar
+|--------------------------------------------------------------------------
+*/
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.25);
+
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.45);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Typography
+|--------------------------------------------------------------------------
+*/
+h1 {
+  font-size: var(--font-4xl);
+
+  font-weight: 700;
+
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: var(--font-2xl);
+
+  font-weight: 600;
+}
+
+h3 {
+  font-size: var(--font-xl);
+
+  font-weight: 600;
+}
+
+p {
+  color: var(--text-light);
+
+  line-height: 1.6;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Links
+|--------------------------------------------------------------------------
+*/
+a {
+  text-decoration: none;
+
+  color: inherit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Buttons
+|--------------------------------------------------------------------------
+*/
+button {
+  border: none;
+
+  outline: none;
+
+  cursor: pointer;
+
+  transition: var(--transition);
+
+  font-family: inherit;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+
+  color: white;
+
+  padding: 14px 24px;
+
+  border-radius: 14px;
+
+  font-weight: 600;
+
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
+
+  transition: var(--transition);
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 15px 35px rgba(59, 130, 246, 0.35);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Inputs
+|--------------------------------------------------------------------------
+*/
+input,
+select,
+textarea {
+  width: 100%;
+
+  padding: 14px 16px;
+
+  border: 1px solid rgba(148, 163, 184, 0.2);
+
+  background: rgba(255, 255, 255, 0.65);
+
+  backdrop-filter: var(--blur);
+
+  border-radius: 14px;
+
+  font-size: var(--font-md);
+
+  transition: var(--transition);
+
+  font-family: inherit;
+
+  color: var(--text);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+
+  border-color: rgba(59, 130, 246, 0.4);
+
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+}
+
+textarea {
+  resize: none;
+
+  min-height: 120px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Glass Card
+|--------------------------------------------------------------------------
+*/
+.glass-card {
+  background: var(--card-bg);
+
+  backdrop-filter: var(--blur);
+
+  border: 1px solid var(--border);
+
+  border-radius: var(--radius);
+
+  box-shadow: var(--shadow);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Utility Classes
+|--------------------------------------------------------------------------
+*/
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-20 {
+  gap: 20px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Fade Animation
+|--------------------------------------------------------------------------
+*/
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
