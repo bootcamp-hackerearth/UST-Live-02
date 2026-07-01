@@ -1,0 +1,27 @@
+[
+  {
+    "_id": "6a2a81b4985635bb3defe624",
+    "name": "Varun",
+    "phone": "9876787690",
+    "email": "21r21a6690@gmail.com",
+    "passwordHash": "$2b$12$mJhWXur.cQyBKHDvbCZ0u.nqAtt3iX0TfSX94MUsxGn0f6hHtnCvG",
+    "gender": "Male",
+    "dob": "2004-06-11T00:00:00.000Z",
+    "address": {
+      "houseName": "b-78",
+      "houseNumber": "b-78",
+      "city": "Hyderabad",
+      "postCode": "500854"
+    },
+    "emergencyContact": {
+      "contactName": "Hello",
+      "relationship": "Sister",
+      "contactNumber": "9879879876"
+    },
+    "status": "ACTIVE",
+    "mustChangePassword": false,
+    "UHID": "UHID-000001",
+    "__v": 0,
+    "tokenVersion": 0
+  }
+]

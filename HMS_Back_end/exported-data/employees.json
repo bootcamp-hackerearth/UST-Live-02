@@ -1,0 +1,147 @@
+[
+  {
+    "_id": "6a280735d21dc72863cbddfa",
+    "employeeCode": "EMP-000001",
+    "name": "Hospital Owner",
+    "phone": "+91 9876543210",
+    "email": "owner@hospital.com",
+    "department": "Administration",
+    "designation": "OWNER",
+    "joiningDate": "2026-06-09T12:29:41.093Z",
+    "qualification": [
+      "MBA Hospital Administration"
+    ],
+    "__v": 0
+  },
+  {
+    "_id": "6a28b4b0c3b09825cb1cb5bc",
+    "employeeCode": "EMP-000002",
+    "name": "Hospital Admin",
+    "phone": "+91 9876543220",
+    "email": "v1861965@gmail.com",
+    "department": "Administration",
+    "designation": "ADMIN",
+    "joiningDate": "2026-06-10T06:16:41.093Z",
+    "qualification": [
+      "MBA Hospital Administration"
+    ],
+    "__v": 0
+  },
+  {
+    "_id": "6a28b526dfd5d3995094ee0b",
+    "name": "Varshith",
+    "phone": "9999999998",
+    "email": "21r21a6690@gmail.com",
+    "department": "IPD",
+    "designation": "DOCTOR",
+    "joiningDate": "2026-06-11T00:00:00.000Z",
+    "medicalRegistrationNumber": "MED-12324",
+    "specialization": "Cardiology",
+    "qualification": [
+      "MD",
+      "MBBS"
+    ],
+    "consultationFee": 1000,
+    "availabilitySlots": [
+      {
+        "day": "MONDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a3c0f105cdf840ac5d7851e"
+      },
+      {
+        "day": "WEDNESDAY",
+        "startTime": "09:00",
+        "endTime": "23:59",
+        "_id": "6a3c0f105cdf840ac5d7851f"
+      },
+      {
+        "day": "FRIDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a3c0f105cdf840ac5d78520"
+      },
+      {
+        "day": "TUESDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a3c0f105cdf840ac5d78521"
+      },
+      {
+        "day": "SATURDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a3c0f105cdf840ac5d78522"
+      },
+      {
+        "day": "THURSDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a3c0f105cdf840ac5d78523"
+      }
+    ],
+    "employeeCode": "EMP-000003",
+    "__v": 2,
+    "bookingCutoffDate": null
+  },
+  {
+    "_id": "6a2b8e9f9b6ebf2697567270",
+    "name": "Varun",
+    "phone": "9879877656",
+    "email": "21r21a6690@mlrinstitutions.ac.in",
+    "department": "OPD",
+    "designation": "DOCTOR",
+    "joiningDate": "2026-06-12T00:00:00.000Z",
+    "medicalRegistrationNumber": "MED-12321",
+    "specialization": "Neurology",
+    "qualification": [
+      "MD"
+    ],
+    "consultationFee": 750,
+    "availabilitySlots": [
+      {
+        "day": "MONDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a2b8e9f9b6ebf2697567271"
+      },
+      {
+        "day": "FRIDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a2b8e9f9b6ebf2697567272"
+      },
+      {
+        "day": "SATURDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a2b8e9f9b6ebf2697567273"
+      },
+      {
+        "day": "TUESDAY",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "_id": "6a2b8e9f9b6ebf2697567274"
+      }
+    ],
+    "employeeCode": "EMP-000005",
+    "__v": 0
+  },
+  {
+    "_id": "6a3a60ffa116d7fde82d4d71",
+    "name": "Arundathi",
+    "phone": "9877899870",
+    "email": "rangapuramaishwarya@gmail.com",
+    "department": "Reception",
+    "designation": "RECEPTIONIST",
+    "joiningDate": "2026-06-12T00:00:00.000Z",
+    "qualification": [
+      "MD"
+    ],
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "employeeCode": "EMP-000006",
+    "__v": 0
+  }
+]

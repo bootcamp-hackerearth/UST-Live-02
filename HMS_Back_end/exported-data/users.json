@@ -1,0 +1,115 @@
+[
+  {
+    "_id": "6a280735d21dc72863cbddfb",
+    "username": "owner",
+    "email": "owner@hospital.com",
+    "passwordHash": "$2b$10$e6k.k8k6B2v0Nm7OjeL4yOoVeX9dx7pQv8kvrb4N/Nk6JR1J7J5oa",
+    "status": "ACTIVE",
+    "roles": [
+      "OWNER"
+    ],
+    "employeeCode": "EMP-000001",
+    "mustChangePassword": false,
+    "createdByAdmin": false,
+    "approvedBy": null,
+    "approvedAt": null,
+    "createdBy": null,
+    "resetPasswordTokenHash": null,
+    "resetPasswordTokenExpiry": null,
+    "lastLoginAt": "2026-06-09T13:05:39.120Z",
+    "created_at": "2026-06-09T12:29:41.526Z",
+    "updated_at": "2026-06-09T13:05:39.145Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a28b526dfd5d3995094ee0f",
+    "username": "varshith6690",
+    "email": "21r21a6690@gmail.com",
+    "passwordHash": "$2b$10$Y2CRX4daUsM9Ilql5J2jAuHqXKna9gXBtzTUkwg1oJUOgUcy5X9Ku",
+    "status": "ACTIVE",
+    "roles": [
+      "STAFF"
+    ],
+    "employeeCode": "EMP-000003",
+    "mustChangePassword": false,
+    "createdByAdmin": false,
+    "approvedBy": "EMP-000002",
+    "approvedAt": "2026-06-10T00:59:16.298Z",
+    "createdBy": "Self registration",
+    "resetPasswordTokenHash": null,
+    "resetPasswordTokenExpiry": null,
+    "lastLoginAt": "2026-06-27T05:50:51.565Z",
+    "created_at": "2026-06-10T00:51:50.615Z",
+    "updated_at": "2026-06-27T05:50:51.566Z",
+    "__v": 0,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "6a28b5b1c3b09825cb1cb5bf",
+    "username": "admin",
+    "email": "v1861965@gmail.com",
+    "passwordHash": "$2b$10$iNApQ.LigGnmNxRZuJSm8.ETd.CkZQC.jHOWIx/boB8qqlhwhBoly",
+    "status": "ACTIVE",
+    "roles": [
+      "ADMIN"
+    ],
+    "employeeCode": "EMP-000002",
+    "mustChangePassword": false,
+    "createdByAdmin": false,
+    "approvedBy": null,
+    "approvedAt": null,
+    "createdBy": null,
+    "resetPasswordTokenHash": null,
+    "resetPasswordTokenExpiry": null,
+    "lastLoginAt": "2026-06-27T05:27:12.766Z",
+    "created_at": "2026-06-09T12:29:41.526Z",
+    "updated_at": "2026-06-27T05:27:12.767Z",
+    "__v": 0,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "6a2b8e9f9b6ebf2697567275",
+    "username": "varun6690",
+    "email": "21r21a6690@mlrinstitutions.ac.in",
+    "passwordHash": "$2b$10$MA5qt4M5scVWArRV.dlu/euEgbHPdr.xoEO/TADKGfQ6Dbt19cF1u",
+    "status": "ACTIVE",
+    "roles": [
+      "STAFF"
+    ],
+    "employeeCode": "EMP-000005",
+    "mustChangePassword": false,
+    "createdByAdmin": false,
+    "approvedBy": "EMP-000002",
+    "approvedAt": "2026-06-12T04:44:41.408Z",
+    "createdBy": "Self registration",
+    "resetPasswordTokenHash": null,
+    "resetPasswordTokenExpiry": null,
+    "lastLoginAt": "2026-06-12T08:13:37.718Z",
+    "created_at": "2026-06-12T04:44:15.825Z",
+    "updated_at": "2026-06-12T08:13:37.718Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a3a60ffa116d7fde82d4d72",
+    "username": "arundathi11",
+    "email": "rangapuramaishwarya@gmail.com",
+    "passwordHash": "$2b$10$QwlfxWjTR1Gza0SUx1V6puD1bdbwxWnJwyDuOQQD.JkAu.wLIpKGu",
+    "status": "ACTIVE",
+    "roles": [
+      "STAFF"
+    ],
+    "employeeCode": "EMP-000006",
+    "mustChangePassword": false,
+    "createdByAdmin": false,
+    "approvedBy": "EMP-000002",
+    "approvedAt": "2026-06-23T10:33:55.725Z",
+    "createdBy": "Self registration",
+    "resetPasswordTokenHash": null,
+    "resetPasswordTokenExpiry": null,
+    "lastLoginAt": "2026-06-27T05:24:50.735Z",
+    "created_at": "2026-06-23T10:33:35.243Z",
+    "updated_at": "2026-06-27T05:24:50.735Z",
+    "__v": 0,
+    "tokenVersion": 0
+  }
+]

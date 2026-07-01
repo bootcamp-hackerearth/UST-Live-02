@@ -1,0 +1,103 @@
+[
+  {
+    "_id": "6a2807309537b17eddcc6456",
+    "name": "Employees",
+    "path": "/dashboard/employees",
+    "icon": "users",
+    "allowedDesignations": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "created_at": "2026-06-09T12:29:36.883Z",
+    "updated_at": "2026-06-09T12:29:36.883Z",
+    "nodeId": "NODE-000001",
+    "__v": 0
+  },
+  {
+    "_id": "6a2807309537b17eddcc6457",
+    "name": "Approvals",
+    "path": "/dashboard/approvals",
+    "icon": "check-circle",
+    "allowedDesignations": [
+      "OWNER",
+      "ADMIN"
+    ],
+    "created_at": "2026-06-09T12:29:36.921Z",
+    "updated_at": "2026-06-09T12:29:36.921Z",
+    "nodeId": "NODE-000002",
+    "__v": 0
+  },
+  {
+    "_id": "6a2807309537b17eddcc6458",
+    "name": "Admins",
+    "path": "/dashboard/admins",
+    "icon": "shield",
+    "allowedDesignations": [
+      "OWNER"
+    ],
+    "created_at": "2026-06-09T12:29:36.975Z",
+    "updated_at": "2026-06-09T12:29:36.975Z",
+    "nodeId": "NODE-000003",
+    "__v": 0
+  },
+  {
+    "_id": "6a2807309537b17eddcc6459",
+    "name": "Patients",
+    "path": "/dashboard/patients",
+    "icon": "user",
+    "allowedDesignations": [
+      "OWNER",
+      "ADMIN",
+      "RECEPTIONIST"
+    ],
+    "created_at": "2026-06-09T12:29:36.985Z",
+    "updated_at": "2026-06-09T12:29:36.985Z",
+    "nodeId": "NODE-000004",
+    "__v": 0
+  },
+  {
+    "_id": "6a2807319537b17eddcc645a",
+    "name": "Appointments",
+    "path": "/dashboard/appointments",
+    "icon": "calendar",
+    "allowedDesignations": [
+      "OWNER",
+      "ADMIN",
+      "RECEPTIONIST",
+      "DOCTOR"
+    ],
+    "created_at": "2026-06-09T12:29:37.001Z",
+    "updated_at": "2026-06-09T12:29:37.001Z",
+    "nodeId": "NODE-000005",
+    "__v": 0
+  },
+  {
+    "_id": "6a3bfe0690079b344853861b",
+    "name": "Medical Records",
+    "path": "/dashboard/medical-records",
+    "icon": "file-text",
+    "allowedDesignations": [
+      "OWNER",
+      "ADMIN",
+      "RECEPTIONIST",
+      "DOCTOR"
+    ],
+    "created_at": "2026-06-24T15:55:50.328Z",
+    "updated_at": "2026-06-24T15:55:50.328Z",
+    "nodeId": "NODE-000007",
+    "__v": 0
+  },
+  {
+    "_id": "6a3e917616e878c92476182a",
+    "name": "Menu Nodes",
+    "path": "/dashboard/menu-nodes",
+    "icon": "menu",
+    "allowedDesignations": [
+      "OWNER"
+    ],
+    "created_at": "2026-06-26T14:49:26.893Z",
+    "updated_at": "2026-06-26T14:49:26.893Z",
+    "nodeId": "NODE-000008",
+    "__v": 0
+  }
+]
