@@ -1,0 +1,57 @@
+name: Deploy HMS Backend to EC2
+
+on:
+  push:
+    branches:
+      - feature/sprint4_pod1_varshith
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: |
+          cd HMS_Back_end
+          npm install --ignore-scripts
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/UST-Live-02
+            git pull origin feature/sprint4_pod1_varshith
+
+            cd HMS-BACKEND
+            npm install --ignore-scripts
+
+            # Create .env from GitHub Secrets
+            cat > .env << EOF
+            PORT=5000
+            NODE_ENV=production
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_PATIENT_SECRET=${{ secrets.JWT_PATIENT_SECRET }}
+            REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
+            JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
+            REFRESH_TOKEN_EXPIRES_IN=${{ secrets.REFRESH_TOKEN_EXPIRES_IN }}
+            REFRESH_TOKEN_EXPIRES_DAYS=${{ secrets.REFRESH_TOKEN_EXPIRES_DAYS }}
+            OWNER_EMAIL=${{ secrets.OWNER_EMAIL }}
+            OWNER_PASS=${{ secrets.OWNER_PASS }}
+            NODE_TLS_REJECT_UNAUTHORIZED=${{ secrets.NODE_TLS_REJECT_UNAUTHORIZED }}
+            FRONTEND_URL=http://13.60.253.30
+            EOF
+
+            pm2 restart hms-backend
+            pm2 save
