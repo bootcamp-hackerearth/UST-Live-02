@@ -1,0 +1,38 @@
+[
+  {
+    "_id": "6a2807303373f67f3cee524d",
+    "name": "nodes",
+    "__v": 0,
+    "seq": 8
+  },
+  {
+    "_id": "6a280735d21dc72863cbddf9",
+    "name": "employees",
+    "seq": 6,
+    "__v": 0
+  },
+  {
+    "_id": "6a280fd73373f67f3cee524e",
+    "name": "auditlogs",
+    "__v": 0,
+    "seq": 95
+  },
+  {
+    "_id": "6a2a81b43373f67f3cee524f",
+    "name": "patients",
+    "__v": 0,
+    "seq": 1
+  },
+  {
+    "_id": "6a2a82153373f67f3cee5250",
+    "name": "appointments",
+    "__v": 0,
+    "seq": 23
+  },
+  {
+    "_id": "6a3381b4c4fc92fe4ebde112",
+    "name": "medicalRecord",
+    "__v": 0,
+    "seq": 4
+  }
+]

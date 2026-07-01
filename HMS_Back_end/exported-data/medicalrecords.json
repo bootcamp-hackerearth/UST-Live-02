@@ -1,0 +1,98 @@
+[
+  {
+    "_id": "6a3cc57dce626648cf0121c8",
+    "appointmentId": "APT-000008",
+    "patientUHID": "UHID-000001",
+    "patientName": "Varun",
+    "doctorEmployeeId": "EMP-000003",
+    "doctorName": "Varshith",
+    "chiefComplaint": "While doing any heavy work there is mild chest pain",
+    "symptoms": "Frequent chest pain",
+    "diagnosis": "Use prescribed medicines for 2 weeks",
+    "advice": "Avoid heavy work until diagnosis completion, Revisit after 2 weeks",
+    "prescriptionItems": [
+      {
+        "name": "Cetrezol 10mg",
+        "dosage": "1 tablet",
+        "frequency": "2 times a day",
+        "duration": "2 weeks",
+        "administrationCategory": "ENTERAL",
+        "administrationMethod": "ORAL",
+        "_id": "6a3cc68cce626648cf012223"
+      }
+    ],
+    "notes": "No vitals recorded",
+    "status": "FINALIZED",
+    "createdByEmployeeId": "EMP-000003",
+    "createdByName": "Varshith",
+    "createdByDesignation": "DOCTOR",
+    "created_at": "2026-06-25T06:06:53.496Z",
+    "updated_at": "2026-06-25T06:11:24.505Z",
+    "medicalRecordId": "MEDREC-000002",
+    "__v": 2
+  },
+  {
+    "_id": "6a3f559416e878c924761b6e",
+    "appointmentId": "APT-000018",
+    "patientUHID": "UHID-000001",
+    "patientName": "Varun",
+    "doctorEmployeeId": "EMP-000003",
+    "doctorName": "Varshith",
+    "chiefComplaint": "While doing any heavy work there is mild chest pain",
+    "symptoms": "frequent chest pain",
+    "diagnosis": "Use prescribed medicines for 2 weeks",
+    "advice": "Avoid heavy work until diagnosis completion, Revisit after 2 weeks",
+    "prescriptionItems": [
+      {
+        "name": "Cetrezol 10mg",
+        "dosage": "1 tablet",
+        "frequency": "2 times a day",
+        "duration": "2 weeks",
+        "administrationCategory": "ENTERAL",
+        "administrationMethod": "ORAL",
+        "_id": "6a3f563116e878c924761c20"
+      }
+    ],
+    "notes": "",
+    "status": "FINALIZED",
+    "createdByEmployeeId": "EMP-000002",
+    "createdByName": "Hospital Admin",
+    "createdByDesignation": "ADMIN",
+    "created_at": "2026-06-27T04:46:12.483Z",
+    "updated_at": "2026-06-27T04:48:49.826Z",
+    "medicalRecordId": "MEDREC-000003",
+    "__v": 1
+  },
+  {
+    "_id": "6a3f64ab16e878c924761dcf",
+    "appointmentId": "APT-000021",
+    "patientUHID": "UHID-000001",
+    "patientName": "Varun",
+    "doctorEmployeeId": "EMP-000003",
+    "doctorName": "Varshith",
+    "chiefComplaint": "while doing heavy work getting chest pain",
+    "symptoms": "frequent chest pain",
+    "diagnosis": "follow prescribed medicine for 2 weeks",
+    "advice": "dont do heavy work for now",
+    "prescriptionItems": [
+      {
+        "name": "Cetrezol 10mg",
+        "dosage": "1 tablet",
+        "frequency": "2 times a day",
+        "duration": "2 weeks",
+        "administrationCategory": "ENTERAL",
+        "administrationMethod": "ORAL",
+        "_id": "6a3f64de16e878c924761e0c"
+      }
+    ],
+    "notes": "",
+    "status": "FINALIZED",
+    "createdByEmployeeId": "EMP-000002",
+    "createdByName": "Hospital Admin",
+    "createdByDesignation": "ADMIN",
+    "created_at": "2026-06-27T05:50:35.135Z",
+    "updated_at": "2026-06-27T05:51:26.757Z",
+    "medicalRecordId": "MEDREC-000004",
+    "__v": 1
+  }
+]
