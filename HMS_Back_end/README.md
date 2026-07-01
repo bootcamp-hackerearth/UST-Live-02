@@ -279,3 +279,4 @@ Configured for **Vercel** serverless deployment via `vercel.json`, which routes
 all traffic to `src/api/index.js`. That handler establishes the MongoDB
 connection per invocation and delegates to the Express `app`. The production
 frontend is configured to call `https://vanguard-hms-rho.vercel.app/api`.
+# Deployment test
