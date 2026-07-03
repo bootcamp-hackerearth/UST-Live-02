@@ -66,10 +66,12 @@ exports.login = async (req, res) => {
         await auditFailedLogin("EMPLOYEE", user.employeeCode);
         throw new AppError(STATUS.FORBIDDEN, blockedMessage);
     }
-
+    await User.updateOne(
+    { _id: user._id },
+    { $set: { lastLoginAt: new Date() } }
+);
     user.lastLoginAt = new Date();
-    await user.save();
-
+   
     // Load the linked employee profile to include in the response
     const employee = await Employee.findOne({
         employeeCode: user.employeeCode
