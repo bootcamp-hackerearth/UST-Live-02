@@ -105,6 +105,13 @@ const medicalRecordSchema = new mongoose.Schema({
 }, {timestamps: { createdAt: "created_at", updatedAt: "updated_at" }}
 );
 
+// Performance indexes
+medicalRecordSchema.index({ appointmentId: 1 });
+medicalRecordSchema.index({ patientUHID: 1, created_at: -1 });
+medicalRecordSchema.index({ doctorEmployeeId: 1, created_at: -1 });
+medicalRecordSchema.index({ status: 1, created_at: -1 });
+medicalRecordSchema.index({ patientUHID: 1, doctorEmployeeId: 1 });
+
 medicalRecordSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(

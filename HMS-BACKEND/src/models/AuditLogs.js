@@ -86,6 +86,12 @@ const auditLogSchema = new mongoose.Schema(
     }
 );
 
+// Performance indexes
+auditLogSchema.index({ created_at: -1 });
+auditLogSchema.index({ action: 1, created_at: -1 });
+auditLogSchema.index({ targetType: 1, targetId: 1 });
+auditLogSchema.index({ actorId: 1, created_at: -1 });
+
 auditLogSchema.pre("save", async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(

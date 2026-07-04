@@ -99,6 +99,11 @@ const employeeSchema = new mongoose.Schema({
   },
 });
 
+employeeSchema.index({ designation: 1 });
+employeeSchema.index({ department: 1 });
+employeeSchema.index({ name: 1 });
+employeeSchema.index({ designation: 1, department: 1 });
+
 employeeSchema.pre("save", async function () {
   if (this.isNew && !this.employeeCode) {
     const counter = await Counter.findOneAndUpdate(

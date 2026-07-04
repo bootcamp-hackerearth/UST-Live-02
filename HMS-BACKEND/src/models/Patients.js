@@ -69,6 +69,11 @@ const patientSchema = new mongoose.Schema({
     }
 });
 
+patientSchema.index({ status: 1});
+patientSchema.index({ gender: 1 });
+patientSchema.index({ name: 1 });
+patientSchema.index({ phone: 1 });
+
 patientSchema.pre('save', async function () {
     if (this.isNew) {
         const counter = await Counter.findOneAndUpdate(

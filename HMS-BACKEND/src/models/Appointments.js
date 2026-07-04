@@ -38,6 +38,13 @@ const appointmentSchema = new mongoose.Schema({
     }
 });
 
+// Performance indexes
+appointmentSchema.index({ patientUHID: 1, appointmentDate: -1 });
+appointmentSchema.index({ doctorEmployeeId: 1, appointmentDate: 1 });
+appointmentSchema.index({ status: 1, appointmentDate: 1 });
+appointmentSchema.index({ doctorEmployeeId: 1, appointmentDate: 1, timeSlot: 1 });
+appointmentSchema.index({ patientUHID: 1, status: 1 });
+
 appointmentSchema.pre('save', async function () {
     if (this.isNew) {
             const counter = await Counter.findOneAndUpdate(

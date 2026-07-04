@@ -78,6 +78,10 @@ const userSchema = new mongoose.Schema(
     }
 );
 
+userSchema.index({ roles: 1 });
+userSchema.index({ status: 1 });
+userSchema.index({ employeeCode: 1, status: 1 });
+
 userSchema.plugin(softDeletePlugin);
 
 module.exports = mongoose.model("User", userSchema);
