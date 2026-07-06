@@ -117,6 +117,8 @@ exports.getMyAppointments = async (req, res) => {
 // Fetch a single appointment
 exports.getAppointmentById = async (req, res) => {
 
+    await autoCompleteDueAppointments();
+
     const { appointmentId } = req.params;
 
     const appointment = await Appointment.findOne({
@@ -129,10 +131,11 @@ exports.getAppointmentById = async (req, res) => {
         throw new AppError(STATUS.NOT_FOUND, MESSAGES.APPOINTMENT.NOT_FOUND);
     }
 
-    // A doctor may only access their own appointments
+    // Doctor can only view their own appointment
     const actor = await resolveActor(req.user);
-    if (actor.designation === "DOCTOR" && appointment.doctorEmployeeId !== req.user.employeeCode) {
-        throw new AppError(STATUS.FORBIDDEN, MESSAGES.APPOINTMENT.OWN_ONLY_MODIFY);
+    if (actor.designation === "DOCTOR" &&
+        appointment.doctorEmployeeId !== req.user.employeeCode) {
+        throw new AppError(STATUS.FORBIDDEN, MESSAGES.AUTH.ACCESS_DENIED);
     }
 
     const [enriched] = await enrichAppointments([appointment]);

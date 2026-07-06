@@ -78,28 +78,33 @@ describe("🔒 RBAC (Role-Based Access Control) Tests", () => {
 
   describe("Appointment Routes", () => {
 
-    test("Owner can access appointments", async () => {
+    test("Owner can access all appointments", async () => {
       const res = await staffGet("/api/appointments", ownerToken);
       expect(res.status).toBe(200);
     });
 
-    test("Admin can access appointments", async () => {
+    test("Admin can access all appointments", async () => {
       const res = await staffGet("/api/appointments", adminToken);
       expect(res.status).toBe(200);
     });
 
-    test("Receptionist can access appointments", async () => {
+    test("Receptionist can access all appointments", async () => {
       const res = await staffGet("/api/appointments", receptionistToken);
       expect(res.status).toBe(200);
     });
 
-    test("Doctor can access own appointments", async () => {
+    test("Doctor cannot access all appointments list", async () => {
+      const res = await staffGet("/api/appointments", doctorToken);
+      expect(res.status).toBe(403);
+    });
+
+    test("Doctor can access own appointments via /my", async () => {
       const res = await staffGet("/api/appointments/my", doctorToken);
       expect(res.status).toBe(200);
     });
 
-    test("Doctor cannot access all appointments", async () => {
-      const res = await staffGet("/api/appointments", doctorToken);
+    test("Receptionist cannot access doctor-only /my route", async () => {
+      const res = await staffGet("/api/appointments/my", receptionistToken);
       expect(res.status).toBe(403);
     });
   });
