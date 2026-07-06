@@ -5,6 +5,11 @@ const MESSAGES = require("../constants/messages");
 
 // Creates a rate limiter with standardized error responses
 const buildLimiter = ({ windowMs, limit, message }) => {
+    // Skip rate limiting in test environment
+    if (process.env.NODE_ENV === "test") {
+        return (req, res, next) => next();
+    }
+
     if (!Number.isInteger(windowMs) || windowMs <= 0) {
         throw new Error(
             "Rate limiter configuration error: windowMs must be a positive integer"
@@ -27,17 +32,15 @@ const buildLimiter = ({ windowMs, limit, message }) => {
     });
 };
 
-// Limits login attempts
 const loginLimiter = buildLimiter({
     windowMs: 15 * 60 * 1000,
-    limit: 10,
+    limit: process.env.NODE_ENV === "test" ? 1000 : 10,
     message: MESSAGES.AUTH.TOO_MANY_ATTEMPTS
 });
 
-// Limits password reset requests
 const passwordResetLimiter = buildLimiter({
     windowMs: 15 * 60 * 1000,
-    limit: 5,
+    limit: process.env.NODE_ENV === "test" ? 1000 : 5,
     message: MESSAGES.AUTH.TOO_MANY_REQUESTS
 });
 

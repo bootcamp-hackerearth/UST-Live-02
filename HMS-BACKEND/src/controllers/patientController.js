@@ -219,8 +219,16 @@ exports.updatePatient = async (req, res) => {
         }
     });
 
-    await patient.save();
-
+    await Patient.findOneAndUpdate(
+    { UHID: patient.UHID },
+    { $set: {
+        phone: patient.phone,
+        email: patient.email,
+        address: patient.address,
+        emergencyContact: patient.emergencyContact,
+        status: patient.status
+    }}
+);
     // Record audit
     const actor = await resolveActor(req.user);
     await recordAudit({
@@ -256,8 +264,17 @@ exports.deletePatient = async (req, res) => {
     patient.isDeleted = true;
     patient.deletedAt = new Date();
     patient.deletedBy = actor.employeeCode;
-    await patient.save();
-
+    
+    await Patient.findOneAndUpdate(
+    { UHID: patient.UHID },
+    { $set: {
+        phone: patient.phone,
+        email: patient.email,
+        address: patient.address,
+        emergencyContact: patient.emergencyContact,
+        status: patient.status
+    }}
+);
     await recordAudit({
         actor,
         action: "PATIENT_DELETED",

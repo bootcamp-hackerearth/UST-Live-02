@@ -1,0 +1,483 @@
+● Validation Warning:
+
+  Unknown option "runInBand" with value true was found.
+  This is probably a typing mistake. Fixing it will remove this message.
+
+  Configuration Documentation:
+  https://jestjs.io/docs/configuration
+
+● Validation Warning:
+
+  Unknown option "runInBand" with value true was found.
+  This is probably a typing mistake. Fixing it will remove this message.
+
+  Configuration Documentation:
+  https://jestjs.io/docs/configuration
+
+  console.log
+    ◇ injected env (13) from tests/.env.test // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+  console.log
+    ◇ injected env (0) from tests/.env.test // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+FAIL tests/integration/patients.test.js (13.552 s)
+  👤 Patient Management Tests
+    Patient List
+      ✓ Returns paginated patient list (454 ms)
+      ✓ Pagination works correctly (452 ms)
+      ✓ Status filter works (460 ms)
+      ✓ Search by name works (452 ms)
+      ✓ Search by UHID works (454 ms)
+    Create Patient
+      ✕ Admin can create a patient (308 ms)
+      ✓ Receptionist can create a patient (1667 ms)
+      ✓ Cannot create patient with duplicate email (2069 ms)
+      ✓ Cannot create patient with missing required fields (342 ms)
+      ✓ Doctor cannot create patient (339 ms)
+    Get Patient By UHID
+      ✓ Can get patient by UHID (498 ms)
+      ✓ Returns 404 for non-existent UHID (450 ms)
+    Update Patient
+      ✕ Admin can update patient phone (601 ms)
+      ✕ Receptionist can update patient (599 ms)
+      ✓ Doctor cannot update patient (312 ms)
+      ✕ Cannot update to duplicate email (758 ms)
+
+  ● 👤 Patient Management Tests › Create Patient › Admin can create a patient
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 422
+
+      115 |       );
+      116 |
+    > 117 |       expect(res.status).toBe(201);
+          |                          ^
+      118 |       expect(res.data.data.patient).toBeDefined();
+      119 |       expect(res.data.data.patient.UHID).toBeDefined();
+      120 |       createdPatientUHID = res.data.data.patient.UHID;
+
+      at Object.toBe (tests/integration/patients.test.js:117:26)
+
+  ● 👤 Patient Management Tests › Update Patient › Admin can update patient phone
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      279 |       );
+      280 |
+    > 281 |       expect(res.status).toBe(200);
+          |                          ^
+      282 |     });
+      283 |
+      284 |     test("Receptionist can update patient", async () => {
+
+      at Object.toBe (tests/integration/patients.test.js:281:26)
+
+  ● 👤 Patient Management Tests › Update Patient › Receptionist can update patient
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      289 |       );
+      290 |
+    > 291 |       expect(res.status).toBe(200);
+          |                          ^
+      292 |     });
+      293 |
+      294 |     test("Doctor cannot update patient", async () => {
+
+      at Object.toBe (tests/integration/patients.test.js:291:26)
+
+  ● 👤 Patient Management Tests › Update Patient › Cannot update to duplicate email
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected value: 500
+    Received array: [409, 400]
+
+      309 |       );
+      310 |
+    > 311 |       expect([409, 400]).toContain(res.status);
+          |                          ^
+      312 |     });
+      313 |   });
+      314 | });
+
+      at Object.toContain (tests/integration/patients.test.js:311:26)
+
+  console.log
+    ◇ injected env (13) from tests/.env.test // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+  console.log
+    ◇ injected env (0) from tests/.env.test // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+FAIL tests/integration/edge-cases.test.js (10.277 s)
+  ⚡ Edge Cases and Security Tests
+    API Health
+      ✕ Root endpoint returns API running message (23 ms)
+      ✓ DB status shows connected (11 ms)
+      ✓ Unknown route returns 404 (8 ms)
+    Security Edge Cases
+      ✕ SQL injection attempt in login email is rejected (12 ms)
+      ✕ XSS attempt in patient name is sanitized (306 ms)
+      ✕ Very long string input is rejected (11 ms)
+      ✓ Empty body on login is rejected (17 ms)
+      ✓ Patient cannot access another patient's appointments (455 ms)
+    Rate Limiting
+      ✓ Multiple failed logins do not crash server (505 ms)
+    Pagination Edge Cases
+      ✓ Page 0 defaults to page 1 (455 ms)
+      ✓ Limit over 100 is capped (458 ms)
+      ✓ Negative limit is handled (451 ms)
+      ✓ Non-numeric page returns valid response (456 ms)
+    Session and Token Edge Cases
+      ✓ Expired format token is rejected (9 ms)
+      ✓ Token without Bearer prefix is rejected (1000 ms)
+      ✓ Multiple simultaneous requests with same token work (1482 ms)
+      ✓ Refresh without cookie returns 401 (7 ms)
+    Data Validation Edge Cases
+      ✓ Invalid phone format is rejected (302 ms)
+      ✓ Future date of birth is rejected (1668 ms)
+      ✓ Invalid gender value is rejected (305 ms)
+
+  ● ⚡ Edge Cases and Security Tests › API Health › Root endpoint returns API running message
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "API running"
+    Received: undefined
+
+      27 |       });
+      28 |       expect(res.status).toBe(200);
+    > 29 |       expect(res.data.message).toBe("API running");
+         |                                ^
+      30 |     });
+      31 |
+      32 |     test("DB status shows connected", async () => {
+
+      at Object.toBe (tests/integration/edge-cases.test.js:29:32)
+
+  ● ⚡ Edge Cases and Security Tests › Security Edge Cases › SQL injection attempt in login email is rejected
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected value: 422
+    Received array: [400, 401]
+
+      59 |         { validateStatus: () => true }
+      60 |       );
+    > 61 |       expect([400, 401]).toContain(res.status);
+         |                          ^
+      62 |       expect(res.data.success).toBe(false);
+      63 |     });
+      64 |
+
+      at Object.toContain (tests/integration/edge-cases.test.js:61:26)
+
+  ● ⚡ Edge Cases and Security Tests › Security Edge Cases › XSS attempt in patient name is sanitized
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected value: 422
+    Received array: [201, 400]
+
+      88 |       );
+      89 |       // Should either reject or sanitize
+    > 90 |       expect([201, 400]).toContain(res.status);
+         |                          ^
+      91 |     });
+      92 |
+      93 |     test("Very long string input is rejected", async () => {
+
+      at Object.toContain (tests/integration/edge-cases.test.js:90:26)
+
+  ● ⚡ Edge Cases and Security Tests › Security Edge Cases › Very long string input is rejected
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected value: 422
+    Received array: [400, 401, 413]
+
+       98 |         { validateStatus: () => true }
+       99 |       );
+    > 100 |       expect([400, 401, 413]).toContain(res.status);
+          |                               ^
+      101 |     });
+      102 |
+      103 |     test("Empty body on login is rejected", async () => {
+
+      at Object.toContain (tests/integration/edge-cases.test.js:100:31)
+
+  console.log
+    ◇ injected env (13) from tests/.env.test // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+  console.log
+    ◇ injected env (0) from tests/.env.test // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+PASS tests/integration/auth.test.js (13.398 s)
+  🔐 Authentication Tests
+    Staff Login
+      ✓ Owner can login successfully (1251 ms)
+      ✓ Admin can login successfully (986 ms)
+      ✓ Receptionist can login successfully (997 ms)
+      ✓ Doctor can login successfully (990 ms)
+      ✓ Login fails with wrong password (807 ms)
+      ✓ Login fails with wrong email (454 ms)
+      ✓ Login fails with missing email (8 ms)
+      ✓ Login fails with missing password (8 ms)
+      ✓ Login fails with invalid email format (10 ms)
+    JWT Token Validation
+      ✓ Request with valid token returns 200 (1697 ms)
+      ✓ Request with no token returns 401 (15 ms)
+      ✓ Request with invalid token returns 401 (8 ms)
+      ✓ Request with malformed Bearer token returns 401 (6 ms)
+      ✓ Token contains correct user info (983 ms)
+    Refresh Token
+      ✓ Refresh endpoint exists and responds (7 ms)
+      ✓ Logout endpoint works (1288 ms)
+    Patient Authentication
+      ✓ Patient can login successfully (953 ms)
+      ✓ Patient login fails with wrong password (809 ms)
+      ✓ Patient token rejected on staff routes (955 ms)
+      ✓ Staff token rejected on patient routes (993 ms)
+
+  console.log
+    ◇ injected env (13) from tests/.env.test // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+  console.log
+    ◇ injected env (0) from tests/.env.test // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+PASS tests/integration/medical-records.test.js (9.258 s)
+  🏥 Medical Records Tests
+    List Medical Records
+      ✓ Admin can list all medical records (598 ms)
+      ✓ Doctor sees only own medical records (601 ms)
+      ✓ Medical records list is paginated (596 ms)
+      ✓ Can filter by patientUHID (599 ms)
+    Get Record by Appointment
+      ✓ Can get medical record by appointment ID (600 ms)
+      ✓ Returns null for appointment with no record (597 ms)
+    Patient Health Records (Mobile)
+      ✓ Patient can view own health records (303 ms)
+      ✓ Patient only sees own records (303 ms)
+
+  console.log
+    ◇ injected env (13) from tests/.env.test // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+  console.log
+    ◇ injected env (0) from tests/.env.test // tip: ⌘ override existing { override: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+FAIL tests/integration/appointments.test.js (14.331 s)
+  📅 Appointment Tests
+    List Appointments
+      ✓ Admin gets paginated appointments (599 ms)
+      ✓ Appointments include enriched patient and doctor data (599 ms)
+      ✓ Status filter works (598 ms)
+      ✓ Doctor gets only own appointments (753 ms)
+    Create Appointment (Staff)
+      ✕ Receptionist can create appointment (457 ms)
+      ✓ Doctor cannot create staff appointment (459 ms)
+      ✕ Cannot create appointment in the past (455 ms)
+      ✕ Cannot create appointment more than 6 months ahead (456 ms)
+      ✕ Cannot create appointment with invalid time slot format (451 ms)
+    Patient Appointment Flow
+      ✕ Patient can book appointment (creates as PENDING) (1684 ms)
+      ✓ Patient can view own appointments (451 ms)
+      ✓ Patient cannot book in past (599 ms)
+    Booked Slots
+      ✓ Returns booked slots for doctor and date (599 ms)
+      ✕ Booked slots requires doctorEmployeeId (450 ms)
+
+  ● 📅 Appointment Tests › Create Appointment (Staff) › Receptionist can create appointment
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected value: 422
+    Received array: [201, 409]
+
+      114 |       }
+      115 |
+    > 116 |       expect([201, 409]).toContain(res.status);
+          |                          ^
+      117 |     });
+      118 |
+      119 |     test("Doctor cannot create staff appointment", async () => {
+
+      at Object.toContain (tests/integration/appointments.test.js:116:26)
+
+  ● 📅 Appointment Tests › Create Appointment (Staff) › Cannot create appointment in the past
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 409
+    Received: 422
+
+      148 |       );
+      149 |
+    > 150 |       expect(res.status).toBe(409);
+          |                          ^
+      151 |     });
+      152 |
+      153 |     test("Cannot create appointment more than 6 months ahead", async () => {
+
+      at Object.toBe (tests/integration/appointments.test.js:150:26)
+
+  ● 📅 Appointment Tests › Create Appointment (Staff) › Cannot create appointment more than 6 months ahead
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 409
+    Received: 422
+
+      167 |       );
+      168 |
+    > 169 |       expect(res.status).toBe(409);
+          |                          ^
+      170 |     });
+      171 |
+      172 |     test("Cannot create appointment with invalid time slot format", async () => {
+
+      at Object.toBe (tests/integration/appointments.test.js:169:26)
+
+  ● 📅 Appointment Tests › Create Appointment (Staff) › Cannot create appointment with invalid time slot format
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 422
+
+      186 |       );
+      187 |
+    > 188 |       expect(res.status).toBe(400);
+          |                          ^
+      189 |     });
+      190 |   });
+      191 |
+
+      at Object.toBe (tests/integration/appointments.test.js:188:26)
+
+  ● 📅 Appointment Tests › Patient Appointment Flow › Patient can book appointment (creates as PENDING)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "PENDING"
+    Received: "BOOKED"
+
+      211 |       expect([201, 409]).toContain(res.status);
+      212 |       if (res.status === 201) {
+    > 213 |         expect(res.data.data.appointment.status).toBe("PENDING");
+          |                                                  ^
+      214 |       }
+      215 |     });
+      216 |
+
+      at Object.toBe (tests/integration/appointments.test.js:213:50)
+
+  ● 📅 Appointment Tests › Booked Slots › Booked slots requires doctorEmployeeId
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 422
+
+      264 |       );
+      265 |
+    > 266 |       expect(res.status).toBe(400);
+          |                          ^
+      267 |     });
+      268 |   });
+      269 | });
+
+      at Object.toBe (tests/integration/appointments.test.js:266:26)
+
+  console.log
+    ◇ injected env (13) from tests/.env.test // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+  console.log
+    ◇ injected env (0) from tests/.env.test // tip: ⌘ enable debugging { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+FAIL tests/integration/rbac.test.js (13.873 s)
+  🔒 RBAC (Role-Based Access Control) Tests
+    Employee Routes
+      ✓ Owner can access employees list (306 ms)
+      ✓ Admin can access employees list (304 ms)
+      ✓ Receptionist cannot access employees list (156 ms)
+      ✓ Doctor cannot access employees list (155 ms)
+    Patient Routes
+      ✓ Owner can access patients list (307 ms)
+      ✓ Admin can access patients list (455 ms)
+      ✓ Receptionist can access patients list (450 ms)
+      ✓ Doctor cannot access patients list (303 ms)
+    Appointment Routes
+      ✓ Owner can access appointments (451 ms)
+      ✓ Admin can access appointments (635 ms)
+      ✓ Receptionist can access appointments (597 ms)
+      ✓ Doctor can access own appointments (868 ms)
+      ✕ Doctor cannot access all appointments (626 ms)
+    Medical Record Routes
+      ✓ Doctor can access medical records (601 ms)
+      ✓ Receptionist can access medical records (602 ms)
+      ✓ Admin can access medical records (598 ms)
+    Admin Only Routes
+      ✓ Owner can access audit logs (306 ms)
+      ✓ Admin can access audit logs (310 ms)
+      ✓ Receptionist cannot access audit logs (164 ms)
+      ✓ Doctor cannot access audit logs (157 ms)
+    Approval Routes
+      ✓ Owner can access pending employees (453 ms)
+      ✓ Admin can access pending employees (448 ms)
+      ✓ Receptionist cannot access pending employees (155 ms)
+      ✓ Doctor cannot access pending employees (154 ms)
+
+  ● 🔒 RBAC (Role-Based Access Control) Tests › Appointment Routes › Doctor cannot access all appointments
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 200
+
+      101 |     test("Doctor cannot access all appointments", async () => {
+      102 |       const res = await staffGet("/api/appointments", doctorToken);
+    > 103 |       expect(res.status).toBe(403);
+          |                          ^
+      104 |     });
+      105 |   });
+      106 |
+
+      at Object.toBe (tests/integration/rbac.test.js:103:26)
+
+Test Suites: 4 failed, 2 passed, 6 total
+Tests:       15 failed, 87 passed, 102 total
+Snapshots:   0 total
+Time:        74.806 s
+Ran all test suites matching tests/integration.
