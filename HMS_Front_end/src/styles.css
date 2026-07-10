@@ -103,6 +103,10 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 .form-textarea { resize: vertical; min-height: 5rem; }
 
+/* Checkboxes follow the teal theme and disabled ones show the prohibited cursor */
+input[type='checkbox'] { accent-color: #0f766e; }
+input[type='checkbox']:disabled { cursor: not-allowed; }
+
 .form-error { color: #dc2626; font-size: 0.75rem; margin: 0.125rem 0 0; font-weight: 500; }
 
 /* Alerts */

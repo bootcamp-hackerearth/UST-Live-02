@@ -23,9 +23,11 @@
           </select>
         </div>
       </div>
-      <a routerLink="/dashboard/employees/create" class="btn btn-primary">
-        + Add Employee
-      </a>
+      @if (canCreate()) {
+        <a routerLink="/dashboard/employees/create" class="btn btn-primary">
+          + Add Employee
+        </a>
+      }
     </div>
 
     @if (loading()) {

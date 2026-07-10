@@ -3,30 +3,26 @@ name: Deploy HMS to EC2
 on:
   push:
     branches:
-      - feature/sprint4_pod1_varshith
+      - feature/team-merge
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Get the code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2: Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # Step 3: Install and verify backend
       - name: Install Backend Dependencies
         run: |
           cd HMS_Back_end
           npm install --ignore-scripts
 
-      # Step 4: Install and build Angular
       - name: Install Angular Dependencies
         run: |
           cd HMS_Front_end
@@ -37,7 +33,6 @@ jobs:
           cd HMS_Front_end
           npx ng build --configuration production
 
-      # Step 5: Ensure swap exists on EC2 for future builds
       - name: Setup EC2 Swap Memory
         uses: appleboy/ssh-action@master
         with:
@@ -56,7 +51,6 @@ jobs:
               echo "Swap already exists"
             fi
 
-      # Step 6: Deploy backend to EC2
       - name: Deploy Backend
         uses: appleboy/ssh-action@master
         with:
@@ -64,10 +58,15 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/UST-Live-02
-            git pull origin feature/sprint4_pod1_varshith
+            # Clone personal repo if not exists
+            if [ ! -d ~/hms-personal ]; then
+              git clone https://github.com/Varshith-UST/hms-sprint5-deploy.git ~/hms-personal
+            fi
 
-            cd HMS-BACKEND
+            cd ~/hms-personal
+            git pull origin main
+
+            cd HMS_Back_end
             npm install --ignore-scripts
 
             # Create .env from GitHub Secrets
@@ -85,14 +84,18 @@ jobs:
             OWNER_PASS=${{ secrets.OWNER_PASS }}
             NODE_TLS_REJECT_UNAUTHORIZED=${{ secrets.NODE_TLS_REJECT_UNAUTHORIZED }}
             FRONTEND_URL=http://${{ secrets.EC2_HOST }}
+            BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
+            EMAIL_USER=${{ secrets.EMAIL_USER }}
             ENVEOF
 
-            pm2 restart hms-backend || pm2 start src/server.js --name hms-backend
+            # Restart or start PM2 from new folder
+            pm2 stop hms-backend || true
+            pm2 delete hms-backend || true
+            pm2 start src/server.js --name hms-backend
             pm2 save
 
-            echo "Backend deployed"
+            echo "Backend deployed from personal repo"
 
-      # Step 7: Copy Angular build files to EC2
       - name: Copy Angular Build to EC2
         uses: appleboy/scp-action@master
         with:
@@ -103,7 +106,6 @@ jobs:
           target: "/tmp/angular-build"
           strip_components: 4
 
-      # Step 8: Move files and restart Nginx
       - name: Deploy Angular and Restart Nginx
         uses: appleboy/ssh-action@master
         with:
@@ -111,25 +113,14 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Clear old files
             sudo rm -rf /var/www/html/*
-
-            # Copy new build
             sudo cp -r /tmp/angular-build/* /var/www/html/
-
-            # Set permissions
             sudo chown -R www-data:www-data /var/www/html/
             sudo chmod -R 755 /var/www/html/
-
-            # Clean temp
             rm -rf /tmp/angular-build
-
-            # Restart Nginx
             sudo systemctl restart nginx
-
             echo "Angular deployed"
 
-      # Step 9: Health check
       - name: Health Check
         uses: appleboy/ssh-action@master
         with:
@@ -140,13 +131,13 @@ jobs:
             echo "=== PM2 Status ==="
             pm2 list
 
-            echo "=== API Health Check ==="
+            echo "=== API Health ==="
             curl -s http://localhost:5000/ || echo "Backend not responding"
 
             echo "=== Nginx Status ==="
-            sudo systemctl status nginx --no-pager -l | head -5
+            sudo systemctl status nginx --no-pager | head -5
 
             echo "=== Angular Files ==="
-            ls /var/www/html/index.html && echo "index.html exists" || echo "index.html missing"
+            ls /var/www/html/index.html && echo "index.html exists"
 
             echo "=== DEPLOYMENT COMPLETE ==="

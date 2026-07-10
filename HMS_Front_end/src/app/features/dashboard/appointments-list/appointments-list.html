@@ -1,8 +1,8 @@
 <app-dashboard-layout pageTitle="Appointments">
   <div class="page">
 
-    <!-- Doctor view: tabs -->
-    @if (isDoctor()) {
+    <!-- Own-appointments feed: tabs -->
+    @if (!canViewAll()) {
     <div class="tabs">
       <button
         type="button"
@@ -42,8 +42,8 @@
     </div>
     }
 
-    <!-- Reception view: filters + book button -->
-    @if (hasReceptionAccess()) {
+    <!-- Full-list view: filters + book button -->
+    @if (canViewAll()) {
     <div class="toolbar">
       <div class="toolbar-filters">
 
@@ -98,11 +98,13 @@
 
       </div>
 
-      <a
-        routerLink="/dashboard/appointments/book"
-        class="btn btn-primary">
-        + Book Appointment
-      </a>
+      @if (canBook()) {
+        <a
+          routerLink="/dashboard/appointments/book"
+          class="btn btn-primary">
+          + Book Appointment
+        </a>
+      }
     </div>
     }
 
@@ -152,7 +154,7 @@
             </td>
 
             <td class="row-actions">
-              @if (hasReceptionAccess() && a.status === 'BOOKED' && !startTimePassed(a)) {
+              @if (canCancel() && a.status === 'BOOKED' && !startTimePassed(a)) {
               <button
                 type="button"
                 class="btn btn-sm btn-danger-outline"

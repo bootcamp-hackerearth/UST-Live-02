@@ -205,11 +205,11 @@
               <span class="form-label">Allowed Designations</span>
               <div class="checkbox-grid">
                 @for (d of allDesignations; track d) {
-                  <label class="checkbox">
+                  <label class="checkbox" [class.disabled]="isDesignationLocked(d)">
                     <input
                       type="checkbox"
                       [checked]="isDesignationSelected(d)"
-                      [disabled]="isLockedNode()"
+                      [disabled]="isDesignationLocked(d)"
                       (change)="toggleDesignation(d, $any($event.target).checked)"
                     />
                     <span>{{ d }}</span>
@@ -217,7 +217,9 @@
                 }
               </div>
               @if (isLockedNode()) {
-                <small class="form-hint">This is a management node; access is fixed to OWNER and ADMIN.</small>
+                <small class="form-hint">This is a system node; access is fixed to OWNER.</small>
+              } @else if (isAdminMaxNode()) {
+                <small class="form-hint">This is a management node; it can be granted to OWNER and ADMIN only.</small>
               }
             </div>
 

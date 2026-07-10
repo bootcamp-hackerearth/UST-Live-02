@@ -2,9 +2,11 @@
   <div class="page">
     <div class="toolbar">
       <h3 class="toolbar-title">All Administrators</h3>
-      <a routerLink="/dashboard/admins/create" class="btn btn-primary">
-        + Add Admin
-      </a>
+      @if (canCreate()) {
+        <a routerLink="/dashboard/admins/create" class="btn btn-primary">
+          + Add Admin
+        </a>
+      }
     </div>
 
     @if (loading()) {
@@ -64,10 +66,12 @@
             <p class="modal-sub">{{ item.employee.employeeCode }} · ADMIN</p>
           </div>
           <div class="modal-header-actions">
-            <a [routerLink]="['/dashboard/admins', item.employee.employeeCode, 'edit']"
-              class="btn btn-primary btn-sm">
-              Edit
-            </a>
+            @if (canEdit()) {
+              <a [routerLink]="['/dashboard/admins', item.employee.employeeCode, 'edit']"
+                class="btn btn-primary btn-sm">
+                Edit
+              </a>
+            }
             <button type="button" class="modal-close" (click)="close()">✕</button>
           </div>
         </div>
@@ -109,9 +113,11 @@
           <button type="button" class="btn btn-secondary" (click)="close()">
             Close
           </button>
-          <button type="button" class="btn btn-danger" (click)="deleteAdmin(item)">
-            Delete
-          </button>
+          @if (canDelete()) {
+            <button type="button" class="btn btn-danger" (click)="deleteAdmin(item)">
+              Delete
+            </button>
+          }
         </div>
       </div>
     </div>

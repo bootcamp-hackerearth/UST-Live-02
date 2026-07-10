@@ -26,9 +26,11 @@
           </select>
         </div>
       </div>
-      <a routerLink="/dashboard/patients/create" class="btn btn-primary">
-        + Add Patient
-      </a>
+      @if (canCreate()) {
+        <a routerLink="/dashboard/patients/create" class="btn btn-primary">
+          + Add Patient
+        </a>
+      }
     </div>
 
     @if (loading()) {
@@ -95,9 +97,11 @@
             <button type="button" class="btn btn-secondary btn-sm" [disabled]="deleting()" (click)="viewMedicalRecords(p)">
               View Medical Records
             </button>
-            <button type="button" class="btn btn-primary btn-sm" [disabled]="deleting()" (click)="editPatient(p)">
-              Edit
-            </button>
+            @if (canEdit()) {
+              <button type="button" class="btn btn-primary btn-sm" [disabled]="deleting()" (click)="editPatient(p)">
+                Edit
+              </button>
+            }
             <button type="button" class="modal-close" [disabled]="deleting()" (click)="close()">✕</button>
           </div>
         </div>
@@ -164,7 +168,7 @@
           <button type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="close()">
             Close
           </button>
-          @if (isPrivileged()) {
+          @if (canDelete()) {
             <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="deletePatient(p)">
               @if (deleting()) {
                 <span>Deleting…</span>

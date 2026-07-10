@@ -84,10 +84,12 @@
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">
-            @if (isPrivileged()) { Update Profile } @else { Request Profile Update }
+            @if (!canUpdateSelf()) { Account } @else if (isPrivileged()) { Update Profile } @else { Request Profile Update }
           </h3>
           <p class="card-sub">
-            @if (isPrivileged()) {
+            @if (!canUpdateSelf()) {
+              Profile updates are not enabled for your designation.
+            } @else if (isPrivileged()) {
               Update your phone number and qualification.
             } @else {
               Changes to phone and qualification require admin approval before
@@ -97,6 +99,7 @@
         </div>
 
         <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="card-body">
+          @if (canUpdateSelf()) {
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label" for="profile-phone">Phone</label>
@@ -135,6 +138,7 @@
               }
             </div>
           </div>
+          }
 
           <div class="form-actions">
             <button
@@ -144,19 +148,21 @@
             >
               Change Password
             </button>
-            <button
-              type="submit"
-              class="btn btn-primary"
-              [disabled]="saving() || !hasChanges()"
-            >
-              @if (saving()) {
-                <span>Saving…</span>
-              } @else if (isPrivileged()) {
-                <span>Save Changes</span>
-              } @else {
-                <span>Submit for Approval</span>
-              }
-            </button>
+            @if (canUpdateSelf()) {
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="saving() || !hasChanges()"
+              >
+                @if (saving()) {
+                  <span>Saving…</span>
+                } @else if (isPrivileged()) {
+                  <span>Save Changes</span>
+                } @else {
+                  <span>Submit for Approval</span>
+                }
+              </button>
+            }
           </div>
         </form>
       </div>

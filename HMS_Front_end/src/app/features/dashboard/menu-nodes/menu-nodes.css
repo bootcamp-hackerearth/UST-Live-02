@@ -277,6 +277,15 @@
   cursor: pointer;
 }
 
+.checkbox.disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.checkbox.disabled input {
+  cursor: not-allowed;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
