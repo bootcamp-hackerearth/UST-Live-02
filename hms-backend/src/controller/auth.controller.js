@@ -116,8 +116,6 @@ const signUp = asyncHandler(async (req, res) => {
             `
     });
 
-    console.log(`verify url: https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
-
     const passwordHash = await bcrypt.hash(userPassword, 12);
 
     await User.create({
@@ -321,8 +319,6 @@ const patientSignUp = asyncHandler(async (req, res) => {
         });
     }
 
-    console.log(`Patient Password : ${userPassword}`);
-
     const passwordHash = await bcrypt.hash(userPassword, 12);
 
     await User.create({
@@ -350,7 +346,6 @@ const patientSignUp = asyncHandler(async (req, res) => {
             `
     });
 
-    console.log(`verify url: https://hms.fortrancer.in/api/auth/verify-email?email=${profile.email}&verification_token=${verification_token}`);
     // 201 created
     return res.status(201).json({
         message: "Account created sucessfully.",
@@ -467,7 +462,6 @@ const resetPassword = asyncHandler(async (req, res) => {
             <br>`
     });
 
-    console.log(`temp password: ${temp_password}`);
     return res.status(200).json({ message: `Reset link is sent to mail` });
 });
 

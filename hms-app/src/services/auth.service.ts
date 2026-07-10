@@ -70,7 +70,6 @@ export const logout = async () => {
     await deleteToken();
     await clearSecureStorage();
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
