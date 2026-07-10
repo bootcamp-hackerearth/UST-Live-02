@@ -46,9 +46,11 @@ npm run lint         # expo lint (ESLint)
 
 ## Configuring the API
 
-The API base URL lives in `src/config/api.ts`. Point it at your running backend
-(default `http://localhost:5000/api`). When testing on a physical device, use
-your machine's LAN IP rather than `localhost` so the phone can reach the server.
+The API base URL is read from the `EXPO_PUBLIC_API_URL` environment variable in
+`src/config/api.ts`, falling back to a local default. Set it in a `.env` file
+(gitignored) — point it at your deployed backend for shared builds, or at your
+machine's LAN IP when testing on a physical device via Expo Go (the phone can't
+reach the dev machine's `localhost`).
 
 The app's deep-link scheme is `hmsapp://` (see `app.json`), which must match the
 backend's `PATIENT_APP_URL` so emailed password-reset/login links open the app.

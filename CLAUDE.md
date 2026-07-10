@@ -38,8 +38,8 @@ npm run seed:all       # re-run seeders manually
 **Frontend** (`HMS_Front_end/`)
 
 ```bash
-npm start              # ng serve on :4200
-npm run build          # prod build to dist/ (uses environment.ts → Vercel API)
+npm start              # ng serve (dev server)
+npm run build          # prod build to dist/Admin-Panel/browser (uses environment.ts)
 npm run watch          # rebuild on change (development config)
 npm test               # Vitest + jsdom
 ```
@@ -54,7 +54,7 @@ npm run lint           # expo lint (ESLint)
 
 ## Backend architecture
 
-Entry points: `src/server.js` (local: validate env → connect DB → sync indexes → seed → listen) and `src/api/index.js` (Vercel serverless: connects DB per-invocation, delegates to the same `app`). Both import `src/app.js`, which wires all middleware and mounts every router under `/api/*`.
+Entry point: `src/server.js` (validate env → connect DB → sync indexes → seed → listen), run under **pm2** (`healthcare-api`) in production on EC2. It imports `src/app.js`, which wires all middleware and mounts every router under `/api/*`.
 
 **Cross-cutting conventions — follow these when adding endpoints:**
 
@@ -83,7 +83,7 @@ Modern Angular: **standalone components, zoneless change detection, signals, laz
 - **HTTP.** `authInterceptor` attaches the bearer token, transparently refreshes on 401 (single shared in-flight `/refresh` so a burst of 401s triggers one call), and handles errors globally (session clear on refresh failure, redirect, and a "cannot reach server" toast on status 0).
 - **Guards** (`core/guards/`): access mirrors the backend **node + permission** model. `authGuard`, `nodeAccessGuard` (module access by sidebar node at `route.data.nodePath`; **OWNER always passes**), `permissionGuard([...])` (requires ≥1 permission code), `role.guard`/`ownerOnlyGuard` (OWNER-only pages: `menu-nodes`, `permissions`), `mustChangePasswordGuard`, `unsavedChangesGuard` (`canDeactivate`).
 - **Structure:** `core/` (guards, interceptors, models, one service per resource, validators), `features/` (auth, dashboard/\*, home), `shared/ui/` (reusable navbar, sidebar, modals, toast, slot pickers, inputs).
-- **API URL** comes from `src/environments/` via an `angular.json` file replacement (dev → `http://localhost:5000/api`, prod → Vercel). `proxy.conf.json` proxies `/api` to `:5000` during `ng serve`. Import from `environments/environment`.
+- **API URL** comes from `src/environments/` via an `angular.json` file replacement; both configs use a same-origin `/api` base (keeps the refresh cookie first-party). `proxy.conf.json` proxies `/api` to the backend during `ng serve`; in production Nginx serves the built app and reverse-proxies `/api` to the backend. Import from `environments/environment`.
 - Prettier: `printWidth: 100`, `singleQuote: true` (HTML uses the `angular` parser).
 
 ## PatientApp architecture
@@ -99,4 +99,4 @@ Expo Router file-based routing: screens in `src/app/*.tsx` are routes (`login`, 
 
 - The backend is the single source of truth for roles/designations/permissions; frontend guards and the app must mirror, not redefine, backend authorization.
 - Both client apps center on the same domain flows: auth (login/register/forgot/reset/change-password), appointments, medical records, and profile — mirror existing service/screen patterns when extending them.
-- Deployment is Vercel for backend and frontend (`vercel.json` in each; backend routes all traffic to `src/api/index.js`).
+- Deployment is to **EC2** via a GitHub Actions workflow (`.github/workflows/deploy.yml`, on push to `feature/Ashbin`): it SSHes to the instance, runs the backend under **pm2** (`healthcare-api`) and builds the Angular app, which **Nginx** serves while reverse-proxying `/api` to the backend.

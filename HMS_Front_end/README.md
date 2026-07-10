@@ -23,7 +23,7 @@ detection**, **signals**, and **lazy-loaded routes**.
 
 - Node.js and npm
 - Angular CLI (use `npx ng ...`, or install globally)
-- The HMS Back End running and reachable (default `http://localhost:5000/api`)
+- The HMS Back End running and reachable
 
 ## Getting started
 
@@ -35,17 +35,17 @@ npm install
 npm start            # = ng serve
 ```
 
-Open `http://localhost:4200`. The app reloads on source changes.
+Open the local URL printed by the dev server. The app reloads on source changes.
 
 > **CORS & cookies:** the backend only accepts requests from its configured
 > `FRONTEND_URL` and issues an httpOnly refresh cookie, so keep `FRONTEND_URL`
-> set to `http://localhost:4200` during local development.
+> set to your dev server's origin during local development.
 
 ## Available scripts
 
 | Script          | Action                                 |
 | --------------- | -------------------------------------- |
-| `npm start`     | `ng serve` (dev server on :4200)       |
+| `npm start`     | `ng serve` (dev server)                |
 | `npm run build` | Production build to `dist/`            |
 | `npm run watch` | Rebuild on change (development config) |
 | `npm test`      | Run unit tests with Vitest             |
@@ -53,17 +53,20 @@ Open `http://localhost:4200`. The app reloads on source changes.
 
 ## Environment configuration
 
-API endpoints are defined per build configuration in `src/environments/`:
+API endpoints are defined per build configuration in `src/environments/`. Both
+configs use a **same-origin `/api`** base so the httpOnly refresh cookie stays
+first-party; they differ only in the `production` flag:
 
-| File                         | `production` | `apiUrl`                                  |
-| ---------------------------- | ------------ | ----------------------------------------- |
-| `environment.development.ts` | `false`      | `http://localhost:5000/api`               |
-| `environment.ts`             | `true`       | `https://vanguard-hms-rho.vercel.app/api` |
+| File                         | `production` | `apiUrl` |
+| ---------------------------- | ------------ | -------- |
+| `environment.development.ts` | `false`      | `/api`   |
+| `environment.ts`             | `true`       | `/api`   |
 
 `angular.json` performs a file replacement so production builds use
 `environment.ts` while `ng serve` / development builds use
-`environment.development.ts`. `proxy.conf.json` proxies `/api` to `:5000` during
-`ng serve`. Import the API URL via
+`environment.development.ts`. `proxy.conf.json` proxies `/api` to the backend
+during `ng serve`; in production Nginx serves the built app and reverse-proxies
+`/api` to the backend. Import the API URL via
 `import { environment } from '.../environments/environment'`.
 
 ## Architecture
@@ -159,5 +162,7 @@ Guards (`core/guards/`):
 npm run build
 ```
 
-Outputs to `dist/`. The production build uses `environment.ts` (Vercel API URL)
-and deploys to **Vercel** (`vercel.json`).
+Outputs to `dist/Admin-Panel/browser`. Deployment is handled by the repo's
+GitHub Actions workflow (`.github/workflows/deploy.yml`): the built app is copied
+to the **EC2** instance and served by **Nginx**, which also reverse-proxies
+`/api` to the backend.

@@ -26,7 +26,7 @@ and the [PatientApp](../PatientApp) (Expo mobile app).
 ## Prerequisites
 
 - Node.js and npm
-- A reachable MongoDB instance — local (`mongodb://localhost:27017/hms`) or MongoDB Atlas
+- A reachable MongoDB instance (local or MongoDB Atlas)
 
 ## Getting started
 
@@ -48,7 +48,7 @@ On boot, `src/server.js` runs in order: **validate env → connect DB → sync
 indexes → seed → listen**. Env validation is fatal (the server refuses to start
 with missing/weak secrets); index sync and seeding are non-fatal.
 
-The server listens on `PORT` (default **5000**). Quick health checks:
+The server listens on the configured `PORT`. Quick health checks:
 
 - `GET /` → `{ success, message: "API running" }`
 - `GET /health` → `{ status: "UP", timestamp }`
@@ -63,20 +63,20 @@ real secrets.** `.env` is gitignored.
 **Required** below and rejects `JWT_SECRET` / `JWT_PATIENT_SECRET` shorter than
 **32 characters**.
 
-| Variable                     | Required | Description                                            | Example                         |
-| ---------------------------- | -------- | ------------------------------------------------------ | ------------------------------- |
-| `MONGO_URI`                  | yes      | MongoDB connection string                              | `mongodb://localhost:27017/hms` |
-| `JWT_SECRET`                 | yes      | Secret for staff/employee access tokens (≥32 chars)    | `<long-random-string>`          |
-| `JWT_PATIENT_SECRET`         | yes      | Secret for patient access tokens (≥32 chars)           | `<different-long-random>`       |
-| `JWT_EXPIRES_IN`             | yes      | Access-token lifetime                                  | `15m`                           |
-| `REFRESH_TOKEN_EXPIRES_DAYS` | yes      | Refresh-token lifetime in days                         | `30`                            |
-| `FRONTEND_URL`               | no       | Allowed CORS origin (the Angular app); enables cookies | `http://localhost:4200`         |
-| `PATIENT_APP_URL`            | no       | Patient app deep-link base for emailed links           | `hmsapp://`                     |
-| `PORT`                       | no       | Port the API listens on (default 5000)                 | `5000`                          |
-| `TZ`                         | no       | Overrides the default `Asia/Kolkata` timezone          | `Asia/Kolkata`                  |
-| `BREVO_API_KEY`              | no       | Brevo (Sendinblue) API key for transactional email     | `<your-brevo-key>`              |
-| `EMAIL_USER`                 | no       | Sender email address                                   | `no-reply@example.com`          |
-| `OWNER_PASS`                 | no       | Password for the auto-seeded OWNER account             | `<strong-password>`             |
+| Variable                     | Required | Description                                            | Example                              |
+| ---------------------------- | -------- | ------------------------------------------------------ | ------------------------------------ |
+| `MONGO_URI`                  | yes      | MongoDB connection string                              | `<your-mongodb-connection-string>`   |
+| `JWT_SECRET`                 | yes      | Secret for staff/employee access tokens (≥32 chars)    | `<your-staff-jwt-secret>`            |
+| `JWT_PATIENT_SECRET`         | yes      | Secret for patient access tokens (≥32 chars)           | `<your-patient-jwt-secret>`          |
+| `JWT_EXPIRES_IN`             | yes      | Access-token lifetime                                  | `<your-access-token-lifetime>`       |
+| `REFRESH_TOKEN_EXPIRES_DAYS` | yes      | Refresh-token lifetime in days                         | `<your-refresh-token-days>`          |
+| `FRONTEND_URL`               | no       | Allowed CORS origin (the Angular app); enables cookies | `<your-frontend-origin>`             |
+| `PATIENT_APP_URL`            | no       | Patient app deep-link base for emailed links           | `<your-patient-app-scheme>`          |
+| `PORT`                       | no       | Port the API listens on                                | `<your-port>`                        |
+| `TZ`                         | no       | Overrides the default timezone                         | `<your-iana-timezone>`               |
+| `BREVO_API_KEY`              | no       | Brevo (Sendinblue) API key for transactional email     | `<your-brevo-key>`                   |
+| `EMAIL_USER`                 | no       | Sender email address                                   | `<your-sender-email>`                |
+| `OWNER_PASS`                 | no       | Password for the auto-seeded OWNER account             | `<your-owner-password>`              |
 
 > **Timezone:** `server.js` pins `process.env.TZ` to `Asia/Kolkata` unless
 > overridden, so all appointment/slot date math is hospital-local.
@@ -91,13 +91,9 @@ npm run seed:all
 ```
 
 Seeding creates the sidebar navigation **nodes**, the **permission** catalog per
-designation, and a single **OWNER** account:
-
-| Field    | Value                                |
-| -------- | ------------------------------------ |
-| Username | `owner`                              |
-| Email    | `owner@hospital.com`                 |
-| Password | value of `OWNER_PASS` in your `.env` |
+designation, and a single **OWNER** account. Its username and email are fixed
+defaults defined in `src/utils/seedOwner.js`; its password is the value of
+`OWNER_PASS` in your `.env`.
 
 The OWNER is seeded with `mustChangePassword: false`. Staff/admin accounts
 created through the app are issued a temporary password and flagged to change it
@@ -355,9 +351,8 @@ soft-delete relaxes.
 
 ```text
 src/
-├── api/index.js          # Vercel serverless handler (connects DB, delegates to app)
 ├── app.js                # Express app: middleware + route mounting
-├── server.js             # Local entrypoint: validate env, connect, sync, seed, listen
+├── server.js             # Entrypoint: validate env, connect, sync, seed, listen
 ├── config/               # db connection, env validation
 ├── constants/            # statusCodes, messages, domain enums, permissions
 ├── controllers/          # Route handlers (staff + patient)
@@ -389,7 +384,10 @@ npx jest -t "test case name"        # one test by name
 
 ## Deployment
 
-Configured for **Vercel** serverless deployment via `vercel.json`, which routes
-all traffic to `src/api/index.js`. That handler establishes the MongoDB
-connection per invocation and delegates to the Express `app`. The production
-clients call `https://vanguard-hms-rho.vercel.app/api`.
+Deployed to an **AWS EC2** instance by a GitHub Actions workflow
+(`.github/workflows/deploy.yml`) that runs on every push to `feature/Ashbin`.
+The workflow SSHes into the instance, resets it to the latest commit, installs
+dependencies (`npm ci`), and restarts the API under **pm2** (process
+`healthcare-api`), verifying its `/health` endpoint afterward. **Nginx** fronts
+the instance — it serves the built Angular app and reverse-proxies `/api` to the
+Node process, keeping the staff refresh cookie first-party.
