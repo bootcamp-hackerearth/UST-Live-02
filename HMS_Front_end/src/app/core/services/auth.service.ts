@@ -228,6 +228,15 @@ export class AuthService {
     }
   }
 
+  // Patches the stored user's permissions after a poll refresh
+  patchPermissions(permissions: string[]): void {
+    const user = this.getCurrentUser();
+    if (!user) {
+      return;
+    }
+    this.persistUser({ ...user, permissions });
+  }
+
   // Accessors
   isAuthenticated(): boolean {
     return !!this.accessToken;

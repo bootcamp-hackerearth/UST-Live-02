@@ -32,7 +32,7 @@
         </div>
         <div class="mr-field">
           <span class="mr-label">Status</span>
-          @if (isDoctor()) {
+          @if (canFinalize()) {
             <select class="form-select" formControlName="status">
               <option value="DRAFT">DRAFT</option>
               <option value="FINALIZED">FINALIZED</option>

@@ -9,6 +9,7 @@ Subtitle: "Book appointments, track your care"
 ## Design System
 
 ### Colors
+
 - Primary accent: Teal/green (used for buttons, links, status labels, active nav items)
 - Background: White
 - Text primary: Dark gray / near-black
@@ -19,6 +20,7 @@ Subtitle: "Book appointments, track your care"
 - Info banner: Light teal/mint background
 
 ### Typography
+
 - App name: Medium weight, gray
 - Hero heading: Large, bold, dark gray (2-line)
 - Section headings: Bold, dark
@@ -26,21 +28,25 @@ Subtitle: "Book appointments, track your care"
 - Links (e.g. "Forgot password?", "Register"): Teal, bold
 
 ### Input Fields
+
 - Full-width rounded rectangle borders
 - Light gray border
 - Placeholder text in gray
 - Label above each field
 
 ### Buttons
+
 - Primary action button: Full-width, rounded, teal/green fill, white text
 - Secondary/ghost button: Outlined rounded, no fill
 - Segmented toggle (Sign in / Register): Pill-shaped container, active tab has white background with shadow
 
 ### Cards
+
 - Rounded rectangle, white background, subtle shadow or border
 - Used for: quick action tiles, appointment entries, doctor listings, admin approval items
 
 ### Bottom Navigation Bar
+
 - 4 tabs: Home | Appointments | Profile | Alerts (patient) / Admin (admin role)
 - Active tab: teal text
 - Inactive tabs: gray text
@@ -54,6 +60,7 @@ Subtitle: "Book appointments, track your care"
 ### 1. Patient Login & Register
 
 **Sign In Tab**
+
 - Logo: "MediCare+" centered, gray
 - Hero text: "Your health, in your hands" (large, bold)
 - Subtext: "Book appointments, track your care"
@@ -66,6 +73,7 @@ Subtitle: "Book appointments, track your care"
 - Footer text: "Don't have an account?" + "Register" (teal link)
 
 **Register Tab**
+
 - Section divider: "Or register a new account"
 - Fields:
   - Full name (placeholder: Arjun Sharma)
@@ -81,18 +89,21 @@ Subtitle: "Book appointments, track your care"
 ### 2. Patient Dashboard
 
 **Header**
+
 - Greeting: "GOOD MORNING" (small caps, gray)
 - Patient name: "Arjun Sharma" (large, bold)
 - Subtext: "How are you feeling today?"
 - Avatar: Circle with initials "AS" (top right)
 
 **Quick Actions Grid (2×2)**
+
 - Book appointment (icon + label)
 - My records (icon + label)
 - Prescriptions (icon + label)
 - Find doctor (icon + label)
 
 **Upcoming Appointments Section**
+
 - Section title: "Upcoming appointments"
 - Appointment card layout:
   - Doctor avatar thumbnail (left)
@@ -106,6 +117,7 @@ Subtitle: "Book appointments, track your care"
   - Dr. Ravi Kumar · Cardiologist · Thu, 5 Jun · 3:00 PM · Pending
 
 **Book a New Appointment Section**
+
 - Section title: "Book a new appointment"
 - "Select department" dropdown (example: Cardiology, with chevron)
 - "Available doctors" subsection:
@@ -113,6 +125,7 @@ Subtitle: "Book appointments, track your care"
   - Example: Dr. Priya Menon · Neurologist · 12 yrs exp · Available Mon–Fri
 
 **Appointment Booking Form (continued below)**
+
 - Date field: dd-mm-yyyy (half width)
 - Time slot dropdown: 10:00 AM (half width)
 - Reason for visit: multiline text area (placeholder: "Describe symptoms briefly...")
@@ -126,16 +139,19 @@ Subtitle: "Book appointments, track your care"
 ### 3. Patient Profile
 
 **Profile Header**
+
 - Circle avatar with initials "AS" (teal outline)
 - Name: "Arjun Sharma" (large)
 - Email: arjun.sharma@email.com
 - Patient ID: #MCR-4892
 
 **Stats Row (2 cards)**
+
 - Total visits: 8 (bold teal number)
 - Upcoming: 2 (bold teal number)
 
 **Personal Information Section**
+
 - Section title: "Personal information"
 - Fields (editable):
   - Full name: Arjun Sharma
@@ -150,10 +166,12 @@ Subtitle: "Book appointments, track your care"
 ### 4. Admin Approval Panel (Doctor / Receptionist / Admin view)
 
 **Header**
+
 - Title: "Admin panel — Approvals"
 - Subtitle: "Doctor / Receptionist / Admin view"
 
 **Filter Tabs (horizontal scroll pill buttons)**
+
 - All (12) — active, teal outline
 - Pending (5)
 - Approved (6)
@@ -161,6 +179,7 @@ Subtitle: "Book appointments, track your care"
 
 **Appointment Approval Cards**
 Each card shows:
+
 - Patient name (bold)
 - Doctor name · Specialty
 - Date & time
@@ -169,6 +188,7 @@ Each card shows:
 - If Approved: info banner "Confirmation email sent to patient"
 
 Example entries:
+
 - Meena Krishnan · Dr. Priya Menon · Neurology · Mon, 2 Jun · 10:30 AM · Pending → [Approve] [Reject] [View details]
 - Raj Patel · Dr. Ravi Kumar · Cardiology · Thu, 5 Jun · 3:00 PM · Approved → banner shown
 - Sunita Verma · Dr. Anita Rao · Dermatology · Sat, 7 Jun · 9:00 AM · Pending → [Approve] [Reject]
@@ -179,10 +199,10 @@ Example entries:
 
 ## Navigation Structure
 
-| Role    | Bottom Nav Tabs                          |
-|---------|------------------------------------------|
-| Patient | Home · Appointments · Profile · Alerts   |
-| Admin   | Home · Appointments · Profile · Admin    |
+| Role    | Bottom Nav Tabs                        |
+| ------- | -------------------------------------- |
+| Patient | Home · Appointments · Profile · Alerts |
+| Admin   | Home · Appointments · Profile · Admin  |
 
 ---
 

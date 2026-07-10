@@ -1,0 +1,175 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - feature/Ashbin
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: Preview-Ashbin
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            cd /home/ubuntu/hms_project/Vanguard-HMS
+
+            echo "========================================"
+            echo "Starting Deployment"
+            echo "========================================"
+
+            echo "Connected to: $(hostname)"
+
+            echo "Node Version:"
+            node -v
+
+            echo "NPM Version:"
+            npm -v
+
+            echo "Current branch:"
+            git branch --show-current
+
+            echo "Current deployed commit:"
+            git rev-parse --short HEAD
+            git log -1 --oneline
+
+            echo "========================================"
+            echo "Preparing Repository"
+            echo "========================================"
+
+            echo "Fetching latest code..."
+            git fetch --prune origin
+
+            echo "Resetting to latest remote commit..."
+            git reset --hard origin/feature/Ashbin
+
+            echo "Cleaning repository..."
+            git clean -fd
+
+            echo "Latest deployed commit:"
+            git rev-parse --short HEAD
+            git log -1 --oneline
+
+            echo "========================================"
+            echo "Backend Deployment"
+            echo "========================================"
+
+            cd HMS_Back_end
+
+            echo "Installing backend dependencies..."
+            npm ci
+
+            echo "Restarting backend..."
+            pm2 restart healthcare-api --update-env
+
+            echo "Verifying backend process..."
+
+            pm2 describe healthcare-api
+
+            if ! pm2 describe healthcare-api | grep -q "status.*online"; then
+              echo "Backend process verification failed!"
+              exit 1
+            fi
+
+            echo "Backend process verified"
+
+            echo "Verifying backend health..."
+
+            sleep 5
+
+            if ! curl -fsS http://localhost:5000/health > /dev/null; then
+              echo "Backend health check failed!"
+              exit 1
+            fi
+
+            echo "Backend health verified"
+
+            echo "========================================"
+            echo "Frontend Deployment"
+            echo "========================================"
+
+            cd ../HMS_Front_end
+
+            echo "Cleaning frontend..."
+            rm -rf node_modules
+            rm -rf dist
+
+            echo "Installing frontend dependencies..."
+            npm install
+
+            echo "Building Angular..."
+            npm run build
+
+            echo "Verifying Angular build output..."
+
+            if [ ! -d "dist/Admin-Panel/browser" ]; then
+              echo "Angular build output not found!"
+              exit 1
+            fi
+
+            echo "Angular build verified"
+
+            echo "Deploying frontend..."
+
+            sudo rm -rf /var/www/hms-frontend
+            sudo mkdir -p /var/www/hms-frontend
+            sudo cp -r dist/Admin-Panel/browser/* /var/www/hms-frontend/
+
+            echo "Restarting Nginx..."
+            sudo systemctl restart nginx
+
+            echo "Checking Nginx status..."
+
+            if ! sudo systemctl is-active --quiet nginx; then
+              echo "Nginx failed to start!"
+              exit 1
+            fi
+
+            echo "Nginx is running successfully"
+
+            echo "Verifying frontend deployment..."
+
+            if [ ! -f "/var/www/hms-frontend/index.html" ]; then
+              echo "Frontend deployment failed! index.html not found."
+              exit 1
+            fi
+
+            echo "Frontend deployment files verified"
+
+            echo "Verifying frontend availability..."
+
+            if ! curl -fsS http://localhost/ > /dev/null; then
+              echo "Frontend availability check failed!"
+              exit 1
+            fi
+
+            echo "Frontend deployment verified"
+
+            echo "========================================"
+            echo "Deployment Summary"
+            echo "========================================"
+
+            echo "Host: $(hostname)"
+            echo "Branch: $(git branch --show-current)"
+            echo "Commit: $(git rev-parse --short HEAD)"
+            echo "Backend: Healthy"
+            echo "Frontend: Deployed"
+            echo "Nginx: Running"
+            echo "Completed At: $(date)"
+
+            echo "========================================"
+            echo "Deployment completed successfully"
+            echo "========================================"

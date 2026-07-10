@@ -176,12 +176,16 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-danger" (click)="rejectRegistration(item)">
-            Reject
-          </button>
-          <button type="button" class="btn btn-success" (click)="approveRegistration(item)">
-            Approve
-          </button>
+          @if (canRejectEmployee()) {
+            <button type="button" class="btn btn-danger" (click)="rejectRegistration(item)">
+              Reject
+            </button>
+          }
+          @if (canApproveEmployee()) {
+            <button type="button" class="btn btn-success" (click)="approveRegistration(item)">
+              Approve
+            </button>
+          }
         </div>
       </div>
     </div>
@@ -229,12 +233,16 @@
           </ul>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-danger" (click)="rejectChange(req)">
-            Reject
-          </button>
-          <button type="button" class="btn btn-success" (click)="approveChange(req)">
-            Approve
-          </button>
+          @if (canRejectChange()) {
+            <button type="button" class="btn btn-danger" (click)="rejectChange(req)">
+              Reject
+            </button>
+          }
+          @if (canApproveChange()) {
+            <button type="button" class="btn btn-success" (click)="approveChange(req)">
+              Approve
+            </button>
+          }
         </div>
       </div>
     </div>

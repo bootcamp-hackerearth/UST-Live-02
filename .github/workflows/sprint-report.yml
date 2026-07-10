@@ -1,0 +1,74 @@
+# Companion to the /sprint-report Claude Code command.
+# Runs the command in CI and posts the result to a chat channel at sprint close.
+#
+# TEMPLATE — SAFE BY DEFAULT. Only the manual trigger is active, so this workflow
+# does nothing (and posts nothing) until you deliberately:
+#   1. add the repository secrets listed below, and
+#   2. uncomment the `schedule:` block.
+#
+# NOTE: a GitHub Action cannot invoke a Claude Code slash command through the UI.
+# It runs Claude Code in headless mode (`-p`) with the same command string. The
+# exact CLI flags depend on the installed Claude Code version — adjust as needed.
+#
+# Required repository secrets:
+#   ANTHROPIC_API_KEY  — to run Claude Code headless
+#   SLACK_WEBHOOK_URL  — incoming webhook for the target channel (optional; the
+#                        report is always uploaded as an artifact regardless)
+
+name: Sprint Report
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "Start of range (git ref or date, e.g. 2.weeks.ago, midnight, main)"
+        default: "2.weeks.ago"
+        required: false
+      audience:
+        description: "team | standup | stakeholder"
+        default: "stakeholder"
+        required: false
+  # Uncomment to auto-run at sprint close. Cron is UTC; Fri 17:00 IST = 11:30 UTC.
+  # Cron cannot express "every other Friday" — adjust cadence to your sprint length.
+  # schedule:
+  #   - cron: "30 11 * * 5"
+
+jobs:
+  sprint-report:
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Checkout (full history is required for the git log range)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate report with Claude Code (headless)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SINCE: ${{ github.event.inputs.since || '2.weeks.ago' }}
+          AUDIENCE: ${{ github.event.inputs.audience || 'stakeholder' }}
+        run: |
+          npx -y @anthropic-ai/claude-code -p \
+            "/sprint-report --since $SINCE --audience $AUDIENCE --format markdown --save sprint-report.md" \
+            --allowedTools "Bash(git:*),Read,Write"
+          test -f sprint-report.md
+
+      - name: Post to Slack
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          jq -Rs '{ text: . }' < sprint-report.md \
+            | curl -fsS -X POST -H 'Content-type: application/json' \
+                --data @- "$SLACK_WEBHOOK_URL"
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint-report
+          path: sprint-report.md

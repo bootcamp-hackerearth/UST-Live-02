@@ -34,7 +34,7 @@
           (keyup.enter)="search()"
           [disabled]="scopedToPatient()" />
 
-        @if (!isDoctor()) {
+        @if (canViewAll()) {
           <input
             type="text"
             class="form-input"

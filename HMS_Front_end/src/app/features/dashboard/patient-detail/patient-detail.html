@@ -23,8 +23,10 @@
                 [queryParams]="{ patientUHID: p.UHID, patientName: p.name }">
                 View Medical Records
               </a>
-              <button class="btn btn-primary" [disabled]="deleting()" (click)="startEdit()">Edit</button>
-              @if (isPrivileged()) {
+              @if (canEdit()) {
+                <button class="btn btn-primary" [disabled]="deleting()" (click)="startEdit()">Edit</button>
+              }
+              @if (canDelete()) {
                 <button class="btn btn-danger" [disabled]="deleting()" (click)="deletePatient()">
                   @if (deleting()) {
                     <span>Deleting…</span>

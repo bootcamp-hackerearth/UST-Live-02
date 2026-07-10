@@ -1,56 +1,111 @@
-# Welcome to your Expo app 👋
+# HMS Patient App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**MediCare+** — the patient-facing mobile app for the Hospital Management
+System. Built with Expo (React Native) and expo-router, it lets patients
+register, book and manage appointments, and read their finalized medical
+records. It talks to the [HMS Back End](../HMS_Back_end) patient API
+(`/api/patient/*`).
 
-## Get started
+## Tech stack
 
-1. Install dependencies
+| Area          | Library                                 |
+| ------------- | --------------------------------------- |
+| Framework     | Expo `~56` + React Native `0.85`        |
+| Language      | TypeScript                              |
+| Routing       | expo-router (file-based)                |
+| Server state  | @tanstack/react-query                   |
+| Client state  | zustand                                 |
+| Secure tokens | expo-secure-store                       |
+| Navigation UI | react-native-screens, safe-area-context |
 
-   ```bash
-   npm install
-   ```
+## Prerequisites
 
-2. Start the app
+- Node.js and npm
+- The Expo CLI (invoked via `npx expo ...`)
+- A running [HMS Back End](../HMS_Back_end) reachable from the device/emulator
+- Expo Go, an Android emulator, or an iOS simulator to run the app
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Getting started
 
 ```bash
-npm run reset-project
+# Install dependencies
+npm install
+
+# Start the Expo dev server
+npm start            # = expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Then open the app on a device or emulator:
 
-### Other setup steps
+```bash
+npm run android      # build & run on Android
+npm run ios          # build & run on iOS
+npm run web          # run in the browser
+npm run lint         # expo lint (ESLint)
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Configuring the API
 
-## Learn more
+The API base URL lives in `src/config/api.ts`. Point it at your running backend
+(default `http://localhost:5000/api`). When testing on a physical device, use
+your machine's LAN IP rather than `localhost` so the phone can reach the server.
 
-To learn more about developing your project with Expo, look at the following resources:
+The app's deep-link scheme is `hmsapp://` (see `app.json`), which must match the
+backend's `PATIENT_APP_URL` so emailed password-reset/login links open the app.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Architecture
 
-## Join the community
+```text
+src/
+├── app/                # expo-router routes (file = screen)
+│   ├── _layout.tsx     # Root layout / providers
+│   ├── index.tsx       # Landing
+│   ├── login.tsx, register.tsx, forgot-password.tsx, reset-password.tsx, change-password.tsx
+│   ├── book-appointment.tsx, edit-appointment.tsx, appointment-record.tsx
+│   ├── medical-records.tsx, medical-record.tsx
+│   └── profile.tsx
+├── components/         # Reusable UI (appointment/, common/, medical-record/)
+├── screens/            # Screen bodies with co-located styles/*.style.ts
+├── services/           # apiClient + one service per resource, tokenStore, types
+├── store/              # zustand stores (AuthStore, confirmModal, navGuard)
+├── hooks/              # useGuardedRouter, useRefetchOnFocusIfStale, useUnsavedChanges
+├── lib/                # react-query client + logger
+├── constants/          # theme (Colors/Fonts/Spacing), messages
+└── utils/              # alerts, format, validation
+```
 
-Join our community of developers creating universal apps.
+### Routing
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+File-based via **expo-router**: each `src/app/*.tsx` file is a route, and
+`src/app/_layout.tsx` is the root layout. Navigation is guarded through
+`hooks/useGuardedRouter` and the `navGuard` store so users can't leave forms with
+unsaved changes.
+
+### Data & auth
+
+- **Server state** is fetched with `@tanstack/react-query` (client in
+  `lib/queryClient.ts`); one service per resource under `services/`
+  (`authService`, `appointmentService`, `medicalRecordService`, `patientService`)
+  wraps `services/apiClient.ts`.
+- **Auth tokens** are persisted with `expo-secure-store` via
+  `services/tokenStore.ts`; auth state lives in the `AuthStore` zustand store.
+  The backend issues a short-lived access token plus a rotating refresh token
+  (sent in the request body for the mobile client).
+
+### Theming
+
+`src/constants/theme.ts` is the single source of truth for design tokens:
+
+- `Colors` — light/dark palettes (green primary with semantic keys such as
+  `surface`, `text`, `textSecondary`, `border`).
+- `Fonts` — platform-specific font families.
+- `Spacing` — a fixed spacing scale (`half`…`six`).
+
+**Use these tokens — do not hardcode colors or spacing values.** `ThemeColor` is
+the union of valid color keys. The intended visual design is documented in
+[`UI_SPEC.md`](./UI_SPEC.md).
+
+## App identity
+
+Configured in `app.json`: name `hms-app`, scheme `hmsapp`, iOS bundle id
+`com.chrisdepallan.hmsapp`, automatic light/dark UI style.
