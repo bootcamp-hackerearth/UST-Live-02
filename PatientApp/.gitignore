@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+/android
+/ios
+.kotlin/
+
+# Metro
+.metro-health-check*
+
+# Environment
+.env
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+errorlogs/
+
+# Certificates
+*.pem
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Misc
+*.orig.*
+
+# VS Code
+.vscode/
+
+# Sonar
+.scannerwork
+sonar-project.properties
+
+# Documentation
+UI_Guide.pdf

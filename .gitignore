@@ -1,0 +1,7 @@
+# IDEs
+.vscode/
+.sonarlint/
+
+# Operating System
+.DS_Store
+Thumbs.db

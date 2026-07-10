@@ -1,0 +1,102 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - feature/Ashbin
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: Preview-Ashbin
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/hms_project/Vanguard-HMS
+
+            echo "Current branch:"
+            git branch --show-current
+
+            echo "Resetting repository..."
+            git reset --hard HEAD
+            git clean -fd
+
+            echo "Pulling latest code..."
+            git pull origin feature/Ashbin
+
+            echo "Connected to: $(hostname)"
+
+            echo "Installing backend dependencies..."
+            cd HMS_Back_end
+            npm ci
+
+            echo "Restarting backend..."
+            pm2 restart healthcare-api --update-env
+
+            echo "Checking backend status..."
+
+            if ! pm2 list | grep -q "healthcare-api.*online"; then
+              echo "Backend failed to start!"
+              exit 1
+            fi
+
+            echo "Backend is running successfully"
+
+            echo "Verifying backend health..."
+
+            sleep 5
+
+            if ! curl -fsS http://localhost:5000/health > /dev/null; then
+              echo "Backend health check failed!"
+              exit 1
+            fi
+
+            echo "Backend health verified"
+
+            echo "Installing frontend dependencies..."
+            cd ../HMS_Front_end
+
+            echo "Cleaning frontend..."
+            rm -rf node_modules
+
+            npm install
+
+            echo "Building Angular..."
+            npm run build
+
+            echo "Verifying Angular build output..."
+
+            if [ ! -d "dist/Admin-Panel/browser" ]; then
+              echo "Angular build output not found!"
+              exit 1
+            fi
+
+            echo "Angular build verified"
+
+            echo "Deploying frontend..."
+            sudo rm -rf /var/www/hms-frontend
+            sudo mkdir -p /var/www/hms-frontend
+            sudo cp -r dist/Admin-Panel/browser/* /var/www/hms-frontend/
+
+            echo "Verifying frontend deployment..."
+
+            if [ ! -f "/var/www/hms-frontend/index.html" ]; then
+              echo "Frontend deployment failed! index.html not found"
+              exit 1
+            fi
+
+            echo "Frontend deployment verified"
+
+            echo "Frontend deployed successfully"
+            echo "Deployment completed successfully"
