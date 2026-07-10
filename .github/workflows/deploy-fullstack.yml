@@ -1,0 +1,66 @@
+name: Deploy HMS Full Stack to EC2
+
+on:
+  push:
+    branches:
+      - feature/nathipriya_sprint5
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.NATHI_EC2_NAME }}
+          username: ${{ secrets.NATHI_EC2_USER }}
+          key: ${{ secrets.NATHI_EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+
+            echo "========== START DEPLOYMENT =========="
+
+            cd /home/ubuntu/hms_project/Vanguard-HMS
+
+            git fetch origin
+            git checkout feature/nathipriya_sprint5
+            git pull origin feature/nathipriya_sprint5
+
+            echo "========== BACKEND DEPLOYMENT =========="
+
+            cd HMS_Back_end
+
+            npm ci || npm install
+
+            sudo -u ubuntu pm2 restart hb --update-env || sudo -u ubuntu pm2 start src/server.js --name hb --update-env
+
+            sudo -u ubuntu pm2 save
+
+            sudo -u ubuntu pm2 list
+            sudo -u ubuntu pm2 logs hb --lines 10 --nostream
+
+            echo "========== FRONTEND DEPLOYMENT =========="
+
+            cd ../HMS_Front_end
+
+            npm ci || npm install
+
+            npm run build
+
+            sudo rm -rf /var/www/angular/*
+
+            if [ -d "dist/Admin-Panel/browser" ]; then
+              sudo cp -r dist/Admin-Panel/browser/* /var/www/angular/
+            else
+              sudo cp -r dist/Admin-Panel/* /var/www/angular/
+            fi
+
+            echo "========== NGINX RESTART =========="
+
+            sudo nginx -t
+            sudo systemctl restart nginx
+
+            echo "========== DEPLOYMENT SUCCESS =========="
