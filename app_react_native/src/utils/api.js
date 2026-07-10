@@ -1,6 +1,6 @@
 import axios from "axios";
 import SecureStorage from "./secureStorage";
-export const BASE_URL = "http://13.126.191.218/api";
+export const BASE_URL = "https://13.126.191.218/api";
 let accessToken = null;
 export const setApiAccessToken = (token) => {
     accessToken = token || null;
