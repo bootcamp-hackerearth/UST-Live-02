@@ -1,13 +1,17 @@
 const jwt = require("jsonwebtoken");
-
-const ERR = require("../utils/errors");
+const ApiError = require("../utils/ApiError");
+const logger = require("../utils/logger");
 
 const authMiddleware = (req, res, next) => {
   try {
     const authorizationHeader = req.headers.authorization;
 
     if (!authorizationHeader) {
-      return next(ERR.tokenRequired());
+      throw new ApiError(
+        401,
+        "Authorization token is required",
+        "TOKEN_REQUIRED",
+      );
     }
 
     const token = authorizationHeader.startsWith("Bearer ")
@@ -15,14 +19,30 @@ const authMiddleware = (req, res, next) => {
       : null;
 
     if (!token) {
-      return next(ERR.invalidAuthorizationFormat());
+      throw new ApiError(
+        401,
+        "Invalid authorization format",
+        "INVALID_TOKEN_FORMAT",
+      );
     }
 
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-    return next();
-  } catch {
-    return next(ERR.invalidToken());
+    req.user = decodedToken;
+
+    next();
+  } catch (error) {
+    logger.warn("Authentication failed", {
+      requestId: req.requestId,
+      path: req.originalUrl,
+      error,
+    });
+
+    next(
+      error instanceof ApiError
+        ? error
+        : new ApiError(401, "Invalid or expired token", "INVALID_TOKEN"),
+    );
   }
 };
 

@@ -3,20 +3,18 @@
 
   <div class="profile-hero glass-card">
     <div class="profile-left">
-      <div class="avatar">{{ patient?.firstName ?.charAt(0) }} {{ patient?.lastName ?.charAt(0) }}</div>
+      <div class="avatar">{{ patient()?.firstName ?.charAt(0) }} {{ patient()?.lastName ?.charAt(0) }}</div>
 
       <div>
         <p class="profile-label">Patient Profile</p>
 
-        <h1>{{ patient?.firstName }} {{ patient?.lastName }}</h1>
+        <h1>{{ patient()?.firstName }} {{ patient()?.lastName }}</h1>
 
-        <p class="patient-subtitle">Registered Patient • {{ patient?.gender }}</p>
+        <p class="patient-subtitle">Registered Patient • {{ patient()?.gender }}</p>
       </div>
     </div>
 
-    <div class="hero-actions">
-      <div class="patient-id-badge">{{ patient?.patientId }}</div>
-    </div>
+    <div class="patient-id-badge">{{ patient()?.patientId }}</div>
   </div>
 
   <!-- BASIC INFO -->
@@ -34,37 +32,37 @@
       <div class="info-box">
         <span>Gender</span>
 
-        <h4>{{ patient?.gender }}</h4>
+        <h4>{{ patient()?.gender }}</h4>
       </div>
 
       <div class="info-box">
         <span>Blood Group</span>
 
-        <h4>{{ patient?.bloodGroup }}</h4>
+        <h4>{{ patient()?.bloodGroup }}</h4>
       </div>
 
       <div class="info-box">
         <span>Phone</span>
 
-        <h4>{{ patient?.phone }}</h4>
+        <h4>{{ patient()?.phone }}</h4>
       </div>
 
       <div class="info-box">
         <span>Email</span>
 
-        <h4>{{ patient?.email }}</h4>
+        <h4>{{ patient()?.email }}</h4>
       </div>
 
       <div class="info-box">
         <span>Patient Type</span>
 
-        <h4>{{ patient?.patientType }}</h4>
+        <h4>{{ patient()?.patientType }}</h4>
       </div>
 
       <div class="info-box">
         <span>Status</span>
 
-        <div class="status-badge">{{ patient?.status }}</div>
+        <div class="status-badge">{{ patient()?.status }}</div>
       </div>
     </div>
   </div>
@@ -84,25 +82,25 @@
       <div class="medical-box">
         <h4>Medical History</h4>
 
-        <p>{{ patient?.medicalHistory || 'N/A' }}</p>
+        <p>{{ patient()?.medicalHistory || 'N/A' }}</p>
       </div>
 
       <div class="medical-box">
         <h4>Allergies</h4>
 
-        <p>{{ patient?.allergies || 'N/A' }}</p>
+        <p>{{ patient()?.allergies || 'N/A' }}</p>
       </div>
 
       <div class="medical-box">
         <h4>Chronic Diseases</h4>
 
-        <p>{{ patient?.chronicDiseases || 'N/A' }}</p>
+        <p>{{ patient()?.chronicDiseases || 'N/A' }}</p>
       </div>
 
       <div class="medical-box">
         <h4>Current Medications</h4>
 
-        <p>{{ patient?.currentMedications || 'N/A' }}</p>
+        <p>{{ patient()?.currentMedications || 'N/A' }}</p>
       </div>
     </div>
   </div>
@@ -122,13 +120,13 @@
       <div class="info-box">
         <span>Insurance Provider</span>
 
-        <h4>{{ patient?.insuranceProvider || 'N/A' }}</h4>
+        <h4>{{ patient()?.insuranceProvider || 'N/A' }}</h4>
       </div>
 
       <div class="info-box">
         <span>Policy Number</span>
 
-        <h4>{{ patient?.insurancePolicyNumber || 'N/A' }}</h4>
+        <h4>{{ patient()?.insurancePolicyNumber || 'N/A' }}</h4>
       </div>
     </div>
   </div>
@@ -148,13 +146,13 @@
       <div class="info-box">
         <span>Assigned Doctor</span>
 
-        <h4>{{ patient?.assignedDoctor?.name || 'Not Assigned' }}</h4>
+        <h4>{{ patient()?.assignedDoctor?.name || 'Not Assigned' }}</h4>
       </div>
 
       <div class="info-box">
         <span>Department</span>
 
-        <h4>{{ patient?.assignedDoctor?.department || 'N/A' }}</h4>
+        <h4>{{ patient()?.assignedDoctor?.department || 'N/A' }}</h4>
       </div>
     </div>
   </div>

@@ -11,37 +11,25 @@
         <!-- First Name -->
 
         <div class="form-group">
-          <label>First Name</label>
+          <label for="ep-firstName">First Name</label>
 
-          <input type="text" placeholder="Enter first name" formControlName="firstName" />
-
-          @if(patientForm.get('firstName')?.touched && patientForm.get('firstName')?.invalid){
-          <span class="error-text">
-            @if(patientForm.get('firstName')?.errors?.['required']){ First name is required } @else if(patientForm.get('firstName')?.errors?.['pattern']){ First name can contain only letters }
-          </span>
-          }
+          <input id="ep-firstName" type="text" placeholder="Enter first name" formControlName="firstName" />
         </div>
 
         <!-- Last Name -->
 
         <div class="form-group">
-          <label>Last Name</label>
+          <label for="ep-lastName">Last Name</label>
 
-          <input type="text" placeholder="Enter last name" formControlName="lastName" />
-
-          @if(patientForm.get('lastName')?.touched && patientForm.get('lastName')?.invalid){
-          <span class="error-text">
-            @if(patientForm.get('lastName')?.errors?.['required']){ Last name is required } @else if(patientForm.get('lastName')?.errors?.['pattern']){ Last name can contain only letters }
-          </span>
-          }
+          <input id="ep-lastName" type="text" placeholder="Enter last name" formControlName="lastName" />
         </div>
 
         <!-- Gender -->
 
         <div class="form-group">
-          <label>Gender</label>
+          <label for="ep-gender">Gender</label>
 
-          <select formControlName="gender">
+          <select id="ep-gender" formControlName="gender">
             <option value="">Select Gender</option>
 
             <option value="MALE">Male</option>
@@ -55,9 +43,9 @@
         <!-- Blood Group -->
 
         <div class="form-group">
-          <label>Blood Group</label>
+          <label for="ep-bloodGroup">Blood Group</label>
 
-          <select formControlName="bloodGroup">
+          <select id="ep-bloodGroup" formControlName="bloodGroup">
             <option value="">Select Blood Group</option>
 
             <option value="A+">A+</option>
@@ -81,37 +69,29 @@
         <!-- Phone -->
 
         <div class="form-group">
-          <label>Phone Number</label>
+          <label for="ep-phone">Phone Number</label>
 
-          <input type="text" maxlength="10" inputmode="numeric" placeholder="Enter phone number" formControlName="phone" />
-
-          @if(patientForm.get('phone')?.touched && patientForm.get('phone')?.invalid){
-          <span class="error-text">
-            @if(patientForm.get('phone')?.errors?.['pattern']){ Phone number must contain exactly 10 digits }
-          </span>
-          }
+          <input id="ep-phone" type="text" placeholder="Enter phone number" formControlName="phone" />
         </div>
 
         <!-- Email -->
 
         <div class="form-group">
-          <label>Email Address</label>
+          <label for="ep-email">Email Address</label>
 
-          <input type="email" placeholder="Enter email" formControlName="email" />
+          <input id="ep-email" type="email" placeholder="Enter email" formControlName="email" />
         </div>
 
         <!-- Assigned Doctor -->
 
         <div class="form-group">
-          <label>Assigned Doctor</label>
+          <label for="ep-assignedDoctor">Assigned Doctor</label>
 
-          <select formControlName="assignedDoctor">
+          <select id="ep-assignedDoctor" formControlName="assignedDoctor">
             <option value="">Select Doctor</option>
 
-            @for ( doctor of doctors; track doctor._id ) {
-
+            @for ( doctor of doctors(); track doctor._id ) {
             <option [value]="doctor._id">{{ doctor.name }} - {{ doctor.department }}</option>
-
             }
           </select>
         </div>
@@ -119,9 +99,9 @@
         <!-- Patient Type -->
 
         <div class="form-group">
-          <label>Patient Type</label>
+          <label for="ep-patientType">Patient Type</label>
 
-          <select formControlName="patientType">
+          <select id="ep-patientType" formControlName="patientType">
             <option value="OPD">OPD</option>
 
             <option value="IPD">IPD</option>
@@ -141,31 +121,31 @@
         <!-- Medical History -->
 
         <div class="form-group">
-          <label>Medical History</label>
+          <label for="ep-medicalHistory">Medical History</label>
 
-          <textarea placeholder="Enter medical history" formControlName="medicalHistory"></textarea>
+          <textarea id="ep-medicalHistory" placeholder="Enter medical history" formControlName="medicalHistory"></textarea>
         </div>
 
         <!-- Allergies -->
 
         <div class="form-group">
-          <label>Allergies</label>
+          <label for="ep-allergies">Allergies</label>
 
-          <textarea placeholder="Enter allergies" formControlName="allergies"></textarea>
+          <textarea id="ep-allergies" placeholder="Enter allergies" formControlName="allergies"></textarea>
         </div>
 
         <!-- Insurance Provider -->
 
         <div class="form-group">
-          <label>Insurance Provider</label>
+          <label for="ep-insuranceProvider">Insurance Provider</label>
 
-          <input type="text" placeholder="Enter insurance provider" formControlName="insuranceProvider" />
+          <input id="ep-insuranceProvider" type="text" placeholder="Enter insurance provider" formControlName="insuranceProvider" />
         </div>
       </div>
     </div>
 
     <!-- Submit -->
 
-    <button type="submit" [disabled]="isSubmitting">@if(isSubmitting){ Updating... } @else { Update Patient }</button>
+    <button type="submit" [disabled]="isSubmitting()">@if(isSubmitting()){ Updating... } @else { Update Patient }</button>
   </form>
 </div>

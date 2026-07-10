@@ -11,7 +11,7 @@
     </div>
 
     <div class="header-right">
-      <div class="patient-count">{{ filteredPatients.length }} Patients</div>
+      <div class="patient-count">{{ totalRecords() }} Patients</div>
     </div>
   </div>
 
@@ -19,152 +19,155 @@
 
   <div class="filters-wrapper glass-card">
     <div class="search-box">
+      <span>🔍</span>
 
-      <input
-        type="text"
-        placeholder="
-              Search patient name,
-              ID or phone
-              "
-        [(ngModel)]="
-              searchTerm
-              "
-        (input)="
-              onSearchInput()
-              "
-      />
+      <input type="text" placeholder="Search patient..." [ngModel]="search()" (ngModelChange)="search.set($event); searchDebounce$.next()" />
     </div>
+
+    <select [ngModel]="gender()" (ngModelChange)="gender.set($event); onFilterChange()">
+      <option value="">All Genders</option>
+
+      <option value="MALE">Male</option>
+
+      <option value="FEMALE">Female</option>
+
+      <option value="OTHER">Other</option>
+    </select>
   </div>
+  <div class="list-content">
+    @if(isLoading()){
+    <app-skeleton-loader [rows]="5"></app-skeleton-loader>
 
-  <!-- Table -->
+    } @else if(patients().length === 0) {
+    <app-empty-state
+      icon="personal_injury"
+      title="No Patients Found"
+      message="Try changing filters or add a new patient."
+    ></app-empty-state>
 
-  <div class="table-wrapper glass-card">
-    <table>
-      <thead>
-        <tr>
-          <th>Patient</th>
+    } @else {
+    <!-- Table -->
 
-          <th>Patient ID</th>
+    <div class="table-wrapper glass-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
 
-          <th>Gender</th>
+            <th>Patient ID</th>
 
-          <th>Phone</th>
+            <th>Gender</th>
 
-          <th>Blood Group</th>
+            <th>Phone</th>
 
-          <th>Status</th>
+            <th>Blood Group</th>
 
-          <th>Actions</th>
-        </tr>
-      </thead>
+            <th>Status</th>
 
-      <tbody>
-        @for( patient of filteredPatients; track patient._id ){
+            <th>Actions</th>
+          </tr>
+        </thead>
 
-        <tr>
-          <!-- Patient -->
+        <tbody>
+          @for( patient of patients(); track patient._id ){
+          <tr>
+            <!-- Patient -->
 
-          <td>
-            <div class="patient-info">
-              <div class="avatar">{{ patient ?.firstName ?.charAt(0) }}</div>
+            <td>
+              <div class="patient-info">
+                <div class="avatar">{{ patient ?.firstName ?.charAt(0) }}</div>
 
-              <div>
-                <h4>{{ patient ?.firstName }} {{ patient ?.lastName }}</h4>
+                <div>
+                  <h4>{{ patient ?.firstName }} {{ patient ?.lastName }}</h4>
 
-                <span>{{ patient ?.email || 'No Email' }}</span>
+                  <span>{{ patient ?.email || 'No Email' }}</span>
+                </div>
               </div>
-            </div>
-          </td>
+            </td>
 
-          <!-- Patient ID -->
+            <!-- Patient ID -->
 
-          <td>
-            <div class="patient-id">{{ patient ?.patientId }}</div>
-          </td>
+            <td>
+              <div class="patient-id">{{ patient ?.patientId }}</div>
+            </td>
 
-          <!-- Gender -->
+            <!-- Gender -->
 
-          <td>
-            <span class="gender-badge">{{ patient ?.gender }}</span>
-          </td>
+            <td>
+              <span class="gender-badge">{{ patient ?.gender }}</span>
+            </td>
 
-          <!-- Phone -->
+            <!-- Phone -->
 
-          <td>{{ patient ?.countryCode }} {{ patient ?.phone }}</td>
+            <td>{{ patient ?.countryCode }} {{ patient ?.phone }}</td>
 
-          <!-- Blood Group -->
+            <!-- Blood Group -->
 
-          <td>
-            <span class="blood-badge">{{ patient ?.bloodGroup || 'N/A' }}</span>
-          </td>
+            <td>
+              <span class="blood-badge">🩸 {{ patient ?.bloodGroup || 'N/A' }}</span>
+            </td>
 
-          <!-- Status -->
+            <!-- Status -->
 
-          <td>
-            <span class="status-badge">Active</span>
-          </td>
+            <td>
+              <span class="status-badge">Active</span>
+            </td>
 
-          <!-- Actions -->
+            <!-- Actions -->
 
-          <td>
-            <div class="actions">
-              <!-- View -->
+            <td>
+              <div class="actions">
+                <!-- View -->
 
-              <a
-                class="action-btn view"
-                [routerLink]="[
-                                '/patients',
-                                patient._id
-                              ]"
-              >
-                View
-              </a>
+                <a
+                  class="action-btn view"
+                  [routerLink]="[
+        '/patients',
+        patient._id
+      ]"
+                >
+                  View
+                </a>
 
-              <!-- Edit -->
+                <!-- Edit -->
 
-              @if( canUpdatePatient() ){
+                @if(nodeService.canUseApi('PUT', '/api/patients/:id')){
+                <a
+                  class="action-btn edit"
+                  [routerLink]="[
+          '/patients/edit',
+          patient._id
+        ]"
+                >
+                  Edit
+                </a>
+                }
 
-              <a
-                class="action-btn edit"
-                [routerLink]="[
-                                '/patients/edit',
-                                patient._id
-                              ]"
-              >
-                Edit
-              </a>
+                <!-- Delete -->
 
-              }
+                @if(nodeService.canUseApi('DELETE', '/api/patients/:id')){
+                <button class="action-btn delete" (click)="deletePatient(patient._id)">Delete</button>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination -->
 
-              @if( canDeletePatient() ){
-
-              <button
-                type="button"
-                class="action-btn delete"
-                (click)="
-                                deletePatient(
-                                  patient._id
-                                )
-                                "
-              >
-                Delete
-              </button>
-
-              }
-            </div>
-          </td>
-        </tr>
-
-        }
-      </tbody>
-    </table>
+    <app-pagination
+      [page]="page()"
+      [totalPages]="page() + (nextCursor() ? 1 : 0)"
+      [totalRecords]="totalRecords()"
+      [limit]="limit()"
+      [cursorMode]="true"
+      [hasNextPage]="!!nextCursor()"
+      (previous)="previousPage()"
+      (next)="nextPage()"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+    }
   </div>
-  <app-pagination
-    [pagination]="pagination"
-    totalLabel="patients"
-    (pagePrevious)="previousPage()"
-    (pageNext)="nextPage()"
-    (pageSizeChange)="changeLimit($event)"
-  ></app-pagination>
 </div>
-

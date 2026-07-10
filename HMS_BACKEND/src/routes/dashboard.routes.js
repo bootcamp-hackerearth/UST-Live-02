@@ -1,7 +1,7 @@
 const express = require("express");
 
 const authMiddleware = require("../middleware/auth.middleware");
-const permissionMiddleware = require("../middleware/permission.middleware");
+const nodePermissionMiddleware = require("../middleware/node-permission.middleware");
 
 const {
   getAdminStats,
@@ -17,40 +17,40 @@ const router = express.Router();
 router.get(
   "/admin-stats",
   authMiddleware,
-  permissionMiddleware("dashboard:admin-stats"),
-  getAdminStats
+  nodePermissionMiddleware,
+  getAdminStats,
 );
 
 // Get recently added employees
 router.get(
   "/recent-employees",
   authMiddleware,
-  permissionMiddleware("dashboard:recent-employees"),
-  getRecentEmployees
+  nodePermissionMiddleware,
+  getRecentEmployees,
 );
 
 // Get doctor dashboard statistics
 router.get(
   "/doctor-stats",
   authMiddleware,
-  permissionMiddleware("dashboard:doctor-stats"),
-  getDoctorStats
+  nodePermissionMiddleware,
+  getDoctorStats,
 );
 
 // Get receptionist dashboard statistics
 router.get(
   "/receptionist-stats",
   authMiddleware,
-  permissionMiddleware("dashboard:receptionist-stats"),
-  getReceptionistStats
+  nodePermissionMiddleware,
+  getReceptionistStats,
 );
 
 // Get today's appointments
 router.get(
   "/today-appointments",
   authMiddleware,
-  permissionMiddleware("dashboard:today-appointments"),
-  getTodayAppointments
+  nodePermissionMiddleware,
+  getTodayAppointments,
 );
 
 module.exports = router;

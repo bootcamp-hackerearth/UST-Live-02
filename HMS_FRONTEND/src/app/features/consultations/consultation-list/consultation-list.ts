@@ -1,129 +1,187 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
+import { FormsModule } from '@angular/forms';
+import { EmployeeService } from '../../../core/services/employee';
+import { PatientService } from '../../../core/services/patient';
 import { ConsultationService } from '../../../core/services/consultation';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-consultation-list',
+  selector: 'app-consultation-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PaginationComponent],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './consultation-list.html',
-  styleUrls: ['./consultation-list.css']
+  styleUrls: ['./consultation-list.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConsultationList implements OnInit, OnDestroy {
-  consultations: any[] = [];
+  readonly consultations = signal<any[]>([]);
+  readonly meta = signal<any>({});
+  readonly search = signal('');
+  readonly doctor = signal('');
+  readonly patient = signal('');
+  readonly status = signal('');
+  readonly startDate = signal('');
+  readonly endDate = signal('');
+  readonly page = signal(1);
+  readonly limit = signal(10);
+  readonly cursorStack = signal<string[]>(['']);
+  readonly nextCursor = signal('');
+  readonly doctors = signal<any[]>([]);
+  readonly patients = signal<any[]>([]);
+  readonly isLoading = signal(false);
 
-  isLoading = false;
-  searchTerm = '';
-  selectedStatus = '';
-  fromDate = '';
-  toDate = '';
-  sortBy = 'createdAt';
-  sortOrder = 'desc';
-
-  private searchTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  pagination = {
-    page: 1,
-    limit: 10,
-    totalRecords: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPreviousPage: false
-  };
+  private readonly destroy$ = new Subject<void>();
+  protected readonly searchDebounce$ = new Subject<void>();
 
   constructor(
-    private readonly consultationService: ConsultationService
+    private readonly consultationService: ConsultationService,
+    private readonly employeeService: EmployeeService,
+    private readonly patientService: PatientService
   ) {}
 
   // Load consultations on page load
   ngOnInit(): void {
+    this.loadDoctors();
+    this.loadPatients();
     this.loadConsultations();
+    this.searchDebounce$.pipe(debounceTime(300), takeUntil(this.destroy$)).subscribe(() => this.onFilterChange());
   }
 
   ngOnDestroy(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  // Fetch all consultations
-  loadConsultations(page = this.pagination.page): void {
-    this.isLoading = true;
-
-    const filters = {
-      search: this.searchTerm,
-      status: this.selectedStatus,
-      fromDate: this.fromDate,
-      toDate: this.toDate,
-      sortBy: this.sortBy,
-      sortOrder: this.sortOrder
-    };
-
-    this.consultationService.getConsultations(page, this.pagination.limit, filters).subscribe({
+  loadDoctors(): void {
+    this.employeeService.getDoctors().subscribe({
       next: (response) => {
-
-        this.consultations = response.data || [];
-        this.pagination = response.pagination || this.pagination;
-
-        this.isLoading = false;
-      },
-
-      error: (error) => {
-
-        this.isLoading = false;
+        this.doctors.set(response.data);
       }
     });
   }
 
-  previousPage(): void {
-    if (this.pagination.hasPreviousPage) {
-      this.loadConsultations(this.pagination.page - 1);
-    }
+  loadPatients(): void {
+    this.patientService.getPatients().subscribe({
+      next: (response) => {
+        this.patients.set(response.data);
+      }
+    });
   }
 
-  nextPage(): void {
-    if (this.pagination.hasNextPage) {
-      this.loadConsultations(this.pagination.page + 1);
-    }
-  }
-
-  changeLimit(limit: number): void {
-    this.pagination.limit = Number(limit);
-    this.loadConsultations(1);
-  }
-
-  onSearchInput(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
+  // Fetch all consultations
+  loadConsultations(showPageLoader = true): void {
+    if (showPageLoader) {
+      this.isLoading.set(true);
     }
 
-    this.searchTimeout = setTimeout(() => {
-      this.loadConsultations(1);
-    }, 500);
+    const params: any = {
+      page: this.page(),
+      limit: this.limit(),
+      pagination: 'cursor',
+      cursor: this.cursorStack()[this.page() - 1] || ''
+    };
+
+    if (this.search()) {
+      params.search = this.search();
+    }
+
+    if (this.doctor()) {
+      params.doctor = this.doctor();
+    }
+
+    if (this.patient()) {
+      params.patient = this.patient();
+    }
+
+    if (this.status()) {
+      params.status = this.status();
+    }
+
+    if (this.startDate()) {
+      params.startDate = this.startDate();
+    }
+
+    if (this.endDate()) {
+      params.endDate = this.endDate();
+    }
+
+    this.consultationService.getConsultations(params).subscribe({
+      next: (response) => {
+        this.consultations.set(response.data);
+
+        this.meta.set(response.meta);
+        this.nextCursor.set(response.meta?.nextCursor || '');
+
+        if (this.page() > 1 && this.consultations().length === 0) {
+          this.page.set(Math.max(this.meta()?.totalPages || 1, 1));
+          this.loadConsultations(false);
+          return;
+        }
+
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.log(error);
+
+        this.isLoading.set(false);
+      }
+    });
   }
 
   onFilterChange(): void {
-    this.loadConsultations(1);
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
+
+    this.loadConsultations(false);
+  }
+
+  previousPage(): void {
+    if (this.page() <= 1) {
+      return;
+    }
+
+    this.page.update(p => p - 1);
+
+    this.loadConsultations(false);
+  }
+
+  nextPage(): void {
+    if (!this.nextCursor()) {
+      return;
+    }
+
+    const stack = [...this.cursorStack()];
+    stack[this.page()] = this.nextCursor();
+    this.cursorStack.set(stack);
+    this.page.update(p => p + 1);
+
+    this.loadConsultations(false);
+  }
+
+  onPageSizeChange(newLimit: number): void {
+    this.limit.set(newLimit);
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
+    this.loadConsultations(false);
   }
 
   // Download prescription PDF
   downloadPdf(consultationId: string): void {
-    this.consultationService
-      .downloadPrescriptionPdf(consultationId)
-      .subscribe({
-        next: (response: Blob) => {
-          const fileURL = globalThis.URL.createObjectURL(response);
+    this.consultationService.downloadPrescriptionPdf(consultationId).subscribe({
+      next: (response: Blob) => {
+        const fileURL = globalThis.URL.createObjectURL(response);
 
-          globalThis.open(fileURL);
-        },
-
-        error: (error) => {
-        }
-      });
+        globalThis.open(fileURL);
+      },
+      error: (error) => {
+        console.log(error);
+      }
+    });
   }
 }

@@ -1,113 +1,68 @@
-import { Component, ChangeDetectorRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Subscription } from 'rxjs';
-
 import { ToastService } from '../../../core/services/toast';
 import { EmployeeService } from '../../../core/services/employee';
-import { AuthService } from '../../../core/services/auth';
-import { getApiErrorMessage } from '../../../core/utils/api-error';
-
-type DesignationOption = {
-  label: string;
-  value: string;
-};
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-add-employee',
+  selector: 'app-add-employee',
   standalone: true,
   imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './add-employee.html',
-  styleUrl: './add-employee.css'
+  styleUrl: './add-employee.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AddEmployee implements OnInit, OnDestroy {
+export class AddEmployee implements OnInit {
   employeeForm: FormGroup;
 
-  successMessage = '';
-  errorMessage = '';
+  readonly isSubmitting = signal(false);
+  readonly designations = signal(['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'NURSE', 'LAB_TECH', 'PHARMACIST', 'CASHIER']);
 
-  isSubmitting = false;
-  designationOptions: DesignationOption[] = [];
+  ngOnInit(): void {
+    const role = localStorage.getItem('role');
 
-  private readonly staffDesignationOptions: DesignationOption[] = [
-    { label: 'Doctor', value: 'DOCTOR' },
-    { label: 'Nurse', value: 'NURSE' },
-    { label: 'Receptionist', value: 'RECEPTIONIST' }
-  ];
-  private userSubscription?: Subscription;
+    if (role !== 'SUPER_ADMIN') {
+      this.designations.update(list => list.filter((designation) => designation !== 'ADMIN'));
+    }
+  }
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly employeeService: EmployeeService,
-    private readonly authService: AuthService,
-    private readonly cdr: ChangeDetectorRef,
     private readonly toastService: ToastService
   ) {
     this.employeeForm = this.fb.group({
       // Basic Details
       name: [
         '',
-        [
-          Validators.required,
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[A-Za-z\s]+$/)
-        ]
+        [Validators.required, Validators.minLength(2), Validators.maxLength(100), Validators.pattern(/^[A-Za-z\s]+$/)]
       ],
-
       email: ['', [Validators.required, Validators.email]],
-
       countryCode: ['+91', Validators.required],
-
       phone: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-
       gender: ['', Validators.required],
-
       designation: ['', Validators.required],
-
       department: ['', Validators.required],
-
       joiningDate: ['', Validators.required],
-
       // Doctor Details
       medicalRegistrationNo: [
         '',
-        [
-          Validators.minLength(5),
-          Validators.maxLength(50),
-          Validators.pattern(/^[A-Za-z0-9\-/]+$/)
-        ]
+        [Validators.minLength(5), Validators.maxLength(50), Validators.pattern(/^[A-Za-z0-9\-/]+$/)]
       ],
-
       specialization: [''],
-
       qualification: [
         '',
-        [
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[A-Za-z\s.,]+$/)
-        ]
+        [Validators.minLength(2), Validators.maxLength(100), Validators.pattern(/^[A-Za-z0-9\s.,()-]+$/)]
       ],
-
       consultationFee: [0, [Validators.min(0)]],
-
       availabilitySlots: [''],
-
       // Doctor Availability
       workingDays: [[]],
-
       startTime: [''],
-
       endTime: [''],
-
       slotDuration: [15],
-
       breakStartTime: [''],
-
       breakEndTime: [''],
-
       maxPatientsPerDay: [40]
     });
 
@@ -124,40 +79,33 @@ export class AddEmployee implements OnInit, OnDestroy {
       ];
 
       if (designation === 'DOCTOR') {
-        this.employeeForm.get('medicalRegistrationNo')?.setValidators([
-          Validators.required,
-          Validators.minLength(5),
-          Validators.maxLength(50),
-          Validators.pattern(/^[A-Za-z0-9\-/]+$/)
-        ]);
+        this.employeeForm
+          .get('medicalRegistrationNo')
+          ?.setValidators([
+            Validators.required,
+            Validators.minLength(5),
+            Validators.maxLength(50),
+            Validators.pattern(/^[A-Za-z0-9\-/]+$/)
+          ]);
 
-        this.employeeForm.get('qualification')?.setValidators([
-          Validators.required,
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[A-Za-z\s.,]+$/)
-        ]);
+        this.employeeForm
+          .get('qualification')
+          ?.setValidators([
+            Validators.required,
+            Validators.minLength(2),
+            Validators.maxLength(100),
+            Validators.pattern(/^[A-Za-z0-9\s.,()-]+$/)
+          ]);
 
-        this.employeeForm.get('specialization')?.setValidators([
-          Validators.required
-        ]);
+        this.employeeForm.get('specialization')?.setValidators([Validators.required]);
 
-        this.employeeForm.get('consultationFee')?.setValidators([
-          Validators.required,
-          Validators.min(0)
-        ]);
+        this.employeeForm.get('consultationFee')?.setValidators([Validators.required, Validators.min(0)]);
 
-        this.employeeForm.get('startTime')?.setValidators([
-          Validators.required
-        ]);
+        this.employeeForm.get('startTime')?.setValidators([Validators.required]);
 
-        this.employeeForm.get('endTime')?.setValidators([
-          Validators.required
-        ]);
+        this.employeeForm.get('endTime')?.setValidators([Validators.required]);
 
-        this.employeeForm.get('slotDuration')?.setValidators([
-          Validators.required
-        ]);
+        this.employeeForm.get('slotDuration')?.setValidators([Validators.required]);
 
         doctorFields.forEach((field) => {
           this.employeeForm.get(field)?.updateValueAndValidity();
@@ -171,28 +119,6 @@ export class AddEmployee implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void {
-    this.userSubscription = this.authService.currentUser.subscribe((user) => {
-      this.setDesignationOptions(user);
-      this.cdr.detectChanges();
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.userSubscription?.unsubscribe();
-  }
-
-  private setDesignationOptions(user: any): void {
-    const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN');
-
-    this.designationOptions = isSuperAdmin
-      ? [
-          { label: 'Admin', value: 'ADMIN' },
-          ...this.staffDesignationOptions
-        ]
-      : this.staffDesignationOptions;
-  }
-
   // Current selected designation
   get designation(): string {
     return this.employeeForm.get('designation')?.value;
@@ -200,14 +126,18 @@ export class AddEmployee implements OnInit, OnDestroy {
 
   // Submit employee form
   onSubmit(): void {
+    console.log('FORM VALID:', this.employeeForm.valid);
 
     Object.keys(this.employeeForm.controls).forEach((key) => {
       const control = this.employeeForm.get(key);
 
       if (control?.invalid) {
+        console.log(key, control.errors);
       }
     });
 
+    console.log('Create Employee Clicked');
+    console.log(this.employeeForm.value);
 
     if (this.employeeForm.invalid) {
       this.employeeForm.markAllAsTouched();
@@ -215,10 +145,7 @@ export class AddEmployee implements OnInit, OnDestroy {
       return;
     }
 
-    this.isSubmitting = true;
-
-    this.successMessage = '';
-    this.errorMessage = '';
+    this.isSubmitting.set(true);
 
     // Remove doctor-specific values for non-doctors
     if (this.designation !== 'DOCTOR') {
@@ -239,10 +166,7 @@ export class AddEmployee implements OnInit, OnDestroy {
     // Prepare API payload
     const payload: any = {
       ...this.employeeForm.value,
-      qualification: this.employeeForm.value.qualification
-        ? [this.employeeForm.value.qualification]
-        : [],
-      role: this.employeeForm.value.designation
+      qualification: this.employeeForm.value.qualification ? [this.employeeForm.value.qualification] : []
     };
 
     if (this.designation !== 'DOCTOR') {
@@ -263,15 +187,11 @@ export class AddEmployee implements OnInit, OnDestroy {
     // Create employee
     this.employeeService.createEmployee(payload).subscribe({
       next: (response) => {
+        console.log(response);
 
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
 
-        this.toastService.show(
-          'Employee created successfully',
-          'success'
-        );
-
-        this.cdr.detectChanges();
+        this.toastService.show('Employee created successfully', 'success');
 
         this.employeeForm.reset();
 
@@ -280,27 +200,26 @@ export class AddEmployee implements OnInit, OnDestroy {
           designation: ''
         });
       },
-
       error: (error) => {
+        console.log('FULL ERROR');
+        console.log(error);
 
+        console.log('BACKEND RESPONSE');
+        console.log(error?.error);
 
+        console.log('VALIDATION');
+        console.log(error?.error?.errors);
 
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
 
-        this.toastService.show(
-          getApiErrorMessage(error, 'Failed to create employee'),
-          'error'
-        );
-
-        this.cdr.detectChanges();
+        this.toastService.show(error?.error?.message || 'Failed to create employee', 'error');
       }
     });
   }
 
   // Handle working day checkbox selection
   onWorkingDayChange(event: any): void {
-    const workingDays =
-      this.employeeForm.get('workingDays')?.value || [];
+    const workingDays = this.employeeForm.get('workingDays')?.value || [];
 
     if (event.target.checked) {
       workingDays.push(event.target.value);

@@ -1,66 +1,59 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, ChangeDetectionStrategy, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-
 import { AppointmentService } from '../../../core/services/appointment';
 import { AuthService } from '../../../core/services/auth';
+import { ToastService } from '../../../core/services/toast';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-doctor-queue',
+  selector: 'app-doctor-queue',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SkeletonLoaderComponent],
   templateUrl: './doctor-queue.html',
-  styleUrls: ['./doctor-queue.css']
+  styleUrls: ['./doctor-queue.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DoctorQueue implements OnInit {
-  appointments: any[] = [];
+export class DoctorQueue {
+  readonly appointments = signal<any[]>([]);
+  readonly isLoading = signal(false);
 
-  isLoading = false;
-
-  doctorEmployeeId = '';
+  private doctorEmployeeId = '';
 
   constructor(
     private readonly appointmentService: AppointmentService,
     public authService: AuthService,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+    private readonly toast: ToastService
+  ) {
+    effect(() => {
+      const user = this.authService.currentUser();
+      const doctorEmployeeId = user?.employeeId?._id || '';
 
-  // Get logged-in doctor and load today's queue
-  ngOnInit(): void {
-    this.authService.currentUser.subscribe({
-      next: (user: any) => {
-
-        this.doctorEmployeeId = user?.employeeId?._id;
-
-        if (this.doctorEmployeeId) {
-          this.loadQueue();
-        }
+      if (doctorEmployeeId && doctorEmployeeId !== this.doctorEmployeeId) {
+        this.doctorEmployeeId = doctorEmployeeId;
+        this.loadQueue();
       }
     });
   }
 
   // Fetch doctor's appointment queue
   loadQueue(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
 
-    this.appointmentService
-      .getDoctorQueue(this.doctorEmployeeId)
-      .subscribe({
-        next: (response) => {
+    this.appointmentService.getDoctorQueue(this.doctorEmployeeId).subscribe({
+      next: (response) => {
+        console.log(response);
 
-          this.appointments = response.data;
+        this.appointments.set(response.data);
 
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        },
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.log(error);
 
-        error: (error) => {
-
-          this.isLoading = false;
-        }
-      });
+        this.isLoading.set(false);
+      }
+    });
   }
 
   // Mark appointment as completed
@@ -70,22 +63,19 @@ export class DoctorQueue implements OnInit {
       status: 'COMPLETED'
     };
 
-    this.appointmentService
-      .updateAppointment(
-        appointment._id,
-        updatedData
-      )
-      .subscribe({
-        next: (response) => {
+    this.appointmentService.updateAppointment(appointment._id, updatedData).subscribe({
+      next: (response) => {
+        console.log(response);
 
-          alert('Consultation completed');
+        this.toast.success('Consultation completed');
 
-          this.loadQueue();
-        },
-
-        error: (error) => {
-        }
-      });
+        this.loadQueue();
+      },
+      error: (error) => {
+        console.log(error);
+        this.toast.error('Unable to complete consultation');
+      }
+    });
   }
 
   // Move appointment to consultation state
@@ -95,21 +85,18 @@ export class DoctorQueue implements OnInit {
       status: 'IN_CONSULTATION'
     };
 
-    this.appointmentService
-      .updateAppointment(
-        appointment._id,
-        updatedData
-      )
-      .subscribe({
-        next: (response) => {
+    this.appointmentService.updateAppointment(appointment._id, updatedData).subscribe({
+      next: (response) => {
+        console.log(response);
 
-          alert('Consultation started');
+        this.toast.success('Consultation started');
 
-          this.loadQueue();
-        },
-
-        error: (error) => {
-        }
-      });
+        this.loadQueue();
+      },
+      error: (error) => {
+        console.log(error);
+        this.toast.error('Unable to start consultation');
+      }
+    });
   }
 }

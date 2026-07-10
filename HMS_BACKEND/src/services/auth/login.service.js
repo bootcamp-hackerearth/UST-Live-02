@@ -2,98 +2,79 @@ const bcrypt = require("bcryptjs");
 
 const User = require("../../models/User");
 const Employee = require("../../models/Employee");
-const Patient = require("../../models/Patient");
+const STATUS = require("../../constants/status");
+const ROLES = require("../../constants/roles");
+const ApiError = require("../../utils/ApiError");
+
 const generateAccessToken = require("../../utils/generateAccessToken");
 const generateRefreshToken = require("../../utils/generateRefreshToken");
-const ERR = require("../../utils/errors");
 
-const findUser = async (loginId) => {
-  if (loginId.includes("@")) {
-    return User.findOne({
+const loginUser = async (loginData, clientType) => {
+  const { loginId, password } = loginData;
+
+  let user = null;
+
+  const isEmailLogin = loginId.includes("@");
+
+  if (isEmailLogin) {
+    user = await User.findOne({
       email: loginId.toLowerCase(),
+      isDeleted: false,
     });
-  }
-
-  const employee = await Employee.findOne({
-    employeeCode: loginId,
-    isDeleted: { $ne: true },
-  });
-
-  if (!employee) {
-    throw ERR.invalidCredentials();
-  }
-
-  return User.findOne({
-    employeeId: employee._id,
-  });
-};
-
-const validateLinkedAccount = async (user) => {
-  if (user.employeeId) {
+  } else {
     const employee = await Employee.findOne({
-      _id: user.employeeId,
-      isDeleted: { $ne: true },
+      employeeCode: loginId,
+      isDeleted: false,
     });
 
     if (!employee) {
-      throw ERR.invalidCredentials();
+      throw new ApiError(401, "Invalid credentials", "UNAUTHORIZED");
     }
-  }
 
-  if (user.patientId) {
-    const patient = await Patient.findOne({
-      _id: user.patientId,
-      isDeleted: { $ne: true },
+    user = await User.findOne({
+      employeeId: employee._id,
+      isDeleted: false,
     });
-
-    if (!patient) {
-      throw ERR.invalidCredentials();
-    }
   }
-};
-
-const validateUserStatus = (user) => {
-  switch (user.status) {
-    case "PENDING":
-      throw ERR.accountPendingApproval();
-
-    case "REJECTED":
-      throw ERR.registrationRejected();
-
-    case "INACTIVE":
-      throw ERR.accountInactive();
-
-    default:
-      return;
-  }
-};
-
-const validatePassword = async (user, password) => {
-  const hash = user.isFirstLogin
-    ? user.temporaryPasswordHash
-    : user.passwordHash;
-
-  const isPasswordValid = await bcrypt.compare(password, hash);
-
-  if (!isPasswordValid) {
-    throw ERR.invalidCredentials();
-  }
-};
-
-const loginUser = async (loginData) => {
-  const { loginId, password } = loginData;
-
-  const user = await findUser(loginId);
 
   if (!user) {
-    throw ERR.invalidCredentials();
+    throw new ApiError(401, "Invalid credentials", "UNAUTHORIZED");
   }
 
-  await validateLinkedAccount(user);
+  if (user.status === STATUS.PENDING) {
+    throw new ApiError(
+      403,
+      "Your account is pending admin approval",
+      "FORBIDDEN",
+    );
+  }
 
-  validateUserStatus(user);
+  if (user.status === STATUS.REJECTED) {
+    throw new ApiError(403, "Your registration was rejected", "FORBIDDEN");
+  }
 
-  await validatePassword(user, password);
+  if (user.status === STATUS.INACTIVE) {
+    throw new ApiError(403, "Account is inactive", "FORBIDDEN");
+  }
+
+  let isPasswordValid = false;
+
+  if (user.isFirstLogin) {
+    isPasswordValid = await bcrypt.compare(
+      password,
+      user.temporaryPasswordHash,
+    );
+  } else {
+    isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+  }
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid credentials", "UNAUTHORIZED");
+  }
+
+  if (clientType === "mobile" && !user.roles.includes(ROLES.PATIENT)) {
+    throw new ApiError(403, "Access denied. Mobile app is for patients only.", "FORBIDDEN");
+  }
 
   const tokenPayload = {
     userId: user._id,
@@ -103,6 +84,7 @@ const loginUser = async (loginData) => {
   };
 
   const accessToken = generateAccessToken(tokenPayload);
+
   const refreshToken = generateRefreshToken(tokenPayload);
 
   user.refreshToken = refreshToken;

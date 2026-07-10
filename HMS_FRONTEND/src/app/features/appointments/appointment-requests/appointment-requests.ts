@@ -1,112 +1,48 @@
-import { Component, OnDestroy, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-
 import { AppointmentService } from '../../../core/services/appointment';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { NodeService } from '../../../core/services/node';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-appointment-requests',
+  selector: 'app-appointment-requests',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule],
   templateUrl: './appointment-requests.html',
   styleUrls: ['./appointment-requests.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppointmentRequestsComponent implements OnInit, OnDestroy {
-  appointments: any[] = [];
-  loading = false;
-  searchTerm = '';
-  fromDate = '';
-  toDate = '';
-  sortBy = 'createdAt';
-  sortOrder = 'desc';
-
-  private searchTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  pagination = {
-    page: 1,
-    limit: 10,
-    totalRecords: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  };
+export class AppointmentRequestsComponent implements OnInit {
+  readonly appointments = signal<any[]>([]);
+  readonly loading = signal(false);
 
   constructor(
     private readonly appointmentService: AppointmentService,
-    private readonly cdr: ChangeDetectorRef
+    public readonly nodeService: NodeService
   ) {}
 
   ngOnInit(): void {
     this.loadPendingAppointments();
   }
 
-  ngOnDestroy(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-  }
+  loadPendingAppointments(): void {
+    this.loading.set(true);
 
-  loadPendingAppointments(page = this.pagination.page): void {
-    this.loading = true;
-
-    const filters = {
-      search: this.searchTerm,
-      fromDate: this.fromDate,
-      toDate: this.toDate,
-      sortBy: this.sortBy,
-      sortOrder: this.sortOrder,
-    };
-
-    this.appointmentService
-      .getPendingAppointments(page, this.pagination.limit, filters)
-      .subscribe({
-        next: (response) => {
-          this.appointments = response.data || [];
-          this.pagination = response.pagination || this.pagination;
-          this.loading = false;
-
-          this.cdr.detectChanges();
-        },
-
-        error: () => {
-          this.loading = false;
-        },
-      });
-  }
-
-  onSearchInput(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-
-    this.searchTimeout = setTimeout(() => {
-      this.loadPendingAppointments(1);
-    }, 500);
-  }
-
-  onFilterChange(): void {
-    this.loadPendingAppointments(1);
-  }
-
-  previousPage(): void {
-    if (this.pagination.hasPreviousPage) {
-      this.loadPendingAppointments(this.pagination.page - 1);
-    }
-  }
-
-  nextPage(): void {
-    if (this.pagination.hasNextPage) {
-      this.loadPendingAppointments(this.pagination.page + 1);
-    }
+    this.appointmentService.getPendingAppointments().subscribe({
+      next: (response) => {
+        this.appointments.set(response.data);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
   }
 
   approve(id: string): void {
     this.appointmentService.approveAppointment(id).subscribe({
       next: () => {
         this.loadPendingAppointments();
-      },
+      }
     });
   }
 
@@ -114,7 +50,7 @@ export class AppointmentRequestsComponent implements OnInit, OnDestroy {
     this.appointmentService.rejectAppointment(id).subscribe({
       next: () => {
         this.loadPendingAppointments();
-      },
+      }
     });
   }
 }

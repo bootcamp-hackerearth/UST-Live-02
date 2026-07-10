@@ -1,48 +1,49 @@
-import { Component, HostListener, ElementRef, ChangeDetectorRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, HostListener, ElementRef, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
-
+import { NodeService } from '../../core/services/node';
 import { AuthService } from '../../core/services/auth';
 import { TokenService } from '../../core/services/token';
 import { ToastService } from '../../core/services/toast';
-import { MenuNodeService } from '../../core/services/menu-node';
 import { Sidebar } from '../../shared/components/sidebar/sidebar';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-dashboard-layout',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, AsyncPipe, Sidebar],
+  selector: 'app-dashboard-layout',
+  imports: [RouterOutlet, RouterLink, Sidebar],
   templateUrl: './dashboard-layout.html',
-  styleUrl: './dashboard-layout.css'
+  styleUrl: './dashboard-layout.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardLayout implements OnInit {
-  isProfileOpen = false;
+  readonly isProfileOpen = signal(false);
 
   constructor(
+    public readonly nodeService: NodeService,
     public authService: AuthService,
     private readonly tokenService: TokenService,
     private readonly router: Router,
     private readonly toastService: ToastService,
-    private readonly menuNodeService: MenuNodeService,
-    private readonly cdr: ChangeDetectorRef,
     private readonly elementRef: ElementRef
   ) {}
 
   // Load current user details
   ngOnInit(): void {
-    this.authService.loadCurrentUser();
+    const token = this.tokenService.getAccessToken();
+
+    if (token) {
+      this.authService.loadCurrentUser();
+
+      this.nodeService.loadNodes();
+    }
   }
 
   // Close active toast
   dismissToast(): void {
-    this.toastService.toast$.next(null);
+    this.toastService.dismiss();
   }
 
   // Toggle profile dropdown
   toggleProfile(): void {
-    this.isProfileOpen = !this.isProfileOpen;
+    this.isProfileOpen.update(v => !v);
   }
 
   // Close dropdown when clicked outside
@@ -51,26 +52,23 @@ export class DashboardLayout implements OnInit {
     const clickedInside = this.elementRef.nativeElement.contains(event.target);
 
     if (!clickedInside) {
-      this.isProfileOpen = false;
+      this.isProfileOpen.set(false);
     }
   }
 
   // Logout user
   logout(): void {
-   const refreshToken =
-  this.tokenService.getRefreshToken();
+    this.authService.logout().subscribe();
 
-this.authService
-  .logout(refreshToken!)
-  .subscribe();
+    this.tokenService.removeTokens();
 
-this.tokenService.removeTokens();
-this.menuNodeService.clearMenu();
+    this.authService.clearCurrentUser();
 
-    this.authService.currentUser.next(null);
+    this.nodeService.clearNodes();
+
+    localStorage.removeItem('role');
+    localStorage.removeItem('loginId');
 
     this.router.navigate(['/login']);
-
-    this.cdr.detectChanges();
   }
 }

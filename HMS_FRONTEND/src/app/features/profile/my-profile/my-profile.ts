@@ -1,43 +1,38 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { AuthService } from '../../../core/services/auth';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-my-profile',
+  selector: 'app-my-profile',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './my-profile.html',
-  styleUrl: './my-profile.css'
+  styleUrl: './my-profile.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MyProfile implements OnInit {
-  user: any;
+export class MyProfile {
+  private readonly authService = inject(AuthService);
 
-  constructor(private readonly authService: AuthService) {}
+  readonly user = computed(() => {
+    const response = this.authService.currentUser();
 
-  // Load logged-in user profile
-  ngOnInit(): void {
-    this.authService.currentUser.subscribe({
-      next: (response: any) => {
+    if (!response) {
+      return null;
+    }
 
-        if (response?.employeeId) {
-          this.user = response.employeeId;
-        } else {
-          this.user = {
-            name: 'Administrator',
-            email: response?.email,
-            status: response?.status,
-            designation: response?.roles?.[0],
-            department: 'Administration',
-            employeeCode: 'ADMIN',
-            joiningDate: response?.createdAt
-          };
-        }
-      },
+    if (response.employeeId) {
+      return response.employeeId;
+    }
 
-      error: (error) => {
-      }
-    });
-  }
+    return {
+      name: 'Administrator',
+      email: response.email,
+      status: response.status,
+      designation: response.roles?.[0],
+      department: 'Administration',
+      employeeCode: 'ADMIN',
+      joiningDate: response.createdAt
+    };
+  });
+
 }

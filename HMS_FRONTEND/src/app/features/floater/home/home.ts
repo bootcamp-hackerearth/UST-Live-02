@@ -1,19 +1,15 @@
 import { Component, HostListener, ChangeDetectionStrategy } from '@angular/core';
-
 import { Router } from '@angular/router';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-home',
-
+  selector: 'app-home',
   imports: [],
-
   templateUrl: './home.html',
-
-  styleUrl: './home.css'
+  styleUrl: './home.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Home {
-  constructor(private router: Router) {}
+  constructor(private readonly router: Router) {}
 
   @HostListener('window:keydown.space')
   handleSpacebar(): void {

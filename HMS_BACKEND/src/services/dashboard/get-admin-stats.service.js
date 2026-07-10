@@ -2,23 +2,24 @@ const Employee = require("../../models/Employee");
 const STATUS = require("../../constants/status");
 
 const getAdminStatsService = async () => {
-  const totalEmployees = await Employee.countDocuments({
-    isDeleted: { $ne: true },
-  });
+  const filter = {
+    isDeleted: false,
+  };
+  const totalEmployees = await Employee.countDocuments(filter);
 
   const totalDoctors = await Employee.countDocuments({
+    ...filter,
     designation: "DOCTOR",
-    isDeleted: { $ne: true },
   });
 
   const totalNurses = await Employee.countDocuments({
+    ...filter,
     designation: "NURSE",
-    isDeleted: { $ne: true },
   });
 
   const pendingRequests = await Employee.countDocuments({
+    ...filter,
     status: STATUS.PENDING,
-    isDeleted: { $ne: true },
   });
 
   return {
@@ -30,4 +31,3 @@ const getAdminStatsService = async () => {
 };
 
 module.exports = getAdminStatsService;
-

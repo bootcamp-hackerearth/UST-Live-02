@@ -1,56 +1,56 @@
 const Patient = require("../../models/Patient");
-
+const ApiError = require("../../utils/ApiError");
 const Appointment = require("../../models/Appointment");
-const ERR = require("../../utils/errors");
+const STATUS = require("../../constants/status");
 
 const getPatientDashboard = async (patientId) => {
   const patient = await Patient.findOne({
     _id: patientId,
-    isDeleted: { $ne: true },
+    isDeleted: false,
   });
 
   if (!patient) {
-throw ERR.patientNotFound();
+    throw new ApiError(404, "Patient not found", "PATIENT_NOT_FOUND");
   }
-  const pendingCount = await Appointment.countDocuments({
-    patientId,
-    isDeleted: { $ne: true },
 
-    status: "PENDING",
+  const baseFilter = {
+    patientId,
+    isDeleted: false,
+  };
+
+  const pendingCount = await Appointment.countDocuments({
+    ...baseFilter,
+    status: STATUS.PENDING,
   });
 
   const bookedCount = await Appointment.countDocuments({
-    patientId,
-    isDeleted: { $ne: true },
-
-    status: "BOOKED",
+    ...baseFilter,
+    status: STATUS.BOOKED,
   });
 
   const completedCount = await Appointment.countDocuments({
-    patientId,
-    isDeleted: { $ne: true },
-
-    status: "COMPLETED",
+    ...baseFilter,
+    status: STATUS.COMPLETED,
   });
 
   const cancelledCount = await Appointment.countDocuments({
-    patientId,
-    isDeleted: { $ne: true },
-
-    status: "CANCELLED",
+    ...baseFilter,
+    status: STATUS.CANCELLED,
   });
 
   const upcomingAppointment = await Appointment.findOne({
-    patientId,
-    isDeleted: { $ne: true },
-
+    ...baseFilter,
     status: {
-      $in: ["PENDING", "BOOKED"],
+      $in: [STATUS.PENDING, STATUS.BOOKED],
     },
   })
-
-    .populate("doctorEmployeeId")
-
+    .populate({
+      path: "doctorEmployeeId",
+      select: "name department specialization",
+      match: {
+        isDeleted: false,
+      },
+    })
     .sort({
       appointmentDate: 1,
     });
@@ -58,25 +58,17 @@ throw ERR.patientNotFound();
   return {
     patient: {
       firstName: patient.firstName,
-
       lastName: patient.lastName,
-
       patientId: patient.patientId,
     },
-
     appointmentSummary: {
       pending: pendingCount,
-
       booked: bookedCount,
-
       completed: completedCount,
-
       cancelled: cancelledCount,
     },
-
     upcomingAppointment,
   };
 };
 
 module.exports = getPatientDashboard;
-

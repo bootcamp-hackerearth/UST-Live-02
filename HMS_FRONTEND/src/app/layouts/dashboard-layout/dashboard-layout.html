@@ -2,7 +2,35 @@
 <div class="dashboard-shell">
   <!-- Sidebar -->
 
-  <app-sidebar></app-sidebar>
+  <aside class="sidebar glass">
+    <!-- Logo -->
+
+    <div class="logo-section">
+      <div class="logo-circle">B</div>
+
+      <div>
+        <h2>BootStrap HMS</h2>
+
+        <p>Smart Healthcare</p>
+      </div>
+    </div>
+
+    @if( authService.currentUser(); as user ){
+    <!-- Profile -->
+
+    <div class="profile-card">
+      <div class="avatar">{{ user.email ?.charAt(0) ?.toUpperCase() }}</div>
+
+      <div>
+        <h4>{{ user.roles?.[0] }}</h4>
+
+        <span>{{ user.email }}</span>
+      </div>
+    </div>
+
+    <app-sidebar />
+    }
+  </aside>
 
   <!-- Main Content -->
 
@@ -16,8 +44,7 @@
         <p>Modern Hospital Workspace</p>
       </div>
 
-      @if( authService.currentUser | async; as user ){
-
+      @if( authService.currentUser(); as user ){
       <div class="topbar-right">
         <!-- System Status -->
 
@@ -29,8 +56,9 @@
 
         <!-- Profile -->
 
-        <div
+        <button
           class="top-profile"
+          type="button"
           (click)=" toggleProfile();
 
                   $event.stopPropagation()
@@ -50,18 +78,15 @@
 
           <!-- Dropdown -->
 
-          @if(isProfileOpen){
-
+          @if(isProfileOpen()){
           <div class="profile-dropdown">
             <a routerLink="/my-profile">My Profile</a>
 
             <button (click)="logout()">Logout</button>
           </div>
-
           }
-        </div>
+        </button>
       </div>
-
       }
     </header>
 

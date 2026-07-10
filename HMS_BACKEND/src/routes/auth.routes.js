@@ -18,48 +18,35 @@ const {
   forgotPassword,
   resetPassword,
   register,
-  refreshToken,logout
+  refreshToken,
+  logout,
 } = require("../controllers/auth.controller");
 
 const router = express.Router();
 
 // Authenticate user and generate token
-router.post(
-  "/login",
-  loginValidation,
-  validateMiddleware,
-  login
-);
+router.post("/login", loginValidation, validateMiddleware, login);
 
 // Create password for first-time login
 router.post(
   "/create-password",
   createPasswordValidation,
   validateMiddleware,
-  createPassword
+  createPassword,
 );
 
 // Get currently logged-in user
-router.get(
-  "/me",
-  authMiddleware,
-  getCurrentUser
-);
+router.get("/me", authMiddleware, getCurrentUser);
 
 // Self-registration for employees
-router.post(
-  "/register",
-  registerValidation,
-  validateMiddleware,
-  register
-);
+router.post("/register", registerValidation, validateMiddleware, register);
 
 // Get security question for password recovery
 router.post(
   "/forgot-password",
   forgotPasswordValidation,
   validateMiddleware,
-  forgotPassword
+  forgotPassword,
 );
 
 // Reset password using security answer
@@ -67,16 +54,10 @@ router.post(
   "/reset-password",
   resetPasswordValidation,
   validateMiddleware,
-  resetPassword
+  resetPassword,
 );
-router.post(
-  "/refresh-token",
-  refreshToken
-);
+router.post("/refresh-token", refreshToken);
 
-router.post(
-  "/logout",
-  logout
-);
+router.post("/logout", logout);
 
 module.exports = router;

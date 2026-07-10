@@ -1,30 +1,26 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppointmentService } from '../../../core/services/appointment';
 import { EmployeeService } from '../../../core/services/employee';
 import { ToastService } from '../../../core/services/toast';
-import { getApiErrorMessage } from '../../../core/utils/api-error';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-edit-appointment',
+  selector: 'app-edit-appointment',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './edit-appointment.html',
-  styleUrls: ['./edit-appointment.css']
+  styleUrls: ['./edit-appointment.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditAppointment implements OnInit {
-  appointmentId = '';
+  readonly doctors = signal<any[]>([]);
+  readonly availableSlots = signal<string[]>([]);
+  readonly isSubmitting = signal(false);
+  readonly noSlotsError = signal(false);
 
-  doctors: any[] = [];
-
-  availableSlots: string[] = [];
-
-  isSubmitting = false;
-
-  noSlotsError = false;
+  private appointmentId = '';
 
   appointmentForm: any;
 
@@ -58,8 +54,8 @@ export class EditAppointment implements OnInit {
     this.appointmentForm.get('status')?.valueChanges.subscribe({
       next: (status: string) => {
         if (status === 'COMPLETED' || status === 'CANCELLED') {
-          this.availableSlots = [];
-          this.noSlotsError = false;
+          this.availableSlots.set([]);
+          this.noSlotsError.set(false);
           this.appointmentForm.patchValue({ timeSlot: '' });
         } else {
           this.fetchAvailableSlots();
@@ -78,10 +74,10 @@ export class EditAppointment implements OnInit {
   loadDoctors(): void {
     this.employeeService.getDoctors().subscribe({
       next: (response) => {
-        this.doctors = response.data;
+        this.doctors.set(response.data);
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }
@@ -101,6 +97,7 @@ export class EditAppointment implements OnInit {
           '-' +
           String(date.getDate()).padStart(2, '0');
 
+        console.log('FORMATTED DATE', formattedDate);
 
         this.appointmentForm.patchValue({
           doctorEmployeeId: appointment?.doctorEmployeeId?._id,
@@ -121,8 +118,8 @@ export class EditAppointment implements OnInit {
           this.fetchAvailableSlots();
         }
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }
@@ -145,9 +142,8 @@ export class EditAppointment implements OnInit {
       return;
     }
 
-    this.noSlotsError = false;
-
-    this.availableSlots = [];
+    this.noSlotsError.set(false);
+    this.availableSlots.set([]);
 
     this.appointmentService.getAvailableSlots(doctorEmployeeId, appointmentDate).subscribe({
       next: (response) => {
@@ -177,30 +173,23 @@ export class EditAppointment implements OnInit {
           });
         }
 
-        this.availableSlots = slots;
+        this.availableSlots.set(slots);
 
         // Show error if no slots are available
-        if (this.availableSlots.length === 0) {
-          this.noSlotsError = true;
+        if (this.availableSlots().length === 0) {
+          this.noSlotsError.set(true);
 
-          this.toastService.show(
-            'No slots available for the selected date.',
-            'error'
-          );
+          this.toastService.show('No slots available for the selected date.', 'error');
         } else {
-          this.noSlotsError = false;
+          this.noSlotsError.set(false);
         }
       },
-
       error: (error) => {
-        this.availableSlots = [];
+        this.availableSlots.set([]);
 
-        this.noSlotsError = true;
+        this.noSlotsError.set(true);
 
-        this.toastService.show(
-          getApiErrorMessage(error, 'Doctor is not available on this date.'),
-          'error'
-        );
+        this.toastService.show(error?.error?.message || 'Doctor is not available on this date.', 'error');
       }
     });
   }
@@ -211,11 +200,8 @@ export class EditAppointment implements OnInit {
       this.appointmentForm.markAllAsTouched();
 
       // Show slot error if date is selected but no slot is available
-      if (
-        this.appointmentForm.get('appointmentDate')?.valid &&
-        this.availableSlots.length === 0
-      ) {
-        this.noSlotsError = true;
+      if (this.appointmentForm.get('appointmentDate')?.valid && this.availableSlots().length === 0) {
+        this.noSlotsError.set(true);
       }
 
       return;
@@ -223,49 +209,40 @@ export class EditAppointment implements OnInit {
 
     // Prevent update when no slot is available
     if (
-      this.availableSlots.length === 0 &&
+      this.availableSlots().length === 0 &&
       this.appointmentForm.get('status')?.value !== 'COMPLETED' &&
       this.appointmentForm.get('status')?.value !== 'CANCELLED'
     ) {
-      this.noSlotsError = true;
+      this.noSlotsError.set(true);
 
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
     // Convert symptoms text into array before sending to backend
     const formData = {
       ...this.appointmentForm.value,
-      symptoms: this.appointmentForm.value.symptoms
-        ?.split(',')
-        .map((symptom: string) => symptom.trim())
+      symptoms: this.appointmentForm.value.symptoms?.split(',').map((symptom: string) => symptom.trim())
     };
 
-    this.appointmentService
-      .updateAppointment(this.appointmentId, formData)
-      .subscribe({
-        next: (response) => {
+    this.appointmentService.updateAppointment(this.appointmentId, formData).subscribe({
+      next: (response) => {
+        console.log(response);
 
-          this.toastService.show(
-            'Appointment updated successfully',
-            'success'
-          );
+        this.toastService.show('Appointment updated successfully', 'success');
 
-          this.router.navigate(['/appointments']);
+        this.router.navigate(['/appointments']);
 
-          this.isSubmitting = false;
-        },
+        this.isSubmitting.set(false);
+      },
+      error: (error) => {
+        console.log(error);
 
-        error: (error) => {
+        this.isSubmitting.set(false);
 
-          this.isSubmitting = false;
-
-          this.toastService.show(
-            getApiErrorMessage(error, 'Failed to update appointment.'),
-            'error'
-          );
-        }
-      });
+        this.toastService.show(error?.error?.message || 'Failed to update appointment.', 'error');
+      }
+    });
   }
 }

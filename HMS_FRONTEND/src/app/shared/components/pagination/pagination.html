@@ -1,34 +1,26 @@
-<div class="pagination-wrapper">
-  <div class="pagination-info">
-    Page {{ pagination.page }} of {{ pagination.totalPages }}
-    <span>{{ pagination.totalRecords }} total {{ totalLabel }}</span>
-  </div>
+<div class="pagination-card">
+  <div class="total-records">Total: {{ totalRecords() }}</div>
 
-  <div class="pagination-actions">
-    <select
-      *ngIf="showPageSize"
-      [value]="pagination.limit"
-      (change)="onLimitChange($event)"
-    >
-      <option value="5">5</option>
-      <option value="10">10</option>
-      <option value="20">20</option>
-    </select>
+  <div class="pagination-controls">
+    <button type="button" (click)="previous.emit()" [disabled]="page() === 1">Previous</button>
 
-    <button
-      type="button"
-      (click)="pagePrevious.emit()"
-      [disabled]="!pagination.hasPreviousPage"
-    >
-      Previous
-    </button>
+    <span>@if(cursorMode()){ Page {{ page() }} } @else { Page {{ page() }} of {{ totalPages() }} }</span>
 
-    <button
-      type="button"
-      (click)="pageNext.emit()"
-      [disabled]="!pagination.hasNextPage"
-    >
+    <button type="button" (click)="next.emit()" [disabled]="cursorMode() ? !hasNextPage() : page() === totalPages()">
       Next
     </button>
   </div>
+
+  @if(showPageSize()){
+  <div class="page-size">
+    <span>Rows</span>
+    <select [value]="limit()" (change)="changePageSize($event)">
+      <option value="10">10</option>
+
+      <option value="20">20</option>
+
+      <option value="50">50</option>
+    </select>
+  </div>
+  }
 </div>

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import { API_BASE_URL } from '../constants/api.constants';
 
 @Injectable({
@@ -18,16 +17,7 @@ export class PatientService {
   }
 
   // Get all patients
-  getPatients(pageOrParams: number | any = 1, limit = 10, filters: any = {}): Observable<any> {
-    const params =
-      typeof pageOrParams === 'object'
-        ? pageOrParams
-        : {
-            page: pageOrParams,
-            limit,
-            ...filters
-          };
-
+  getPatients(params?: any): Observable<any> {
     return this.http.get(this.apiUrl, { params });
   }
 
@@ -86,10 +76,7 @@ export class PatientService {
     return this.http.put(`${this.apiUrl}/${id}`, patientData);
   }
   // Delete patient
-deletePatient(id: string): Observable<any> {
-  return this.http.delete(
-    `${this.apiUrl}/${id}`
-  );
+  deletePatient(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
 }
-}
- 

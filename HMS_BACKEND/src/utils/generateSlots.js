@@ -3,7 +3,7 @@ const generateSlots = (
   endTime,
   slotDuration,
   breakStartTime,
-  breakEndTime
+  breakEndTime,
 ) => {
   const slots = [];
 
@@ -25,13 +25,9 @@ const generateSlots = (
   let currentTime = convertToMinutes(startTime);
 
   const end = convertToMinutes(endTime);
-  const breakStart = breakStartTime
-    ? convertToMinutes(breakStartTime)
-    : null;
+  const breakStart = breakStartTime ? convertToMinutes(breakStartTime) : null;
 
-  const breakEnd = breakEndTime
-    ? convertToMinutes(breakEndTime)
-    : null;
+  const breakEnd = breakEndTime ? convertToMinutes(breakEndTime) : null;
 
   // Generate slots until end time
   while (currentTime < end) {

@@ -1,24 +1,22 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-
 import { PatientService } from '../../../core/services/patient';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-patient-details',
+  selector: 'app-patient-details',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './patient-details.html',
-  styleUrls: ['./patient-details.css']
+  styleUrls: ['./patient-details.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PatientDetails implements OnInit {
-  patient: any = {};
+  readonly patient = signal<any>(null);
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly patientService: PatientService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly patientService: PatientService
   ) {}
 
   // Load patient details on page load
@@ -36,13 +34,12 @@ export class PatientDetails implements OnInit {
   loadPatient(id: string): void {
     this.patientService.getPatientById(id).subscribe({
       next: (response) => {
+        console.log(response);
 
-        this.patient = response.data;
-
-        this.cdr.detectChanges();
+        this.patient.set(response.data);
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }

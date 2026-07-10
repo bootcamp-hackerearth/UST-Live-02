@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 
 const User = require("../../models/User");
 const Employee = require("../../models/Employee");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 
 const createEmployeePassword = async (passwordData) => {
   const {
@@ -15,44 +15,50 @@ const createEmployeePassword = async (passwordData) => {
 
   let user = null;
 
-  //  login using email or employee code
   const isEmailLogin = loginId.includes("@");
 
   if (isEmailLogin) {
     user = await User.findOne({
       email: loginId.toLowerCase(),
+      isDeleted: false,
     });
   } else {
     const employee = await Employee.findOne({
       employeeCode: loginId,
+      isDeleted: false,
     });
 
     if (!employee) {
-throw ERR.invalidLoginId();    }
+      throw new ApiError(404, "Invalid login ID", "NOT_FOUND");
+    }
 
     user = await User.findOne({
       employeeId: employee._id,
+      isDeleted: false,
     });
   }
 
-  // Ensure user account exists
   if (!user) {
-throw ERR.userNotFound();  }
+    throw new ApiError(404, "User not found", "NOT_FOUND");
+  }
 
-  // Prevent password recreation after first login
   if (!user.isFirstLogin) {
-throw ERR.passwordAlreadyCreated();  }
+    throw new ApiError(
+      409,
+      "Password is already created for this account",
+      "CONFLICT",
+    );
+  }
 
-  // Verify temporary password
   const isTemporaryPasswordValid = await bcrypt.compare(
     temporaryPassword,
     user.temporaryPasswordHash,
   );
 
   if (!isTemporaryPasswordValid) {
-throw ERR.invalidTemporaryPassword();  }
+    throw new ApiError(401, "Invalid temporary password", "UNAUTHORIZED");
+  }
 
-  // Hash password and security answer
   const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
   const hashedSecurityAnswer = await bcrypt.hash(
@@ -60,7 +66,6 @@ throw ERR.invalidTemporaryPassword();  }
     10,
   );
 
-  // Update account credentials
   user.passwordHash = hashedNewPassword;
   user.temporaryPasswordHash = null;
   user.isFirstLogin = false;

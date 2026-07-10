@@ -11,7 +11,7 @@ const STATUS = require("../../constants/status");
 const sendEmail = require("../../utils/sendEmail");
 const patientCreatedTemplate = require("../../templates/patient-created.template");
 const generateTemporaryPassword = require("../../utils/generateTemporaryPassword");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 const registerPatient = async (patientData) => {
   const {
     // Basic information
@@ -21,23 +21,18 @@ const registerPatient = async (patientData) => {
     gender,
     bloodGroup,
     maritalStatus,
-
     // Contact information
     phone,
     email,
     address,
     city,
     state,
-    taluk,
-    postOffice,
     pincode,
     country,
-
     // Emergency contact
     emergencyContactName,
     emergencyContactPhone,
     relationship,
-
     // Medical information
     allergies,
     chronicDiseases,
@@ -45,13 +40,11 @@ const registerPatient = async (patientData) => {
     pastSurgeries,
     medicalHistory,
     familyMedicalHistory,
-
     // Insurance information
     insuranceProvider,
     insurancePolicyNumber,
     insuranceExpiryDate,
     insuranceCoverageAmount,
-
     // Hospital information
     assignedDoctor,
     department,
@@ -61,56 +54,60 @@ const registerPatient = async (patientData) => {
   // Generate unique patient ID
   const patientId = await generatePatientId();
   if (dateOfBirth && new Date(dateOfBirth) > new Date()) {
-throw ERR.futureDateOfBirth();  }
+    throw new ApiError(
+      422,
+      "Date of Birth cannot be in the future",
+      "INVALID_DATE_OF_BIRTH",
+    );
+  }
 
   // check duplicate
   const existingUser = await User.findOne({
     email: email.toLowerCase(),
+    isDeleted: false,
   });
 
   if (existingUser) {
-throw ERR.userEmailExists();  }
+    throw new ApiError(
+      409,
+      "User with this email already exists",
+      "EMAIL_ALREADY_EXISTS",
+    );
+  }
 
   // Create patient record
   const patient = await Patient.create({
     patientId,
-
     firstName,
     lastName,
     dateOfBirth,
     gender,
     bloodGroup,
     maritalStatus,
-
     phone,
     email,
     address,
     city,
     state,
-    taluk,
-    postOffice,
     pincode,
     country,
-
     emergencyContactName,
     emergencyContactPhone,
     relationship,
-
     allergies,
     chronicDiseases,
     currentMedications,
     pastSurgeries,
     medicalHistory,
     familyMedicalHistory,
-
     insuranceProvider,
     insurancePolicyNumber,
     insuranceExpiryDate,
     insuranceCoverageAmount,
-
     assignedDoctor,
     department,
     patientType,
+    createdBy: null,
   });
 
   const temporaryPassword = generateTemporaryPassword();
@@ -118,31 +115,22 @@ throw ERR.userEmailExists();  }
 
   await User.create({
     email: email.toLowerCase(),
-
     temporaryPasswordHash,
-
     patientId: patient._id,
-
     roles: [ROLES.PATIENT],
-
     isFirstLogin: true,
-
     status: STATUS.ACTIVE,
   });
   if (patient.email) {
     const htmlContent = patientCreatedTemplate({
       patientName: `${patient.firstName} ${patient.lastName}`,
-
       email: patient.email,
-
       temporaryPassword,
     });
 
     await sendEmail({
       to: patient.email,
-
       subject: "Your HMS Account Credentials",
-
       htmlContent,
     });
   }

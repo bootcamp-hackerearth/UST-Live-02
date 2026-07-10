@@ -1,14 +1,33 @@
 const Consultation = require("../../models/Consultation");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 
 const getPrescriptionDataService = async (consultationId) => {
-  const consultation = await Consultation.findById(consultationId)
-    .populate("patientId")
-    .populate("doctorEmployeeId")
-    .populate("appointmentId");
+  const consultation = await Consultation.findOne({
+    _id: consultationId,
+    isDeleted: false,
+  })
+    .populate({
+      path: "patientId",
+      match: {
+        isDeleted: false,
+      },
+    })
+    .populate({
+      path: "doctorEmployeeId",
+      match: {
+        isDeleted: false,
+      },
+    })
+    .populate({
+      path: "appointmentId",
+      match: {
+        isDeleted: false,
+      },
+    });
 
   if (!consultation) {
-throw ERR.consultationNotFound();  }
+    throw new ApiError(404, "Consultation not found", "CONSULTATION_NOT_FOUND");
+  }
 
   return consultation;
 };

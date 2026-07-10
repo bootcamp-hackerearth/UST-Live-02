@@ -1,5 +1,7 @@
 const { body } = require("express-validator");
-const ROLES = require("../constants/roles");
+const EMPLOYEE_PREFIX = require("../constants/employee-prefix");
+
+const VALID_DESIGNATIONS = Object.keys(EMPLOYEE_PREFIX);
 
 const registerEmployeeValidation = [
   body("name")
@@ -10,7 +12,6 @@ const registerEmployeeValidation = [
     .withMessage("Name must be between 2 and 100 characters")
     .matches(/^[A-Za-z\s]+$/)
     .withMessage("Employee name can contain only alphabets and spaces"),
-
   body("email")
     .trim()
     .notEmpty()
@@ -18,47 +19,39 @@ const registerEmployeeValidation = [
     .isEmail()
     .withMessage("Invalid email format")
     .normalizeEmail(),
-
   body("phone")
     .notEmpty()
     .withMessage("Phone number is required")
     .matches(/^\d{10}$/)
     .withMessage("Phone number must be exactly 10 digits"),
-
   body("gender")
     .notEmpty()
     .withMessage("Gender is required")
     .isIn(["MALE", "FEMALE", "OTHER"])
     .withMessage("Invalid gender"),
-
   body("department")
     .trim()
     .notEmpty()
     .withMessage("Department is required")
     .isLength({ min: 2, max: 100 })
     .withMessage("Department must be between 2 and 100 characters"),
-
   body("designation").trim().notEmpty().withMessage("Designation is required"),
-
   body("joiningDate")
     .notEmpty()
     .withMessage("Joining date is required")
     .isISO8601()
     .withMessage("Invalid joining date format"),
-
-  body("role")
+  body("designation")
     .notEmpty()
-    .withMessage("Role is required")
-    .isIn(Object.values(ROLES))
-    .withMessage("Invalid employee role"),
-
+    .withMessage("Designation is required")
+    .isIn(VALID_DESIGNATIONS)
+    .withMessage(`Invalid employee designation. Must be one of: ${VALID_DESIGNATIONS.join(", ")}`),
   body("consultationFee")
     .optional()
     .isNumeric()
     .withMessage("Consultation fee must be a number")
     .custom((value) => value >= 0)
     .withMessage("Consultation fee cannot be negative"),
-
   body("medicalRegistrationNo")
     .optional({ values: "falsy" })
     .isLength({
@@ -74,7 +67,6 @@ const registerEmployeeValidation = [
     .optional({ values: "falsy" })
     .isArray()
     .withMessage("Qualification must be an array"),
-
   body("specialization")
     .optional({ values: "falsy" })
     .trim()

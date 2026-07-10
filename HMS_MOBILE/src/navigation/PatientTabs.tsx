@@ -1,0 +1,111 @@
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import Dashboard from "../screens/DashboardScreen";
+import Appointments from "../screens/AppointmentScreen";
+import Profile from "../screens/ProfileScreen";
+import React from "react";
+import { Ionicons } from "@expo/vector-icons";
+import HealthRecordsScreen from "../screens/HealthRecordScreen";
+
+const Tab = createBottomTabNavigator();
+
+type TabBarIconProps = {
+  readonly routeName: string;
+  readonly focused: boolean;
+  readonly color: string;
+};
+
+function TabBarIcon({ routeName, focused, color }: TabBarIconProps) {
+  let iconName: React.ComponentProps<typeof Ionicons>["name"] = "home";
+
+  if (routeName === "Dashboard") {
+    iconName = focused ? "home" : "home-outline";
+  }
+  if (routeName === "Appointments") {
+    iconName = focused ? "calendar" : "calendar-outline";
+  }
+  if (routeName === "Profile") {
+    iconName = focused ? "person" : "person-outline";
+  }
+  if (routeName === "HealthRecords") {
+    iconName = focused ? "medical" : "medical-outline";
+  }
+
+  return <Ionicons name={iconName} size={26} color={color} />;
+}
+
+const screenOptions = ({ route }: { route: { name: string } }) => ({
+  headerShown: false,
+  tabBarHideOnKeyboard: true,
+  tabBarShowLabel: true,
+  tabBarActiveTintColor: "#2563EB",
+  tabBarInactiveTintColor: "#94A3B8",
+  tabBarStyle: {
+    position: "absolute",
+    left: 18,
+    right: 18,
+    bottom: 18,
+    height: 78,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderTopWidth: 0,
+    elevation: 20,
+    shadowColor: "#2563EB",
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    shadowOffset: {
+      width: 0,
+      height: 12,
+    },
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  tabBarItemStyle: {
+    borderRadius: 20,
+    marginVertical: 8,
+  },
+  tabBarActiveBackgroundColor: "rgba(37,99,235,0.08)",
+  tabBarLabelStyle: {
+    fontSize: 11,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  tabBarIcon: ({ focused, color }: { focused: boolean; color: string }) => (
+    <TabBarIcon routeName={route.name} focused={focused} color={color} />
+  ),
+});
+
+export default function PatientTabs() {
+  return (
+    <Tab.Navigator screenOptions={screenOptions}>
+      <Tab.Screen
+        name="Dashboard"
+        component={Dashboard}
+        options={{
+          tabBarLabel: "Home",
+        }}
+      />
+      <Tab.Screen
+        name="Appointments"
+        component={Appointments}
+        options={{
+          tabBarLabel: "Appointments",
+        }}
+      />
+      <Tab.Screen
+        name="HealthRecords"
+        component={HealthRecordsScreen}
+        options={{
+          tabBarLabel: "Records",
+        }}
+      />
+
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          tabBarLabel: "Profile",
+        }}
+      />
+    </Tab.Navigator>
+  );
+}

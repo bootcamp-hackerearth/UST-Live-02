@@ -5,13 +5,11 @@ const generateSequentialId = async (prefix) => {
     {
       name: prefix,
     },
-
     {
       $inc: { sequence: 1 },
     },
-
     {
-      new: true,
+      returnDocument: "after",
       upsert: true,
     },
   );

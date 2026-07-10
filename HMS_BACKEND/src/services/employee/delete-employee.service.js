@@ -1,114 +1,46 @@
 const Employee = require("../../models/Employee");
-const User = require("../../models/User");
 const Appointment = require("../../models/Appointment");
+
 const STATUS = require("../../constants/status");
-const ERR = require("../../utils/errors");
-const sendEmail = require("../../utils/sendEmail");
-const doctorUnavailableAppointmentCancelledTemplate = require("../../templates/doctor-unavailable-appointment-cancelled.template");
 
-const ACTIVE_APPOINTMENT_STATUSES = [
-  STATUS.PENDING,
-  STATUS.BOOKED,
-  STATUS.IN_CONSULTATION,
-];
-
-const getStartOfToday = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
-};
-
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-const notifyPatientsAndCancelAppointments = async ({
-  doctor,
-  deletedBy,
-}) => {
-  const upcomingAppointments = await Appointment.find({
-    doctorEmployeeId: doctor._id,
-    appointmentDate: { $gte: getStartOfToday() },
-    status: { $in: ACTIVE_APPOINTMENT_STATUSES },
-    isDeleted: { $ne: true },
-  }).populate("patientId", "firstName lastName email");
-
-  for (const appointment of upcomingAppointments) {
-    const patient = appointment.patientId;
-
-    if (patient?.email) {
-      await sendEmail({
-        to: patient.email,
-        subject: "Appointment Cancelled - Doctor Unavailable",
-        htmlContent: doctorUnavailableAppointmentCancelledTemplate({
-          patientName: `${patient.firstName || ""} ${
-            patient.lastName || ""
-          }`.trim() || "Patient",
-          doctorName: doctor.name,
-          appointmentDate: formatDate(appointment.appointmentDate),
-          appointmentTime: appointment.timeSlot,
-        }),
-      });
-    } else {
-      console.warn(
-        `Skipping appointment ${appointment.appointmentId} email because patient email is missing`
-      );
-    }
-  }
-
-  if (upcomingAppointments.length) {
-    await Appointment.updateMany(
-      {
-        _id: {
-          $in: upcomingAppointments.map((appointment) => appointment._id),
-        },
-      },
-      {
-        status: STATUS.CANCELLED,
-        deletedBy,
-        deletedDate: new Date(),
-      }
-    );
-  }
-};
+const cancelFutureDoctorAppointments = require("../appointment/cancel-future-doctor-appointments.service");
+const User = require("../../models/User");
+const ApiError = require("../../utils/ApiError");
 
 const deleteEmployeeService = async (employeeId, deletedBy) => {
   const employee = await Employee.findOne({
     _id: employeeId,
-    isDeleted: { $ne: true },
+    isDeleted: false,
   });
 
   if (!employee) {
-    throw ERR.employeeNotFound();
-  }
-
-  if (employee.designation === "DOCTOR") {
-    await notifyPatientsAndCancelAppointments({
-      doctor: employee,
-      deletedBy,
-    });
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
   }
 
   employee.isDeleted = true;
   employee.deletedBy = deletedBy;
-  employee.deletedDate = new Date();
-  employee.status = STATUS.INACTIVE;
+  employee.deletedAt = new Date();
 
   await employee.save();
+  if (employee.designation === "DOCTOR") {
+    await cancelFutureDoctorAppointments(employee._id, deletedBy);
+  }
 
   await User.findOneAndUpdate(
-    { employeeId },
     {
-      status: STATUS.INACTIVE,
-    }
+      employeeId,
+      isDeleted: false,
+    },
+    {
+      isDeleted: true,
+      deletedBy,
+      deletedAt: new Date(),
+    },
   );
 
-  return employee;
+  return {
+    message: "Employee deleted successfully",
+  };
 };
 
 module.exports = deleteEmployeeService;
-

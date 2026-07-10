@@ -1,10 +1,13 @@
 const mongoose = require("mongoose");
 
+const asyncHandler = require("../utils/asyncHandler");
+const ApiError = require("../utils/ApiError");
+const ApiResponse = require("../utils/ApiResponse");
+
 const registerEmployee = require("../services/employee/register-employee.service");
 const getEmployeesService = require("../services/employee/get-employees.service");
 const getEmployeeByIdService = require("../services/employee/get-employee-by-id.service");
 const updateEmployeeService = require("../services/employee/update-employee.service");
-const deleteEmployeeService = require("../services/employee/delete-employee.service");
 const activateEmployeeService = require("../services/employee/activate-employee.service");
 const deactivateEmployeeService = require("../services/employee/deactivate-employee.service");
 const getPendingEmployeesService = require("../services/employee/get-pending-employees.service");
@@ -13,242 +16,233 @@ const rejectEmployeeService = require("../services/employee/reject-employee.serv
 const getDoctorsService = require("../services/employee/get-doctors.service");
 const updateDoctorAvailabilityService = require("../services/employee/update-doctor-availability.service");
 const getDoctorAvailabilityService = require("../services/employee/get-doctor-availability.service");
-const asyncHandler = require("../utils/asyncHandler");
-const ERR = require("../utils/errors");
-const { getPagination, getPaginationMeta } = require("../utils/pagination");
+const deleteEmployeeService = require("../services/employee/delete-employee.service");
+const { auditFromRequestSafe } = require("../services/audit-log/audit-log.service");
 
-// Create a new employee
+const validateObjectId = (id, message) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, message, "INVALID_ID");
+  }
+};
+
 const createEmployee = asyncHandler(async (req, res) => {
   const employee = await registerEmployee(req.body, req.user);
 
-  return res.status(201).json({
-    success: true,
-    message: "Employee registered successfully",
-    data: employee,
+  auditFromRequestSafe(req, {
+    action: "Employee Created",
+    module: "Employee",
+    entityId: employee._id,
+    entityType: "Employee",
+    details: {
+      employeeCode: employee.employeeCode,
+      designation: employee.designation,
+      department: employee.department,
+    },
   });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Employee registered successfully", employee));
 });
 
-// Get all employees
 const getEmployees = asyncHandler(async (req, res) => {
-  const { page, limit, skip, sort, search, status } = getPagination(req.query, {
-    allowedSortFields: ["createdAt", "joiningDate", "name", "employeeCode"],
-    defaultSort: { createdAt: -1 },
-  });
-
-  const { employees, total } = await getEmployeesService({
-    skip,
-    limit,
-    sort,
-    search,
-    status,
-  });
+  const result = await getEmployeesService(req.query);
 
   return res.status(200).json({
-    success: true,
-    message: "Employees retrieved successfully",
-    data: employees,
-    pagination: getPaginationMeta({
-      page,
-      limit,
-      total,
-    }),
+    ...new ApiResponse(200, "Employees retrieved successfully", result.data),
+    meta: result.meta,
   });
 });
 
-// Get employee details by ID
 const getEmployeeById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw ERR.invalidEmployeeId();
-  }
+  validateObjectId(id, "Invalid employee ID");
 
   const employee = await getEmployeeByIdService(id);
 
   if (!employee) {
-    throw ERR.employeeNotFound();
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
   }
 
-  return res.status(200).json({
-    success: true,
-    message: "Employee retrieved successfully",
-    data: employee,
-  });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee retrieved successfully", employee));
 });
 
-// Update employee information
 const updateEmployee = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw ERR.invalidEmployeeId();
-  }
+  validateObjectId(id, "Invalid employee ID");
 
   const { email, employeeCode, ...updateData } = req.body;
-
-  const employee = await updateEmployeeService(id, updateData);
+  const employee = await updateEmployeeService(id, updateData, req.user.userId);
 
   if (!employee) {
-    throw ERR.employeeNotFound();
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
   }
 
-  return res.status(200).json({
-    success: true,
-    message: "Employee updated successfully",
-    data: employee,
+  auditFromRequestSafe(req, {
+    action: "Employee Updated",
+    module: "Employee",
+    entityId: employee._id,
+    entityType: "Employee",
+    details: {
+      employeeCode: employee.employeeCode,
+      updatedFields: Object.keys(updateData),
+    },
   });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee updated successfully", employee));
 });
 
-// Soft delete employee
-const deleteEmployee = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw ERR.invalidEmployeeId();
-  }
-
-  await deleteEmployeeService(id, req.user.userId);
-
-  return res.status(200).json({
-    success: true,
-    message: "Employee deleted successfully",
-  });
-});
-
-// Deactivate employee account
 const deactivateEmployee = asyncHandler(async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    throw ERR.invalidEmployeeId();
-  }
+  await deactivateEmployeeService(req.params.id);
 
-  await deactivateEmployeeService(req.params.id, req.user.userId);
-  return res.status(200).json({
-    success: true,
-    message: "Employee deactivated successfully",
+  auditFromRequestSafe(req, {
+    action: "Employee Deactivated",
+    module: "Employee",
+    entityId: req.params.id,
+    entityType: "Employee",
   });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee deactivated successfully"));
 });
 
-// Activate employee account
 const activateEmployee = asyncHandler(async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    throw ERR.invalidEmployeeId();
-  }
+  await activateEmployeeService(req.params.id);
 
-  await activateEmployeeService(req.params.id, req.user.userId);
-  return res.status(200).json({
-    success: true,
-    message: "Employee activated successfully",
+  auditFromRequestSafe(req, {
+    action: "Employee Activated",
+    module: "Employee",
+    entityId: req.params.id,
+    entityType: "Employee",
   });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee activated successfully"));
 });
 
-// Get all employees waiting for approval
 const getPendingEmployees = asyncHandler(async (req, res) => {
-  const { page, limit, skip, sort, search } = getPagination(req.query, {
-    allowedSortFields: ["createdAt", "joiningDate", "name", "employeeCode"],
-    defaultSort: { createdAt: -1 },
-  });
+  const employees = await getPendingEmployeesService();
 
-  const { employees, total } = await getPendingEmployeesService({
-    skip,
-    limit,
-    sort,
-    search,
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: "Pending employees retrieved successfully",
-    data: employees,
-    pagination: getPaginationMeta({
-      page,
-      limit,
-      total,
-    }),
-  });
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        "Pending employees retrieved successfully",
+        employees,
+      ),
+    );
 });
 
-// Approve employee registration
 const approveEmployee = asyncHandler(async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    throw ERR.invalidEmployeeId();
-  }
-
   const employee = await approveEmployeeService(
     req.params.id,
     req.body.consultationFee,
     req.user.userId,
   );
 
-  return res.status(200).json({
-    success: true,
-    message: "Employee approved successfully",
-    data: employee,
+  auditFromRequestSafe(req, {
+    action: "Employee Approved",
+    module: "Employee",
+    entityId: employee._id,
+    entityType: "Employee",
+    details: {
+      employeeCode: employee.employeeCode,
+      designation: employee.designation,
+    },
   });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee approved successfully", employee));
 });
 
-// Reject employee registration
 const rejectEmployee = asyncHandler(async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    throw ERR.invalidEmployeeId();
-  }
+  await rejectEmployeeService(
+    req.params.id,
+    req.user.userId,
+    req.body.rejectionReason,
+  );
 
-  await rejectEmployeeService(req.params.id, req.user.userId);
-  return res.status(200).json({
-    success: true,
-    message: "Employee rejected successfully",
+  auditFromRequestSafe(req, {
+    action: "Employee Rejected",
+    module: "Employee",
+    entityId: req.params.id,
+    entityType: "Employee",
+    details: {
+      hasRejectionReason: Boolean(req.body.rejectionReason),
+    },
   });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employee rejected successfully"));
 });
 
-// Get list of doctors
 const getDoctors = asyncHandler(async (req, res) => {
-  const { page, limit, skip, sort, search, status } = getPagination(req.query, {
-    allowedSortFields: ["createdAt", "joiningDate", "name", "department"],
-    defaultSort: { name: 1 },
-  });
+  const doctors = await getDoctorsService();
 
-  const { doctors, total } = await getDoctorsService({
-    skip,
-    limit,
-    sort,
-    search,
-    status,
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: "Doctors retrieved successfully",
-    data: doctors,
-    pagination: getPaginationMeta({
-      page,
-      limit,
-      total,
-    }),
-  });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Doctors retrieved successfully", doctors));
 });
 
-// Update doctor's availability schedule
 const updateDoctorAvailability = asyncHandler(async (req, res) => {
   const doctor = await updateDoctorAvailabilityService(
     req.user.userId,
     req.body,
   );
 
-  return res.status(200).json({
-    success: true,
-    message: "Doctor availability updated successfully",
-    data: doctor,
+  auditFromRequestSafe(req, {
+    action: "Doctor Availability Updated",
+    module: "Employee",
+    entityId: doctor._id,
+    entityType: "Employee",
+    details: {
+      employeeCode: doctor.employeeCode,
+    },
   });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Doctor availability updated successfully", doctor),
+    );
 });
 
-// Get doctor's current availability
 const getDoctorAvailability = asyncHandler(async (req, res) => {
   const availability = await getDoctorAvailabilityService(req.user.userId);
 
-  return res.status(200).json({
-    success: true,
-    message: "Doctor availability retrieved successfully",
-    data: availability,
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        "Doctor availability retrieved successfully",
+        availability,
+      ),
+    );
+});
+
+const deleteEmployee = asyncHandler(async (req, res) => {
+  const result = await deleteEmployeeService(req.params.id, req.user.userId);
+
+  auditFromRequestSafe(req, {
+    action: "Employee Deleted",
+    module: "Employee",
+    entityId: req.params.id,
+    entityType: "Employee",
   });
+
+  return res.status(200).json(new ApiResponse(200, result.message, result));
 });
 
 module.exports = {
@@ -256,7 +250,6 @@ module.exports = {
   getEmployees,
   getEmployeeById,
   updateEmployee,
-  deleteEmployee,
   deactivateEmployee,
   activateEmployee,
   getPendingEmployees,
@@ -265,4 +258,5 @@ module.exports = {
   getDoctors,
   updateDoctorAvailability,
   getDoctorAvailability,
+  deleteEmployee,
 };

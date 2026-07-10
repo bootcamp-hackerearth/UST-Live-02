@@ -1,4 +1,7 @@
+const https = require("node:https");
+
 const SibApiV3Sdk = require("sib-api-v3-sdk");
+const logger = require("./logger");
 
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
 const apiKey = defaultClient.authentications["api-key"];
@@ -7,22 +10,53 @@ apiKey.apiKey = process.env.BREVO_API_KEY;
 
 const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
-const isLocalIssuerError = (error) => {
-  return error?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY";
-};
+const TLS_ERROR_CODES = new Set([
+  "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+  "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+  "DEPTH_ZERO_SELF_SIGNED_CERT",
+  "SELF_SIGNED_CERT_IN_CHAIN",
+  "ECONNRESET",
+]);
 
-const sendTransacEmail = ({ sender, receivers, subject, htmlContent }) => {
-  return tranEmailApi.sendTransacEmail({
-    sender,
-    to: receivers,
-    subject,
-    htmlContent,
-  });
+const isTlsError = (error) =>
+  TLS_ERROR_CODES.has(error?.code) ||
+  /tls|ssl|certificate|socket disconnected/i.test(error?.message || "");
+
+const shouldUseInsecureEmailTlsFallback = () =>
+  process.env.NODE_ENV !== "production" &&
+  process.env.ALLOW_INSECURE_EMAIL_TLS !== "false";
+
+const withEmailTlsFallback = async (sendOperation) => {
+  try {
+    return await sendOperation();
+  } catch (error) {
+    if (!isTlsError(error) || !shouldUseInsecureEmailTlsFallback()) {
+      throw error;
+    }
+
+    const previousAgent = defaultClient.requestAgent;
+
+    defaultClient.requestAgent = new https.Agent({
+      rejectUnauthorized: false,
+    });
+
+    try {
+      return await sendOperation();
+    } finally {
+      defaultClient.requestAgent = previousAgent;
+    }
+  }
 };
 
 const sendEmail = async ({ to, subject, htmlContent }) => {
   try {
-    console.log("Sending email...");
+    if (!process.env.BREVO_API_KEY || !process.env.SENDER_EMAIL) {
+      logger.warn("Email skipped because email configuration is missing");
+
+      return null;
+    }
+
+    logger.info("Sending email", { to, subject });
 
     const sender = {
       email: process.env.SENDER_EMAIL,
@@ -35,69 +69,29 @@ const sendEmail = async ({ to, subject, htmlContent }) => {
       },
     ];
 
-    const response = await sendTransacEmail({
-      sender,
-      receivers,
-      subject,
-      htmlContent,
-    });
+    const response = await withEmailTlsFallback(() =>
+      tranEmailApi.sendTransacEmail({
+        sender,
+        to: receivers,
+        subject,
+        htmlContent,
+      }),
+    );
 
-    console.log("Email sent successfully");
+    logger.info("Email sent successfully", { to, subject });
 
     return response;
   } catch (error) {
-    console.error("EMAIL ERROR:", error);
+    logger.error("Email send failed", {
+      to,
+      subject,
+      errorMessage: error.message,
+      errorCode: error.code,
+      providerStatus: error.status,
+      providerResponse: error.response?.body,
+    });
 
-    if (
-      isLocalIssuerError(error) &&
-      process.env.NODE_ENV !== "production"
-    ) {
-      console.warn(
-        "Retrying email with relaxed TLS for local development certificate issue"
-      );
-
-      try {
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
-        const response = await sendTransacEmail({
-          sender: {
-            email: process.env.SENDER_EMAIL,
-            name: "HMS System",
-          },
-          receivers: [
-            {
-              email: to,
-            },
-          ],
-          subject,
-          htmlContent,
-        });
-
-        console.log("Email sent successfully after TLS retry");
-
-        return response;
-      } catch (retryError) {
-        console.error("EMAIL RETRY ERROR:", retryError);
-
-        if (retryError.response) {
-          console.error(retryError.response.body);
-        }
-
-        return {
-          success: false,
-          error: retryError.message,
-        };
-      }
-    }
-
-    if (error.response) {
-      console.error(error.response.body);
-    }
-
-    return {
-      success: false,
-      error: error.message,
-    };
+    throw error;
   }
 };
 

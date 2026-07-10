@@ -27,31 +27,17 @@
         <!-- Patient -->
 
         <div class="form-group">
-          <label>Patient</label>
+          <label for="patientId">Patient</label>
 
-          <div class="search-dropdown">
-            <input
-              type="text"
-              [value]="patientSearch"
-              placeholder="Search or select patient"
-              (focus)="showPatientDropdown = true"
-              (blur)="closePatientDropdown()"
-              (input)="onPatientSearchChange($any($event.target).value)"
-            />
+          <select id="patientId" formControlName="patientId">
+            <option value="">Select Patient</option>
 
-            @if(showPatientDropdown){
-            <div class="dropdown-list">
-              @for( patient of filteredPatientsForSearch; track patient._id ){
-              <button type="button" class="dropdown-option" (mousedown)="selectPatient(patient)">
-                {{ patient.patientId }} - {{ patient.firstName }} {{ patient.lastName }}
-              </button>
-              } @empty {
-              <div class="dropdown-empty">No patients found</div>
-              }
-            </div>
+            @for( patient of patients(); track patient._id ){
+            <option [value]="patient._id">
+              {{ patient.patientId }} - {{ patient.firstName }} {{ patient.lastName }}
+            </option>
             }
-          </div>
-
+          </select>
           @if(appointmentForm.get('patientId')?.invalid && appointmentForm.get('patientId')?.touched){
           <span class="error-text">Patient Id is required</span>
           }
@@ -60,9 +46,9 @@
         <!-- Department -->
 
         <div class="form-group">
-          <label>Department</label>
+          <label for="department">Department</label>
 
-          <select formControlName="department" (change)="filterDoctors()">
+          <select id="department" formControlName="department" (change)="filterDoctors()">
             <option value="">Select Department</option>
 
             <option value="CARDIOLOGY">Cardiology</option>
@@ -114,49 +100,6 @@
           }
         </div>
 
-        <!-- Doctor -->
-
-        <div class="form-group">
-          <label>Doctor</label>
-
-          <div class="search-dropdown">
-            <input
-              type="text"
-              [value]="doctorSearch"
-              placeholder="Search or select doctor"
-              [disabled]="!appointmentForm.get('department')?.value"
-              (focus)="showDoctorDropdown = true"
-              (blur)="closeDoctorDropdown()"
-              (input)="onDoctorSearchChange($any($event.target).value)"
-            />
-
-            @if(showDoctorDropdown){
-            <div class="dropdown-list">
-              @for( doctor of filteredDoctorsForSearch; track doctor._id ){
-              <button type="button" class="dropdown-option" (mousedown)="selectDoctor(doctor)">
-                {{ doctor.name }}
-              </button>
-              } @empty {
-              <div class="dropdown-empty">No doctors found</div>
-              }
-            </div>
-            }
-          </div>
-
-          <!-- Consultation Fee -->
-
-          @if(selectedDoctor){
-
-          <p class="consultation-fee">Consultation Fee: ₹{{ selectedDoctor ?.consultationFee || 0 }}</p>
-
-          @if(selectedDoctorAvailableFrom){
-          <p class="available-from">Available from: {{ selectedDoctorAvailableFrom }}</p>
-          }
-
-          }
-         
-        </div>
-
         <!-- Appointment Date -->
 
         <div class="form-group">
@@ -166,13 +109,34 @@
             id="appointmentDate"
             type="date"
             formControlName="appointmentDate"
-            [min]="effectiveMinDate"
-            (change)="fetchAvailableSlots()"
+            [min]="minDate"
+            (change)="filterDoctors()"
           />
           @if(appointmentForm.get('appointmentDate')?.invalid && appointmentForm.get('appointmentDate')?.touched){
           <span class="error-text">Appointment Date is required</span>
-          } @if(noSlotsError){
-          <span class="error-text">{{ slotErrorMessage }}</span>
+          }
+        </div>
+
+        <!-- Doctor -->
+
+        <div class="form-group">
+          <label for="doctorId">Doctor</label>
+
+          <select id="doctorId" formControlName="doctorId" (change)="onDoctorChange()">
+            <option value="">Select Doctor</option>
+
+            @for( doctor of filteredDoctors(); track doctor._id ){
+            <option [value]="doctor._id">{{ doctor.name }}</option>
+            }
+          </select>
+
+          <!-- Consultation Fee -->
+
+          @if(selectedDoctor()){
+          <p class="consultation-fee">Consultation Fee: ₹{{ selectedDoctor()?.consultationFee || 0 }}</p>
+          }
+          @if(noSlotsError()){
+          <span class="error-text">Doctor is not available on this day</span>
           }
         </div>
       </div>
@@ -190,8 +154,7 @@
       </div>
 
       <div class="slots-container">
-        @for( slot of availableSlots; track slot ){
-
+        @for( slot of availableSlots(); track slot ){
         <button
           type="button"
           class="slot-btn"
@@ -214,11 +177,6 @@
         >
           {{ slot }}
         </button>
-
-        }
-
-        @if(noSlotsError && availableSlots.length === 0){
-        <div class="slot-empty-message">{{ slotErrorMessage }}</div>
         }
       </div>
     </div>
@@ -236,9 +194,9 @@
         <!-- Appointment Type -->
 
         <div class="form-group">
-          <label>Appointment Type</label>
+          <label for="appointmentType">Appointment Type</label>
 
-          <select formControlName="appointmentType">
+          <select id="appointmentType" formControlName="appointmentType">
             <option value="">Select appointment type</option>
             <option value="CONSULTATION">Consultation</option>
 
@@ -258,9 +216,9 @@
         <!-- Priority -->
 
         <div class="form-group">
-          <label>Priority</label>
+          <label for="priority">Priority</label>
 
-          <select formControlName="priority">
+          <select id="priority" formControlName="priority">
             <option value="">Select Priority</option>
             <option value="NORMAL">Normal</option>
 
@@ -276,9 +234,9 @@
         <!-- Payment Status -->
 
         <div class="form-group">
-          <label>Payment Status</label>
+          <label for="paymentStatus">Payment Status</label>
 
-          <select formControlName="paymentStatus">
+          <select id="paymentStatus" formControlName="paymentStatus">
             <option value="">Select Payment Status</option>
             <option value="PENDING">Pending</option>
 
@@ -294,9 +252,9 @@
         <!-- Visit Mode -->
 
         <div class="form-group">
-          <label>Visit Mode</label>
+          <label for="visitMode">Visit Mode</label>
 
-          <select formControlName="visitMode">
+          <select id="visitMode" formControlName="visitMode">
             <option value="">Select visit Mode</option>
             <option value="OFFLINE">Offline</option>
 
@@ -313,32 +271,32 @@
       <!-- Symptoms -->
 
       <div class="form-group full-width">
-        <label>Symptoms</label>
+        <label for="symptoms">Symptoms</label>
 
-        <textarea formControlName="symptoms" placeholder="Enter symptoms"></textarea>
+        <textarea id="symptoms" formControlName="symptoms" placeholder="Enter symptoms"></textarea>
       </div>
 
       <!-- Reason -->
 
       <div class="form-group full-width">
-        <label>Reason</label>
+        <label for="reason">Reason</label>
 
-        <textarea formControlName="reason" placeholder="Reason for appointment"></textarea>
+        <textarea id="reason" formControlName="reason" placeholder="Reason for appointment"></textarea>
       </div>
 
       <!-- Notes -->
 
       <div class="form-group full-width">
-        <label>Notes</label>
+        <label for="notes">Notes</label>
 
-        <textarea formControlName="notes" placeholder="Additional notes"></textarea>
+        <textarea id="notes" formControlName="notes" placeholder="Additional notes"></textarea>
       </div>
     </div>
 
     <!-- Submit -->
 
-    <button type="submit" class="submit-btn" [disabled]="isSubmitting">
-      @if(isSubmitting){ Booking Appointment... } @else { Confirm Appointment }
+    <button type="submit" class="submit-btn" [disabled]="isSubmitting()">
+      @if(isSubmitting()){ Booking Appointment... } @else { Confirm Appointment }
     </button>
   </form>
 </div>

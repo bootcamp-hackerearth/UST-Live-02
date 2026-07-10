@@ -1,26 +1,23 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-
 import { ConsultationService } from '../../../core/services/consultation';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-consultation-details',
+  selector: 'app-consultation-details',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './consultation-details.html',
-  styleUrls: ['./consultation-details.css']
+  styleUrls: ['./consultation-details.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConsultationDetails implements OnInit {
-  consultation: any;
-
-  isLoading = true;
+  readonly consultation = signal<any>(null);
+  readonly isLoading = signal(true);
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly consultationService: ConsultationService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly consultationService: ConsultationService
   ) {}
 
   ngOnInit(): void {
@@ -35,36 +32,34 @@ export class ConsultationDetails implements OnInit {
   loadConsultation(id: string): void {
     this.consultationService.getConsultationById(id).subscribe({
       next: (response) => {
+        console.log(response);
 
-        this.consultation = response.data;
+        this.consultation.set(response.data);
 
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        this.isLoading.set(false);
       },
-
       error: (error) => {
+        console.log(error);
 
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
     });
   }
 
   // Print consultation details
   printPage(): void {
-      document.title = 'Prescription';
+    document.title = 'Prescription';
     globalThis.print();
   }
 
   // Download prescription PDF
   downloadPdf(): void {
-    this.consultationService
-      .downloadPrescriptionPdf(this.consultation._id)
-      .subscribe({
-        next: (response: Blob) => {
-          const fileURL = globalThis.URL.createObjectURL(response);
+    this.consultationService.downloadPrescriptionPdf(this.consultation()._id).subscribe({
+      next: (response: Blob) => {
+        const fileURL = globalThis.URL.createObjectURL(response);
 
-          globalThis.open(fileURL);
-        }
-      });
+        globalThis.open(fileURL);
+      }
+    });
   }
 }

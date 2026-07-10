@@ -1,34 +1,39 @@
 const Patient = require("../../models/Patient");
+
 const User = require("../../models/User");
-const STATUS = require("../../constants/status");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 
 const deletePatientService = async (patientId, deletedBy) => {
   const patient = await Patient.findOne({
     _id: patientId,
-    isDeleted: { $ne: true },
+    isDeleted: false,
   });
 
   if (!patient) {
-    throw ERR.patientNotFound();
+    throw new ApiError(404, "Patient not found", "PATIENT_NOT_FOUND");
   }
 
   patient.isDeleted = true;
   patient.deletedBy = deletedBy;
-  patient.deletedDate = new Date();
-  patient.status = STATUS.INACTIVE;
+  patient.deletedAt = new Date();
 
   await patient.save();
 
   await User.findOneAndUpdate(
-    { patientId },
     {
-      status: STATUS.INACTIVE,
-    }
+      patientId,
+      isDeleted: false,
+    },
+    {
+      isDeleted: true,
+      deletedBy,
+      deletedAt: new Date(),
+    },
   );
 
-  return patient;
+  return {
+    message: "Patient deleted successfully",
+  };
 };
 
 module.exports = deletePatientService;
-

@@ -1,11 +1,20 @@
 const User = require("../../models/User");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 
 const getCurrentUser = async (userId) => {
-  const user = await User.findById(userId).populate("employeeId");
+  const user = await User.findOne({
+    _id: userId,
+    isDeleted: false,
+  }).populate({
+    path: "employeeId",
+    match: {
+      isDeleted: false,
+    },
+  });
 
   if (!user) {
-throw ERR.userProfileNotFound();  }
+    throw new ApiError(404, "User not found", "NOT_FOUND");
+  }
 
   return user;
 };

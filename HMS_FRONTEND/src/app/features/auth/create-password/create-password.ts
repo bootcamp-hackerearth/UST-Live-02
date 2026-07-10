@@ -1,22 +1,20 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-
 import { TokenService } from '../../../core/services/token';
 import { AuthService } from '../../../core/services/auth';
-import { MenuNodeService } from '../../../core/services/menu-node';
 import { ToastService } from '../../../core/services/toast';
-import { getApiErrorMessage } from '../../../core/utils/api-error';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-create-password',
+  selector: 'app-create-password',
   imports: [ReactiveFormsModule],
   templateUrl: './create-password.html',
-  styleUrl: './create-password.css'
+  styleUrl: './create-password.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CreatePassword {
   passwordForm: FormGroup;
+  readonly isSubmitting = signal(false);
 
   securityQuestions = [
     'What is your favourite color?',
@@ -31,12 +29,10 @@ export class CreatePassword {
     private readonly router: Router,
     private readonly tokenService: TokenService,
     private readonly authService: AuthService,
-    private readonly menuNodeService: MenuNodeService,
-    private readonly toastService: ToastService
+    private readonly toast: ToastService
   ) {
     this.passwordForm = this.fb.group({
       temporaryPassword: ['', Validators.required],
-
       newPassword: [
         '',
         [
@@ -46,7 +42,6 @@ export class CreatePassword {
           Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
         ]
       ],
-
       confirmPassword: ['', Validators.required],
       securityQuestion: ['', Validators.required],
       securityAnswer: ['', Validators.required]
@@ -61,9 +56,15 @@ export class CreatePassword {
     }
 
     if (this.passwordForm.value.newPassword !== this.passwordForm.value.confirmPassword) {
-      alert('Passwords do not match');
+      this.toast.error('Passwords do not match');
       return;
     }
+
+    if (this.isSubmitting()) {
+      return;
+    }
+
+    this.isSubmitting.set(true);
 
     const payload = {
       loginId: localStorage.getItem('loginId'),
@@ -76,17 +77,18 @@ export class CreatePassword {
 
     this.authService.createPassword(payload).subscribe({
       next: (response) => {
+        console.log(response);
 
+        this.toast.success('Password created successfully');
         this.tokenService.removeTokens();
-        this.menuNodeService.clearMenu();
         this.router.navigate(['/login']);
+        this.isSubmitting.set(false);
       },
-
       error: (error) => {
-        this.toastService.show(
-          getApiErrorMessage(error, 'Failed to create password'),
-          'error'
-        );
+        console.log(error);
+        console.log(error.error.errors);
+        this.toast.error(error?.error?.message || 'Unable to create password');
+        this.isSubmitting.set(false);
       }
     });
   }

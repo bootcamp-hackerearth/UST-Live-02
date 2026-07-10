@@ -10,19 +10,19 @@
 
   <!-- Progress -->
   <div class="steps-wrapper glass-card">
-    <div class="step" [class.active]="currentStep >= 1">
+    <div class="step" [class.active]="currentStep() >= 1">
       <div class="step-number">1</div>
       <span>Basic Info</span>
     </div>
-    <div class="step" [class.active]="currentStep >= 2">
+    <div class="step" [class.active]="currentStep() >= 2">
       <div class="step-number">2</div>
       <span>Contact</span>
     </div>
-    <div class="step" [class.active]="currentStep >= 3">
+    <div class="step" [class.active]="currentStep() >= 3">
       <div class="step-number">3</div>
       <span>Medical</span>
     </div>
-    <div class="step" [class.active]="currentStep >= 4">
+    <div class="step" [class.active]="currentStep() >= 4">
       <div class="step-number">4</div>
       <span>Insurance</span>
     </div>
@@ -31,7 +31,7 @@
   <!-- FORM -->
   <form [formGroup]="patientForm" (ngSubmit)="onSubmit()" class="patient-form glass-card">
     <!-- STEP 1 -->
-    @if(currentStep === 1){
+    @if(currentStep() === 1){
     <div class="section">
       <div class="section-title">
         <h2>Basic Information</h2>
@@ -45,9 +45,7 @@
           @if(patientForm.get('firstName')?.invalid && patientForm.get('firstName')?.touched){
           <span class="error-text">
             @if(patientForm.get('firstName')?.errors?.['required']){ First Name is required }
-            @else if(patientForm.get('firstName')?.errors?.['minlength']){ First Name must be at least 2 characters }
-            @else if(patientForm.get('firstName')?.errors?.['maxlength']){ First Name cannot exceed 50 characters }
-            @else if(patientForm.get('firstName')?.errors?.['pattern']){ First Name can contain only letters, spaces, apostrophes and hyphens }
+            @else if(patientForm.get('firstName')?.errors?.['pattern']){ First Name cannot contain numbers or special characters }
           </span>
           }
         </div>
@@ -58,17 +56,18 @@
           @if(patientForm.get('lastName')?.invalid && patientForm.get('lastName')?.touched){
           <span class="error-text">
             @if(patientForm.get('lastName')?.errors?.['required']){ Last Name is required }
-            @else if(patientForm.get('lastName')?.errors?.['minlength']){ Last Name must be at least 2 characters }
-            @else if(patientForm.get('lastName')?.errors?.['maxlength']){ Last Name cannot exceed 50 characters }
-            @else if(patientForm.get('lastName')?.errors?.['pattern']){ Last Name can contain only letters, spaces, apostrophes and hyphens }
+            @else if(patientForm.get('lastName')?.errors?.['pattern']){ Last Name cannot contain numbers or special characters }
           </span>
+          }
+          @if(patientForm.errors?.['lastNameSameAsFirst'] && patientForm.get('lastName')?.touched){
+          <span class="error-text">Last name cannot be the same as first name</span>
           }
         </div>
 
         <!-- Date of Birth -->
         <div class="form-field">
-          <label class="field-label">Date of Birth</label>
-          <input type="date" formControlName="dateOfBirth" [max]="today" />
+          <label class="field-label" for="dateOfBirth">Date of Birth</label>
+          <input id="dateOfBirth" type="date" formControlName="dateOfBirth" [max]="today" />
           @if(patientForm.get('dateOfBirth')?.invalid && patientForm.get('dateOfBirth')?.touched){
           <span class="error-text">Date of Birth is required</span>
           @if (patientForm.get('dateOfBirth')?.errors?.['futureDate']) {
@@ -125,7 +124,7 @@
     }
 
     <!-- STEP 2 -->
-    @if(currentStep === 2){
+    @if(currentStep() === 2){
     <div class="section">
       <div class="section-title">
         <h2>Contact Information</h2>
@@ -145,8 +144,7 @@
           </div>
           @if(patientForm.get('phone')?.invalid && patientForm.get('phone')?.touched){
           <span class="error-text">
-            @if(patientForm.get('phone')?.errors?.['required']){ Phone number is required } 
-            @else if(patientForm.get('phone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
+            @if(patientForm.get('phone')?.errors?.['required']){ Phone number is required } @else if(patientForm.get('phone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
           </span>
           }
         </div>
@@ -156,8 +154,7 @@
           <input type="email" placeholder="Email" formControlName="email" />
           @if(patientForm.get('email')?.invalid && patientForm.get('email')?.touched){
           <span class="error-text">
-            @if(patientForm.get('email')?.errors?.['required']){ Email is required } 
-            @else if(patientForm.get('email')?.errors?.['email']){ Enter a valid email address }
+            @if(patientForm.get('email')?.errors?.['required']){ Email is required } @else if(patientForm.get('email')?.errors?.['email']){ Enter a valid email address }
           </span>
           }
         </div>
@@ -166,28 +163,21 @@
         <div class="form-field">
           <input type="text" placeholder="Address" formControlName="address" />
           @if(patientForm.get('address')?.invalid && patientForm.get('address')?.touched){
-          <span class="error-text">
-            @if(patientForm.get('address')?.errors?.['required']){ Address is required }
-            @else if(patientForm.get('address')?.errors?.['minlength']){ Address must be at least 5 characters }
-            @else if(patientForm.get('address')?.errors?.['maxlength']){ Address cannot exceed 250 characters }
-          </span>
+          <span class="error-text">Address is required</span>
           }
         </div>
 
         <!-- State -->
         <div class="form-field">
-          <select [value]="selectedStateId" (change)="onStateChange($event)" [disabled]="isLoadingStates">
-            <option value="">
-              @if(isLoadingStates){ Loading states... } @else { Select State }
-            </option>
-            @for (state of states; track state.id) {
+          <select [value]="selectedStateId" (change)="onStateChange($event)" [disabled]="isLoadingStates()">
+            <option value="">@if(isLoadingStates()){ Loading states... } @else { Select State }</option>
+            @for (state of states(); track state.id) {
             <option [value]="state.id">{{ state.name }}</option>
             }
           </select>
           @if(patientForm.get('state')?.invalid && patientForm.get('state')?.touched){
           <span class="error-text">State is required</span>
           @if ( patientForm.get('state')?.touched && patientForm.get('state')?.invalid ) {
-
           <div class="error-message">Select a valid state</div>
 
           } }
@@ -195,18 +185,19 @@
 
         <!-- City / District -->
         <div class="form-field">
-          <select formControlName="city" [disabled]="!selectedStateId || isLoadingDistricts" (change)="onDistrictChange()">
-            <option value="">
-              @if(isLoadingDistricts){ Loading cities... } @else { Select City }
-            </option>
-            @for (district of districts; track district) {
+          <select
+            formControlName="city"
+            [disabled]="!selectedStateId || isLoadingDistricts()"
+            (change)="onDistrictChange()"
+          >
+            <option value="">@if(isLoadingDistricts()){ Loading cities... } @else { Select City }</option>
+            @for (district of districts(); track district) {
             <option [value]="district">{{ district }}</option>
             }
           </select>
           @if(patientForm.get('city')?.invalid && patientForm.get('city')?.touched){
           <span class="error-text">City is required</span>
           @if ( patientForm.get('city')?.touched && patientForm.get('city')?.invalid ) {
-
           <div class="error-message">Select a valid city</div>
 
           } }
@@ -218,13 +209,11 @@
             class="location-select"
             formControlName="taluk"
             [title]="patientForm.get('taluk')?.value || 'Select Taluk'"
-            [disabled]="!patientForm.get('city')?.value || isLoadingTaluks"
+            [disabled]="!patientForm.get('city')?.value || isLoadingTaluks()"
             (change)="onTalukChange()"
           >
-            <option value="">
-              @if(isLoadingTaluks){ Loading taluks... } @else { Select Taluk }
-            </option>
-            @for (taluk of taluks; track taluk) {
+            <option value="">@if(isLoadingTaluks()){ Loading taluks... } @else { Select Taluk }</option>
+            @for (taluk of taluks(); track taluk) {
             <option [value]="taluk">{{ taluk }}</option>
             }
           </select>
@@ -239,13 +228,11 @@
             class="location-select"
             [value]="selectedPostOfficeIndex"
             [title]="patientForm.get('postOffice')?.value || 'Select Post Office / Area'"
-            [disabled]="!patientForm.get('taluk')?.value || isLoadingAreas"
+            [disabled]="!patientForm.get('taluk')?.value || isLoadingAreas()"
             (change)="onPostOfficeChange($event)"
           >
-            <option value="">
-              @if(isLoadingAreas){ Loading areas... } @else { Select Post Office / Area }
-            </option>
-            @for (area of filteredPostOfficeAreas; track area.name + area.pincode; let i = $index) {
+            <option value="">@if(isLoadingAreas()){ Loading areas... } @else { Select Post Office / Area }</option>
+            @for (area of filteredPostOfficeAreas(); track area.name + area.pincode; let i = $index) {
             <option [value]="i">{{ area.name }}</option>
             }
           </select>
@@ -270,12 +257,9 @@
           />
 
           @if(patientForm.get('pincode')?.invalid && patientForm.get('pincode')?.touched){
-
           <span class="error-text">
-            @if(patientForm.get('pincode')?.errors?.['required']){ Pincode is required } 
-            @else if(patientForm.get('pincode')?.errors?.['pattern']){ Enter valid 6-digit pincode }
+            @if(patientForm.get('pincode')?.errors?.['required']){ Pincode is required } @else if(patientForm.get('pincode')?.errors?.['pattern']){ Enter valid 6-digit pincode }
           </span>
-
           }
         </div>
 
@@ -285,16 +269,16 @@
           @if(patientForm.get('emergencyContactName')?.invalid && patientForm.get('emergencyContactName')?.touched){
           <span class="error-text">
             @if(patientForm.get('emergencyContactName')?.errors?.['required']){ Emergency Contact Name is required }
-            @else if(patientForm.get('emergencyContactName')?.errors?.['minlength']){ Emergency Contact Name must be at least 2 characters }
-            @else if(patientForm.get('emergencyContactName')?.errors?.['maxlength']){ Emergency Contact Name cannot exceed 100 characters }
-            @else if(patientForm.get('emergencyContactName')?.errors?.['pattern']){ Emergency Contact Name can contain only letters, spaces, apostrophes and hyphens }
+            @else if(patientForm.get('emergencyContactName')?.errors?.['pattern']){ Emergency Contact Name cannot contain numbers or special characters }
           </span>
           }
         </div>
 
         <!-- Emergency Contact Phone -->
         <div class="form-field">
+          <label for="emergencyContactPhone" class="field-label">Emergency Contact Phone</label>
           <input
+            id="emergencyContactPhone"
             type="text"
             placeholder="Emergency Contact Phone"
             maxlength="10"
@@ -303,21 +287,16 @@
           @if(patientForm.get('emergencyContactPhone')?.invalid && patientForm.get('emergencyContactPhone')?.touched){
           <span class="error-text">
             @if(patientForm.get('emergencyContactPhone')?.errors?.['required']){ Emergency Contact Phone is required }
-            @else if(patientForm.get('emergencyContactPhone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
+            @else if(patientForm.get('emergencyContactPhone')?.errors?.['pattern']){ Enter a valid 10-digit phone number }
           </span>
-          @if ( patientForm.get('emergencyContactPhone')?.touched && patientForm.get('emergencyContactPhone')?.invalid )
-          {
-
-          <div class="error-message">Emergency Contact Number must be 10 digits</div>
-
-          } }
+          }
         </div>
       </div>
     </div>
     }
 
     <!-- STEP 3 — No mandatory fields -->
-    @if(currentStep === 3){
+    @if(currentStep() === 3){
     <div class="section">
       <div class="section-title">
         <h2>Medical Information</h2>
@@ -336,7 +315,7 @@
     }
 
     <!-- STEP 4 -->
-    @if(currentStep === 4){
+    @if(currentStep() === 4){
     <div class="section">
       <div class="section-title">
         <h2>Insurance & Hospital</h2>
@@ -356,16 +335,13 @@
 
         <!-- Insurance Expiry Date (optional) -->
         <div class="form-field">
-          <label class="field-label">Insurance Expiry Date (optional)</label>
-          <input type="date" formControlName="insuranceExpiryDate" />
+          <label class="field-label" for="insuranceExpiryDate">Insurance Expiry Date (optional)</label>
+          <input id="insuranceExpiryDate" type="date" formControlName="insuranceExpiryDate" />
         </div>
 
         <!-- Coverage Amount (optional) -->
         <div class="form-field">
           <input type="number" placeholder="Coverage Amount (optional)" formControlName="insuranceCoverageAmount" />
-          @if(patientForm.get('insuranceCoverageAmount')?.invalid && patientForm.get('insuranceCoverageAmount')?.touched){
-          <span class="error-text">Coverage amount cannot be negative</span>
-          }
         </div>
 
         <!-- Patient Type (mandatory) -->
@@ -386,16 +362,15 @@
 
     <!-- BUTTONS -->
     <div class="button-group">
-      @if(currentStep > 1){
+      @if(currentStep() > 1){
       <button type="button" class="secondary-btn" (click)="previousStep()">Previous</button>
-      } @if(currentStep < 4){
+      } @if(currentStep() < 4){
       <button type="button" class="primary-btn" (click)="nextStep()">Save & Continue</button>
-      } @if(currentStep === 4){
-      <button type="submit" class="submit-btn" [disabled]="isSubmitting">
-        @if(isSubmitting){ Registering... } @else { Register Patient }
+      } @if(currentStep() === 4){
+      <button type="submit" class="submit-btn" [disabled]="isSubmitting()">
+        @if(isSubmitting()){ Registering... } @else { Register Patient }
       </button>
       }
     </div>
   </form>
 </div>
- 

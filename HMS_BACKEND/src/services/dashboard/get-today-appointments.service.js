@@ -1,16 +1,25 @@
 const Appointment = require("../../models/Appointment");
 const getTodayAppointmentsService = async (user) => {
   let filter = {
-    isDeleted: { $ne: true },
+    isDeleted: false,
   };
-
   if (user?.roles?.includes("DOCTOR")) {
     filter.doctorEmployeeId = user.employeeId;
   }
 
   const appointments = await Appointment.find(filter)
-    .populate("patientId")
-    .populate("doctorEmployeeId");
+    .populate({
+      path: "patientId",
+      match: {
+        isDeleted: false,
+      },
+    })
+    .populate({
+      path: "doctorEmployeeId",
+      match: {
+        isDeleted: false,
+      },
+    });
 
   const today = new Date();
 
@@ -31,4 +40,3 @@ const getTodayAppointmentsService = async (user) => {
   return todayAppointments.sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
 };
 module.exports = getTodayAppointmentsService;
-

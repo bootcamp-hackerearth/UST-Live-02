@@ -10,26 +10,12 @@
       <p class="page-subtitle">Review and approve employee registration requests.</p>
     </div>
 
-    <div class="pending-count">{{ pendingEmployees.length }} Pending</div>
-  </div>
-
-  <div class="filters-wrapper glass-card">
-    <div class="search-box">
-      <span>Search</span>
-
-      <input
-        type="text"
-        placeholder="Search pending employee..."
-        [(ngModel)]="searchText"
-        (input)="onSearchInput()"
-      />
-    </div>
+    <div class="pending-count">{{ pendingEmployees().length }} Pending</div>
   </div>
 
   <!-- Empty State -->
 
-  @if( pendingEmployees.length === 0 ){
-
+  @if( pendingEmployees().length === 0 ){
   <div class="empty-state glass-card">
     <div class="empty-icon">📄</div>
 
@@ -39,12 +25,10 @@
   </div>
 
   } @else {
-
   <!-- Employee Grid -->
 
   <div class="employee-grid">
-    @for( employee of pendingEmployees; track employee._id ){
-
+    @for( employee of pendingEmployees(); track employee._id ){
     <div class="employee-card glass-card">
       <!-- Top -->
 
@@ -95,32 +79,23 @@
       <!-- Actions -->
 
       <div class="actions">
+        @if(nodeService.canUseApi('PATCH', '/api/employees/:id/approve-employee')){
         <button class="approve-btn" (click)="approveEmployee(employee)">Approve</button>
-
+        } @if(nodeService.canUseApi('PATCH', '/api/employees/:id/reject-employee')){
         <button
           class="reject-btn"
           (click)="
                     rejectEmployee(
-                      employee._id
+                      employee
                     )
                     "
         >
           Reject
         </button>
+        }
       </div>
     </div>
-
     }
   </div>
-
-  <app-pagination
-    [pagination]="pagination"
-    totalLabel="pending employees"
-    (pagePrevious)="previousPage()"
-    (pageNext)="nextPage()"
-    (pageSizeChange)="changeLimit($event)"
-  ></app-pagination>
-
   }
 </div>
-

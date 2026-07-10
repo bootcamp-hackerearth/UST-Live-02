@@ -1,49 +1,38 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-
 import { PatientService } from '../../../core/services/patient';
+import { ToastService } from '../../../core/services/toast';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-edit-patient',
+  selector: 'app-edit-patient',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './edit-patient.html',
-  styleUrls: ['./edit-patient.css']
+  styleUrls: ['./edit-patient.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditPatient implements OnInit {
-  patientId = '';
-  isSubmitting = false;
+  private patientId = '';
+  readonly isSubmitting = signal(false);
+  readonly doctors = signal<any[]>([]);
 
-  doctors: any[] = [];
   patientForm: any;
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly patientService: PatientService
+    private readonly patientService: PatientService,
+    private readonly toast: ToastService
   ) {
     this.patientForm = this.fb.group({
-      firstName: [
-        '',
-        [
-          Validators.required,
-          Validators.pattern(/^[A-Za-z\s]+$/)
-        ]
-      ],
-      lastName: [
-        '',
-        [
-          Validators.required,
-          Validators.pattern(/^[A-Za-z\s]+$/)
-        ]
-      ],
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
       gender: [''],
       bloodGroup: [''],
-      phone: ['', Validators.pattern(/^\d{10}$/)],
+      phone: [''],
       email: [''],
       medicalHistory: [''],
       allergies: [''],
@@ -65,10 +54,10 @@ export class EditPatient implements OnInit {
   loadDoctors(): void {
     this.patientService.getDoctors().subscribe({
       next: (response) => {
-        this.doctors = response.data;
+        this.doctors.set(response.data);
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }
@@ -77,6 +66,7 @@ export class EditPatient implements OnInit {
   loadPatient(): void {
     this.patientService.getPatientById(this.patientId).subscribe({
       next: (response) => {
+        console.log(response);
 
         const patient = response.data;
 
@@ -94,8 +84,8 @@ export class EditPatient implements OnInit {
           assignedDoctor: patient?.assignedDoctor?._id
         });
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }
@@ -103,29 +93,26 @@ export class EditPatient implements OnInit {
   // Update patient
   onSubmit(): void {
     if (this.patientForm.invalid) {
-      this.patientForm.markAllAsTouched();
-
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
-    this.patientService.updatePatient(
-      this.patientId,
-      this.patientForm.value
-    ).subscribe({
+    this.patientService.updatePatient(this.patientId, this.patientForm.value).subscribe({
       next: (response) => {
+        console.log(response);
 
-        alert('Patient Updated Successfully');
+        this.toast.success('Patient updated successfully');
 
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
 
         this.router.navigate(['/patients']);
       },
-
       error: (error) => {
+        console.log(error);
 
-        this.isSubmitting = false;
+        this.toast.error(error?.error?.message || 'Unable to update patient');
+        this.isSubmitting.set(false);
       }
     });
   }

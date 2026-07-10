@@ -1,26 +1,25 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
-
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { DashboardService } from '../../../core/services/dashboard';
+import { NodeService } from '../../../core/services/node';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-doctor-dashboard',
+  selector: 'app-doctor-dashboard',
   standalone: true,
-  imports: [AsyncPipe],
+  imports: [RouterLink],
   templateUrl: './doctor-dashboard.html',
-  styleUrl: './doctor-dashboard.css'
+  styleUrl: './doctor-dashboard.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DoctorDashboard implements OnInit {
-  stats: any = {};
-
-  todayAppointments: any[] = [];
+  readonly stats = signal<any>({});
+  readonly todayAppointments = signal<any[]>([]);
 
   constructor(
     public readonly authService: AuthService,
-    private readonly dashboardService: DashboardService,
-    private readonly cdr: ChangeDetectorRef
+    public readonly nodeService: NodeService,
+    private readonly dashboardService: DashboardService
   ) {}
 
   // Load dashboard data
@@ -33,13 +32,12 @@ export class DoctorDashboard implements OnInit {
   loadDoctorStats(): void {
     this.dashboardService.getDoctorStats().subscribe({
       next: (response) => {
+        console.log(response);
 
-        this.stats = response.data;
-
-        this.cdr.detectChanges();
+        this.stats.set(response.data);
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }
@@ -48,11 +46,12 @@ export class DoctorDashboard implements OnInit {
   loadTodayAppointments(): void {
     this.dashboardService.getTodayAppointments().subscribe({
       next: (response) => {
+        console.log(response);
 
-        this.todayAppointments = response.data;
+        this.todayAppointments.set(response.data);
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }

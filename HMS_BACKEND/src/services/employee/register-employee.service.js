@@ -9,12 +9,13 @@ const STATUS = require("../../constants/status");
 
 const generateTemporaryPassword = require("../../utils/generateTemporaryPassword");
 const generateSequentialId = require("../../utils/generateSequentialId");
+const ApiError = require("../../utils/ApiError");
 
 const sendEmail = require("../../utils/sendEmail");
-const employeeWelcomeTemplate = require("../../templates/employeeWelcomeTemplate");
-const ERR = require("../../utils/errors");
+const employeeWelcomeTemplate = require("../../templates/employeeWelcometemplate");
+const logger = require("../../utils/logger");
 
-const registerEmployee = async (employeeData, currentUser = {}) => {
+const registerEmployee = async (employeeData, currentUser) => {
   const {
     name,
     email,
@@ -36,56 +37,77 @@ const registerEmployee = async (employeeData, currentUser = {}) => {
     breakEndTime,
     maxPatientsPerDay,
     securityQuestion,
-    securityAnswer,
-    role,
+    securityAnswer: hashedSecurityAnswer,
+    
   } = employeeData;
-  const selectedRole = role || designation || ROLES.DOCTOR;
 
-  if (selectedRole === ROLES.SUPER_ADMIN) {
-    throw ERR.unauthorizedAccess();
-  }
-
+  // Super admin authorization
   if (
-    selectedRole === ROLES.ADMIN &&
+    designation === ROLES.ADMIN &&
     !currentUser.roles?.includes(ROLES.SUPER_ADMIN)
   ) {
-    throw ERR.unauthorizedAccess();
+    throw new ApiError(403, "Only Super Admin can create Admin", "FORBIDDEN");
   }
 
   // Check if email is already in use
   const existingUser = await User.findOne({
     email: email.toLowerCase(),
+    isDeleted: false,
   });
 
   if (existingUser) {
-throw ERR.employeeEmailExists();
+    throw new ApiError(
+      409,
+      "Employee already exists with this email",
+      "EMAIL_ALREADY_EXISTS",
+    );
   }
+
   // Check if phone number is already in use
   const existingPhone = await Employee.findOne({
     phone,
+    isDeleted: false,
   });
 
   if (existingPhone) {
-throw ERR.employeePhoneExists();
+    throw new ApiError(
+      409,
+      "Employee already exists with this phone number",
+      "PHONE_ALREADY_EXISTS",
+    );
   }
+
   // Validate doctor's registration number
   if (designation === "DOCTOR") {
     const existingDoctor = await Employee.findOne({
       medicalRegistrationNo,
+      isDeleted: false,
     });
 
     if (existingDoctor) {
-throw ERR.medicalRegistrationExists();
-      }  }
+      throw new ApiError(
+        409,
+        "Medical registration number already exists",
+        "MEDICAL_REGISTRATION_EXISTS",
+      );
+    }
+  }
 
   // Generate employee code
   const prefix = EMPLOYEE_PREFIX[designation];
 
   if (!prefix) {
-throw ERR.invalidDesignation();
+    throw new ApiError(
+      400,
+      "Invalid employee designation",
+      "INVALID_DESIGNATION",
+    );
   }
+
   const employeeCode = await generateSequentialId(prefix);
-  const employeePayload = {
+
+  // Create employee record
+  const employee = await Employee.create({
     employeeCode,
     name,
     email: email.toLowerCase(),
@@ -94,16 +116,12 @@ throw ERR.invalidDesignation();
     gender,
     designation,
     joiningDate,
-    status: STATUS.ACTIVE,
-  };
-
-  if (designation === ROLES.DOCTOR) {
-    employeePayload.medicalRegistrationNo = medicalRegistrationNo;
-    employeePayload.specialization = specialization;
-    employeePayload.qualification = qualification;
-    employeePayload.consultationFee = consultationFee;
-    employeePayload.availabilitySlots = availabilitySlots;
-    employeePayload.availability = {
+    medicalRegistrationNo,
+    specialization,
+    qualification,
+    consultationFee,
+    availabilitySlots,
+    availability: {
       workingDays: workingDays || [],
       startTime,
       endTime,
@@ -111,33 +129,30 @@ throw ERR.invalidDesignation();
       breakStartTime,
       breakEndTime,
       maxPatientsPerDay: maxPatientsPerDay || 40,
-    };
-  }
-
-  // Create employee record
-  const employee = await Employee.create(employeePayload);
+    },
+    status: STATUS.ACTIVE,
+    createdBy: currentUser.userId,
+  });
 
   // Generate temporary password for first login
   const temporaryPassword = generateTemporaryPassword();
 
-  const hashedTemporaryPassword = await bcrypt.hash(
-    temporaryPassword,
-    10
-  );
+  const hashedTemporaryPassword = await bcrypt.hash(temporaryPassword, 10);
 
   // Create user account
   await User.create({
     email: email.toLowerCase(),
     temporaryPasswordHash: hashedTemporaryPassword,
-    roles: [selectedRole],
+    roles: [designation],
     employeeId: employee._id,
     isFirstLogin: true,
     status: STATUS.ACTIVE,
     securityQuestion,
-    securityAnswer,
+    securityAnswer: hashedSecurityAnswer,
+    createdBy: currentUser.userId,
   });
 
-  // Send welcome email with login details
+  // Send welcome email — non-blocking: failure does not roll back employee creation
   const loginLink = `${process.env.FRONTEND_URL}/login`;
 
   const htmlContent = employeeWelcomeTemplate({
@@ -148,11 +163,20 @@ throw ERR.invalidDesignation();
     loginLink,
   });
 
-  await sendEmail({
-    to: email,
-    subject: "Welcome to HMS",
-    htmlContent,
-  });
+  try {
+    await sendEmail({
+      to: email,
+      subject: "Welcome to HMS",
+      htmlContent,
+    });
+  } catch (emailError) {
+    logger.warn("Welcome email could not be sent; employee was still created", {
+      email,
+      employeeCode,
+      errorMessage: emailError.message,
+      errorCode: emailError.code,
+    });
+  }
 
   return {
     message: "Employee registered successfully",

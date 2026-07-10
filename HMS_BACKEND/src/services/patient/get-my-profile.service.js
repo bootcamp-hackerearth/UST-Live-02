@@ -1,17 +1,23 @@
 const Patient = require("../../models/Patient");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 
 const getMyProfile = async (patientId) => {
   const patient = await Patient.findOne({
     _id: patientId,
-    isDeleted: { $ne: true },
+    isDeleted: false,
+  }).populate({
+    path: "assignedDoctor",
+    select: "name department specialization",
+    match: {
+      isDeleted: false,
+    },
   });
 
   if (!patient) {
-throw ERR.patientNotFound(); }
+    throw new ApiError(404, "Patient not found", "PATIENT_NOT_FOUND");
+  }
 
   return patient;
 };
 
 module.exports = getMyProfile;
-

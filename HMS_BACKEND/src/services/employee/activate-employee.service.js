@@ -1,33 +1,36 @@
 const Employee = require("../../models/Employee");
 const User = require("../../models/User");
 const STATUS = require("../../constants/status");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 
-const activateEmployeeService = async (employeeId, activatedBy) => {
-  const employee = await Employee.findOneAndUpdate(
-    {
-      _id: employeeId,
-      isDeleted: { $ne: true },
-    },
-    {
-      status: STATUS.ACTIVE,
-      activatedBy,
-      activatedDate: new Date(),
-    },
-    { new: true }
-  );
+const activateEmployeeService = async (employeeId, userId) => {
+  const employee = await Employee.findOne({
+    _id: employeeId,
+    isDeleted: false,
+  });
 
   if (!employee) {
-    throw ERR.employeeNotFound();
+    throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
   }
 
-  await User.findOneAndUpdate(
-    { employeeId },
-    { status: STATUS.ACTIVE }
-  );
+  const user = await User.findOne({
+    employeeId,
+    isDeleted: false,
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User account not found", "USER_NOT_FOUND");
+  }
+
+  employee.status = STATUS.ACTIVE;
+  employee.updatedBy = userId;
+
+  user.status = STATUS.ACTIVE;
+
+  await employee.save();
+  await user.save();
 
   return employee;
 };
 
 module.exports = activateEmployeeService;
-

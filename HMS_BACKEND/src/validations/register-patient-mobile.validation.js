@@ -7,34 +7,33 @@ const registerPatientMobileValidation = [
     .withMessage("First name is required")
     .matches(/^[A-Za-z\s'-]+$/)
     .withMessage("Invalid first name"),
-
   body("lastName")
     .trim()
     .notEmpty()
     .withMessage("Last name is required")
     .matches(/^[A-Za-z\s'-]+$/)
     .withMessage("Invalid last name"),
-
   body("email")
     .trim()
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
     .withMessage("Invalid email"),
-
   body("phone")
     .trim()
     .notEmpty()
     .withMessage("Phone number is required")
     .matches(/^\d{10}$/)
     .withMessage("Phone number must be 10 digits"),
-
   body("password")
     .notEmpty()
     .withMessage("Password is required")
-    .isLength({ min: 8 })
-    .withMessage("Password must be at least 8 characters"),
-
+    .isLength({ min: 8, max: 20 })
+    .withMessage("Password must be between 8 and 20 characters")
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
+    .withMessage(
+      "Password must contain uppercase, lowercase, number and special character",
+    ),
   body("confirmPassword")
     .notEmpty()
     .withMessage("Confirm password is required")
@@ -44,18 +43,6 @@ const registerPatientMobileValidation = [
       }
       return true;
     }),
-
-  body("securityQuestion")
-    .trim()
-    .notEmpty()
-    .withMessage("Security question is required"),
-
-  body("securityAnswer")
-    .trim()
-    .notEmpty()
-    .withMessage("Security answer is required")
-    .isLength({ min: 2, max: 100 })
-    .withMessage("Security answer must be between 2 and 100 characters"),
 ];
 
 module.exports = {

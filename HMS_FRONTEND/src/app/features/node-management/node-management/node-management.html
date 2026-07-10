@@ -1,0 +1,150 @@
+<div class="node-page">
+  <div class="page-header">
+    <div>
+      <p class="page-label">Super Admin</p>
+      <h1>Node Management</h1>
+      <p class="page-subtitle">Control navigation nodes and API permission mappings.</p>
+    </div>
+  </div>
+
+  <div class="node-layout">
+    <section class="node-list">
+      <div class="section-title">
+        <h2>Nodes</h2>
+        <span>{{ flatNodes.length }} total</span>
+      </div>
+
+      @if(isLoading()) {
+      <app-skeleton-loader [rows]="5"></app-skeleton-loader>
+      } @else if(flatNodes.length === 0) {
+      <app-empty-state
+        icon="account_tree"
+        title="No Nodes Found"
+        message="Create the first navigation node for this HMS workspace."
+      ></app-empty-state>
+      } @else {
+      <div class="tree">
+        @for(node of nodes(); track node._id) {
+        <div class="node-group">
+          <button type="button" class="node-row" [class.active]="selectedNodeId() === node._id" (click)="editNode(node)">
+            <span class="material-icons">{{ node.icon || 'radio_button_unchecked' }}</span>
+            <span>
+              <strong>{{ node.name }}</strong>
+              <small>{{ node.path }}</small>
+            </span>
+          </button>
+
+          @for(child of node.children || []; track child._id) {
+          <button
+            type="button"
+            class="node-row child"
+            [class.active]="selectedNodeId() === child._id"
+            (click)="editNode(child)"
+          >
+            <span class="material-icons">{{ child.icon || 'subdirectory_arrow_right' }}</span>
+            <span>
+              <strong>{{ child.name }}</strong>
+              <small>{{ child.path }}</small>
+            </span>
+          </button>
+          }
+        </div>
+        }
+      </div>
+      }
+    </section>
+
+    <section class="node-form">
+      <div class="section-title">
+        <h2>{{ form._id ? 'Edit Node' : 'Create Node' }}</h2>
+        @if(form._id) {
+        <button type="button" class="danger-link" (click)="deleteNode(form)">Delete</button>
+        }
+      </div>
+
+      <div class="form-grid">
+        <label>
+          <span>Name</span>
+          <input type="text" [(ngModel)]="form.name" placeholder="Employees" />
+        </label>
+
+        <label>
+          <span>Route Path</span>
+          <input type="text" [(ngModel)]="form.path" placeholder="/employees" />
+        </label>
+
+        <label>
+          <span>Material Icon</span>
+          <input type="text" [(ngModel)]="form.icon" placeholder="groups" />
+        </label>
+
+        <label>
+          <span>Order</span>
+          <input type="number" [(ngModel)]="form.order" />
+        </label>
+
+        <label>
+          <span>Parent</span>
+          <select [(ngModel)]="form.parent">
+            <option value="">Root node</option>
+            @for(parent of parentOptions; track parent._id) {
+            <option [value]="parent._id">{{ parent.name }} - {{ parent.path }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          <span>Active</span>
+          <select [(ngModel)]="form.isActive">
+            <option [ngValue]="true">Active</option>
+            <option [ngValue]="false">Inactive</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="full-field">
+        <span>Allowed Roles</span>
+        <input type="text" [(ngModel)]="form.rolesText" placeholder="SUPER_ADMIN, ADMIN" />
+        <small>Available: {{ roles.join(', ') }}</small>
+      </label>
+
+      <div class="permission-header">
+        <div>
+          <h3>API Permissions</h3>
+          <p>Match backend route patterns such as /api/patients/:id.</p>
+        </div>
+        <button type="button" class="secondary-btn" (click)="addPermission()">
+          <span class="material-icons">add</span>
+          Add API
+        </button>
+      </div>
+
+      <div class="permissions">
+        @for(permission of form.apiPermissions; track $index) {
+        <div class="permission-row">
+          <select [(ngModel)]="permission.method">
+            @for(method of methods; track method) {
+            <option [value]="method">{{ method }}</option>
+            }
+          </select>
+
+          <input type="text" [(ngModel)]="permission.path" placeholder="/api/resource/:id" />
+
+          <input type="text" [(ngModel)]="permission.rolesText" placeholder="Optional role override" />
+
+          <button type="button" class="icon-btn danger" (click)="removePermission($index)">
+            <span class="material-icons">delete</span>
+          </button>
+        </div>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="secondary-btn" (click)="startCreate()">Reset</button>
+        <button type="button" class="primary-btn" [disabled]="isSaving()" (click)="saveNode()">
+          {{ isSaving() ? 'Saving...' : form._id ? 'Update Node' : 'Create Node' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

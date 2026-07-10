@@ -1,39 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import { API_BASE_URL } from '../constants/api.constants';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardService {
-  private readonly apiUrl = `${API_BASE_URL}/dashboard`;
-
   constructor(private readonly http: HttpClient) {}
 
   // Get admin dashboard statistics
   getAdminStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/admin-stats`);
+    return this.http.get(`${API_BASE_URL}/dashboard/admin-stats`);
   }
 
   // Get recently added employees
   getRecentEmployees(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/recent-employees`);
+    return this.http.get(`${API_BASE_URL}/dashboard/recent-employees`);
   }
 
   // Get doctor dashboard statistics
   getDoctorStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/doctor-stats`);
+    return this.http.get(`${API_BASE_URL}/dashboard/doctor-stats`);
   }
 
   // Get receptionist dashboard statistics
   getReceptionistStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/receptionist-stats`);
+    return this.http.get(`${API_BASE_URL}/dashboard/receptionist-stats`);
   }
 
   // Get today's appointments
   getTodayAppointments(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/today-appointments`);
+    return this.http.get(`${API_BASE_URL}/dashboard/today-appointments`);
   }
 }

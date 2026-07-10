@@ -1,115 +1,72 @@
+const asyncHandler = require("../utils/asyncHandler");
+const ApiError = require("../utils/ApiError");
+const ApiResponse = require("../utils/ApiResponse");
+
 const {
   getStates,
   getDistrictsByStateId,
   getTaluksByDistrict,
   getPostOfficeAreasByDistrict,
   getPincodesByDistrict,
-} = require("../services/india-location.service");
- 
-const getIndiaStates = async (req, res, next) => {
-  try {
-    const states = await getStates();
- 
-    return res.status(200).json({
-      success: true,
-      message: "States retrieved successfully",
-      data: states,
-    });
-  } catch (error) {
-    next(error);
+} = require("../services/patient/india-location.service");
+
+const requireStateAndDistrict = (query) => {
+  const { state, district } = query;
+
+  if (!state || !district) {
+    throw new ApiError(400, "State and district are required", "BAD_REQUEST");
   }
+
+  return { state, district };
 };
- 
-const getIndiaDistricts = async (req, res, next) => {
-  try {
-    const districts = await getDistrictsByStateId(req.params.stateId);
- 
-    if (!districts) {
-      return res.status(404).json({
-        success: false,
-        message: "State not found",
-      });
-    }
- 
-    return res.status(200).json({
-      success: true,
-      message: "Districts retrieved successfully",
-      data: districts,
-    });
-  } catch (error) {
-    next(error);
+
+const getIndiaStates = asyncHandler(async (req, res) => {
+  const states = await getStates();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "States retrieved successfully", states));
+});
+
+const getIndiaDistricts = asyncHandler(async (req, res) => {
+  const districts = await getDistrictsByStateId(req.params.stateId);
+
+  if (!districts) {
+    throw new ApiError(404, "State not found", "STATE_NOT_FOUND");
   }
-};
- 
-const getIndiaPincodes = async (req, res, next) => {
-  try {
-    const { state, district } = req.query;
- 
-    if (!state || !district) {
-      return res.status(400).json({
-        success: false,
-        message: "State and district are required",
-      });
-    }
- 
-    const pincodes = await getPincodesByDistrict(state, district);
- 
-    return res.status(200).json({
-      success: true,
-      message: "Pincodes retrieved successfully",
-      data: pincodes,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
- 
-const getIndiaPostOfficeAreas = async (req, res, next) => {
-  try {
-    const { state, district } = req.query;
- 
-    if (!state || !district) {
-      return res.status(400).json({
-        success: false,
-        message: "State and district are required",
-      });
-    }
- 
-    const areas = await getPostOfficeAreasByDistrict(state, district);
- 
-    return res.status(200).json({
-      success: true,
-      message: "Post offices retrieved successfully",
-      data: areas,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
- 
-const getIndiaTaluks = async (req, res, next) => {
-  try {
-    const { state, district } = req.query;
- 
-    if (!state || !district) {
-      return res.status(400).json({
-        success: false,
-        message: "State and district are required",
-      });
-    }
- 
-    const taluks = await getTaluksByDistrict(state, district);
- 
-    return res.status(200).json({
-      success: true,
-      message: "Taluks retrieved successfully",
-      data: taluks,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
- 
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Districts retrieved successfully", districts));
+});
+
+const getIndiaPincodes = asyncHandler(async (req, res) => {
+  const { state, district } = requireStateAndDistrict(req.query);
+  const pincodes = await getPincodesByDistrict(state, district);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Pincodes retrieved successfully", pincodes));
+});
+
+const getIndiaPostOfficeAreas = asyncHandler(async (req, res) => {
+  const { state, district } = requireStateAndDistrict(req.query);
+  const areas = await getPostOfficeAreasByDistrict(state, district);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Post offices retrieved successfully", areas));
+});
+
+const getIndiaTaluks = asyncHandler(async (req, res) => {
+  const { state, district } = requireStateAndDistrict(req.query);
+  const taluks = await getTaluksByDistrict(state, district);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Taluks retrieved successfully", taluks));
+});
+
 module.exports = {
   getIndiaStates,
   getIndiaDistricts,
@@ -117,4 +74,3 @@ module.exports = {
   getIndiaPostOfficeAreas,
   getIndiaTaluks,
 };
- 

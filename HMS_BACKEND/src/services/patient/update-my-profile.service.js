@@ -1,7 +1,7 @@
 const Patient = require("../../models/Patient");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 
-const updateMyProfile = async (patientId, updateData) => {
+const updateMyProfile = async (patientId, updateData, updatedBy) => {
   if (updateData.maritalStatus === "") {
     delete updateData.maritalStatus;
   }
@@ -9,24 +9,23 @@ const updateMyProfile = async (patientId, updateData) => {
   if (updateData.gender === "") {
     delete updateData.gender;
   }
-  const patient = await Patient.findOneAndUpdate(
-    {
-      _id: patientId,
-      isDeleted: { $ne: true },
-    },
-    updateData,
-    {
-      new: true,
-      runValidators: true,
-    },
-  );
+
+  const patient = await Patient.findOne({
+    _id: patientId,
+    isDeleted: false,
+  });
 
   if (!patient) {
-throw ERR.patientNotFound();
+    throw new ApiError(404, "Patient not found", "PATIENT_NOT_FOUND");
   }
+
+  Object.assign(patient, updateData);
+
+  patient.updatedBy = updatedBy;
+
+  await patient.save();
 
   return patient;
 };
 
 module.exports = updateMyProfile;
-

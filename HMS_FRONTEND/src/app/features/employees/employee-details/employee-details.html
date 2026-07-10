@@ -1,4 +1,5 @@
-<div class="employee-page" *ngIf="employee as emp">
+@if(employee(); as emp){
+<div class="employee-page">
   <!-- Hero -->
 
   <div class="employee-hero glass-card">
@@ -35,25 +36,25 @@
 
       <div class="info-list">
         <div class="info-item">
-          <label>Employee Code</label>
+          <span>Employee Code</span>
 
           <p>{{ emp.employeeCode }}</p>
         </div>
 
         <div class="info-item">
-          <label>Email</label>
+          <span>Email</span>
 
           <p>{{ emp.email }}</p>
         </div>
 
         <div class="info-item">
-          <label>Phone</label>
+          <span>Phone</span>
 
           <p>{{ emp.countryCode }} {{ emp.phone }}</p>
         </div>
 
         <div class="info-item">
-          <label>Gender</label>
+          <span>Gender</span>
 
           <p>{{ emp.gender || 'N/A' }}</p>
         </div>
@@ -67,25 +68,25 @@
 
       <div class="info-list">
         <div class="info-item">
-          <label>Designation</label>
+          <span>Designation</span>
 
           <p>{{ emp.designation }}</p>
         </div>
 
         <div class="info-item">
-          <label>Department</label>
+          <span>Department</span>
 
           <p>{{ emp.department }}</p>
         </div>
 
         <div class="info-item">
-          <label>Joining Date</label>
+          <span>Joining Date</span>
 
           <p>{{ emp.joiningDate | date }}</p>
         </div>
 
         <div class="info-item">
-          <label>Status</label>
+          <span>Status</span>
 
           <p>{{ emp.status }}</p>
         </div>
@@ -94,40 +95,37 @@
 
     <!-- Doctor -->
 
-    <div
-      *ngIf="
-          emp.designation
-          === 'DOCTOR'
-          "
-      class="info-card glass-card doctor-card"
-    >
+    @if( emp.designation === 'DOCTOR' ){
+    <div class="info-card glass-card doctor-card">
       <h2>Doctor Information</h2>
 
       <div class="info-list">
         <div class="info-item">
-          <label>Specialization</label>
+          <span>Specialization</span>
 
           <p>{{ emp.specialization || 'N/A' }}</p>
         </div>
 
         <div class="info-item">
-          <label>Qualification</label>
+          <span>Qualification</span>
 
           <p>{{ emp.qualification && emp.qualification.length > 0 ? emp.qualification[0] : 'N/A' }}</p>
         </div>
 
         <div class="info-item">
-          <label>Consultation Fee</label>
+          <span>Consultation Fee</span>
 
           <p>₹ {{ emp.consultationFee || 0 }}</p>
         </div>
 
         <div class="info-item">
-          <label>Availability</label>
+          <span>Availability</span>
 
           <p>{{ emp.availabilitySlots && emp.availabilitySlots.length > 0 ? emp.availabilitySlots : 'N/A' }}</p>
         </div>
       </div>
     </div>
+    }
   </div>
 </div>
+}

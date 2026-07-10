@@ -1,10 +1,11 @@
 <div class="dashboard-wrapper">
+  <!-- Hero Section -->
+
   <div class="hero-section glass-card">
     <div>
       <p class="hero-label">Smart Healthcare Workspace</p>
-
-      @if( authService.currentUser | async; as user ){
-      <h1>Welcome, {{ user?.employeeId?.name || 'Administrator' }}</h1>
+      @if( authService.currentUser(); as user ){
+      <h1>Welcome, {{ user?.employeeId?.name || 'Administrator' }} 👋</h1>
       }
 
       <p class="hero-subtitle">Here's what's happening in your hospital today.</p>
@@ -17,65 +18,63 @@
     </div>
   </div>
 
+  <!-- Stats -->
+
   <div class="stats-grid">
+    <!-- Employees -->
+
     <div class="stat-card glass-card">
-      <div class="stat-icon blue" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>
-        </svg>
-      </div>
+      <div class="stat-icon blue">👨‍⚕️</div>
 
       <div>
-        <h2>{{ stats?.totalEmployees || 0 }}</h2>
+        <h2>{{ stats()?.totalEmployees || 0 }}</h2>
 
         <p>Total Employees</p>
       </div>
     </div>
 
+    <!-- Doctors -->
+
     <div class="stat-card glass-card">
-      <div class="stat-icon purple" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M6 3v5a6 6 0 0 0 12 0V3M4 3h4M16 3h4M12 14v3a4 4 0 0 0 8 0v-1M20 16a2 2 0 1 0 0-4 2 2 0 0 0 0 4"></path>
-        </svg>
-      </div>
+      <div class="stat-icon purple">🩺</div>
 
       <div>
-        <h2>{{ stats?.totalDoctors || 0 }}</h2>
+        <h2>{{ stats()?.totalDoctors || 0 }}</h2>
 
         <p>Doctors</p>
       </div>
     </div>
 
+    <!-- Nurses -->
+
     <div class="stat-card glass-card">
-      <div class="stat-icon green" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M12 3 4 6v6c0 5 3.4 8.6 8 9 4.6-.4 8-4 8-9V6l-8-3ZM12 8v8M8 12h8"></path>
-        </svg>
-      </div>
+      <div class="stat-icon green">💉</div>
 
       <div>
-        <h2>{{ stats?.totalNurses || 0 }}</h2>
+        <h2>{{ stats()?.totalNurses || 0 }}</h2>
 
         <p>Nurses</p>
       </div>
     </div>
 
+    <!-- Pending -->
+
     <div class="stat-card glass-card">
-      <div class="stat-icon orange" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"></path>
-        </svg>
-      </div>
+      <div class="stat-icon orange">⏳</div>
 
       <div>
-        <h2>{{ stats?.pendingRequests || 0 }}</h2>
+        <h2>{{ stats()?.pendingRequests || 0 }}</h2>
 
         <p>Pending Requests</p>
       </div>
     </div>
   </div>
 
-  <div class="bottom-grid single-column">
+  <!-- Bottom Grid -->
+
+  <div class="bottom-grid">
+    <!-- Recent Employees -->
+
     <div class="recent-section glass-card">
       <div class="section-header">
         <h2>Recent Employees</h2>
@@ -84,7 +83,7 @@
       </div>
 
       <div class="employee-list">
-        @for( employee of recentEmployees || []; track employee._id ){
+        @for( employee of recentEmployees() || []; track employee._id ){
         <div class="employee-card">
           <div class="employee-avatar">{{ employee.name ?.charAt(0) }}</div>
 
@@ -94,6 +93,44 @@
             <p>{{ employee.designation }}</p>
           </div>
         </div>
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+
+    <div class="quick-section glass-card">
+      <div class="section-header">
+        <h2>Quick Actions</h2>
+
+        <span>Fast Navigation</span>
+      </div>
+
+      <div class="quick-grid">
+        @if(nodeService.canAccessPath('/appointments/book')){
+        <a routerLink="/appointments/book" class="quick-card">
+          <span>📅</span>
+
+          Book Appointment
+        </a>
+        } @if(nodeService.canAccessPath('/patients/create')){
+        <a routerLink="/patients/create" class="quick-card">
+          <span>🧑</span>
+
+          Add Patient
+        </a>
+        } @if(nodeService.canAccessPath('/employees/create')){
+        <a routerLink="/employees/create" class="quick-card">
+          <span>👨‍⚕️</span>
+
+          Add Employee
+        </a>
+        } @if(nodeService.canAccessPath('/appointments')){
+        <a routerLink="/appointments" class="quick-card">
+          <span>📋</span>
+
+          View Appointments
+        </a>
         }
       </div>
     </div>

@@ -1,10 +1,12 @@
 <div class="dashboard-wrapper">
+  <!-- Hero Section -->
+
   <div class="hero-section glass-card">
     <div>
       <p class="hero-label">Reception Workspace</p>
 
-      @if( authService.currentUser | async; as user ){
-      <h1>Welcome, {{ user?.employeeId?.name || 'Receptionist' }}</h1>
+      @if( authService.currentUser(); as user ){
+      <h1>Welcome, {{ user?.employeeId?.name || 'Receptionist' }} 👋</h1>
       }
 
       <p class="hero-subtitle">Manage patients, appointments and front desk operations.</p>
@@ -17,65 +19,63 @@
     </div>
   </div>
 
+  <!-- Stats -->
+
   <div class="stats-grid">
+    <!-- Today's Appointments -->
+
     <div class="stat-card glass-card">
-      <div class="stat-icon blue" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"></path>
-        </svg>
-      </div>
+      <div class="stat-icon blue">📅</div>
 
       <div>
-        <h2>{{ stats?.todayAppointments || 0 }}</h2>
+        <h2>{{ stats()?.todayAppointments || 0 }}</h2>
 
         <p>Today's Appointments</p>
       </div>
     </div>
 
+    <!-- Total Patients -->
+
     <div class="stat-card glass-card">
-      <div class="stat-icon purple" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M16 11h6"></path>
-        </svg>
-      </div>
+      <div class="stat-icon purple">🧑</div>
 
       <div>
-        <h2>{{ stats?.totalPatients || 0 }}</h2>
+        <h2>{{ stats()?.totalPatients || 0 }}</h2>
 
         <p>Total Patients</p>
       </div>
     </div>
 
+    <!-- Checked In -->
+
     <div class="stat-card glass-card">
-      <div class="stat-icon green" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M20 6 9 17l-5-5"></path>
-        </svg>
-      </div>
+      <div class="stat-icon green">✅</div>
 
       <div>
-        <h2>{{ stats?.checkedInPatients || 0 }}</h2>
+        <h2>{{ stats()?.checkedInPatients || 0 }}</h2>
 
         <p>Checked In</p>
       </div>
     </div>
 
+    <!-- Pending -->
+
     <div class="stat-card glass-card">
-      <div class="stat-icon orange" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"></path>
-        </svg>
-      </div>
+      <div class="stat-icon orange">⏳</div>
 
       <div>
-        <h2>{{ stats?.pendingAppointments || 0 }}</h2>
+        <h2>{{ stats()?.pendingAppointments || 0 }}</h2>
 
         <p>Pending Appointments</p>
       </div>
     </div>
   </div>
 
-  <div class="bottom-grid single-column">
+  <!-- Bottom Grid -->
+
+  <div class="bottom-grid">
+    <!-- Today's Appointments -->
+
     <div class="recent-section glass-card">
       <div class="section-header">
         <h2>Today's Appointments</h2>
@@ -84,7 +84,7 @@
       </div>
 
       <div class="employee-list">
-        @for( appointment of todayAppointments || []; track appointment._id ){
+        @for( appointment of todayAppointments() || []; track appointment._id ){
         <div class="employee-card">
           <div class="employee-avatar">{{ appointment ?.patientId ?.firstName ?.charAt(0) }}</div>
 
@@ -94,6 +94,44 @@
             <p>{{ appointment ?.timeSlot }}</p>
           </div>
         </div>
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+
+    <div class="quick-section glass-card">
+      <div class="section-header">
+        <h2>Quick Actions</h2>
+
+        <span>Fast Navigation</span>
+      </div>
+
+      <div class="quick-grid">
+        @if(nodeService.canAccessPath('/patients/create')){
+        <a routerLink="/patients/create" class="quick-card">
+          <span>🧑</span>
+
+          Add Patient
+        </a>
+        } @if(nodeService.canAccessPath('/appointments/book')){
+        <a routerLink="/appointments/book" class="quick-card">
+          <span>📅</span>
+
+          Book Appointment
+        </a>
+        } @if(nodeService.canAccessPath('/appointments')){
+        <a routerLink="/appointments" class="quick-card">
+          <span>📋</span>
+
+          View Appointments
+        </a>
+        } @if(nodeService.canAccessPath('/patients')){
+        <a routerLink="/patients" class="quick-card">
+          <span>👨‍⚕️</span>
+
+          Patients
+        </a>
         }
       </div>
     </div>

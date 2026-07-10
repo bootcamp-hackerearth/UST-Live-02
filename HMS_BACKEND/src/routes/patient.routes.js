@@ -2,107 +2,97 @@ const express = require("express");
 
 const router = express.Router();
 
+const authMiddleware = require("../middleware/auth.middleware");
+const nodePermissionMiddleware = require("../middleware/node-permission.middleware");
+const validateMiddleware = require("../middleware/validate.middleware");
+const {
+  paginationQueryValidation,
+} = require("../validations/common.validation");
+
 const {
   createPatient,
   getPatients,
   getPatientById,
   updatePatient,
-  deletePatient,
   registerPatientMobile,
   getProfile,
   updateProfile,
+  deletePatient,
   getPatientDashboard,
 } = require("../controllers/patient.controller");
-
-const authMiddleware = require("../middleware/auth.middleware");
-const permissionMiddleware = require("../middleware/permission.middleware");
-const validateMiddleware = require("../middleware/validate.middleware");
 
 const {
   createPatientValidation,
   updatePatientValidation,
 } = require("../validations/patient.validation");
+
 const {
   registerPatientMobileValidation,
-} = require(
-  "../validations/register-patient-mobile.validation"
-);
-// Register a new patient
+} = require("../validations/register-patient-mobile.validation");
+
+// Create patient
 router.post(
   "/",
   authMiddleware,
-  permissionMiddleware("patient:create"),
+  nodePermissionMiddleware,
   createPatientValidation,
   validateMiddleware,
-  createPatient
+  createPatient,
 );
 
 // Get all patients
 router.get(
   "/",
   authMiddleware,
-  permissionMiddleware("patient:list"),
-  getPatients
-);
-// get profile 
-router.get(
-  "/profile",
-  authMiddleware,
-  permissionMiddleware("patient:profile:view"),
-  getProfile
+  nodePermissionMiddleware,
+  paginationQueryValidation,
+  validateMiddleware,
+  getPatients,
 );
 
-// update profile 
+// Patient profile
+router.get("/profile", authMiddleware, nodePermissionMiddleware, getProfile);
+
+// Update patient profile
 router.put(
   "/profile",
   authMiddleware,
-  permissionMiddleware("patient:profile:update"),
+  nodePermissionMiddleware,
   updatePatientValidation,
   validateMiddleware,
-  updateProfile
+  updateProfile,
 );
 
 // Patient dashboard
 router.get(
   "/dashboard",
   authMiddleware,
-  permissionMiddleware("patient:dashboard"),
-  getPatientDashboard
-);
-// Get patient details by ID
-router.get(
-  "/:id",
-  authMiddleware,
-  permissionMiddleware("patient:detail"),
-  getPatientById
+  nodePermissionMiddleware,
+  getPatientDashboard,
 );
 
-// Update patient information
+// Get patient by id
+router.get("/:id", authMiddleware, nodePermissionMiddleware, getPatientById);
+
+// Update patient
 router.put(
   "/:id",
   authMiddleware,
-  permissionMiddleware("patient:update"),
+  nodePermissionMiddleware,
   updatePatientValidation,
   validateMiddleware,
-  updatePatient
+  updatePatient,
 );
 
-// Soft delete patient
-router.delete(
-  "/:id",
-  authMiddleware,
-  permissionMiddleware("patient:delete"),
-  deletePatient
-);
-
-// Mobile register
+// Mobile registration
 router.post(
   "/register",
   registerPatientMobileValidation,
   validateMiddleware,
-  registerPatientMobile
+  registerPatientMobile,
 );
 
-
+// Delete patient
+router.delete("/:id", authMiddleware, nodePermissionMiddleware, deletePatient);
 
 module.exports = router;

@@ -4,11 +4,7 @@
   gap: 24px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Glass Card
-|--------------------------------------------------------------------------
-*/
+/* Glass Card */
 .glass-card {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(18px);
@@ -16,31 +12,16 @@
   box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Error Text
-|--------------------------------------------------------------------------
-*/
-.error-text {
-  color: #e53e3e;
-  font-size: 17px;
-  margin-top: 6px;
-  display: block;
-  padding-left: 4px;
-}
+/* Error Text */
 
-/*
-|--------------------------------------------------------------------------
-| Header
-|--------------------------------------------------------------------------
-*/
+/* Header */
 .page-header {
   padding: 34px;
   border-radius: 30px;
 }
 
 .page-label {
-  color: #3b82f6;
+  color: #1d4ed8;
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
@@ -54,14 +35,10 @@
 }
 
 .page-subtitle {
-  color: #64748b;
+  color: #475569;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Steps
-|--------------------------------------------------------------------------
-*/
+/* Steps */
 .steps-wrapper {
   display: flex;
   justify-content: space-between;
@@ -84,7 +61,7 @@
 }
 
 .step.active {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #1d4ed8, #6d28d9);
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 15px 30px rgba(59, 130, 246, 0.22);
@@ -101,11 +78,7 @@
   font-weight: 700;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Form
-|--------------------------------------------------------------------------
-*/
+/* Form */
 .patient-form {
   padding: 34px;
   border-radius: 30px;
@@ -123,14 +96,10 @@
 }
 
 .section-title p {
-  color: #64748b;
+  color: #475569;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Grid — align-items: start prevents height stretching when errors appear
-|--------------------------------------------------------------------------
-*/
+/* Grid — align-items: start prevents height stretching when errors appear */
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -138,11 +107,7 @@
   align-items: start;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Form Field — each field + error is one unit
-|--------------------------------------------------------------------------
-*/
+/* Form Field — each field + error is one unit */
 .form-field {
   display: flex;
   flex-direction: column;
@@ -151,7 +116,7 @@
 
 .field-label {
   font-size: 16px;
-  color: #64748b;
+  color: #475569;
   position: relative;
   bottom: 25px;
   left: 10px;
@@ -159,11 +124,7 @@
   font-weight: 500;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Inputs — consistent height, no width overflow
-|--------------------------------------------------------------------------
-*/
+/* Inputs — consistent height, no width overflow */
 input,
 select,
 textarea {
@@ -199,11 +160,7 @@ textarea:focus {
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Input error state — red border when invalid and touched
-|--------------------------------------------------------------------------
-*/
+/* Input error state — red border when invalid and touched */
 input.ng-invalid.ng-touched,
 select.ng-invalid.ng-touched {
   border-color: #e53e3e;
@@ -216,21 +173,13 @@ textarea {
   resize: vertical;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Date input label spacing
-|--------------------------------------------------------------------------
-*/
+/* Date input label spacing */
 .form-field input[type='date'] {
   padding: 0 18px;
-  color: #64748b;
+  color: #475569;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Phone Group
-|--------------------------------------------------------------------------
-*/
+/* Phone Group */
 .phone-group {
   display: flex;
   gap: 12px;
@@ -245,11 +194,7 @@ textarea {
   flex: 1;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Buttons
-|--------------------------------------------------------------------------
-*/
+/* Buttons */
 .button-group {
   display: flex;
   justify-content: space-between;
@@ -271,7 +216,7 @@ button {
 
 .primary-btn,
 .submit-btn {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #1d4ed8, #6d28d9);
   color: white;
   box-shadow: 0 15px 30px rgba(59, 130, 246, 0.22);
 }
@@ -295,32 +240,23 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Responsive
-|--------------------------------------------------------------------------
-*/
+/* Responsive */
 @media (max-width: 768px) {
   .steps-wrapper {
     flex-direction: column;
   }
-
   .patient-form {
     padding: 22px;
   }
-
   .button-group {
     flex-direction: column;
   }
-
   button {
     width: 100%;
   }
-
   .phone-group {
     flex-direction: column;
   }
-
   .phone-group select {
     width: 100%;
   }
@@ -339,5 +275,3 @@ textarea.ng-invalid.ng-touched {
   border: 1px solid #ef4444 !important;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
-
- 

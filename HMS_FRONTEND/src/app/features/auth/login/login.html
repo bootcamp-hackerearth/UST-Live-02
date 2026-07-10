@@ -46,9 +46,9 @@
       <!-- Login ID -->
 
       <div class="input-group">
-        <label>Email or Employee Code</label>
+        <label for="loginId">Email or Employee Code</label>
 
-        <input type="text" placeholder="Enter your login ID" formControlName="loginId" />
+        <input id="loginId" type="text" placeholder="Enter your login ID" formControlName="loginId" />
         @if(loginForm.get('loginId')?.invalid && loginForm.get('loginId')?.touched){
         <span class="error-text">Login ID is required</span>
         }
@@ -57,9 +57,9 @@
       <!-- Password -->
 
       <div class="input-group">
-        <label>Password</label>
+        <label for="loginPassword">Password</label>
 
-        <input type="password" placeholder="Enter your password" formControlName="password" />
+        <input id="loginPassword" type="password" placeholder="Enter your password" formControlName="password" />
         @if(loginForm.get('password')?.invalid && loginForm.get('password')?.touched){
         <span class="error-text">Password is required</span>
         }
@@ -73,22 +73,20 @@
 
       <!-- Error -->
 
-      @if(errorMessage){
-
-      <div class="error-box">{{ errorMessage }}</div>
-
+      @if(errorMessage()){
+      <div class="error-box">{{ errorMessage() }}</div>
       }
 
       <!-- Button -->
 
-      <button type="submit" class="login-btn" [disabled]="isSubmitting">
-        @if(isSubmitting){ Logging in... } @else { Login }
+      <button type="submit" class="login-btn" [disabled]="isSubmitting()">
+        @if(isSubmitting()){ Logging in... } @else { Login }
       </button>
 
       <!-- Register -->
 
       <div class="register-text">
-        Don’t have an account?
+        Don't have an account?
 
         <a routerLink="/register">Register</a>
       </div>

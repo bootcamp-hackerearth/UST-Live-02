@@ -1,31 +1,34 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const ROLES = require("../constants/roles");
-const seedAdmin = async () => {
-  try {
-    const existingAdmin = await User.findOne({ email: "admin@gmail.com" });
-    const hashedPassword = await bcrypt.hash("Admin@123", 10);
+const STATUS = require("../constants/status");
+const logger = require("../utils/logger");
 
-    if (existingAdmin) {
-      existingAdmin.passwordHash = existingAdmin.passwordHash || hashedPassword;
-      existingAdmin.roles = [ROLES.SUPER_ADMIN];
-      existingAdmin.isFirstLogin = false;
-      await existingAdmin.save();
-      console.log("Super Admin already exists and role was updated");
+const seedSuperAdmin = async () => {
+  try {
+    const existingSuperAdmin = await User.findOne({
+      email: "superadmin@hms.com",
+    });
+
+    if (existingSuperAdmin) {
+      logger.info("Super Admin already exists");
       return;
     }
 
+    const hashedPassword = await bcrypt.hash("Admin@123", 10);
+
     await User.create({
-      email: "admin@gmail.com",
+      email: "superadmin@hms.com",
       passwordHash: hashedPassword,
       roles: [ROLES.SUPER_ADMIN],
       isFirstLogin: false,
+      status: STATUS.ACTIVE,
     });
 
-    console.log("Super Admin created successfully");
+    logger.info("Super Admin created successfully");
   } catch (error) {
-    console.error("Admin seeding failed:", error.message);
+    logger.error("Super Admin seeding failed", { error });
   }
 };
 
-module.exports = seedAdmin;
+module.exports = seedSuperAdmin;

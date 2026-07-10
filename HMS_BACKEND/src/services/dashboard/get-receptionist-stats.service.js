@@ -1,23 +1,23 @@
 const Appointment = require("../../models/Appointment");
 const Patient = require("../../models/Patient");
-
+const STATUS = require("../../constants/status");
 const getReceptionistStatsService = async () => {
   const todayAppointments = await Appointment.countDocuments({
-    isDeleted: { $ne: true },
+    isDeleted: false,
   });
 
   const totalPatients = await Patient.countDocuments({
-    isDeleted: { $ne: true },
+    isDeleted: false,
   });
 
   const checkedInPatients = await Appointment.countDocuments({
-    isDeleted: { $ne: true },
-    status: "IN_CONSULTATION",
+    status: STATUS.IN_CONSULTATION,
+    isDeleted: false,
   });
 
   const pendingAppointments = await Appointment.countDocuments({
-    isDeleted: { $ne: true },
-    status: "BOOKED",
+    status: STATUS.BOOKED,
+    isDeleted: false,
   });
 
   return {
@@ -29,4 +29,3 @@ const getReceptionistStatsService = async () => {
 };
 
 module.exports = getReceptionistStatsService;
-

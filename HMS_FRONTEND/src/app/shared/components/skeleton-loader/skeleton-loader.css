@@ -1,0 +1,56 @@
+.skeleton-wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-row {
+  display: grid;
+  grid-template-columns: 42px minmax(120px, 1fr) minmax(80px, 160px) minmax(60px, 100px);
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.avatar,
+.line {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+}
+
+.line {
+  height: 14px;
+}
+
+.wide {
+  height: 18px;
+}
+
+.short {
+  max-width: 90px;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .skeleton-row {
+    grid-template-columns: 42px 1fr;
+  }
+  .line.short {
+    display: none;
+  }
+}

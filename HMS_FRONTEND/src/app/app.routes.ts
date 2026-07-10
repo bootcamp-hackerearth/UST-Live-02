@@ -1,349 +1,218 @@
 import { Routes } from '@angular/router';
-
+import { AuthLayout } from './layouts/auth-layout/auth-layout';
+import { DashboardLayout } from './layouts/dashboard-layout/dashboard-layout';
 import { authGuard } from './core/guards/auth-guard';
-
-import { menuAccessGuard } from './core/guards/menu-access.guard';
+import { Login } from './features/auth/login/login';
+import { Register } from './features/auth/register/register';
+import { CreatePassword } from './features/auth/create-password/create-password';
+import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
+import { ResetPassword } from './features/auth/reset-password/reset-password';
+import { Home } from './features/floater/home/home';
+import { nodeGuard } from './core/guards/node.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // Home Routes
   {
     path: '',
-
-    loadComponent: () =>
-      import('./features/floater/home/home').then((m) => m.Home),
-
-    pathMatch: 'full'
+    component: Home
   },
-
   // Auth Routes
   {
     path: '',
-
-    loadComponent: () =>
-      import('./layouts/auth-layout/auth-layout').then((m) => m.AuthLayout),
-
+    component: AuthLayout,
     children: [
       {
         path: 'login',
-
-        loadComponent: () =>
-          import('./features/auth/login/login').then((m) => m.Login)
+        component: Login
       },
-
       {
         path: 'register',
-
-        loadComponent: () =>
-          import('./features/auth/register/register').then((m) => m.Register)
+        component: Register
       },
-
       {
         path: 'create-password',
-
-        loadComponent: () =>
-          import('./features/auth/create-password/create-password').then(
-            (m) => m.CreatePassword
-          )
+        component: CreatePassword
       },
       {
         path: 'forgot-password',
-
-        loadComponent: () =>
-          import('./features/auth/forgot-password/forgot-password').then(
-            (m) => m.ForgotPassword
-          )
+        component: ForgotPassword
       },
-
       {
         path: 'reset-password',
-
-        loadComponent: () =>
-          import('./features/auth/reset-password/reset-password').then(
-            (m) => m.ResetPassword
-          )
+        component: ResetPassword
       }
     ]
   },
-
   // Protected Dashboard Routes
-    
   {
     path: '',
-
-    loadComponent: () =>
-      import('./layouts/dashboard-layout/dashboard-layout').then(
-        (m) => m.DashboardLayout
-      ),
-
+    component: DashboardLayout,
     canActivate: [authGuard],
-
     children: [
-    
       {
         path: '',
-
-        redirectTo: 'dashboard',
-
+        redirectTo: 'dashboard/admin',
         pathMatch: 'full'
       },
-
-   // Admin Dashboard
-
+      // Dashboards
       {
         path: 'dashboard/admin',
-
         loadComponent: () =>
-          import('./features/dashboard/admin-dashboard/admin-dashboard').then(
-            (m) => m.AdminDashboard
-          ),
-        canActivate: [menuAccessGuard('/dashboard/admin')]
+          import('./features/dashboard/admin-dashboard/admin-dashboard').then((m) => m.AdminDashboard),
+        canActivate: [nodeGuard]
       },
-
-     // Doctor Dashboard
       {
         path: 'dashboard/doctor',
-
         loadComponent: () =>
-          import('./features/dashboard/doctor-dashboard/doctor-dashboard').then(
-            (m) => m.DoctorDashboard
-          ),
-        canActivate: [menuAccessGuard('/dashboard/doctor')]
+          import('./features/dashboard/doctor-dashboard/doctor-dashboard').then((m) => m.DoctorDashboard),
+        canActivate: [nodeGuard]
       },
-
-      // Receptionist Dashboard
       {
         path: 'dashboard/receptionist',
-
         loadComponent: () =>
-          import(
-            './features/dashboard/receptionist-dashboard/receptionist-dashboard'
-          ).then((m) => m.ReceptionistDashboard),
-        canActivate: [menuAccessGuard('/dashboard/receptionist')]
+          import('./features/dashboard/receptionist-dashboard/receptionist-dashboard').then(
+            (m) => m.ReceptionistDashboard
+          ),
+        canActivate: [nodeGuard]
       },
-
-    //Employees
+      // Employees
       {
         path: 'employees',
-
-        loadComponent: () =>
-          import('./features/employees/employee-list/employee-list').then(
-            (m) => m.EmployeeList
-          ),
-
-        canActivate: [menuAccessGuard('/employees')]
+        loadComponent: () => import('./features/employees/employee-list/employee-list').then((m) => m.EmployeeList),
+        canActivate: [nodeGuard]
       },
-
       {
         path: 'employees/create',
-
-        loadComponent: () =>
-          import('./features/employees/add-employee/add-employee').then(
-            (m) => m.AddEmployee
-          ),
-
-        canActivate: [menuAccessGuard('/employees/create')]
+        loadComponent: () => import('./features/employees/add-employee/add-employee').then((m) => m.AddEmployee),
+        canActivate: [nodeGuard]
       },
-
       {
         path: 'employees/pending',
-
         loadComponent: () =>
-          import(
-            './features/employees/pending-employees/pending-employees'
-          ).then((m) => m.PendingEmployees),
-
-        canActivate: [menuAccessGuard('/employees/pending')]
+          import('./features/employees/pending-employees/pending-employees').then((m) => m.PendingEmployees),
+        canActivate: [nodeGuard]
       },
-
+      // Internal pages
       {
         path: 'employees/:id',
-
         loadComponent: () =>
-          import('./features/employees/employee-details/employee-details').then(
-            (m) => m.EmployeeDetails
-          ),
-
-        canActivate: [menuAccessGuard('/employees')]
+          import('./features/employees/employee-details/employee-details').then((m) => m.EmployeeDetails),
+        canActivate: [nodeGuard],
+        data: { nodePath: '/employees' }
       },
-
       {
         path: 'employees/edit/:id',
-
-        loadComponent: () =>
-          import('./features/employees/edit-employee/edit-employee').then(
-            (m) => m.EditEmployee
-          ),
-
-        canActivate: [menuAccessGuard('/employees')]
+        loadComponent: () => import('./features/employees/edit-employee/edit-employee').then((m) => m.EditEmployee),
+        canActivate: [nodeGuard],
+        data: { nodePath: '/employees' }
       },
-
-    // Patients
-      {
-        path: 'patients/create',
-
-        loadComponent: () =>
-          import('./features/patients/add-patient/add-patient').then(
-            (m) => m.AddPatient
-          ),
-
-        canActivate: [menuAccessGuard('/patients/create')]
-      },
+      // Patients
       {
         path: 'patients',
-
+        loadComponent: () => import('./features/patients/patient-list/patient-list').then((m) => m.PatientList),
+        canActivate: [nodeGuard]
+      },
+      {
+        path: 'patients/create',
+        loadComponent: () => import('./features/patients/add-patient/add-patient').then((m) => m.AddPatient),
+        canActivate: [nodeGuard]
+      },
+      // Internal pages
+      {
+        path: 'patients/:id',
         loadComponent: () =>
-          import('./features/patients/patient-list/patient-list').then(
-            (m) => m.PatientList
-          ),
-
-        canActivate: [menuAccessGuard('/patients')]
+          import('./features/patients/patient-details/patient-details').then((m) => m.PatientDetails),
+        canActivate: [nodeGuard],
+        data: { nodePath: '/patients' }
       },
       {
         path: 'patients/edit/:id',
-
-        loadComponent: () =>
-          import('./features/patients/edit-patient/edit-patient').then(
-            (m) => m.EditPatient
-          ),
-
-        canActivate: [menuAccessGuard('/patients')]
+        loadComponent: () => import('./features/patients/edit-patient/edit-patient').then((m) => m.EditPatient),
+        canActivate: [nodeGuard],
+        data: { nodePath: '/patients' }
       },
+      // Appointments
       {
-        path: 'patients/:id',
-
+        path: 'appointments',
         loadComponent: () =>
-          import('./features/patients/patient-details/patient-details').then(
-            (m) => m.PatientDetails
-          ),
-
-        canActivate: [menuAccessGuard('/patients')]
+          import('./features/appointments/appointment-list/appointment-list').then((m) => m.AppointmentList),
+        canActivate: [nodeGuard]
       },
       {
         path: 'appointments/book',
-
         loadComponent: () =>
-          import(
-            './features/appointments/book-appointment/book-appointment'
-          ).then((m) => m.BookAppointment),
-
-        canActivate: [menuAccessGuard('/appointments/book')]
-      },
-      {
-        path: 'appointments',
-
-        loadComponent: () =>
-          import(
-            './features/appointments/appointment-list/appointment-list'
-          ).then((m) => m.AppointmentList),
-
-        canActivate: [menuAccessGuard('/appointments')]
+          import('./features/appointments/book-appointment/book-appointment').then((m) => m.BookAppointment),
+        canActivate: [nodeGuard]
       },
       {
         path: 'appointments/requests',
-
         loadComponent: () =>
-          import(
-            './features/appointments/appointment-requests/appointment-requests'
-          ).then((m) => m.AppointmentRequestsComponent),
-
-        canActivate: [menuAccessGuard('/appointments/requests')]
+          import('./features/appointments/appointment-requests/appointment-requests').then(
+            (m) => m.AppointmentRequestsComponent
+          ),
+        canActivate: [nodeGuard]
       },
+      // Internal pages
       {
         path: 'appointments/edit/:id',
-
         loadComponent: () =>
-          import(
-            './features/appointments/edit-appointment/edit-appointment'
-          ).then((m) => m.EditAppointment),
-
-        canActivate: [menuAccessGuard('/appointments')]
+          import('./features/appointments/edit-appointment/edit-appointment').then((m) => m.EditAppointment),
+        canActivate: [nodeGuard],
+        data: { nodePath: '/appointments' }
       },
+      // Doctor
       {
         path: 'doctor-queue',
-
-        loadComponent: () =>
-          import('./features/appointments/doctor-queue/doctor-queue').then(
-            (m) => m.DoctorQueue
-          ),
-
-        canActivate: [menuAccessGuard('/doctor-queue')]
-      },
-      {
-        path: 'consultation/:appointmentId',
-
-        loadComponent: () =>
-          import(
-            './features/consultations/consultation-form/consultation-form'
-          ).then((m) => m.ConsultationForm),
-
-        canActivate: [menuAccessGuard('/doctor-queue')]
-      },
-      {
-        path: 'consultations',
-
-        loadComponent: () =>
-          import(
-            './features/consultations/consultation-list/consultation-list'
-          ).then((m) => m.ConsultationList),
-
-        canActivate: [menuAccessGuard('/medical-records')]
+        loadComponent: () => import('./features/appointments/doctor-queue/doctor-queue').then((m) => m.DoctorQueue),
+        canActivate: [nodeGuard]
       },
       {
         path: 'doctor-availability',
-
         loadComponent: () =>
-          import(
-            './features/doctor/doctor-availability/doctor-availability'
-          ).then((m) => m.DoctorAvailability),
-
-        canActivate: [menuAccessGuard('/doctor-availability')]
+          import('./features/doctor/doctor-availability/doctor-availability').then((m) => m.DoctorAvailability),
+        canActivate: [nodeGuard]
       },
       {
-        path: 'medical-records',
-
+        path: 'node-management',
         loadComponent: () =>
-          import(
-            './features/medical-records/medical-record-repository/medical-record-repository'
-          ).then((m) => m.MedicalRecordRepository),
-
-        canActivate: [menuAccessGuard('/medical-records')]
+          import('./features/node-management/node-management/node-management').then((m) => m.NodeManagement),
+        canActivate: [roleGuard(['SUPER_ADMIN'])]
+      },
+      // Consultations
+      {
+        path: 'health-records',
+        loadComponent: () =>
+          import('./features/health-records/health-record-list/health-record-list').then((m) => m.HealthRecordList),
+        canActivate: [nodeGuard]
+      },
+      // Internal pages
+      {
+        path: 'consultation/:appointmentId',
+        loadComponent: () =>
+          import('./features/consultations/consultation-form/consultation-form').then((m) => m.ConsultationForm),
+        canActivate: [nodeGuard],
+        data: { nodePath: '/doctor-queue' }
       },
       {
-        path: 'medical-records/patient/:patientId',
-
+        path: 'health-records/:patientId',
         loadComponent: () =>
-          import(
-            './features/medical-records/medical-records/medical-records'
-          ).then((m) => m.MedicalRecords),
-
-        canActivate: [menuAccessGuard('/medical-records')]
+          import('./features/health-records/health-record-details/health-record-details').then(
+            (m) => m.HealthRecordDetails
+          ),
+        canActivate: [nodeGuard],
+        data: { nodePath: '/health-records' }
       },
+      // Profile
       {
         path: 'my-profile',
-
-        loadComponent: () =>
-          import('./features/profile/my-profile/my-profile').then(
-            (m) => m.MyProfile
-          )
-      },
-      {
-        path: 'consultations/:id',
-
-        loadComponent: () =>
-          import('./features/consultations/consultation-details/consultation-details').then(
-            (m) => m.ConsultationDetails
-          ),
-
-        canActivate: [menuAccessGuard('/medical-records')]
+        loadComponent: () => import('./features/profile/my-profile/my-profile').then((m) => m.MyProfile),
+        canActivate: [nodeGuard]
       }
     ]
   },
-
-  
-//routes
   {
     path: '**',
-
     redirectTo: 'login'
   }
 ];

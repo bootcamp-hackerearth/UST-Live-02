@@ -1,8 +1,11 @@
 const Consultation = require("../../models/Consultation");
-const Appointment = require("../../models/Appointment");
-const ERR = require("../../utils/errors");
 
-const createConsultationService = async (data) => {
+const Appointment = require("../../models/Appointment");
+
+const STATUS = require("../../constants/status");
+const ApiError = require("../../utils/ApiError");
+
+const createConsultationService = async (data, createdBy) => {
   const {
     appointmentId,
     diagnosis,
@@ -14,20 +17,25 @@ const createConsultationService = async (data) => {
 
   const existingConsultation = await Consultation.findOne({
     appointmentId,
+    isDeleted: false,
   });
 
   if (existingConsultation) {
-throw ERR.consultationAlreadyExists();
-}
+    throw new ApiError(
+      409,
+      "Consultation already exists",
+      "CONSULTATION_ALREADY_EXISTS",
+    );
+  }
 
   const appointment = await Appointment.findOne({
     _id: appointmentId,
-    isDeleted: { $ne: true },
+    isDeleted: false,
   });
 
   if (!appointment) {
-throw ERR.appointmentNotFound();
- }
+    throw new ApiError(404, "Appointment not found", "APPOINTMENT_NOT_FOUND");
+  }
 
   const consultation = await Consultation.create({
     appointmentId,
@@ -38,21 +46,17 @@ throw ERR.appointmentNotFound();
     doctorNotes,
     vitals,
     prescriptions,
-    status: "COMPLETED",
+    status: STATUS.COMPLETED,
+    createdBy,
+    updatedBy: createdBy,
   });
+  appointment.status = STATUS.COMPLETED;
 
-  await Appointment.findOneAndUpdate(
-    {
-      _id: appointmentId,
-      isDeleted: { $ne: true },
-    },
-    {
-      status: "COMPLETED",
-    }
-  );
+  appointment.updatedBy = createdBy;
+
+  await appointment.save();
 
   return consultation;
 };
 
 module.exports = createConsultationService;
-

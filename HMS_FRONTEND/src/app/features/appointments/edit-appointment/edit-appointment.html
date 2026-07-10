@@ -5,10 +5,10 @@
     <div class="grid">
       <!-- Doctor -->
       <div class="form-group">
-        <label>Doctor</label>
-        <select formControlName="doctorEmployeeId" (change)="fetchAvailableSlots()">
+        <label for="doctorEmployeeId">Doctor</label>
+        <select id="doctorEmployeeId" formControlName="doctorEmployeeId" (change)="fetchAvailableSlots()">
           <option value="">Select Doctor</option>
-          @for ( doctor of doctors; track doctor._id ) {
+          @for ( doctor of doctors(); track doctor._id ) {
           <option [value]="doctor._id">{{ doctor.name }}</option>
           }
         </select>
@@ -19,19 +19,19 @@
 
       <!-- Appointment Date -->
       <div class="form-group">
-        <label>Appointment Date</label>
-        <input type="date" formControlName="appointmentDate" (change)="fetchAvailableSlots()" />
+        <label for="appointmentDate">Appointment Date</label>
+        <input id="appointmentDate" type="date" formControlName="appointmentDate" (change)="fetchAvailableSlots()" />
         @if(appointmentForm.get('appointmentDate')?.invalid && appointmentForm.get('appointmentDate')?.touched){
         <span class="error-text">Appointment Date is required</span>
-        } @if(noSlotsError){
+        } @if(noSlotsError()){
         <span class="error-text">Doctor is not available on this day</span>
         }
       </div>
 
       <!-- Appointment Type -->
       <div class="form-group">
-        <label>Appointment Type</label>
-        <select formControlName="appointmentType">
+        <label for="ea-appointmentType">Appointment Type</label>
+        <select id="ea-appointmentType" formControlName="appointmentType">
           <option value="">Select Appointment Type</option>
           <option value="CONSULTATION">Consultation</option>
           <option value="FOLLOW_UP">Follow Up</option>
@@ -46,8 +46,8 @@
 
       <!-- Priority -->
       <div class="form-group">
-        <label>Priority</label>
-        <select formControlName="priority">
+        <label for="ea-priority">Priority</label>
+        <select id="ea-priority" formControlName="priority">
           <option value="">Select Priority</option>
           <option value="NORMAL">Normal</option>
           <option value="URGENT">Urgent</option>
@@ -60,8 +60,8 @@
 
       <!-- Payment Status -->
       <div class="form-group">
-        <label>Payment Status</label>
-        <select formControlName="paymentStatus">
+        <label for="ea-paymentStatus">Payment Status</label>
+        <select id="ea-paymentStatus" formControlName="paymentStatus">
           <option value="">Select Payment Status</option>
           <option value="PENDING">Pending</option>
           <option value="PAID">Paid</option>
@@ -74,8 +74,8 @@
 
       <!-- Visit Mode -->
       <div class="form-group">
-        <label>Visit Mode</label>
-        <select formControlName="visitMode">
+        <label for="ea-visitMode">Visit Mode</label>
+        <select id="ea-visitMode" formControlName="visitMode">
           <option value="">Select Visit Mode</option>
           <option value="OFFLINE">Offline</option>
           <option value="ONLINE">Online</option>
@@ -88,8 +88,8 @@
 
       <!-- Status -->
       <div class="form-group">
-        <label>Status</label>
-        <select formControlName="status">
+        <label for="ea-status">Status</label>
+        <select id="ea-status" formControlName="status">
           <option value="">Select Status</option>
           <option value="BOOKED">Booked</option>
           <option value="IN_CONSULTATION">In Consultation</option>
@@ -107,7 +107,7 @@
     <div class="slots-section">
       <h2>Available Slots</h2>
       <div class="slots-container">
-        @for ( slot of availableSlots; track slot ) {
+        @for ( slot of availableSlots(); track slot ) {
         <button
           type="button"
           class="slot-btn"
@@ -126,25 +126,25 @@
 
     <!-- Symptoms -->
     <div class="form-group full-width">
-      <label>Symptoms</label>
-      <textarea formControlName="symptoms" placeholder="Enter symptoms"></textarea>
+      <label for="ea-symptoms">Symptoms</label>
+      <textarea id="ea-symptoms" formControlName="symptoms" placeholder="Enter symptoms"></textarea>
     </div>
 
     <!-- Reason -->
     <div class="form-group full-width">
-      <label>Reason</label>
-      <textarea formControlName="reason"></textarea>
+      <label for="ea-reason">Reason</label>
+      <textarea id="ea-reason" formControlName="reason"></textarea>
     </div>
 
     <!-- Notes -->
     <div class="form-group full-width">
-      <label>Notes</label>
-      <textarea formControlName="notes"></textarea>
+      <label for="ea-notes">Notes</label>
+      <textarea id="ea-notes" formControlName="notes"></textarea>
     </div>
 
     <!-- Submit -->
-    <button type="submit" class="submit-btn" [disabled]="isSubmitting">
-      @if(isSubmitting){ Updating... } @else { Update Appointment }
+    <button type="submit" class="submit-btn" [disabled]="isSubmitting()">
+      @if(isSubmitting()){ Updating... } @else { Update Appointment }
     </button>
   </form>
 </div>

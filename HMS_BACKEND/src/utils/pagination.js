@@ -1,113 +1,94 @@
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const mongoose = require("mongoose");
 
-const parseDate = (value, endOfDay = false) => {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  if (endOfDay) {
-    date.setHours(23, 59, 59, 999);
-  }
-
-  return date;
+const applyCursorFilter = (filter, cursor) => {
+  const decodedCursor = decodeCursor(cursor);
+  if (!decodedCursor) return;
+  const existingSearch = filter.$or;
+  delete filter.$or;
+  filter.$and = [
+    ...(existingSearch ? [{ $or: existingSearch }] : []),
+    {
+      $or: [
+        { createdAt: { $lt: new Date(decodedCursor.createdAt) } },
+        {
+          createdAt: new Date(decodedCursor.createdAt),
+          _id: { $lt: new mongoose.Types.ObjectId(decodedCursor.id) },
+        },
+      ],
+    },
+  ];
 };
 
-const getPagination = (
-  query,
-  { allowedSortFields = ["createdAt"], defaultSort = { createdAt: -1 } } = {},
-) => {
-  const page = Math.max(Number.parseInt(query.page, 10) || 1, 1);
+const getPagination = (page = 1, limit = 10) => {
+  const currentPage = Math.max(Number.parseInt(page, 10) || 1, 1);
 
-  const limit = Math.min(Math.max(Number.parseInt(query.limit, 10) || 10, 1), 100);
+  const pageSize = Math.max(Number.parseInt(limit, 10) || 10, 1);
 
-  const skip = (page - 1) * limit;
-
-  const requestedSortBy =
-    typeof query.sortBy === "string" ? query.sortBy.trim() : "";
-
-  const sortOrder = query.sortOrder === "asc" ? 1 : -1;
-// check user is allowed to sort that field
-  const sort = allowedSortFields.includes(requestedSortBy)
-    ? { [requestedSortBy]: sortOrder }
-    : defaultSort;
-
-  const search = typeof query.search === "string" ? query.search.trim() : "";
-
-  const status = typeof query.status === "string" ? query.status.trim() : "";
-
-  const fromDate = parseDate(query.fromDate);
-
-  const toDate = parseDate(query.toDate, true);
+  const skip = (currentPage - 1) * pageSize;
 
   return {
-    page,
-    limit,
+    page: currentPage,
+    limit: pageSize,
     skip,
-    sort,
-    search,
-    status,
-    fromDate,
-    toDate,
-  };
-};
-// for db
-const buildSearchFilter = (fields, search) => {
-  if (!search) {
-    return {};
-  }
-
-  const regex = new RegExp(escapeRegex(search), "i");
-
-  return {
-    $or: fields.map((field) => ({
-      [field]: regex,
-    })),
   };
 };
 
-const buildDateRangeFilter = (field, fromDate, toDate) => {
-  if (!fromDate && !toDate) {
-    return {};
+const encodeCursor = (item) => {
+  if (!item?.createdAt || !item?._id) {
+    return null;
   }
 
-  const dateFilter = {};
-
-  if (fromDate) {
-    dateFilter.$gte = fromDate;
-  }
-
-  if (toDate) {
-    dateFilter.$lte = toDate;
-  }
-
-  return {
-    [field]: dateFilter,
-  };
+  return Buffer.from(
+    JSON.stringify({
+      createdAt: item.createdAt,
+      id: item._id,
+    }),
+  ).toString("base64url");
 };
 
-const 
-getPaginationMeta = ({ page, limit, total }) => {
-  const totalPages = Math.ceil(total / limit) || 1;
+const decodeCursor = (cursor) => {
+  if (!cursor) {
+    return null;
+  }
 
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(cursor, "base64url").toString("utf8"),
+    );
+
+    if (!parsed.createdAt || !parsed.id) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const buildCursorPaginationMeta = (limit, items, hasNextPage, total = 0) => ({
+  limit,
+  total,
+  totalRecords: total,
+  nextCursor: hasNextPage ? encodeCursor(items[items.length - 1]) : null,
+  hasNextPage,
+});
+
+const buildPaginationMeta = (page, limit, total) => {
   return {
     page,
     limit,
-    totalRecords: total,
-    totalPages,
-    hasNextPage: page < totalPages,
+    total,
+    totalPages: Math.ceil(total / limit),
+    hasNextPage: page * limit < total,
     hasPreviousPage: page > 1,
   };
 };
 
 module.exports = {
+  applyCursorFilter,
+  buildCursorPaginationMeta,
   getPagination,
-  getPaginationMeta,
-  buildSearchFilter,
-  buildDateRangeFilter,
+  buildPaginationMeta,
+  decodeCursor,
 };

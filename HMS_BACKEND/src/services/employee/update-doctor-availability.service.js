@@ -1,50 +1,36 @@
 const Employee = require("../../models/Employee");
 const User = require("../../models/User");
-const ERR = require("../../utils/errors");
+const ApiError = require("../../utils/ApiError");
 
-const convertToMinutes = (time) => {
-  if (!time) {
-    return null;
-  }
-
-  const [hours, minutes] = time.split(":").map(Number);
-
-  return hours * 60 + minutes;
-};
-
-const updateDoctorAvailabilityService = async (userId, availabilityData) => {
-  const user = await User.findById(userId);
+const updateDoctorAvailabilityService = async (
+  userId,
+  availabilityData,
+  updatedBy,
+) => {
+  const user = await User.findOne({
+    _id: userId,
+    isDeleted: false,
+  });
 
   if (!user) {
-throw ERR.userAccountNotFound();
+    throw new ApiError(404, "User account not found", "USER_NOT_FOUND");
   }
 
-  const startMinutes = convertToMinutes(availabilityData.startTime);
-  const endMinutes = convertToMinutes(availabilityData.endTime);
-
-  if (
-    startMinutes !== null &&
-    endMinutes !== null &&
-    endMinutes <= startMinutes
-  ) {
-throw ERR.invalidDoctorAvailability();
-  }
-
-  const doctor = await Employee.findByIdAndUpdate(
-    user.employeeId,
-    {
-      $set: {
-        availability: availabilityData,
-      },
-    },
-    {
-      returnDocument: "after",
-    },
-  );
+  const doctor = await Employee.findOne({
+    _id: user.employeeId,
+    isDeleted: false,
+  });
 
   if (!doctor) {
-throw ERR.doctorNotFound();
+    throw new ApiError(404, "Doctor not found", "DOCTOR_NOT_FOUND");
   }
+
+  doctor.availability = availabilityData;
+
+  doctor.updatedBy = updatedBy;
+
+  await doctor.save();
+
   return doctor;
 };
 

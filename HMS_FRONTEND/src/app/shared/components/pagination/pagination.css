@@ -1,63 +1,91 @@
-.pagination-wrapper {
-  display: flex;
-  justify-content: space-between;
+.pagination-card {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto minmax(120px, 1fr);
   align-items: center;
-  gap: 16px;
-  padding: 18px 22px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.06);
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.pagination-info {
-  color: #334155;
-  font-size: var(--font-base);
+.total-records {
+  font-size: 14px;
   font-weight: 700;
+  color: #475569;
+  justify-self: start;
 }
 
-.pagination-info span {
-  display: block;
-  margin-top: 4px;
-  color: #64748b;
-  font-size: var(--font-sm);
-  font-weight: 600;
-}
-
-.pagination-actions {
+.pagination-controls {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  justify-self: center;
 }
 
-.pagination-actions select,
-.pagination-actions button {
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 14px;
-  background: white;
-  padding: 10px 14px;
-  color: #0f172a;
-  font-size: var(--font-md);
+.pagination-controls span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pagination-controls button {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #dbeafe;
+  color: #1d4ed8;
   font-weight: 700;
-}
-
-.pagination-actions button {
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.pagination-actions button:disabled {
+.pagination-controls button:hover:not(:disabled) {
+  background: #bfdbfe;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
-  opacity: 0.5;
+}
+
+.page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.page-size span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.page-size select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-weight: 600;
+  outline: none;
 }
 
 @media (max-width: 768px) {
-  .pagination-wrapper {
-    flex-direction: column;
-    align-items: flex-start;
+  .pagination-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
   }
-
-  .pagination-actions {
-    width: 100%;
-    flex-wrap: wrap;
+  .total-records,
+  .page-size {
+    justify-self: center;
+  }
+  .pagination-controls {
+    justify-content: center;
   }
 }

@@ -10,29 +10,65 @@
       <p class="page-subtitle">Manage doctors, nurses and hospital staff.</p>
     </div>
 
-    <div class="employee-count">{{ filteredEmployees.length }} Employees</div>
+    <div class="header-actions">
+      <div class="employee-count">{{ total() }} Employees</div>
+    </div>
   </div>
 
   <!-- Search -->
 
   <div class="filters-wrapper glass-card">
-    <div class="search-box">
+    <div class="filters-row">
+      <div class="search-box">
+        <span>🔍</span>
+
+        <input type="text" placeholder="Search employee..." [ngModel]="search()" (ngModelChange)="search.set($event); searchDebounce$.next()" />
+      </div>
+
+      <select [ngModel]="status()" (ngModelChange)="status.set($event); onFilterChange()">
+        <option value="">All Status</option>
+
+        <option value="ACTIVE">Active</option>
+
+        <option value="INACTIVE">Inactive</option>
+
+        <option value="PENDING">Pending</option>
+      </select>
 
       <input
         type="text"
-        placeholder="
-              Search employee...
-              "
-        [(ngModel)]="
-              searchText
-              "
-        (input)="
-              onSearchInput()
-              "
+        placeholder="Department"
+        [ngModel]="department()"
+        (ngModelChange)="department.set($event); searchDebounce$.next()"
       />
+
+      <input
+        type="text"
+        placeholder="Designation"
+        [ngModel]="designation()"
+        (ngModelChange)="designation.set($event); searchDebounce$.next()"
+      />
+
+      <button
+        class="action-btn view"
+        (click)="resetFilters()"
+      >
+        Reset
+      </button>
     </div>
   </div>
 
+  @if(isLoading()){
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
+
+  } @else if(employees().length === 0) {
+  <app-empty-state
+    icon="groups"
+    title="No Employees Found"
+    message="Try changing filters or add a new employee."
+  ></app-empty-state>
+
+  } @else {
   <!-- Table -->
 
   <div class="table-wrapper glass-card">
@@ -54,12 +90,8 @@
       </thead>
 
       <tbody>
-        <tr
-          *ngFor="
-                  let employee
-                  of filteredEmployees
-                  "
-        >
+        @for( employee of employees(); track employee._id ){
+        <tr>
           <!-- Employee -->
 
           <td>
@@ -119,83 +151,50 @@
           <td>
             <div class="actions">
               <!-- View -->
-
-              <a
-                [routerLink]="[
-                                '/employees',
-                                employee._id
-                              ]"
-                class="action-btn view"
-              >
-                View
-              </a>
+              <a [routerLink]="['/employees', employee._id]" class="action-btn view">View</a>
 
               <!-- Edit -->
+              @if(nodeService.canUseApi('PUT', '/api/employees/:id')){
+              <a [routerLink]="['/employees/edit', employee._id]" class="action-btn edit">Edit</a>
+              }
 
-              <a
-                [routerLink]="[
-                                '/employees/edit',
-                                employee._id
-                              ]"
-                class="action-btn edit"
-              >
-                Edit
-              </a>
-
-              <!-- Status Action -->
-
-              <button
-                *ngIf="employee.status === 'ACTIVE'"
-                type="button"
-                (click)="
-                              deactivateEmployee(
-                                employee._id
-                              )
-                              "
-                class="action-btn deactivate"
-              >
-                Deactivate
-              </button>
-
-              <button
-                *ngIf="employee.status === 'INACTIVE'"
-                type="button"
-                (click)="
-                              activateEmployee(
-                                employee._id
-                              )
-                              "
-                class="action-btn activate"
-              >
+              <!-- Activate -->
+              @if( employee.status === 'INACTIVE' && ( nodeService.canUseApi('PATCH', '/api/employees/:id/activate') )
+              ){
+              <button type="button" class="action-btn activate" (click)="activateEmployee(employee._id)">
                 Activate
               </button>
+              }
+
+              <!-- Deactivate -->
+              @if( employee.status === 'ACTIVE' && ( nodeService.canUseApi('PATCH', '/api/employees/:id/deactivate') )
+              ){
+              <button type="button" class="action-btn deactivate" (click)="deactivateEmployee(employee._id)">
+                Deactivate
+              </button>
+              }
 
               <!-- Delete -->
-
-              <button
-                type="button"
-                (click)="
-                              deleteEmployee(
-                                employee._id
-                              )
-                              "
-                class="action-btn delete"
-              >
-                Delete
-              </button>
+              @if(nodeService.canUseApi('DELETE', '/api/employees/:id')){
+              <button type="button" class="action-btn delete" (click)="deleteEmployee(employee._id)">Delete</button>
+              }
             </div>
           </td>
         </tr>
+        }
       </tbody>
     </table>
   </div>
-
   <app-pagination
-    [pagination]="pagination"
-    totalLabel="employees"
-    (pagePrevious)="previousPage()"
-    (pageNext)="nextPage()"
-    (pageSizeChange)="changeLimit($event)"
+    [page]="page()"
+    [totalPages]="page() + (nextCursor() ? 1 : 0)"
+    [totalRecords]="total()"
+    [limit]="limit()"
+    [cursorMode]="true"
+    [hasNextPage]="!!nextCursor()"
+    (previous)="previousPage()"
+    (next)="nextPage()"
+    (pageSizeChange)="onPageSizeChange($event)"
   ></app-pagination>
+  }
 </div>
-

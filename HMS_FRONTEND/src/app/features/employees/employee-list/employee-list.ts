@@ -1,146 +1,210 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth';
 import { RouterLink } from '@angular/router';
-
+import { ToastService } from '../../../core/services/toast';
 import { EmployeeService } from '../../../core/services/employee';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { NodeService } from '../../../core/services/node';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-employee-list',
-  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
+  selector: 'app-employee-list',
+  standalone: true,
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent, SkeletonLoaderComponent, EmptyStateComponent],
   templateUrl: './employee-list.html',
-  styleUrl: './employee-list.css'
+  styleUrl: './employee-list.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeList implements OnInit, OnDestroy {
-  employees: any[] = [];
-  filteredEmployees: any[] = [];
-  searchText = '';
-  statusFilter = '';
-  sortBy = 'createdAt';
-  sortOrder = 'desc';
+  readonly employees = signal<any[]>([]);
+  readonly search = signal('');
+  readonly status = signal('');
+  readonly department = signal('');
+  readonly designation = signal('');
+  readonly page = signal(1);
+  readonly cursorStack = signal<string[]>(['']);
+  readonly nextCursor = signal('');
+  readonly limit = signal(10);
+  readonly total = signal(0);
+  readonly totalPages = signal(1);
+  readonly isLoading = signal(false);
 
-  private searchTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  pagination = {
-    page: 1,
-    limit: 10,
-    totalRecords: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPreviousPage: false
-  };
+  private readonly destroy$ = new Subject<void>();
+  protected readonly searchDebounce$ = new Subject<void>();
 
   constructor(
     private readonly employeeService: EmployeeService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly toastService: ToastService,
+    public readonly authService: AuthService,
+    public readonly nodeService: NodeService,
+    private readonly confirmDialog: ConfirmDialogService
   ) {}
 
-  // Load employees on page load
   ngOnInit(): void {
     this.loadEmployees();
+    this.searchDebounce$.pipe(debounceTime(300), takeUntil(this.destroy$)).subscribe(() => this.onFilterChange());
   }
 
   ngOnDestroy(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  // Get all employees
-  loadEmployees(page = this.pagination.page): void {
-    const filters = {
-      search: this.searchText,
-      status: this.statusFilter,
-      sortBy: this.sortBy,
-      sortOrder: this.sortOrder
+  loadEmployees(showPageLoader = true): void {
+    if (showPageLoader) {
+      this.isLoading.set(true);
+    }
+
+    const params: any = {
+      page: this.page(),
+      limit: this.limit(),
+      pagination: 'cursor',
+      cursor: this.cursorStack()[this.page() - 1] || ''
     };
 
-    this.employeeService.getEmployees(page, this.pagination.limit, filters).subscribe({
-      next: (response: any) => {
+    if (this.search()) {
+      params.search = this.search();
+    }
 
-        this.employees = response.data || [];
-        this.filteredEmployees = [...(response.data || [])];
-        this.pagination = response.pagination || this.pagination;
+    if (this.status()) {
+      params.status = this.status();
+    }
 
-        this.cdr.detectChanges();
+    if (this.department()) {
+      params.department = this.department();
+    }
+
+    if (this.designation()) {
+      params.designation = this.designation();
+    }
+
+    this.employeeService.getEmployees(params).subscribe({
+      next: (response) => {
+        this.employees.set(response.data);
+
+        this.total.set(response.meta?.totalRecords ?? response.meta?.total ?? 0);
+
+        this.totalPages.set(response.meta?.totalPages || Math.max(Math.ceil(this.total() / this.limit()), 1));
+        this.nextCursor.set(response.meta?.nextCursor || '');
+
+        if (this.page() > 1 && this.employees().length === 0) {
+          this.page.set(Math.max(this.totalPages() || 1, 1));
+          this.loadEmployees(false);
+          return;
+        }
+
+        this.isLoading.set(false);
       },
-
       error: (error) => {
+        console.log(error);
+
+        this.isLoading.set(false);
       }
     });
   }
+
+  onFilterChange(): void {
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
+    this.loadEmployees(false);
+  }
+
   previousPage(): void {
-    if (this.pagination.hasPreviousPage) {
-      this.loadEmployees(this.pagination.page - 1);
+    if (this.page() === 1) {
+      return;
     }
+
+    this.page.update(p => p - 1);
+
+    this.loadEmployees(false);
   }
 
   nextPage(): void {
-    if (this.pagination.hasNextPage) {
-      this.loadEmployees(this.pagination.page + 1);
-    }
-  }
-
-  changeLimit(limit: number): void {
-    this.pagination.limit = Number(limit);
-    this.loadEmployees(1);
-  }
-
-  onSearchInput(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
+    if (!this.nextCursor()) {
+      return;
     }
 
-    this.searchTimeout = setTimeout(() => {
-      this.loadEmployees(1);
-    }, 500);
+    const stack = [...this.cursorStack()];
+    stack[this.page()] = this.nextCursor();
+    this.cursorStack.set(stack);
+    this.page.update(p => p + 1);
+
+    this.loadEmployees(false);
   }
 
-  // Deactivate employee
+  onPageSizeChange(newLimit: number): void {
+    this.limit.set(newLimit);
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
+    this.loadEmployees(false);
+  }
+
+  resetFilters(): void {
+    this.search.set('');
+    this.status.set('');
+    this.department.set('');
+    this.designation.set('');
+
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
+
+    this.loadEmployees(false);
+  }
+
   deactivateEmployee(id: string): void {
-
     this.employeeService.deactivateEmployee(id).subscribe({
       next: () => {
-
         this.loadEmployees();
-      },
-
-      error: (error) => {
       }
     });
   }
 
-  // Activate employee
   activateEmployee(id: string): void {
     this.employeeService.activateEmployee(id).subscribe({
       next: () => {
-
         this.loadEmployees();
-      },
-
-      error: (error) => {
       }
     });
   }
 
-  // Soft delete employee
-  deleteEmployee(id: string): void {
-    const confirmDelete = confirm('Delete this employee?');
+  async deleteEmployee(id: string): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete employee?',
+      message: 'This employee will be removed from active records.',
+      confirmText: 'Delete',
+      tone: 'danger'
+    });
 
-    if (!confirmDelete) {
+    if (!confirmed) {
       return;
     }
 
     this.employeeService.deleteEmployee(id).subscribe({
       next: () => {
+        this.page.set(this.getPageAfterDelete());
+
+        this.toastService.show('Employee deleted successfully', 'success');
 
         this.loadEmployees();
       },
-
       error: (error) => {
+        this.toastService.show(error?.error?.message || 'Failed to delete employee', 'error');
       }
     });
+  }
+
+  private getPageAfterDelete(): number {
+    const totalAfterDelete = Math.max(this.total() - 1, 0);
+    const totalPagesAfterDelete = Math.max(Math.ceil(totalAfterDelete / this.limit()), 1);
+
+    return Math.min(this.page(), totalPagesAfterDelete);
   }
 }

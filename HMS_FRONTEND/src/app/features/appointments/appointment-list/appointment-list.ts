@@ -1,157 +1,165 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-import { ApiPermissionService } from '../../../core/services/api-permission';
 import { AppointmentService } from '../../../core/services/appointment';
+import { AuthService } from '../../../core/services/auth';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { NodeService } from '../../../core/services/node';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog';
+import { ToastService } from '../../../core/services/toast';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-appointment-list',
+  selector: 'app-appointment-list',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, PaginationComponent],
   templateUrl: './appointment-list.html',
-  styleUrls: ['./appointment-list.css']
+  styleUrls: ['./appointment-list.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppointmentList implements OnInit, OnDestroy {
-  appointments: any[] = [];
+  readonly appointments = signal<any[]>([]);
+  readonly search = signal('');
+  readonly status = signal('');
+  readonly priority = signal('');
+  readonly startDate = signal('');
+  readonly endDate = signal('');
+  readonly page = signal(1);
+  readonly limit = signal(10);
+  readonly cursorStack = signal<string[]>(['']);
+  readonly nextCursor = signal('');
+  readonly totalRecords = signal(0);
+  readonly totalPages = signal(0);
 
-  filteredAppointments: any[] = [];
-
-  searchTerm = '';
-
-  selectedStatus = '';
-  fromDate = '';
-  toDate = '';
-  sortBy = 'appointmentDate';
-  sortOrder = 'asc';
-  permissions = new Set<string>();
-
-  private searchTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  pagination = {
-    page: 1,
-    limit: 10,
-    totalRecords: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPreviousPage: false
-  };
+  private readonly destroy$ = new Subject<void>();
+  protected readonly searchDebounce$ = new Subject<void>();
 
   constructor(
     private readonly appointmentService: AppointmentService,
-    private readonly apiPermissionService: ApiPermissionService,
-    private readonly cdr: ChangeDetectorRef
+    public readonly authService: AuthService,
+    public readonly nodeService: NodeService,
+    private readonly confirmDialog: ConfirmDialogService,
+    private readonly toast: ToastService
   ) {}
 
   ngOnInit(): void {
-    this.loadPermissions();
     this.loadAppointments();
+    this.searchDebounce$.pipe(debounceTime(300), takeUntil(this.destroy$)).subscribe(() => this.onFilterChange());
   }
 
   ngOnDestroy(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  loadAppointments(page = this.pagination.page): void {
-    const filters = {
-      search: this.searchTerm,
-      status: this.selectedStatus,
-      fromDate: this.fromDate,
-      toDate: this.toDate,
-      sortBy: this.sortBy,
-      sortOrder: this.sortOrder
+  loadAppointments(): void {
+    const params: any = {
+      page: this.page(),
+      limit: this.limit(),
+      pagination: 'cursor',
+      cursor: this.cursorStack()[this.page() - 1] || ''
     };
 
-    this.appointmentService.getAppointments(page, this.pagination.limit, filters).subscribe({
+    if (this.search().trim()) {
+      params.search = this.search();
+    }
+
+    if (this.status()) {
+      params.status = this.status();
+    }
+
+    if (this.priority()) {
+      params.priority = this.priority();
+    }
+
+    if (this.startDate()) {
+      params.startDate = this.startDate();
+    }
+
+    if (this.endDate()) {
+      params.endDate = this.endDate();
+    }
+
+    this.appointmentService.getAppointments(params).subscribe({
       next: (response) => {
-        this.appointments = response.data || [];
-        this.filteredAppointments = response.data || [];
-        this.pagination = response.pagination || this.pagination;
+        this.appointments.set(response.data);
 
-        this.cdr.detectChanges();
+        this.totalRecords.set(response.meta?.totalRecords ?? response.meta?.total ?? 0);
+
+        this.totalPages.set(response.meta?.totalPages || Math.max(Math.ceil(this.totalRecords() / this.limit()), 1));
+        this.nextCursor.set(response.meta?.nextCursor || '');
+
+        if (this.page() > 1 && this.appointments().length === 0) {
+          this.page.set(Math.max(this.totalPages() || 1, 1));
+          this.loadAppointments();
+        }
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }
 
-  loadPermissions(): void {
-    this.apiPermissionService.getMyPermissions().subscribe({
-      next: (response) => {
-        this.permissions = new Set(response.data || []);
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.permissions = new Set<string>();
-        this.cdr.detectChanges();
-      }
-    });
+  onFilterChange(): void {
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
+    this.loadAppointments();
   }
 
-  canUpdateAppointment(): boolean {
-    return this.permissions.has('appointment:update');
-  }
-
-  canDeleteAppointment(): boolean {
-    return this.permissions.has('appointment:delete');
-  }
-
-  canViewPatient(): boolean {
-    return this.permissions.has('patient:detail');
-  }
   previousPage(): void {
-    if (this.pagination.hasPreviousPage) {
-      this.loadAppointments(this.pagination.page - 1);
+    if (this.page() > 1) {
+      this.page.update(p => p - 1);
+      this.loadAppointments();
     }
   }
 
   nextPage(): void {
-    if (this.pagination.hasNextPage) {
-      this.loadAppointments(this.pagination.page + 1);
+    if (this.nextCursor()) {
+      const stack = [...this.cursorStack()];
+      stack[this.page()] = this.nextCursor();
+      this.cursorStack.set(stack);
+      this.page.update(p => p + 1);
+      this.loadAppointments();
     }
   }
 
-  changeLimit(limit: number): void {
-    this.pagination.limit = Number(limit);
-    this.loadAppointments(1);
+  onPageSizeChange(newLimit: number): void {
+    this.limit.set(newLimit);
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
+    this.loadAppointments();
   }
 
-  onSearchInput(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
+  async deleteAppointment(id: string): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete appointment?',
+      message: 'This appointment will be removed from the schedule.',
+      confirmText: 'Delete',
+      tone: 'danger'
+    });
 
-    this.searchTimeout = setTimeout(() => {
-      this.loadAppointments(1);
-    }, 500);
-  }
-
-  onFilterChange(): void {
-    this.loadAppointments(1);
-  }
-
-  deleteAppointment(id: string): void {
-    const confirmDelete = confirm('Delete this appointment?');
-
-    if (!confirmDelete) {
+    if (!confirmed) {
       return;
     }
 
     this.appointmentService.deleteAppointment(id).subscribe({
       next: () => {
-        alert('Appointment deleted successfully');
-
+        this.page.set(this.getPageAfterDelete());
+        this.toast.success('Appointment deleted successfully');
         this.loadAppointments();
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
+  }
+
+  private getPageAfterDelete(): number {
+    const totalAfterDelete = Math.max(this.totalRecords() - 1, 0);
+    const totalPagesAfterDelete = Math.max(Math.ceil(totalAfterDelete / this.limit()), 1);
+    return Math.min(this.page(), totalPagesAfterDelete);
   }
 }

@@ -1,29 +1,25 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
 import { EmployeeService } from '../../../core/services/employee';
-import { getApiErrorMessage } from '../../../core/utils/api-error';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-edit-employee',
+  selector: 'app-edit-employee',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './edit-employee.html',
-  styleUrl: './edit-employee.css'
+  styleUrl: './edit-employee.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditEmployee implements OnInit {
   employeeForm: FormGroup;
 
-  employeeId = '';
+  private employeeId = '';
 
-  isSubmitting = false;
-
-  errorMessage = '';
-
-  successMessage = '';
+  readonly isSubmitting = signal(false);
+  readonly errorMessage = signal('');
+  readonly successMessage = signal('');
 
   constructor(
     private readonly fb: FormBuilder,
@@ -34,51 +30,30 @@ export class EditEmployee implements OnInit {
     this.employeeForm = this.fb.group({
       name: [
         '',
-        [
-          Validators.required,
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[A-Za-z ]+$/)
-        ]
+        [Validators.required, Validators.minLength(2), Validators.maxLength(100), Validators.pattern(/^[A-Za-z ]+$/)]
       ],
-
       email: [
         {
           value: '',
           disabled: true
         }
       ],
-
-      phone: [
-        '',
-        [
-          Validators.required,
-          Validators.pattern(/^\d{10}$/)
-        ]
-      ],
-
+      phone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
       gender: ['', Validators.required],
-
-      department: [
-        '',
-        [
-          Validators.required,
-          Validators.pattern(/^[A-Za-z\s]+$/)
-        ]
-      ],
-
+      department: ['', Validators.required],
       designation: ['', Validators.required],
-
       joiningDate: ['', Validators.required]
     });
   }
 
+  // Load employee details on page load
   ngOnInit(): void {
     this.employeeId = this.route.snapshot.paramMap.get('id') || '';
 
     this.loadEmployee();
   }
 
+  // Fetch employee details
   loadEmployee(): void {
     this.employeeService.getEmployeeById(this.employeeId).subscribe({
       next: (response: any) => {
@@ -91,22 +66,21 @@ export class EditEmployee implements OnInit {
           gender: employee.gender,
           department: employee.department,
           designation: employee.designation,
-          joiningDate: employee.joiningDate
-            ? employee.joiningDate.split('T')[0]
-            : ''
+          joiningDate: employee.joiningDate ? employee.joiningDate.split('T')[0] : ''
         });
       },
-
       error: (error) => {
-        this.errorMessage =
-          getApiErrorMessage(error, 'Failed to load employee');
+        console.error(error);
+
+        this.errorMessage.set(error?.error?.message || 'Failed to load employee');
       }
     });
   }
 
+  // Update employee details
   onSubmit(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.errorMessage.set('');
+    this.successMessage.set('');
 
     if (this.employeeForm.invalid) {
       this.employeeForm.markAllAsTouched();
@@ -114,7 +88,7 @@ export class EditEmployee implements OnInit {
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
     const payload = {
       ...this.employeeForm.getRawValue()
@@ -122,25 +96,23 @@ export class EditEmployee implements OnInit {
 
     delete payload.email;
 
-    this.employeeService
-      .updateEmployee(this.employeeId, payload)
-      .subscribe({
-        next: () => {
-          this.isSubmitting = false;
+    this.employeeService.updateEmployee(this.employeeId, payload).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
 
-          this.successMessage = 'Employee updated successfully';
+        this.successMessage.set('Employee updated successfully');
 
-          setTimeout(() => {
-            this.router.navigate(['/employees']);
-          }, 1000);
-        },
+        setTimeout(() => {
+          this.router.navigate(['/employees']);
+        }, 1000);
+      },
+      error: (error) => {
+        console.error(error);
 
-        error: (error) => {
-          this.isSubmitting = false;
+        this.isSubmitting.set(false);
 
-          this.errorMessage =
-            getApiErrorMessage(error, 'Failed to update employee');
-        }
-      });
+        this.errorMessage.set(error?.error?.message || 'Failed to update employee');
+      }
+    });
   }
 }

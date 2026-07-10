@@ -1,0 +1,19 @@
+@if( authService.currentUser(); as user ){
+<!-- ADMIN -->
+
+@if( user?.roles?.includes( 'ADMIN' ) ){
+<app-admin-dashboard />
+}
+
+<!-- DOCTOR -->
+
+@if( user?.roles?.includes( 'DOCTOR' ) ){
+<app-doctor-dashboard />
+}
+
+<!-- RECEPTIONIST -->
+
+@if( user?.roles?.includes( 'RECEPTIONIST' ) ){
+<app-receptionist-dashboard />
+
+} }

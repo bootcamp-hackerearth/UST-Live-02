@@ -8,71 +8,61 @@
       <h1>Consultations</h1>
     </div>
 
-    <div class="consultation-count">Total: {{ consultations.length }}</div>
+    <div class="consultation-count">Total: {{ consultations().length }}</div>
   </div>
-
   <div class="filters-wrapper">
-    <div class="search-box">
-      <span>Search</span>
+    <input type="text" placeholder="Search consultation" [ngModel]="search()" (ngModelChange)="search.set($event); searchDebounce$.next()" />
 
-      <input
-        type="text"
-        placeholder="Search diagnosis or notes..."
-        [(ngModel)]="searchTerm"
-        (input)="onSearchInput()"
-      />
-    </div>
+    <select [ngModel]="doctor()" (ngModelChange)="doctor.set($event); onFilterChange()">
+      <option value="">All Doctors</option>
 
-    <select
-      [(ngModel)]="selectedStatus"
-      (change)="onFilterChange()"
-    >
-      <option value="">All Status</option>
-
-      <option value="IN_PROGRESS">In Progress</option>
-
-      <option value="COMPLETED">Completed</option>
+      @for( doc of doctors(); track doc._id ){
+      <option [value]="doc._id">{{ doc.name }}</option>
+      }
     </select>
 
-    <label class="date-filter">
-      <span>From Date</span>
+    <select [ngModel]="patient()" (ngModelChange)="patient.set($event); onFilterChange()">
+      <option value="">All Patients</option>
 
-      <input
-        type="date"
-        [(ngModel)]="fromDate"
-        (change)="onFilterChange()"
-      />
-    </label>
+      @for( pat of patients(); track pat._id ){
+      <option [value]="pat._id">{{ pat.firstName }} {{ pat.lastName }}</option>
+      }
+    </select>
 
-    <label class="date-filter">
-      <span>To Date</span>
+    <select [ngModel]="status()" (ngModelChange)="status.set($event); onFilterChange()">
+      <option value="">All Status</option>
 
-      <input
-        type="date"
-        [(ngModel)]="toDate"
-        (change)="onFilterChange()"
-      />
-    </label>
+      <option value="ACTIVE">Active</option>
+
+      <option value="COMPLETED">Completed</option>
+
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+    <input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onFilterChange()" />
+
+    <input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onFilterChange()" />
+
+    <select [ngModel]="limit()" (ngModelChange)="limit.set($event); onFilterChange()">
+      <option [value]="10">10</option>
+
+      <option [value]="20">20</option>
+
+      <option [value]="50">50</option>
+    </select>
   </div>
 
   <!-- Loading -->
 
-  @if(isLoading){
-
-  <div class="loading-card">
-    <div class="loader"></div>
-
-    <p>Loading consultations...</p>
-  </div>
+  @if(isLoading()){
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
 
   } @else {
-
   <!-- Empty State -->
 
-  @if( consultations.length === 0 ){
-
+  @if( consultations().length === 0 ){
   <div class="empty-state">
-    <div class="empty-icon">No records</div>
+    <div class="empty-icon">📄</div>
 
     <h2>No Consultations Found</h2>
 
@@ -80,7 +70,6 @@
   </div>
 
   } @else {
-
   <!-- Table -->
 
   <div class="table-container">
@@ -100,8 +89,7 @@
       </thead>
 
       <tbody>
-        @for( consultation of consultations; track consultation._id ){
-
+        @for( consultation of consultations(); track consultation._id ){
         <tr>
           <!-- Patient -->
 
@@ -120,7 +108,7 @@
           <!-- Doctor -->
 
           <td>
-            <div class="doctor-badge">{{ consultation ?.doctorEmployeeId ?.name }}</div>
+            <div class="doctor-badge">🩺 {{ consultation ?.doctorEmployeeId ?.name }}</div>
           </td>
 
           <!-- Diagnosis -->
@@ -166,21 +154,21 @@
             </div>
           </td>
         </tr>
-
         }
       </tbody>
     </table>
   </div>
-
   <app-pagination
-    [pagination]="pagination"
-    totalLabel="consultations"
-    (pagePrevious)="previousPage()"
-    (pageNext)="nextPage()"
-    (pageSizeChange)="changeLimit($event)"
+    [page]="page()"
+    [totalPages]="page() + (nextCursor() ? 1 : 0)"
+    [totalRecords]="meta().total || 0"
+    [limit]="limit()"
+    [cursorMode]="true"
+    [hasNextPage]="!!nextCursor()"
+    (previous)="previousPage()"
+    (next)="nextPage()"
+    (pageSizeChange)="onPageSizeChange($event)"
   ></app-pagination>
 
   } }
 </div>
-
-

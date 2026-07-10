@@ -1,34 +1,30 @@
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-pagination',
+  selector: 'app-pagination',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './pagination.html',
-  styleUrl: './pagination.css'
+  styleUrls: ['./pagination.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaginationComponent {
-  @Input() pagination = {
-    page: 1,
-    limit: 10,
-    totalRecords: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPreviousPage: false
-  };
+  readonly page = input(1);
+  readonly totalPages = input(1);
+  readonly totalRecords = input(0);
+  readonly limit = input(10);
+  readonly showPageSize = input(true);
+  readonly cursorMode = input(false);
+  readonly hasNextPage = input(false);
 
-  @Input() totalLabel = 'records';
-  @Input() showPageSize = true;
+  readonly previous = output<void>();
+  readonly next = output<void>();
+  readonly pageSizeChange = output<number>();
 
-  @Output() pagePrevious = new EventEmitter<void>();
-  @Output() pageNext = new EventEmitter<void>();
-  @Output() pageSizeChange = new EventEmitter<number>();
+  changePageSize(event: Event): void {
+    const select = event.target as HTMLSelectElement;
 
-  onLimitChange(event: Event): void {
-    const selectElement = event.target as HTMLSelectElement;
-
-    this.pageSizeChange.emit(Number(selectElement.value));
+    this.pageSizeChange.emit(Number(select.value));
   }
 }

@@ -1,147 +1,181 @@
-import { Component, OnDestroy, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-import { ApiPermissionService } from '../../../core/services/api-permission';
 import { PatientService } from '../../../core/services/patient';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { NodeService } from '../../../core/services/node';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog';
+import { ToastService } from '../../../core/services/toast';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-patient-list',
+  selector: 'app-patient-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PaginationComponent],
+  imports: [CommonModule, FormsModule, RouterLink, PaginationComponent, SkeletonLoaderComponent, EmptyStateComponent],
   templateUrl: './patient-list.html',
-  styleUrls: ['./patient-list.css']
+  styleUrls: ['./patient-list.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PatientList implements OnInit, OnDestroy {
-  patients: any[] = [];
-  filteredPatients: any[] = [];
+  readonly patients = signal<any[]>([]);
+  readonly userRole = signal('');
+  readonly search = signal('');
+  readonly gender = signal('');
+  readonly bloodGroup = signal('');
+  readonly startDate = signal('');
+  readonly endDate = signal('');
+  readonly page = signal(1);
+  readonly limit = signal(10);
+  readonly cursorStack = signal<string[]>(['']);
+  readonly nextCursor = signal('');
+  readonly totalRecords = signal(0);
+  readonly totalPages = signal(0);
+  readonly isLoading = signal(false);
 
-  searchTerm = '';
-  statusFilter = '';
-  sortBy = 'createdAt';
-  sortOrder = 'desc';
-  permissions = new Set<string>();
-  private searchTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  pagination = {
-  page: 1,
-  limit: 10,
-  totalRecords: 0,
-  totalPages: 1,
-  hasNextPage: false,
-  hasPreviousPage: false
-};
+  private readonly destroy$ = new Subject<void>();
+  protected readonly searchDebounce$ = new Subject<void>();
 
   constructor(
-    private readonly apiPermissionService: ApiPermissionService,
     private readonly patientService: PatientService,
-    private readonly cdr: ChangeDetectorRef
+    public readonly nodeService: NodeService,
+    private readonly confirmDialog: ConfirmDialogService,
+    private readonly toast: ToastService
   ) {}
 
-  // Load patients on page load
   ngOnInit(): void {
-    this.loadPermissions();
+    this.userRole.set(localStorage.getItem('role') || '');
     this.loadPatients();
+    this.searchDebounce$.pipe(debounceTime(300), takeUntil(this.destroy$)).subscribe(() => this.onFilterChange());
   }
 
   ngOnDestroy(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  // Get all patients
-  loadPatients(page = this.pagination.page): void {
-    const filters = {
-      search: this.searchTerm,
-      status: this.statusFilter,
-      sortBy: this.sortBy,
-      sortOrder: this.sortOrder
+  loadPatients(): void {
+    this.isLoading.set(true);
+
+    const params: any = {
+      page: this.page(),
+      limit: this.limit(),
+      pagination: 'cursor',
+      cursor: this.cursorStack()[this.page() - 1] || ''
     };
 
-    this.patientService.getPatients(page, this.pagination.limit, filters).subscribe({
+    if (this.search().trim()) {
+      params.search = this.search();
+    }
+
+    if (this.gender()) {
+      params.gender = this.gender();
+    }
+
+    if (this.bloodGroup()) {
+      params.bloodGroup = this.bloodGroup();
+    }
+
+    if (this.startDate()) {
+      params.startDate = this.startDate();
+    }
+
+    if (this.endDate()) {
+      params.endDate = this.endDate();
+    }
+
+    this.patientService.getPatients(params).subscribe({
       next: (response) => {
+        console.log(response);
 
-        this.patients = response.data || [];
-        this.filteredPatients = response.data || [];
-        this.pagination = response.pagination || this.pagination;
+        this.patients.set(response.data);
 
-        this.cdr.detectChanges();
+        this.totalRecords.set(response.meta?.totalRecords ?? response.meta?.total ?? 0);
+        this.totalPages.set(response.meta?.totalPages || Math.max(Math.ceil(this.totalRecords() / this.limit()), 1));
+        this.nextCursor.set(response.meta?.nextCursor || '');
+
+        if (this.page() > 1 && this.patients().length === 0) {
+          this.page.set(Math.max(this.totalPages() || 1, 1));
+          this.loadPatients();
+          return;
+        }
+
+        this.isLoading.set(false);
       },
-
       error: (error) => {
+        console.log(error);
+
+        this.isLoading.set(false);
       }
     });
   }
 
-  loadPermissions(): void {
-    this.apiPermissionService.getMyPermissions().subscribe({
-      next: (response) => {
-        this.permissions = new Set(response.data || []);
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.permissions = new Set<string>();
-        this.cdr.detectChanges();
-      }
-    });
-  }
+  onFilterChange(): void {
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
 
-  canUpdatePatient(): boolean {
-    return this.permissions.has('patient:update');
-  }
-
-  canDeletePatient(): boolean {
-    return this.permissions.has('patient:delete');
+    this.loadPatients();
   }
 
   previousPage(): void {
-    if (this.pagination.hasPreviousPage) {
-      this.loadPatients(this.pagination.page - 1);
+    if (this.page() > 1) {
+      this.page.update(p => p - 1);
+
+      this.loadPatients();
     }
   }
 
   nextPage(): void {
-    if (this.pagination.hasNextPage) {
-      this.loadPatients(this.pagination.page + 1);
+    if (this.nextCursor()) {
+      const stack = [...this.cursorStack()];
+      stack[this.page()] = this.nextCursor();
+      this.cursorStack.set(stack);
+      this.page.update(p => p + 1);
+
+      this.loadPatients();
     }
   }
 
-  changeLimit(limit: number): void {
-    this.pagination.limit = Number(limit);
-    this.loadPatients(1);
+  onPageSizeChange(nextLimit: number): void {
+    this.limit.set(nextLimit);
+    this.page.set(1);
+    this.cursorStack.set(['']);
+    this.nextCursor.set('');
+
+    this.loadPatients();
   }
 
-  // Debounce search input before filtering
-  onSearchInput(): void {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
+  async deletePatient(id: string): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete patient?',
+      message: 'This patient will be removed from active records.',
+      confirmText: 'Delete',
+      tone: 'danger'
+    });
 
-    this.searchTimeout = setTimeout(() => {
-      this.loadPatients(1);
-    }, 500);
-  }
-
-  // Soft delete patient
-  deletePatient(id: string): void {
-    const confirmDelete = confirm('Delete this patient?');
-
-    if (!confirmDelete) {
+    if (!confirmed) {
       return;
     }
 
     this.patientService.deletePatient(id).subscribe({
       next: () => {
-
+        this.page.set(this.getPageAfterDelete());
+        this.toast.success('Patient deleted successfully');
         this.loadPatients();
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
+  }
+
+  private getPageAfterDelete(): number {
+    const totalAfterDelete = Math.max(this.totalRecords() - 1, 0);
+    const totalPagesAfterDelete = Math.max(Math.ceil(totalAfterDelete / this.limit()), 1);
+
+    return Math.min(this.page(), totalPagesAfterDelete);
   }
 }

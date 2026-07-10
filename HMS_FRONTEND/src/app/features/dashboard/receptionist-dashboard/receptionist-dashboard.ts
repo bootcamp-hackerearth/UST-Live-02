@@ -1,26 +1,25 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
-
+import { Component, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../../core/services/dashboard';
 import { AuthService } from '../../../core/services/auth';
+import { NodeService } from '../../../core/services/node';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-selector: 'app-receptionist-dashboard',
+  selector: 'app-receptionist-dashboard',
   standalone: true,
-  imports: [AsyncPipe],
+  imports: [RouterLink],
   templateUrl: './receptionist-dashboard.html',
-  styleUrl: './receptionist-dashboard.css'
+  styleUrl: './receptionist-dashboard.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReceptionistDashboard implements OnInit {
-  stats: any = {};
-
-  todayAppointments: any[] = [];
+  readonly stats = signal<any>({});
+  readonly todayAppointments = signal<any[]>([]);
 
   constructor(
     public readonly authService: AuthService,
-    private readonly dashboardService: DashboardService,
-    private readonly cdr: ChangeDetectorRef
+    public readonly nodeService: NodeService,
+    private readonly dashboardService: DashboardService
   ) {}
 
   // Load dashboard data
@@ -33,13 +32,12 @@ export class ReceptionistDashboard implements OnInit {
   loadReceptionStats(): void {
     this.dashboardService.getReceptionistStats().subscribe({
       next: (response) => {
+        console.log(response);
 
-        this.stats = response.data;
-
-        this.cdr.detectChanges();
+        this.stats.set(response.data);
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }
@@ -48,11 +46,12 @@ export class ReceptionistDashboard implements OnInit {
   loadTodayAppointments(): void {
     this.dashboardService.getTodayAppointments().subscribe({
       next: (response) => {
+        console.log(response);
 
-        this.todayAppointments = response.data;
+        this.todayAppointments.set(response.data);
       },
-
       error: (error) => {
+        console.log(error);
       }
     });
   }

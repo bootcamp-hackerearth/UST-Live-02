@@ -1,9 +1,4 @@
-const patientCreatedTemplate = ({
-  patientName,
-  email,
-  temporaryPassword,
-}) => {
-
+const patientCreatedTemplate = ({ patientName, email, temporaryPassword }) => {
   return `
     <div style="font-family: Arial, sans-serif;">
 
@@ -44,5 +39,4 @@ const patientCreatedTemplate = ({
   `;
 };
 
-module.exports =
-  patientCreatedTemplate;
+module.exports = patientCreatedTemplate;
