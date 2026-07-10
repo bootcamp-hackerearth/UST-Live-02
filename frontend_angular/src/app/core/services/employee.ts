@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface EmployeeRequest {
   name: string;
@@ -26,7 +27,7 @@ export interface EmployeeRequest {
 export class EmployeeService {
   private readonly http = inject(HttpClient);
 
-  private readonly baseUrl = 'http://localhost:3000/api/employees';
+  private readonly baseUrl = environment.apiUrl + '/api/employees';
 
   // Public employee registration
   registerEmployee(data: EmployeeRequest): Observable<any> {
@@ -43,10 +44,23 @@ export class EmployeeService {
     return this.http.get(`${this.baseUrl}/profile`);
   }
 
-  // Get all employees
-  getEmployees(page = 1, limit = 5): Observable<any> {
+  getEmployees(
+    page = 1,
+    limit = 5,
+    search = ''
+  ): Observable<any> {
+    const params: any = {
+      page,
+      limit,
+    };
+
+    if (search.trim()) {
+      params.search = search.trim();
+    }
+
     return this.http.get(
-      `${this.baseUrl}/employees?page=${page}&limit=${limit}`
+      `${this.baseUrl}/employees`,
+      { params }
     );
   }
 

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface PatientRequest {
   UHID?: string;
@@ -24,7 +25,7 @@ export interface PatientRequest {
 export class PatientService {
   private readonly http = inject(HttpClient);
 
-  private readonly baseUrl = 'http://localhost:3000/api/patients';
+  private readonly baseUrl = environment.apiUrl + '/api/patients';
 
   createPatient(data: PatientRequest): Observable<any> {
     return this.http.post(this.baseUrl, data);
@@ -32,13 +33,29 @@ export class PatientService {
 
   getPatients(
     page = 1,
-    limit = 5
+    limit = 5,
+    search = '',
+    gender = 'ALL',
+    status = 'ALL'
   ): Observable<any> {
+    const params: any = {
+      page,
+      limit,
+    };
 
-    return this.http.get(
-      `${this.baseUrl}?page=${page}&limit=${limit}`
-    );
+    if (search.trim()) {
+      params.search = search.trim();
+    }
 
+    if (gender !== 'ALL') {
+      params.gender = gender;
+    }
+
+    if (status !== 'ALL') {
+      params.status = status;
+    }
+
+    return this.http.get(this.baseUrl, { params });
   }
 
   updatePatient(

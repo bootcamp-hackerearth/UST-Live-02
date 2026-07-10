@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface RoleRequest {
   roleId?: string;
@@ -20,7 +21,7 @@ export class RoleService {
   private readonly http = inject(HttpClient);
 
   private readonly API_URL =
-    'http://localhost:3000/api/roles';
+    environment.apiUrl + '/api/roles';
 
   getRoles(
     page = 1,
@@ -31,6 +32,15 @@ export class RoleService {
     );
   }
 
+
+  // Public, unauthenticated endpoint — returns only { roleId, name } for
+  // active, non-restricted roles. Safe to call from the self-registration
+  // page before the user has an account or token.
+  getPublicRegistrableRoles(): Observable<any> {
+    return this.http.get(
+      `${this.API_URL}/public/self-register`
+    );
+  }
   getRoleById(
     roleId: string
   ): Observable<any> {

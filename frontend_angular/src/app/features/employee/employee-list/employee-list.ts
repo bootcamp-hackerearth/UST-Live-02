@@ -6,6 +6,7 @@ import {
   ChangeDetectorRef,
 
 } from '@angular/core';
+import { MainComponent } from '../../../shared/components/maincomponent/maincomponent';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -22,8 +23,6 @@ import { HasPermissionDirective } from '../../../shared/directives/has-permissio
 import { PERMISSIONS } from '../../../constants/permission';
 import { ToastrService } from 'ngx-toastr';
 
-import { Navbar } from '../../../shared/components/navbar/navbar';
-import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 import { EmployeeService } from '../../../core/services/employee';
 import { AuthService } from '../../../core/services/auth';
 import { EmployeeDialog } from '../employee-dialog/employee-dialog';
@@ -33,6 +32,7 @@ import { EmployeeDialog } from '../employee-dialog/employee-dialog';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    MainComponent,
     CommonModule,
     FormsModule,
 
@@ -45,8 +45,7 @@ import { EmployeeDialog } from '../employee-dialog/employee-dialog';
     MatPaginatorModule,
     HasPermissionDirective,
 
-    Navbar,
-    Sidebar,
+
   ],
   templateUrl: './employee-list.html',
   styleUrl: './employee-list.css',
@@ -110,16 +109,6 @@ export class EmployeeList implements OnInit {
       );
     }
 
-    if (this.searchText.trim()) {
-      const search = this.searchText.toLowerCase().trim();
-
-      employees = employees.filter((emp: any) =>
-        emp.employeeCode?.toLowerCase().includes(search) ||
-        emp.name?.toLowerCase().includes(search) ||
-        emp.email?.toLowerCase().includes(search) ||
-        emp.phone?.includes(search)
-      );
-    }
 
     return employees;
   }
@@ -179,7 +168,7 @@ export class EmployeeList implements OnInit {
 
   loadEmployees(): void {
     this.employeeService
-      .getEmployees(this.pageIndex + 1, this.pageSize)
+      .getEmployees(this.pageIndex + 1, this.pageSize, this.searchText)
       .subscribe({
         next: (response: any) => {
           const employees = Array.isArray(response?.data?.records)
@@ -209,6 +198,16 @@ export class EmployeeList implements OnInit {
   toggleRow(employee: any): void {
     this.expandedEmployee = this.expandedEmployee === employee ? null : employee;
     this.cdr.markForCheck();
+  }
+  applyFilters(): void {
+    this.pageIndex = 0;
+    this.expandedEmployee = null;
+    this.loadEmployees();
+  }
+
+  clearSearch(): void {
+    this.searchText = '';
+    this.applyFilters();
   }
 
   openAddDialog(): void {

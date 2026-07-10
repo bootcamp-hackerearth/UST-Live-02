@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MainComponent } from '../../../shared/components/maincomponent/maincomponent';
 
 import {
   MatTableDataSource,
@@ -22,8 +23,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 
 import { PatientService, PatientRequest } from '../../../core/services/patient';
-import { Navbar } from '../../../shared/components/navbar/navbar';
-import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 import { PatientDialog } from '../patient-dialog/patient-dialog';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { PERMISSIONS } from '../../../constants/permission';
@@ -32,6 +31,7 @@ import { PERMISSIONS } from '../../../constants/permission';
   selector: 'app-patient-list',
   standalone: true,
   imports: [
+    MainComponent,
     CommonModule,
     FormsModule,
     DatePipe,
@@ -42,8 +42,7 @@ import { PERMISSIONS } from '../../../constants/permission';
     MatSelectModule,
     MatIconModule,
     MatButtonModule,
-    Navbar,
-    Sidebar,
+
     HasPermissionDirective,
   ],
   templateUrl: './patient-list.html',
@@ -86,7 +85,13 @@ export class PatientList implements OnInit {
 
   loadPatients(): void {
     this.patientService
-      .getPatients(this.pageIndex + 1, this.pageSize)
+      .getPatients(
+        this.pageIndex + 1,
+        this.pageSize,
+        this.searchText,
+        this.selectedGender,
+        this.selectedStatus
+      )
       .subscribe({
         next: (response: any) => {
           const patients = Array.isArray(response?.data?.records)
@@ -138,45 +143,19 @@ export class PatientList implements OnInit {
   }
 
   applyFilters(): void {
-    let filtered = [...this.allPatients];
-
-    const search = this.searchText.trim().toLowerCase();
-
-    if (search) {
-      filtered = filtered.filter((p) =>
-        (p.UHID ?? '').toLowerCase().includes(search) ||
-        (p.name ?? '').toLowerCase().includes(search) ||
-        (p.email ?? '').toLowerCase().includes(search) ||
-        (p.phone ?? '').includes(search) ||
-        (p.gender ?? '').toLowerCase().includes(search)
-      );
-    }
-
-    if (this.selectedGender !== 'ALL') {
-      filtered = filtered.filter(
-        (p) => p.gender === this.selectedGender
-      );
-    }
-
-    if (this.selectedStatus !== 'ALL') {
-      const isActive = this.selectedStatus === 'ACTIVE';
-
-      filtered = filtered.filter(
-        (p) => p.status === isActive
-      );
-    }
-
-    this.dataSource.data = filtered;
+    this.pageIndex = 0;
     this.expandedPatient = null;
+    this.loadPatients();
   }
 
   clearFilters(): void {
     this.searchText = '';
     this.selectedGender = 'ALL';
     this.selectedStatus = 'ALL';
-
-    this.dataSource.data = this.allPatients;
+    this.pageIndex = 0;
     this.expandedPatient = null;
+
+    this.loadPatients();
   }
 
   openAddDialog(): void {
