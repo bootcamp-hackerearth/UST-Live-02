@@ -4,9 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Navbar } from '../../shared/components/navbar/navbar';
 
-import { Sidebar } from '../../shared/components/sidebar/sidebar';
 import { EmployeeService } from '../../core/services/employee';
 
 @Component({
@@ -17,9 +15,7 @@ import { EmployeeService } from '../../core/services/employee';
     CommonModule,
     MatCardModule,
     MatIconModule,
-    MatProgressSpinnerModule,
-    Navbar,
-    Sidebar
+    MatProgressSpinnerModule
   ],
   templateUrl: './profile.html',
   styleUrl: './profile.css'

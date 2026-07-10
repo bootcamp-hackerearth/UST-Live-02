@@ -6,6 +6,7 @@ import {
   ChangeDetectorRef,
 
 } from '@angular/core';
+import { MainComponent } from '../../../shared/components/maincomponent/maincomponent';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -22,8 +23,6 @@ import { HasPermissionDirective } from '../../../shared/directives/has-permissio
 import { PERMISSIONS } from '../../../constants/permission';
 import { ToastrService } from 'ngx-toastr';
 
-import { Navbar } from '../../../shared/components/navbar/navbar';
-import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 import { EmployeeService } from '../../../core/services/employee';
 import { AuthService } from '../../../core/services/auth';
 import { EmployeeDialog } from '../employee-dialog/employee-dialog';
@@ -33,6 +32,7 @@ import { EmployeeDialog } from '../employee-dialog/employee-dialog';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    MainComponent,
     CommonModule,
     FormsModule,
 
@@ -45,8 +45,7 @@ import { EmployeeDialog } from '../employee-dialog/employee-dialog';
     MatPaginatorModule,
     HasPermissionDirective,
 
-    Navbar,
-    Sidebar,
+
   ],
   templateUrl: './employee-list.html',
   styleUrl: './employee-list.css',
@@ -70,6 +69,8 @@ export class EmployeeList implements OnInit {
   activeView: 'all' | 'active' | 'pending' = 'all';
 
   totalRecords = 0;
+  globalActiveCount = 0;
+  globalPendingCount = 0;
   pageSize = 5;
   pageIndex = 0;
   pageSizeOptions = [5, 10, 25];
@@ -110,26 +111,16 @@ export class EmployeeList implements OnInit {
       );
     }
 
-    if (this.searchText.trim()) {
-      const search = this.searchText.toLowerCase().trim();
-
-      employees = employees.filter((emp: any) =>
-        emp.employeeCode?.toLowerCase().includes(search) ||
-        emp.name?.toLowerCase().includes(search) ||
-        emp.email?.toLowerCase().includes(search) ||
-        emp.phone?.includes(search)
-      );
-    }
 
     return employees;
   }
 
   get activeCount(): number {
-    return this.employees.filter((emp: any) => emp.status === true).length;
+    return this.globalActiveCount;
   }
 
   get pendingCount(): number {
-    return this.employees.filter((emp: any) => emp.status === false).length;
+    return this.globalPendingCount;
   }
 
   get roles(): string[] {
@@ -179,7 +170,7 @@ export class EmployeeList implements OnInit {
 
   loadEmployees(): void {
     this.employeeService
-      .getEmployees(this.pageIndex + 1, this.pageSize)
+      .getEmployees(this.pageIndex + 1, this.pageSize, this.searchText)
       .subscribe({
         next: (response: any) => {
           const employees = Array.isArray(response?.data?.records)
@@ -190,6 +181,8 @@ export class EmployeeList implements OnInit {
 
           this.totalRecords =
             response?.data?.pagination?.totalRecords || 0;
+          this.globalActiveCount = response?.data?.activeCount || 0;
+          this.globalPendingCount = response?.data?.pendingCount || 0;
 
           this.expandedEmployee = null;
           this.cdr.markForCheck();
@@ -199,6 +192,8 @@ export class EmployeeList implements OnInit {
 
           this.employees = [];
           this.totalRecords = 0;
+          this.globalActiveCount = 0;
+          this.globalPendingCount = 0;
           this.expandedEmployee = null;
 
           this.toastr.warning('Failed to load employees');
@@ -209,6 +204,16 @@ export class EmployeeList implements OnInit {
   toggleRow(employee: any): void {
     this.expandedEmployee = this.expandedEmployee === employee ? null : employee;
     this.cdr.markForCheck();
+  }
+  applyFilters(): void {
+    this.pageIndex = 0;
+    this.expandedEmployee = null;
+    this.loadEmployees();
+  }
+
+  clearSearch(): void {
+    this.searchText = '';
+    this.applyFilters();
   }
 
   openAddDialog(): void {

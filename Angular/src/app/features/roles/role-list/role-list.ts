@@ -11,14 +11,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ToastrService } from 'ngx-toastr';
 
-import { Navbar } from '../../../shared/components/navbar/navbar';
-import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 import { AuthService } from '../../../core/services/auth'
 import { RoleService, RoleRequest } from '../../../core/services/role';
 import { MatDialog } from '@angular/material/dialog';
 import { RoleDialog } from '../role-dialouge/role-dialouge';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { PERMISSIONS } from '../../../constants/permission';
+import { MainComponent } from '../../../shared/components/maincomponent/maincomponent';
 
 @Component({
   selector: 'app-role-list',
@@ -32,9 +31,9 @@ import { PERMISSIONS } from '../../../constants/permission';
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    Navbar,
-    Sidebar,
+
     HasPermissionDirective,
+    MainComponent,
   ],
   templateUrl: './role-list.html',
   styleUrl: './role-list.css',

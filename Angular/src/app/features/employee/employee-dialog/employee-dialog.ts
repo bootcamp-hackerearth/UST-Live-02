@@ -25,6 +25,7 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { ToastrService } from 'ngx-toastr';
 import { EmployeeService } from '../../../core/services/employee';
+import { HOSPITAL_DEPARTMENTS } from '../../../constants/departments';
 import {
   EMPLOYEE_ROLES,
   NAME_PATTERN,
@@ -35,7 +36,7 @@ import {
   getSpecializationValidators,
   isDoctorRole,
   isMedicalStaffRole,
-  noFutureDateValidator,
+  noPastDateValidator,
   trimInputValue,
   getQualifications,
   getFormattedJoiningDate,
@@ -101,6 +102,7 @@ export class EmployeeDialog implements OnInit {
 
   loading = false;
   readonly roles = EMPLOYEE_ROLES;
+  readonly departments = HOSPITAL_DEPARTMENTS;
   timeSlots: string[] = [
     '09:00 AM - 09:30 AM',
     '09:30 AM - 10:00 AM',
@@ -170,7 +172,7 @@ export class EmployeeDialog implements OnInit {
       '',
       [
         Validators.required,
-        noFutureDateValidator
+        noPastDateValidator
       ]
     ],
 
@@ -211,9 +213,23 @@ export class EmployeeDialog implements OnInit {
   }
 
   ngOnInit(): void {
+    this.configureJoiningDateValidators();
+
     if (this.data.mode === 'edit' && this.data.employee) {
       this.patchEmployeeData(this.data.employee);
     }
+  }
+
+  private configureJoiningDateValidators(): void {
+    const joiningDateControl = this.form.get('joiningDate');
+
+    joiningDateControl?.setValidators(
+      this.data.mode === 'edit'
+        ? [Validators.required]
+        : [Validators.required, noPastDateValidator]
+    );
+
+    joiningDateControl?.updateValueAndValidity();
   }
 
   private patchEmployeeData(employee: EmployeeData): void {

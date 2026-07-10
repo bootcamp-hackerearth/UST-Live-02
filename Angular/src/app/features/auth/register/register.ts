@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { EmployeeService } from '../../../core/services/employee';
+import { HOSPITAL_DEPARTMENTS } from '../../../constants/departments';
 
 @Component({
   selector: 'app-register',
@@ -45,6 +46,8 @@ export class Register {
       validators: this.passwordsMatchValidator()
     }
   );
+
+  readonly departments = HOSPITAL_DEPARTMENTS;
 
   readonly availabilitySlotOptions = [
     '09:00 AM - 09:30 AM',
@@ -260,8 +263,15 @@ export class Register {
   private buildPayload() {
     const raw = this.registerForm.getRawValue();
 
-    const qualification = this.parseList(raw.qualification);
-    const availabilitySlots = this.availabilitySlotsControl.value ?? [];
+    const parsedQualification = this.parseList(raw.qualification);
+    const qualification = this.needsQualification && parsedQualification.length
+      ? parsedQualification
+      : undefined;
+
+    const parsedAvailabilitySlots = this.availabilitySlotsControl.value ?? [];
+    const availabilitySlots = this.isDoctor && parsedAvailabilitySlots.length
+      ? parsedAvailabilitySlots
+      : undefined;
 
     return {
       name: raw.name,

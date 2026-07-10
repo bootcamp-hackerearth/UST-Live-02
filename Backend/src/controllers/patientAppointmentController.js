@@ -14,7 +14,7 @@ const {
     getTomorrowDate,
     isBeforeDoctorJoiningDate,
     findSlotConflict
-} = require("../utils/appointmentHelpers");
+} = require("../utils/appointmentValidators");
 
 const getPatientId = (req) => {
     return req.user?.UHID || req.user?.uhid || req.user?.patientId;
@@ -261,8 +261,7 @@ exports.getMyAppointments = async (req, res) => {
         const skip = (page - 1) * limit;
 
         const filter = {
-            patientId,
-            isDeleted: false
+            patientId
         };
 
         const totalRecords = await Appointment.countDocuments(filter);

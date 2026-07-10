@@ -1,7 +1,7 @@
 /* Page */
 
 .landing-page {
-    min-height: 100vh;
+    height: 100dvh;
 
     background:
         radial-gradient(circle at top left, #dbeafe 0%, transparent 35%),
@@ -10,7 +10,9 @@
             #f8fbff 0%,
             #eff6ff 100%);
 
+    overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Header */
@@ -238,5 +240,53 @@
     .hero-card,
     .feature-card {
         padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        height: auto;
+        min-height: 64px;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .logo {
+        font-size: 1.35rem;
+    }
+
+    .logo mat-icon {
+        font-size: 1.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .header-actions {
+        gap: 0.5rem;
+    }
+
+    .hero {
+        padding: 2rem 1rem;
+        gap: 2rem;
+    }
+
+    .hero-content p {
+        font-size: 0.95rem;
+    }
+
+    .hero-btn {
+        width: 100%;
+        padding: 0 1rem !important;
+    }
+
+    .hero-card mat-icon {
+        font-size: 3.5rem;
+        width: 3.5rem;
+        height: 3.5rem;
+    }
+
+    .hero-card h2 {
+        font-size: 1.4rem;
     }
 }
