@@ -15,7 +15,7 @@ const createNode = asyncHandler(async (req, res) => {
 });
 
 const getNodes = asyncHandler(async (req, res) => {
-  const nodes = await getNodesService(req.user);
+  const nodes = await getNodesService(req.user, req.query);
 
   return res
     .status(200)
@@ -37,9 +37,7 @@ const updateNode = asyncHandler(async (req, res) => {
 const deleteNode = asyncHandler(async (req, res) => {
   const result = await deleteNodeService(req.params.id, req.user.userId);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, result.message, result));
+  return res.status(200).json(new ApiResponse(200, result.message, result));
 });
 
 module.exports = {

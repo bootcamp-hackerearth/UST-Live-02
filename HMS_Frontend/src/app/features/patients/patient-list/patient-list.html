@@ -21,7 +21,7 @@
     <div class="search-box">
       <span>🔍</span>
 
-      <input type="text" placeholder="Search patient..." [(ngModel)]="search" (input)="onFilterChange()" />
+      <input type="text" placeholder="Search patient..." [(ngModel)]="search" (input)="onSearchInput()" />
     </div>
 
     <select [(ngModel)]="gender" (change)="onFilterChange()">
@@ -35,6 +35,17 @@
     </select>
   </div>
   <div class="list-content">
+    @if(isLoading){
+    <app-skeleton-loader [rows]="5"></app-skeleton-loader>
+
+    } @else if(patients.length === 0) {
+    <app-empty-state
+      icon="personal_injury"
+      title="No Patients Found"
+      message="Try changing filters or add a new patient."
+    ></app-empty-state>
+
+    } @else {
     <!-- Table -->
 
     <div class="table-wrapper glass-card">
@@ -59,7 +70,6 @@
 
         <tbody>
           @for( patient of patients; track patient._id ){
-
           <tr>
             <!-- Patient -->
 
@@ -105,56 +115,42 @@
 
             <!-- Actions -->
 
-          <td>
+            <td>
+              <div class="actions">
+                <!-- View -->
 
-  <div class="actions">
-
-    <!-- View -->
-
-    <a
-      class="action-btn view"
-      [routerLink]="[
+                <a
+                  class="action-btn view"
+                  [routerLink]="[
         '/patients',
         patient._id
       ]"
-    >
-      View
-    </a>
+                >
+                  View
+                </a>
 
-    <!-- Edit -->
+                <!-- Edit -->
 
-    @if(nodeService.canUseApi('PUT', '/api/patients/:id')){
-
-      <a
-        class="action-btn edit"
-        [routerLink]="[
+                @if(nodeService.canUseApi('PUT', '/api/patients/:id')){
+                <a
+                  class="action-btn edit"
+                  [routerLink]="[
           '/patients/edit',
           patient._id
         ]"
-      >
-        Edit
-      </a>
+                >
+                  Edit
+                </a>
+                }
 
-    }
+                <!-- Delete -->
 
-    <!-- Delete -->
-
-    @if(nodeService.canUseApi('DELETE', '/api/patients/:id')){
-
-      <button
-        class="action-btn delete"
-        (click)="deletePatient(patient._id)"
-      >
-        Delete
-      </button>
-
-    }
-
-  </div>
-
-</td>
+                @if(nodeService.canUseApi('DELETE', '/api/patients/:id')){
+                <button class="action-btn delete" (click)="deletePatient(patient._id)">Delete</button>
+                }
+              </div>
+            </td>
           </tr>
-
           }
         </tbody>
       </table>
@@ -163,9 +159,11 @@
 
     <app-pagination
       [page]="page"
-      [totalPages]="totalPages"
+      [totalPages]="page + (nextCursor ? 1 : 0)"
       [totalRecords]="totalRecords"
       [limit]="limit"
+      [cursorMode]="true"
+      [hasNextPage]="!!nextCursor"
       (previous)="previousPage()"
       (next)="nextPage()"
       (pageSizeChange)="
@@ -174,5 +172,6 @@
     loadPatients()
   "
     ></app-pagination>
+    }
   </div>
 </div>

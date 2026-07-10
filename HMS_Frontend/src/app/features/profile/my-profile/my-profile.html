@@ -1,5 +1,4 @@
-@if(user){
-
+@if(user(); as user){
 <div class="profile-page">
   <!-- Hero Section -->
 
@@ -43,25 +42,25 @@
 
       <div class="info-list">
         <div class="info-item">
-          <label>Employee Code</label>
+          <span class="info-label">Employee Code</span>
 
           <p>{{ user?.employeeCode }}</p>
         </div>
 
         <div class="info-item">
-          <label>Email</label>
+          <span class="info-label">Email</span>
 
           <p>{{ user?.email }}</p>
         </div>
 
         <div class="info-item">
-          <label>Phone</label>
+          <span class="info-label">Phone</span>
 
           <p>{{ user?.countryCode }} {{ user?.phone }}</p>
         </div>
 
         <div class="info-item">
-          <label>Gender</label>
+          <span class="info-label">Gender</span>
 
           <p>{{ user?.gender || 'N/A' }}</p>
         </div>
@@ -75,25 +74,25 @@
 
       <div class="info-list">
         <div class="info-item">
-          <label>Designation</label>
+          <span class="info-label">Designation</span>
 
           <p>{{ user?.designation }}</p>
         </div>
 
         <div class="info-item">
-          <label>Department</label>
+          <span class="info-label">Department</span>
 
           <p>{{ user?.department }}</p>
         </div>
 
         <div class="info-item">
-          <label>Joining Date</label>
+          <span class="info-label">Joining Date</span>
 
           <p>{{ user?.joiningDate | date }}</p>
         </div>
 
         <div class="info-item">
-          <label>Employee Status</label>
+          <span class="info-label">Employee Status</span>
 
           <p>{{ user?.status }}</p>
         </div>
@@ -103,33 +102,30 @@
     <!-- Doctor Info -->
 
     @if( user?.designation === 'DOCTOR' ){
-
     <div class="profile-card glass-card">
       <h2>Doctor Information</h2>
 
       <div class="info-list">
         <div class="info-item">
-          <label>Specialization</label>
+          <span class="info-label">Specialization</span>
 
           <p>{{ user?.specialization || 'N/A' }}</p>
         </div>
 
         <div class="info-item">
-          <label>Qualification</label>
+          <span class="info-label">Qualification</span>
 
           <p>{{ user?.qualification?.[0] || 'N/A' }}</p>
         </div>
 
         <div class="info-item">
-          <label>Consultation Fee</label>
+          <span class="info-label">Consultation Fee</span>
 
           <p>₹ {{ user?.consultationFee || 0 }}</p>
         </div>
       </div>
     </div>
-
     }
   </div>
 </div>
-
 }

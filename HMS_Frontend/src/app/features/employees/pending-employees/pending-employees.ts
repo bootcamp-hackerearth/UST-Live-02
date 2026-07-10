@@ -1,9 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
+import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../../core/services/toast';
 import { EmployeeService } from '../../../core/services/employee';
 import { NodeService } from '../../../core/services/node';
+import { InputDialogService } from '../../../core/services/input-dialog';
 
 @Component({
   selector: 'app-pending-employees',
@@ -18,14 +19,16 @@ export class PendingEmployees implements OnInit {
 
   constructor(
     private readonly employeeService: EmployeeService,
+    private readonly route: ActivatedRoute,
     private readonly toastService: ToastService,
     public readonly nodeService: NodeService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly inputDialog: InputDialogService
   ) {}
 
   // Load pending employees on page load
   ngOnInit(): void {
-    this.loadPendingEmployees();
+    this.pendingEmployees = this.route.snapshot.data['pendingEmployees']?.data || [];
   }
 
   // Get all pending employees
@@ -38,7 +41,6 @@ export class PendingEmployees implements OnInit {
 
         this.cdr.detectChanges();
       },
-
       error: (error) => {
         console.log(error);
       }
@@ -46,14 +48,21 @@ export class PendingEmployees implements OnInit {
   }
 
   // Approve employee
-  approveEmployee(employee: any): void {
+  async approveEmployee(employee: any): Promise<void> {
     let consultationFee = null;
 
     if (employee.designation === 'DOCTOR') {
-      const fee = prompt(`Enter consultation fee for Dr. ${employee.name}`);
+      const fee = await this.inputDialog.ask({
+        title: 'Consultation fee',
+        message: `Enter consultation fee for Dr. ${employee.name}`,
+        inputLabel: 'Fee',
+        inputType: 'number',
+        min: 0,
+        confirmText: 'Approve'
+      });
 
       if (fee === null || fee.trim() === '' || Number(fee) < 0) {
-        alert('Valid consultation fee is required');
+        this.toastService.error('Valid consultation fee is required');
         return;
       }
 
@@ -77,7 +86,6 @@ export class PendingEmployees implements OnInit {
 
           this.loadPendingEmployees();
         },
-
         error: (error) => {
           console.log(error);
 
@@ -87,21 +95,36 @@ export class PendingEmployees implements OnInit {
   }
 
   // Reject employee
-  rejectEmployee(employeeId: string): void {
-    this.employeeService.rejectEmployee(employeeId).subscribe({
-      next: (response: any) => {
-        console.log(response);
-
-        this.toastService.show('Employee Rejected', 'success');
-
-        this.loadPendingEmployees();
-      },
-
-      error: (error) => {
-        console.log(error);
-
-        this.toastService.show('Failed to reject employee', 'error');
-      }
+  async rejectEmployee(employee: any): Promise<void> {
+    const rejectionReason = await this.inputDialog.ask({
+      title: 'Reject employee?',
+      message: `Add a reason for rejecting ${employee.name}.`,
+      inputLabel: 'Reason',
+      inputType: 'text',
+      confirmText: 'Reject'
     });
+
+    if (rejectionReason === null) {
+      return;
+    }
+
+    this.employeeService
+      .rejectEmployee(employee._id, {
+        rejectionReason: rejectionReason.trim() || null
+      })
+      .subscribe({
+        next: (response: any) => {
+          console.log(response);
+
+          this.toastService.show('Employee Rejected', 'success');
+
+          this.loadPendingEmployees();
+        },
+        error: (error) => {
+          console.log(error);
+
+          this.toastService.show('Failed to reject employee', 'error');
+        }
+      });
   }
 }

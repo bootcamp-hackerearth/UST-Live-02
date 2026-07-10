@@ -25,9 +25,18 @@ const {
 const authMiddleware = require("../middleware/auth.middleware");
 const roleMiddleware = require("../middleware/role.middleware");
 const nodePermissionMiddleware = require("../middleware/node-permission.middleware");
+const validateMiddleware = require("../middleware/validate.middleware");
+const {
+  paginationQueryValidation,
+} = require("../validations/common.validation");
+const {
+  bookAppointmentValidation,
+  bookPatientAppointmentValidation,
+  updateAppointmentValidation,
+  updateMyAppointmentValidation,
+} = require("../validations/appointment.validation");
 
 // Get today's queue for a doctor
-
 router.get(
   "/doctor-queue",
   authMiddleware,
@@ -36,7 +45,6 @@ router.get(
 );
 
 // Get available slots
-
 router.get(
   "/available-slots",
   authMiddleware,
@@ -45,31 +53,34 @@ router.get(
 );
 
 // Get all appointments
-
 router.get(
   "/",
   authMiddleware,
   nodePermissionMiddleware,
+  paginationQueryValidation,
+  validateMiddleware,
   getAppointments,
 );
 
 // Patient books appointment
-
 router.post(
   "/patient/book",
   authMiddleware,
   nodePermissionMiddleware,
   roleMiddleware(ROLES.PATIENT),
+  bookPatientAppointmentValidation,
+  validateMiddleware,
   bookPatientAppointment,
 );
 
 // Patient appointments
-
 router.get(
   "/my",
   authMiddleware,
   nodePermissionMiddleware,
   roleMiddleware(ROLES.PATIENT),
+  paginationQueryValidation,
+  validateMiddleware,
   getMyAppointments,
 );
 
@@ -82,7 +93,6 @@ router.get(
 );
 
 // Pending appointments
-
 router.get(
   "/pending",
   authMiddleware,
@@ -91,7 +101,6 @@ router.get(
 );
 
 // Approve appointment
-
 router.patch(
   "/:id/approve",
   authMiddleware,
@@ -100,7 +109,6 @@ router.patch(
 );
 
 // Reject appointment
-
 router.patch(
   "/:id/reject",
   authMiddleware,
@@ -109,17 +117,17 @@ router.patch(
 );
 
 // Patient update own appointment
-
 router.put(
   "/my/:id",
   authMiddleware,
   nodePermissionMiddleware,
   roleMiddleware(ROLES.PATIENT),
+  updateMyAppointmentValidation,
+  validateMiddleware,
   updateMyAppointment,
 );
 
 // Patient cancel own appointment
-
 router.patch(
   "/my/:id/cancel",
   authMiddleware,
@@ -129,7 +137,6 @@ router.patch(
 );
 
 // Get appointment by id
-
 router.get(
   "/:id",
   authMiddleware,
@@ -138,25 +145,26 @@ router.get(
 );
 
 // Book appointment (Admin/Receptionist/Super Admin)
-
 router.post(
   "/",
   authMiddleware,
   nodePermissionMiddleware,
+  bookAppointmentValidation,
+  validateMiddleware,
   bookAppointment,
 );
 
 // Update appointment
-
 router.put(
   "/:id",
   authMiddleware,
   nodePermissionMiddleware,
+  updateAppointmentValidation,
+  validateMiddleware,
   updateAppointment,
 );
 
 // Delete appointment
-
 router.delete(
   "/:id",
   authMiddleware,

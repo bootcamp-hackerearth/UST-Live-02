@@ -1,0 +1,6 @@
+projectKey=HMS_REACT
+serverUrl=http://localhost:9000
+serverVersion=26.1.0.118079
+dashboardUrl=http://localhost:9000/dashboard?id=HMS_REACT
+ceTaskId=05992c98-e69a-4004-9b57-2967a6691416
+ceTaskUrl=http://localhost:9000/api/ce/task?id=05992c98-e69a-4004-9b57-2967a6691416

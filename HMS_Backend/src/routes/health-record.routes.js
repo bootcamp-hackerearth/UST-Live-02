@@ -27,52 +27,46 @@ const {
   addMedicalDocumentValidation,
   updateMedicalDocumentValidation,
 } = require("../validations/health-record.validation");
+const {
+  paginationQueryValidation,
+} = require("../validations/common.validation");
 
 // Get all health records
-
 router.get(
   "/",
   authMiddleware,
   nodePermissionMiddleware,
-  getHealthRecords
+  paginationQueryValidation,
+  validateMiddleware,
+  getHealthRecords,
 );
 
 // Patient's own health record
-
 router.get(
   "/me",
   authMiddleware,
   nodePermissionMiddleware,
-  roleMiddleware(
-    ROLES.PATIENT
-  ),
+  roleMiddleware(ROLES.PATIENT),
   async (req, res, next) => {
     try {
-      req.params.patientId =
-        req.user.patientId;
+      req.params.patientId = req.user.patientId;
 
-      return getHealthRecordDetails(
-        req,
-        res,
-        next
-      );
+      return getHealthRecordDetails(req, res, next);
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Health record by patient id
-
 router.get(
   "/:patientId",
   authMiddleware,
   nodePermissionMiddleware,
-  getHealthRecordDetails
+  getHealthRecordDetails,
 );
 
 // Add lab report
-
 router.post(
   "/:patientId/lab-reports",
   authMiddleware,
@@ -80,11 +74,10 @@ router.post(
   upload.single("document"),
   addLabReportValidation,
   validateMiddleware,
-  addLabReport
+  addLabReport,
 );
 
 // Update lab report
-
 router.put(
   "/:patientId/lab-reports/:reportId",
   authMiddleware,
@@ -92,20 +85,18 @@ router.put(
   upload.single("document"),
   updateLabReportValidation,
   validateMiddleware,
-  updateLabReport
+  updateLabReport,
 );
 
 // Delete lab report
-
 router.delete(
   "/:patientId/lab-reports/:reportId",
   authMiddleware,
   nodePermissionMiddleware,
-  deleteLabReport
+  deleteLabReport,
 );
 
 // Add medical document
-
 router.post(
   "/:patientId/medical-documents",
   authMiddleware,
@@ -113,11 +104,10 @@ router.post(
   upload.single("document"),
   addMedicalDocumentValidation,
   validateMiddleware,
-  addMedicalDocument
+  addMedicalDocument,
 );
 
 // Update medical document
-
 router.put(
   "/:patientId/medical-documents/:documentId",
   authMiddleware,
@@ -125,16 +115,15 @@ router.put(
   upload.single("document"),
   updateMedicalDocumentValidation,
   validateMiddleware,
-  updateMedicalDocument
+  updateMedicalDocument,
 );
 
 // Delete medical document
-
 router.delete(
   "/:patientId/medical-documents/:documentId",
   authMiddleware,
   nodePermissionMiddleware,
-  deleteMedicalDocument
+  deleteMedicalDocument,
 );
 
 module.exports = router;

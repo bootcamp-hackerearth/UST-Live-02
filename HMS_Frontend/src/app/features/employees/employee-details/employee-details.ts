@@ -1,7 +1,6 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-
 import { EmployeeService } from '../../../core/services/employee';
 
 @Component({
@@ -37,7 +36,6 @@ export class EmployeeDetails implements OnInit {
 
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.log(error);
       }

@@ -1,8 +1,10 @@
 export interface PaginationMeta {
-  page: number;
   limit: number;
-  totalRecords: number;
-  totalPages: number;
+  nextCursor?: string | null;
+  hasNextPage: boolean;
+  page?: number;
+  totalRecords?: number;
+  totalPages?: number;
 }
 
 export interface HealthRecordMeta {
@@ -16,6 +18,9 @@ export interface HealthRecordPatient {
   patientId: string;
   firstName: string;
   lastName: string;
+  gender?: string;
+  bloodGroup?: string;
+  phone?: string;
 }
 export interface ConsultationDoctor {
   _id: string;

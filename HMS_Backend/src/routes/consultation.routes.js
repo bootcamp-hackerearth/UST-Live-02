@@ -20,9 +20,11 @@ const {
   createConsultationValidation,
   updateConsultationValidation,
 } = require("../validations/consultation.validation");
+const {
+  paginationQueryValidation,
+} = require("../validations/common.validation");
 
 // Create consultation
-
 router.post(
   "/",
   authMiddleware,
@@ -33,16 +35,16 @@ router.post(
 );
 
 // Get all consultations
-
 router.get(
   "/",
   authMiddleware,
   nodePermissionMiddleware,
+  paginationQueryValidation,
+  validateMiddleware,
   getConsultations,
 );
 
 // Get consultation by appointment
-
 router.get(
   "/appointment/:appointmentId",
   authMiddleware,
@@ -51,7 +53,6 @@ router.get(
 );
 
 // Download prescription
-
 router.get(
   "/prescription/:consultationId",
   authMiddleware,
@@ -60,7 +61,6 @@ router.get(
 );
 
 // Get consultation by id
-
 router.get(
   "/:id",
   authMiddleware,
@@ -69,7 +69,6 @@ router.get(
 );
 
 // Update consultation
-
 router.put(
   "/:id",
   authMiddleware,
@@ -80,7 +79,6 @@ router.put(
 );
 
 // Delete consultation
-
 router.delete(
   "/:id",
   authMiddleware,

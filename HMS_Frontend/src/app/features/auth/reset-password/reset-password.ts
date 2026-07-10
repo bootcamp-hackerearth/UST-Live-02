@@ -1,9 +1,9 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-
 import { AuthService } from '../../../core/services/auth';
+import { ToastService } from '../../../core/services/toast';
 
 @Component({
   selector: 'app-reset-password',
@@ -25,11 +25,11 @@ export class ResetPassword implements OnInit {
     private readonly fb: FormBuilder,
     private readonly authService: AuthService,
     private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly toast: ToastService
   ) {
     this.resetForm = this.fb.group({
-      securityAnswer: ['', Validators.required],
-
+      securityAnswer: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       newPassword: [
         '',
         [
@@ -39,7 +39,6 @@ export class ResetPassword implements OnInit {
           Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
         ]
       ],
-
       confirmPassword: ['', Validators.required]
     });
   }
@@ -80,7 +79,7 @@ export class ResetPassword implements OnInit {
     if (this.resetForm.value.newPassword !== this.resetForm.value.confirmPassword) {
       this.isSubmitting = false;
 
-      alert('Passwords do not match');
+      this.toast.error('Passwords do not match');
       this.cdr.markForCheck();
       return;
     }
@@ -96,7 +95,7 @@ export class ResetPassword implements OnInit {
       next: (response) => {
         console.log(response);
 
-        alert('Password reset successful');
+        this.toast.success('Password reset successful');
 
         sessionStorage.removeItem('passwordRecovery');
 
@@ -105,7 +104,6 @@ export class ResetPassword implements OnInit {
         this.isSubmitting = false;
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.log('FULL ERROR');
         console.log(error);
@@ -114,6 +112,7 @@ export class ResetPassword implements OnInit {
         console.log(error?.error?.errors);
 
         this.isSubmitting = false;
+        this.toast.error(error?.error?.message || 'Unable to reset password');
         this.cdr.markForCheck();
       }
     });

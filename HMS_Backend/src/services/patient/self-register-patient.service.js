@@ -20,7 +20,11 @@ const selfRegisterPatient = async (patientData) => {
   });
 
   if (existingUser) {
-    throw new ApiError(409, "Email already registered", "EMAIL_ALREADY_REGISTERED");
+    throw new ApiError(
+      409,
+      "Email already registered",
+      "EMAIL_ALREADY_REGISTERED",
+    );
   }
 
   const existingPatient = await Patient.findOne({
@@ -29,28 +33,24 @@ const selfRegisterPatient = async (patientData) => {
   });
 
   if (existingPatient) {
-    throw new ApiError(409, "Phone number already registered", "PHONE_ALREADY_REGISTERED");
+    throw new ApiError(
+      409,
+      "Phone number already registered",
+      "PHONE_ALREADY_REGISTERED",
+    );
   }
 
   const patientId = await generatePatientId();
 
   const patient = await Patient.create({
     patientId,
-
     firstName,
-
     lastName,
-
     email: email.toLowerCase(),
-
     phone,
-
     gender: "OTHER",
-
     dateOfBirth: new Date(),
-
     status: STATUS.ACTIVE,
-
     createdBy: null,
   });
 
@@ -58,15 +58,10 @@ const selfRegisterPatient = async (patientData) => {
 
   await User.create({
     email: email.toLowerCase(),
-
     passwordHash,
-
     patientId: patient._id,
-
     roles: [ROLES.PATIENT],
-
     isFirstLogin: false,
-
     status: STATUS.ACTIVE,
   });
 

@@ -6,9 +6,7 @@ const ApiError = require("../../utils/ApiError");
 const cancelMyAppointment = async (appointmentId, patientId) => {
   const appointment = await Appointment.findOne({
     _id: appointmentId,
-
     patientId,
-
     isDeleted: false,
   });
 

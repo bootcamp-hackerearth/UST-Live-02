@@ -1,12 +1,18 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppointmentService } from '../../../core/services/appointment';
 import { AuthService } from '../../../core/services/auth';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 import { NodeService } from '../../../core/services/node';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog';
+import { ToastService } from '../../../core/services/toast';
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 @Component({
   selector: 'app-appointment-list',
@@ -26,25 +32,50 @@ export class AppointmentList implements OnInit {
   endDate = '';
   page = 1;
   limit = 10;
+  cursorStack: string[] = [''];
+  nextCursor = '';
 
   totalRecords = 0;
   totalPages = 0;
+
+  private readonly searchChanged$ = new Subject<void>();
 
   constructor(
     private readonly appointmentService: AppointmentService,
     public readonly authService: AuthService,
     public readonly nodeService: NodeService,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+    private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly confirmDialog: ConfirmDialogService,
+    private readonly toast: ToastService
+  ) {
+    this.searchChanged$
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), takeUntilDestroyed())
+      .subscribe(() => this.onFilterChange());
+  }
 
   ngOnInit(): void {
-    this.loadAppointments();
+    this.applyAppointmentsResponse(this.route.snapshot.data['appointments']);
+
+    this.route.queryParamMap.subscribe((params) => {
+      if (!params.has('navReset')) {
+        return;
+      }
+
+      this.resetFilters();
+    });
+  }
+
+  onSearchInput(): void {
+    this.searchChanged$.next();
   }
 
   loadAppointments(): void {
     const params: any = {
       page: this.page,
-      limit: this.limit
+      limit: this.limit,
+      pagination: 'cursor',
+      cursor: this.cursorStack[this.page - 1] || ''
     };
 
     if (this.search.trim()) {
@@ -69,22 +100,26 @@ export class AppointmentList implements OnInit {
 
     this.appointmentService.getAppointments(params).subscribe({
       next: (response) => {
-        this.appointments = response.data;
+        this.applyAppointmentsResponse(response);
 
-        this.totalRecords = response.meta?.total || 0;
-
-        this.totalPages = response.meta?.totalPages || 0;
+        if (this.page > 1 && this.appointments.length === 0) {
+          this.page = Math.max(this.totalPages || 1, 1);
+          this.loadAppointments();
+          return;
+        }
 
         this.cdr.detectChanges();
       },
-
       error: (error) => {
-        console.log(error);
+        this.toast.error(error?.error?.message || 'Failed to delete appointment');
+        this.cdr.detectChanges();
       }
     });
   }
   onFilterChange(): void {
     this.page = 1;
+    this.cursorStack = [''];
+    this.nextCursor = '';
 
     this.loadAppointments();
   }
@@ -98,7 +133,8 @@ export class AppointmentList implements OnInit {
   }
 
   nextPage(): void {
-    if (this.page < this.totalPages) {
+    if (this.nextCursor) {
+      this.cursorStack[this.page] = this.nextCursor;
       this.page++;
 
       this.loadAppointments();
@@ -111,27 +147,61 @@ export class AppointmentList implements OnInit {
     this.limit = Number(select.value);
 
     this.page = 1;
+    this.cursorStack = [''];
+    this.nextCursor = '';
 
     this.loadAppointments();
   }
 
-  deleteAppointment(id: string): void {
-    const confirmDelete = confirm('Delete this appointment?');
+  resetFilters(): void {
+    this.search = '';
+    this.status = '';
+    this.priority = '';
+    this.startDate = '';
+    this.endDate = '';
+    this.page = 1;
+    this.cursorStack = [''];
+    this.nextCursor = '';
 
-    if (!confirmDelete) {
+    this.loadAppointments();
+  }
+
+  async deleteAppointment(id: string): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete appointment?',
+      message: 'This appointment will be removed from the schedule.',
+      confirmText: 'Delete',
+      tone: 'danger'
+    });
+
+    if (!confirmed) {
       return;
     }
 
     this.appointmentService.deleteAppointment(id).subscribe({
       next: () => {
-        alert('Appointment deleted successfully');
+        this.page = this.getPageAfterDelete();
+        this.toast.success('Appointment deleted successfully');
 
         this.loadAppointments();
       },
-
       error: (error) => {
         console.log(error);
       }
     });
+  }
+
+  private getPageAfterDelete(): number {
+    const totalAfterDelete = Math.max(this.totalRecords - 1, 0);
+    const totalPagesAfterDelete = Math.max(Math.ceil(totalAfterDelete / this.limit), 1);
+
+    return Math.min(this.page, totalPagesAfterDelete);
+  }
+
+  private applyAppointmentsResponse(response: any): void {
+    this.appointments = response?.data || [];
+    this.totalRecords = response?.meta?.totalRecords ?? response?.meta?.total ?? 0;
+    this.totalPages = response?.meta?.totalPages || Math.max(Math.ceil(this.totalRecords / this.limit), 1);
+    this.nextCursor = response?.meta?.nextCursor || '';
   }
 }

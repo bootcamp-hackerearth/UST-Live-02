@@ -18,34 +18,31 @@ const notFutureDate = (fieldLabel) => (value) => {
   return true;
 };
 
-const requireDocumentFile = (message) => (_value, { req }) => {
-  if (!req.file) {
-    throw new Error(message);
-  }
+const requireDocumentFile =
+  (message) =>
+  (_value, { req }) => {
+    if (!req.file) {
+      throw new Error(message);
+    }
 
-  return true;
-};
+    return true;
+  };
 
 const addLabReportValidation = [
   body("title").trim().notEmpty().withMessage("Title is required"),
-
   body("reportType").trim().notEmpty().withMessage("Report type is required"),
-
   body("reportDate")
     .notEmpty()
     .withMessage("Report date is required")
     .isISO8601()
     .withMessage("Invalid report date")
     .custom(notFutureDate("Report date")),
-
   body("document").custom(requireDocumentFile("Report file is required")),
 ];
 
 const updateLabReportValidation = [
   body("title").optional({ checkFalsy: true }).trim(),
-
   body("reportType").optional({ checkFalsy: true }).trim(),
-
   body("reportDate")
     .optional({ checkFalsy: true })
     .isISO8601()
@@ -55,27 +52,22 @@ const updateLabReportValidation = [
 
 const addMedicalDocumentValidation = [
   body("title").trim().notEmpty().withMessage("Title is required"),
-
   body("documentType")
     .trim()
     .notEmpty()
     .withMessage("Document type is required"),
-
   body("recordDate")
     .notEmpty()
     .withMessage("Record date is required")
     .isISO8601()
     .withMessage("Invalid record date")
     .custom(notFutureDate("Record date")),
-
   body("document").custom(requireDocumentFile("Document file is required")),
 ];
 
 const updateMedicalDocumentValidation = [
   body("title").optional({ checkFalsy: true }).trim(),
-
   body("documentType").optional({ checkFalsy: true }).trim(),
-
   body("recordDate")
     .optional({ checkFalsy: true })
     .isISO8601()

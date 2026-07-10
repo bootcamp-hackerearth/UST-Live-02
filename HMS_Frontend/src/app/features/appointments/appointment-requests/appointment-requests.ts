@@ -1,19 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
-
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
+import { ActivatedRoute } from '@angular/router';
 import { AppointmentService } from '../../../core/services/appointment';
 import { NodeService } from '../../../core/services/node';
 
 @Component({
   selector: 'app-appointment-requests',
-
   standalone: true,
-
   imports: [CommonModule],
-
   templateUrl: './appointment-requests.html',
-
   styleUrls: ['./appointment-requests.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -25,11 +20,12 @@ export class AppointmentRequestsComponent implements OnInit {
   constructor(
     private readonly appointmentService: AppointmentService,
     public readonly nodeService: NodeService,
+    private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.loadPendingAppointments();
+    this.appointments = this.route.snapshot.data['pendingAppointments']?.data || [];
   }
 
   loadPendingAppointments(): void {
@@ -42,7 +38,6 @@ export class AppointmentRequestsComponent implements OnInit {
         this.loading = false;
         this.cdr.detectChanges();
       },
-
       error: () => {
         this.loading = false;
       }

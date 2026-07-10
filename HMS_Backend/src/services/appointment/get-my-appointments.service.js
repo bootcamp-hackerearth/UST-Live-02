@@ -6,6 +6,90 @@ const {
   buildPaginationMeta,
 } = require("../../utils/pagination");
 
+const isCursorPaginationRequest = (query) =>
+  query.pagination === "cursor" || Boolean(query.cursor);
+
+const encodeAppointmentCursor = (appointment) => {
+  if (!appointment?.appointmentDate || !appointment?.timeSlot || !appointment?._id) {
+    return null;
+  }
+
+  return Buffer.from(
+    JSON.stringify({
+      appointmentDate: appointment.appointmentDate,
+      timeSlot: appointment.timeSlot,
+      id: appointment._id,
+    }),
+  ).toString("base64url");
+};
+
+const decodeAppointmentCursor = (cursor) => {
+  if (!cursor) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(cursor, "base64url").toString("utf8"),
+    );
+
+    if (!parsed.appointmentDate || !parsed.timeSlot || !parsed.id) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const applyAppointmentCursorFilter = (filter, cursor) => {
+  const decodedCursor = decodeAppointmentCursor(cursor);
+
+  if (!decodedCursor) {
+    return;
+  }
+
+  const existingSearch = filter.$or;
+  delete filter.$or;
+
+  filter.$and = [
+    ...(existingSearch ? [{ $or: existingSearch }] : []),
+    {
+      $or: [
+        {
+          appointmentDate: {
+            $lt: new Date(decodedCursor.appointmentDate),
+          },
+        },
+        {
+          appointmentDate: new Date(decodedCursor.appointmentDate),
+          timeSlot: {
+            $lt: decodedCursor.timeSlot,
+          },
+        },
+        {
+          appointmentDate: new Date(decodedCursor.appointmentDate),
+          timeSlot: decodedCursor.timeSlot,
+          _id: {
+            $lt: decodedCursor.id,
+          },
+        },
+      ],
+    },
+  ];
+};
+
+const buildCursorMeta = (appointments, hasNextPage, limit, total) => ({
+  limit,
+  total,
+  totalRecords: total,
+  nextCursor: hasNextPage
+    ? encodeAppointmentCursor(appointments[appointments.length - 1])
+    : null,
+  hasNextPage,
+});
+
 const getMyAppointments = async (patientId, query = {}) => {
   const { search, status, page, limit } = query;
 
@@ -75,14 +159,17 @@ const getMyAppointments = async (patientId, query = {}) => {
   }
 
   const pagination = getPagination(page, limit);
-  const total = await Appointment.countDocuments(filter);
+  const isCursorPagination = isCursorPaginationRequest(query);
+  const totalFilter = { ...filter };
+
+  applyAppointmentCursorFilter(filter, isCursorPagination ? query.cursor : null);
+
+  const total = await Appointment.countDocuments(totalFilter);
 
   const appointments = await Appointment.find(filter)
     .populate({
       path: "doctorEmployeeId",
-
       select: "name department specialization",
-
       match: {
         isDeleted: false,
       },
@@ -90,19 +177,32 @@ const getMyAppointments = async (patientId, query = {}) => {
     .sort({
       appointmentDate: -1,
       timeSlot: -1,
+      _id: -1,
     })
-    .skip(pagination.skip)
-    .limit(pagination.limit)
+    .skip(isCursorPagination ? 0 : pagination.skip)
+    .limit(isCursorPagination ? pagination.limit + 1 : pagination.limit)
     .lean();
+  const hasNextCursorPage =
+    isCursorPagination && appointments.length > pagination.limit;
+  const visibleAppointments = hasNextCursorPage
+    ? appointments.slice(0, pagination.limit)
+    : appointments;
 
   const meta = buildPaginationMeta(pagination.page, pagination.limit, total);
 
   return {
-    data: appointments,
-    meta: {
-      ...meta,
-      totalRecords: meta.total,
-    },
+    data: visibleAppointments,
+    meta: isCursorPagination
+      ? buildCursorMeta(
+          visibleAppointments,
+          hasNextCursorPage,
+          pagination.limit,
+          total,
+        )
+      : {
+          ...meta,
+          totalRecords: meta.total,
+        },
   };
 };
 

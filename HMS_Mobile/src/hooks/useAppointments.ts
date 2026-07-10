@@ -1,93 +1,103 @@
-import { useCallback, useState, useMemo } from "react";
-
-import { AppointmentResponse } from "../types/Appointment";
-
+import { useCallback, useMemo } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Appointment, AppointmentResponse } from "../types/Appointment";
 import { getAppointments } from "../services/appointment.service";
+import { logger } from "../utils/logger";
 
-export default function useAppointments() {
-  const [appointments, setAppointments] = useState<AppointmentResponse | null>(
-    null,
-  );
+const emptyMeta = {
+  limit: 5,
+  nextCursor: null,
+  hasNextPage: false,
+};
 
-  const [loading, setLoading] = useState(false);
+export default function useAppointments(search = "", status = "ALL") {
+  const query = useInfiniteQuery({
+    queryKey: ["appointments", search, status],
+    initialPageParam: "",
+    queryFn: async ({ pageParam }) => {
+      const response = await getAppointments(pageParam, search, status);
 
-  const [refreshing, setRefreshing] = useState(false);
+      return {
+        data: response.data.data ?? [],
+        meta: response.data.meta ?? emptyMeta,
+      } as AppointmentResponse;
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.hasNextPage ? lastPage.meta.nextCursor : undefined,
+  });
 
-  const [loadingMore, setLoadingMore] = useState(false);
+  const appointments = useMemo<AppointmentResponse | null>(() => {
+    if (!query.data?.pages.length) {
+      return null;
+    }
+
+    const seenIds = new Set<string>();
+    const data = query.data.pages.flatMap((page) =>
+      page.data.filter((item: Appointment) => {
+        if (seenIds.has(item._id)) {
+          return false;
+        }
+
+        seenIds.add(item._id);
+        return true;
+      }),
+    );
+    const lastPage = query.data.pages[query.data.pages.length - 1];
+
+    return {
+      data,
+      meta: lastPage.meta,
+    };
+  }, [query.data]);
 
   const loadAppointments = useCallback(
     async (
-      page = 1,
-      search = "",
-      status = "ALL",
-      isRefresh = false,
+      cursor = "",
+      nextSearch = search,
+      nextStatus = status,
+      _isRefresh = false,
       append = false,
     ) => {
       try {
-        if (isRefresh) {
-          setRefreshing(true);
-        } else if (append) {
-          setLoadingMore(true);
-        } else {
-          setLoading(true);
+        if (append || cursor) {
+          await query.fetchNextPage();
+          return;
         }
 
-        const response = await getAppointments(page, search, status);
-        const nextData = response.data.data ?? [];
-        const nextMeta = response.data.meta ?? {
-          page: 1,
-          limit: 5,
-          totalRecords: 0,
-          totalPages: 1,
-        };
-
-        setAppointments((current) => {
-          if (!append || !current || isRefresh) {
-            return {
-              data: nextData,
-              meta: nextMeta,
-            };
-          }
-
-          const existingIds = new Set(current.data.map((item) => item._id));
-
-          return {
-            data: [
-              ...current.data,
-              ...nextData.filter((item: any) => !existingIds.has(item._id)),
-            ],
-            meta: nextMeta,
-          };
-        });
-      } catch (error: any) {
-        console.log("Appointment Error", error?.response?.data ?? error);
-      } finally {
-        setLoading(false);
-
-        setRefreshing(false);
-
-        setLoadingMore(false);
+        if (nextSearch === search && nextStatus === status) {
+          await query.refetch();
+        }
+      } catch (error) {
+        logger.error("Appointment list load failed", error);
       }
     },
-    [],
+    [query, search, status],
   );
 
-  const refresh = useCallback(
-    (page = 1, search = "", status = "ALL") => {
-      loadAppointments(page, search, status, true);
-    },
-    [loadAppointments],
-  );
+  const refresh = useCallback(async () => {
+    try {
+      await query.refetch();
+    } catch (error) {
+      logger.error("Appointment refresh failed", error);
+    }
+  }, [query]);
 
   return useMemo(
     () => ({
       appointments,
-      loading,
-      refreshing,
-      loadingMore,
+      loading: query.isPending && !appointments,
+      refreshing: query.isRefetching && !query.isFetchingNextPage,
+      loadingMore: query.isFetchingNextPage,
       loadAppointments,
       refresh,
     }),
-    [appointments, loading, refreshing, loadingMore, loadAppointments, refresh],
+    [
+      appointments,
+      loadAppointments,
+      query.isFetchingNextPage,
+      query.isPending,
+      query.isRefetching,
+      refresh,
+    ],
   );
 }

@@ -1,7 +1,5 @@
 import React from "react";
-
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
@@ -50,66 +48,41 @@ export default function TimeSlotSelector({
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-
     flexWrap: "wrap",
-
     gap: 12,
   },
-
   slot: {
     flexDirection: "row",
-
     alignItems: "center",
-
     paddingHorizontal: 16,
-
     paddingVertical: 12,
-
     borderRadius: 18,
-
     backgroundColor: "#FFFFFF",
-
     borderWidth: 1,
-
     borderColor: "#E2E8F0",
-
     shadowColor: "#2563EB",
-
     shadowOpacity: 0.05,
-
     shadowRadius: 10,
-
     shadowOffset: {
       width: 0,
       height: 4,
     },
-
     elevation: 2,
   },
-
   selectedSlot: {
     backgroundColor: "#2563EB",
-
     borderColor: "#2563EB",
-
     shadowOpacity: 0.15,
   },
-
   text: {
     marginLeft: 6,
-
     color: "#334155",
-
     fontWeight: "600",
-
     fontSize: 14,
   },
-
   selectedText: {
     color: "#FFFFFF",
-
     fontWeight: "700",
-
     marginRight: 6,
   },
 });

@@ -1,8 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastService } from '../../../core/services/toast';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-
 import { PatientService } from '../../../core/services/patient';
 import { EmployeeService } from '../../../core/services/employee';
 import { AppointmentService } from '../../../core/services/appointment';
@@ -49,11 +48,9 @@ export class BookAppointment implements OnInit {
       doctorId: ['', Validators.required],
       appointmentDate: ['', Validators.required],
       appointmentTime: ['', Validators.required],
-
       reason: [''],
       notes: [''],
       symptoms: [''],
-
       appointmentType: ['', Validators.required],
       priority: ['', Validators.required],
       paymentStatus: ['', Validators.required],
@@ -73,6 +70,10 @@ export class BookAppointment implements OnInit {
     this.appointmentForm.get('department')?.valueChanges.subscribe(() => {
       this.filterDoctors();
     });
+
+    this.appointmentForm.get('appointmentDate')?.valueChanges.subscribe(() => {
+      this.filterDoctors();
+    });
   }
 
   // Fetch all patients
@@ -84,7 +85,6 @@ export class BookAppointment implements OnInit {
         this.patients = response.data;
         this.cdr.detectChanges();
       },
-
       error: (error) => {
         console.log(error);
         this.cdr.detectChanges();
@@ -108,7 +108,6 @@ export class BookAppointment implements OnInit {
 
         this.cdr.detectChanges();
       },
-
       error: (error) => {
         console.log(error);
         this.doctors = [];
@@ -118,21 +117,31 @@ export class BookAppointment implements OnInit {
     });
   }
 
-  // Show doctors belonging to selected department
+  // Show doctors belonging to selected department who have joined by selected date
   filterDoctors(): void {
     const department = this.appointmentForm.get('department')?.value;
+    const appointmentDate = this.appointmentForm.get('appointmentDate')?.value;
 
     console.log('Selected Department:', department);
     console.log('All Doctors:', this.doctors);
 
-    this.filteredDoctors = this.doctors.filter((doctor) => doctor.department === department);
+    this.filteredDoctors = this.doctors.filter(
+      (doctor) => doctor.department === department && this.hasDoctorJoinedByDate(doctor, appointmentDate)
+    );
 
     // Reset doctor and slot selection
     this.appointmentForm.get('doctorId')?.setValue('');
+    this.appointmentForm.get('appointmentTime')?.setValue('');
+    this.selectedDoctor = null;
     this.availableSlots = [];
     this.noSlotsError = false;
 
     this.cdr.detectChanges();
+  }
+
+  onAppointmentDateChange(): void {
+    this.filterDoctors();
+    this.fetchAvailableSlots();
   }
 
   // Load available slots for selected doctor and date
@@ -210,7 +219,6 @@ export class BookAppointment implements OnInit {
 
         this.cdr.detectChanges();
       },
-
       error: (error) => {
         console.log('Slots error:', error);
 
@@ -245,6 +253,21 @@ export class BookAppointment implements OnInit {
     console.log(this.selectedDoctor);
   }
 
+  private hasDoctorJoinedByDate(doctor: any, appointmentDate: string): boolean {
+    if (!appointmentDate || !doctor?.joiningDate) {
+      return Boolean(appointmentDate);
+    }
+
+    return this.getDateOnly(appointmentDate) >= this.getDateOnly(doctor.joiningDate);
+  }
+
+  private getDateOnly(date: string): number {
+    const dateOnly = new Date(date);
+    dateOnly.setHours(0, 0, 0, 0);
+
+    return dateOnly.getTime();
+  }
+
   // Submit appointment booking request
   onSubmit(): void {
     if (this.appointmentForm.invalid) {
@@ -270,7 +293,6 @@ export class BookAppointment implements OnInit {
     // Convert symptoms text into array
     const formData = {
       ...this.appointmentForm.value,
-
       symptoms: this.appointmentForm.value.symptoms?.split(',').map((symptom: string) => symptom.trim())
     };
 
@@ -295,7 +317,6 @@ export class BookAppointment implements OnInit {
         this.filteredDoctors = [];
         this.isSubmitting = false;
       },
-
       error: (error) => {
         console.log(error);
 

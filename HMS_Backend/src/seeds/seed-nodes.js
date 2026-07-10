@@ -5,6 +5,7 @@ const connectDB = require("../config/db");
 const Node = require("../models/Node");
 
 const defaultNodes = require("../constants/default-nodes");
+const logger = require("../utils/logger");
 
 const seedNodes = async () => {
   try {
@@ -24,11 +25,11 @@ const seedNodes = async () => {
       );
     }
 
-    console.log("Default nodes seeded successfully");
+    logger.info("Default nodes seeded successfully");
 
     process.exit(0);
   } catch (error) {
-    console.error("NODE SEED ERROR:", error);
+    logger.error("Node seed failed", { error });
 
     process.exit(1);
   }

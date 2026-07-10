@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import { API_BASE_URL } from '../constants/api.constants';
 
 @Injectable({
@@ -12,36 +11,34 @@ export class DashboardService {
 
   // Get admin dashboard statistics
   getAdminStats(): Observable<any> {
-    return this.http.get(
-      `${API_BASE_URL}/dashboard/admin-stats`
-    );
+    return this.http.get(`${API_BASE_URL}/dashboard/admin-stats`);
   }
 
   // Get recently added employees
   getRecentEmployees(): Observable<any> {
-    return this.http.get(
-      `${API_BASE_URL}/dashboard/recent-employees`
-    );
+    return this.http.get(`${API_BASE_URL}/dashboard/recent-employees`);
+  }
+
+  getAuditLogs(limit = 20): Observable<any> {
+    return this.http.get(`${API_BASE_URL}/dashboard/audit-logs`, {
+      params: {
+        limit
+      }
+    });
   }
 
   // Get doctor dashboard statistics
   getDoctorStats(): Observable<any> {
-    return this.http.get(
-      `${API_BASE_URL}/dashboard/doctor-stats`
-    );
+    return this.http.get(`${API_BASE_URL}/dashboard/doctor-stats`);
   }
 
   // Get receptionist dashboard statistics
   getReceptionistStats(): Observable<any> {
-    return this.http.get(
-      `${API_BASE_URL}/dashboard/receptionist-stats`
-    );
+    return this.http.get(`${API_BASE_URL}/dashboard/receptionist-stats`);
   }
 
   // Get today's appointments
   getTodayAppointments(): Observable<any> {
-    return this.http.get(
-      `${API_BASE_URL}/dashboard/today-appointments`
-    );
+    return this.http.get(`${API_BASE_URL}/dashboard/today-appointments`);
   }
 }

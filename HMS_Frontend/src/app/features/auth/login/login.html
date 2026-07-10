@@ -8,7 +8,7 @@
 
         <h1>BootStrap HMS</h1>
 
-        <p>Modern Smart Healthcare Workspace</p>
+        <p>Smart Healthcare Workspace</p>
 
         <div class="feature-list">
           <div class="feature-item">
@@ -46,9 +46,9 @@
       <!-- Login ID -->
 
       <div class="input-group">
-        <label>Email or Employee Code</label>
+        <label for="login-id">Email or Employee Code</label>
 
-        <input type="text" placeholder="Enter your login ID" formControlName="loginId" />
+        <input id="login-id" type="text" placeholder="Enter your login ID" formControlName="loginId" />
         @if(loginForm.get('loginId')?.invalid && loginForm.get('loginId')?.touched){
         <span class="error-text">Login ID is required</span>
         }
@@ -57,9 +57,9 @@
       <!-- Password -->
 
       <div class="input-group">
-        <label>Password</label>
+        <label for="login-password">Password</label>
 
-        <input type="password" placeholder="Enter your password" formControlName="password" />
+        <input id="login-password" type="password" placeholder="Enter your password" formControlName="password" />
         @if(loginForm.get('password')?.invalid && loginForm.get('password')?.touched){
         <span class="error-text">Password is required</span>
         }
@@ -74,9 +74,7 @@
       <!-- Error -->
 
       @if(errorMessage){
-
       <div class="error-box">{{ errorMessage }}</div>
-
       }
 
       <!-- Button -->

@@ -1,3 +1,4 @@
+const https = require("node:https");
 const INDIA_LOCATION_SOURCE_URL =
   process.env.INDIA_LOCATION_SOURCE_URL ||
   "https://raw.githubusercontent.com/sab99r/Indian-States-And-Districts/master/states-and-districts.json";
@@ -5,9 +6,13 @@ const INDIA_ADMIN_AREA_SOURCE_URL =
   process.env.INDIA_ADMIN_AREA_SOURCE_URL ||
   "https://raw.githubusercontent.com/pranshumaheshwari/indian-cities-and-villages/master/data.json";
 const ApiError = require("../../utils/ApiError");
+const logger = require("../../utils/logger");
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const PINCODE_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const allowInsecureLocationFetch =
+  process.env.ALLOW_INSECURE_LOCATION_FETCH !== "false" &&
+  process.env.NODE_ENV !== "production";
 
 let cachedLocations = null;
 let cacheExpiresAt = 0;
@@ -18,15 +23,17 @@ const areaCache = new Map();
 
 const cleanName = (value) =>
   String(value || "")
-    .replace(/&amp;/g, "&")
-    .replace(/\s+/g, " ")
+    .replaceAll('&amp;', "&")
+    .replaceAll('<', "&lt;")
+    .replaceAll('>', "&gt;")
+    .replaceAll(/\s+/g, " ")
     .trim();
 
 const normalizeName = (value) =>
   cleanName(value)
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
+    .replaceAll(/[^a-z0-9]+/g, " ")
+    .replaceAll(/\s+/g, " ")
     .trim();
 
 const normalizeAlias = (value) => {
@@ -42,14 +49,33 @@ const normalizeAlias = (value) => {
 const getNameVariants = (value) => {
   const name = cleanName(value);
   const variants = new Set();
-  const beforeParenthesis = name.replace(/\s*\([^)]*\)\s*/g, " ").trim();
-  const parenthesisMatches = [...name.matchAll(/\(([^)]*)\)/g)];
 
-  parenthesisMatches.forEach((match) => {
-    if (match[1]) {
-      variants.add(match[1].trim());
+  const open = name.indexOf("(");
+
+  const beforeParenthesis =
+    open === -1 ? name.trim() : name.slice(0, open).trim();
+
+  let start = 0;
+
+  while (true) {
+    const openIndex = name.indexOf("(", start);
+    if (openIndex === -1) {
+      break;
     }
-  });
+
+    const closeIndex = name.indexOf(")", openIndex + 1);
+    if (closeIndex === -1) {
+      break;
+    }
+
+    const variant = name.slice(openIndex + 1, closeIndex).trim();
+
+    if (variant) {
+      variants.add(variant);
+    }
+
+    start = closeIndex + 1;
+  }
 
   if (beforeParenthesis) {
     variants.add(beforeParenthesis);
@@ -61,7 +87,6 @@ const getNameVariants = (value) => {
 
   return [...variants].filter(Boolean);
 };
-
 const namesMatch = (first, second) => {
   const firstName = normalizeAlias(first);
   const secondName = normalizeAlias(second);
@@ -74,17 +99,91 @@ const namesMatch = (first, second) => {
     firstName === secondName ||
     firstName.includes(secondName) ||
     secondName.includes(firstName) ||
-    getNameVariants(first).some((variant) => normalizeName(variant) === secondName) ||
-    getNameVariants(second).some((variant) => normalizeName(variant) === firstName)
+    getNameVariants(first).some(
+      (variant) => normalizeName(variant) === secondName,
+    ) ||
+    getNameVariants(second).some(
+      (variant) => normalizeName(variant) === firstName,
+    )
   );
 };
 
-const fetchLocationData = async () => {
+const isLocalIssuerCertificateError = (error) =>
+  error?.cause?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY" ||
+  error?.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY";
+
+const fetchJsonWithInsecureTls = (url, timeoutMs) =>
+  new Promise((resolve, reject) => {
+    const request = https.get(
+      url,
+      {
+        agent: new https.Agent({
+          rejectUnauthorized: false,
+        }),
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "HMS-Backend/1.0",
+        },
+        timeout: timeoutMs,
+      },
+      (response) => {
+        const chunks = [];
+
+        response.on("data", (chunk) => {
+          chunks.push(chunk);
+        });
+
+        response.on("end", () => {
+          const body = Buffer.concat(chunks).toString("utf8");
+
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            reject(
+              new ApiError(
+                502,
+                `Location source failed with ${response.statusCode}`,
+                "LOCATION_SOURCE_FAILED",
+              ),
+            );
+            return;
+          }
+
+          try {
+            resolve(JSON.parse(body));
+          } catch (error) {
+            reject(
+              new ApiError(
+                502,
+                "Location source returned invalid JSON",
+                "LOCATION_SOURCE_INVALID_JSON",
+                {
+                  cause: error.message,
+                },
+              ),
+            );
+          }
+        });
+      },
+    );
+
+    request.on("timeout", () => {
+      request.destroy(
+        new ApiError(
+          504,
+          "Location source request timed out",
+          "LOCATION_SOURCE_TIMEOUT",
+        ),
+      );
+    });
+
+    request.on("error", reject);
+  });
+
+const fetchJson = async (url, timeoutMs, sourceName) => {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(INDIA_LOCATION_SOURCE_URL, {
+    const response = await fetch(url, {
       signal: controller.signal,
       headers: {
         Accept: "application/json",
@@ -95,29 +194,44 @@ const fetchLocationData = async () => {
     if (!response.ok) {
       throw new ApiError(
         502,
-        `Location source failed with ${response.status}`,
+        `${sourceName} source failed with ${response.status}`,
         "LOCATION_SOURCE_FAILED",
       );
     }
 
-    const data = await response.json();
+    return response.json();
+  } catch (error) {
+    if (allowInsecureLocationFetch && isLocalIssuerCertificateError(error)) {
+      logger.warn(`${sourceName} source TLS verification failed; retrying`, {
+        url,
+        reason: error.cause?.code || error.code,
+      });
 
-    if (!Array.isArray(data.states)) {
-      throw new ApiError(
-        502,
-        "Location source returned invalid data",
-        "LOCATION_SOURCE_INVALID_DATA",
-      );
+      return fetchJsonWithInsecureTls(url, timeoutMs);
     }
 
-    return data.states.map((item, index) => ({
-      id: String(index + 1),
-      name: cleanName(item.state),
-      districts: (item.districts || []).map(cleanName).filter(Boolean),
-    }));
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
+};
+
+const fetchLocationData = async () => {
+  const data = await fetchJson(INDIA_LOCATION_SOURCE_URL, 10000, "Location");
+
+  if (!Array.isArray(data.states)) {
+    throw new ApiError(
+      502,
+      "Location source returned invalid data",
+      "LOCATION_SOURCE_INVALID_DATA",
+    );
+  }
+
+  return data.states.map((item, index) => ({
+    id: String(index + 1),
+    name: cleanName(item.state),
+    districts: (item.districts || []).map(cleanName).filter(Boolean),
+  }));
 };
 
 const getLocations = async () => {
@@ -132,40 +246,17 @@ const getLocations = async () => {
 };
 
 const fetchAdminAreaData = async () => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const data = await fetchJson(INDIA_ADMIN_AREA_SOURCE_URL, 15000, "Admin area");
 
-  try {
-    const response = await fetch(INDIA_ADMIN_AREA_SOURCE_URL, {
-      signal: controller.signal,
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "HMS-Backend/1.0",
-      },
-    });
-
-    if (!response.ok) {
-      throw new ApiError(
-        502,
-        `Admin area source failed with ${response.status}`,
-        "ADMIN_AREA_SOURCE_FAILED",
-      );
-    }
-
-    const data = await response.json();
-
-    if (!Array.isArray(data)) {
-      throw new ApiError(
-        502,
-        "Admin area source returned invalid data",
-        "ADMIN_AREA_SOURCE_INVALID_DATA",
-      );
-    }
-
-    return data;
-  } finally {
-    clearTimeout(timeout);
+  if (!Array.isArray(data)) {
+    throw new ApiError(
+      502,
+      "Admin area source returned invalid data",
+      "ADMIN_AREA_SOURCE_INVALID_DATA",
+    );
   }
+
+  return data;
 };
 
 const getAdminAreas = async () => {
@@ -221,34 +312,16 @@ const getTaluksByDistrict = async (stateName, districtName) => {
         .map((item) => cleanName(item.subDistrict))
         .filter(Boolean),
     ),
-  ].sort();
+  ].sort((a, b) => a.localeCompare(b));
 };
 
 const fetchPostOffices = async (searchTerm) => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-
   try {
-    const response = await fetch(
+    const data = await fetchJson(
       `https://api.postalpincode.in/postoffice/${encodeURIComponent(searchTerm)}`,
-      {
-        signal: controller.signal,
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "HMS-Backend/1.0",
-        },
-      },
+      5000,
+      "Postal",
     );
-
-    if (!response.ok) {
-      throw new ApiError(
-        502,
-        `Postal source failed with ${response.status}`,
-        "POSTAL_SOURCE_FAILED",
-      );
-    }
-
-    const data = await response.json();
     const result = Array.isArray(data) ? data[0] : null;
 
     if (result?.Status !== "Success" || !Array.isArray(result.PostOffice)) {
@@ -258,8 +331,6 @@ const fetchPostOffices = async (searchTerm) => {
     return result.PostOffice;
   } catch {
     return [];
-  } finally {
-    clearTimeout(timeout);
   }
 };
 
@@ -275,7 +346,11 @@ const matchesLocation = (postOffice, stateSearch, districtSearch) => {
   );
 };
 
-const getMatchingPostOffices = async (stateSearch, districtSearch, district) => {
+const getMatchingPostOffices = async (
+  stateSearch,
+  districtSearch,
+  district,
+) => {
   for (const variant of getNameVariants(district)) {
     const postOffices = await fetchPostOffices(variant);
     const matchingPostOffices = postOffices.filter((postOffice) =>
@@ -336,7 +411,9 @@ const getPostOfficeAreasByDistrict = async (stateName, districtName) => {
         .filter(Boolean),
     ).values(),
   ].sort((first, second) =>
-    `${first.taluk} ${first.name}`.localeCompare(`${second.taluk} ${second.name}`),
+    `${first.taluk} ${first.name}`.localeCompare(
+      `${second.taluk} ${second.name}`,
+    ),
   );
 
   areaCache.set(cacheKey, {
@@ -371,7 +448,7 @@ const getPincodesByDistrict = async (stateName, districtName) => {
         .map((postOffice) => postOffice.Pincode)
         .filter((pincode) => /^\d{6}$/.test(String(pincode))),
     ),
-  ].sort();
+  ].sort((a, b) => Number(a) - Number(b));
 
   pincodeCache.set(cacheKey, {
     data: pincodes,
@@ -388,4 +465,3 @@ module.exports = {
   getPostOfficeAreasByDistrict,
   getPincodesByDistrict,
 };
- 

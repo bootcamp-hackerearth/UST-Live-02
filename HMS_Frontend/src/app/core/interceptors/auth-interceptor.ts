@@ -1,13 +1,11 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
-
 import { inject } from '@angular/core';
-
-import { catchError, switchMap, throwError } from 'rxjs';
-
+import { catchError, finalize, Observable, shareReplay, switchMap, tap, throwError } from 'rxjs';
 import { Router } from '@angular/router';
-
 import { TokenService } from '../services/token';
 import { AuthService } from '../services/auth';
+
+let refreshRequest$: Observable<any> | null = null;
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenService = inject(TokenService);
@@ -18,10 +16,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const accessToken = tokenService.getAccessToken();
 
-  let authReq = req;
+  let authReq = req.clone({
+    withCredentials: true
+  });
 
   if (accessToken) {
-    authReq = req.clone({
+    authReq = authReq.clone({
       setHeaders: {
         Authorization: `Bearer ${accessToken}`
       }
@@ -30,21 +30,37 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      const refreshToken = tokenService.getRefreshToken();
-
       const isRefreshCall = req.url.includes('/auth/refresh-token');
+      const isLoginCall = req.url.includes('/auth/login');
+      const isPublicAuthCall =
+        isLoginCall ||
+        req.url.includes('/auth/register') ||
+        req.url.includes('/auth/forgot-password') ||
+        req.url.includes('/auth/reset-password') ||
+        req.url.includes('/auth/create-password');
 
-      if (error.status !== 401 || !refreshToken || isRefreshCall) {
+      if (error.status !== 401 || isRefreshCall || isPublicAuthCall) {
         return throwError(() => error);
       }
 
-      return authService.refreshToken(refreshToken).pipe(
+      refreshRequest$ ??= authService.refreshToken().pipe(
+          tap((response: any) => {
+            const newAccessToken = response.data.accessToken;
+
+            tokenService.setAccessToken(newAccessToken);
+          }),
+          finalize(() => {
+            refreshRequest$ = null;
+          }),
+          shareReplay(1)
+        );
+
+      return refreshRequest$.pipe(
         switchMap((response: any) => {
           const newAccessToken = response.data.accessToken;
 
-          tokenService.setAccessToken(newAccessToken);
-
           const retryRequest = req.clone({
+            withCredentials: true,
             setHeaders: {
               Authorization: `Bearer ${newAccessToken}`
             }
@@ -52,13 +68,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
           return next(retryRequest);
         }),
-
         catchError((refreshError) => {
           tokenService.removeTokens();
 
           localStorage.removeItem('role');
 
-          authService.currentUser.next(null);
+          authService.clearCurrentUser();
 
           router.navigate(['/login']);
 

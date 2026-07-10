@@ -1,8 +1,20 @@
 <div class="global-toast-wrapper"></div>
-<div class="dashboard-shell">
+<div
+  class="dashboard-shell"
+  [class.sidebar-open]="isSidebarOpen"
+  [class.sidebar-collapsed]="isSidebarCollapsed"
+>
   <!-- Sidebar -->
 
-  <aside class="sidebar glass">
+  <button
+    type="button"
+    class="sidebar-backdrop"
+    aria-label="Close navigation"
+    [class.visible]="isSidebarOpen"
+    (click)="closeSidebar()"
+  ></button>
+
+  <aside class="sidebar glass" [class.open]="isSidebarOpen">
     <!-- Logo -->
 
     <div class="logo-section">
@@ -15,8 +27,7 @@
       </div>
     </div>
 
-    @if( authService.currentUser | async; as user ){
-
+    @if( authService.currentUser(); as user ){
     <!-- Profile -->
 
     <div class="profile-card">
@@ -30,7 +41,6 @@
     </div>
 
     <app-sidebar />
-
     }
   </aside>
 
@@ -40,26 +50,41 @@
     <!-- Topbar -->
 
     <header class="topbar glass">
-      <div>
-        <h1>BootStrap HMS</h1>
+      <div class="topbar-title">
+        <button
+          type="button"
+          class="mobile-menu-btn"
+          [attr.aria-label]="isSidebarOpen || !isSidebarCollapsed ? 'Close navigation' : 'Open navigation'"
+          [attr.aria-expanded]="isSidebarOpen || !isSidebarCollapsed"
+          (click)="toggleNavigation(); $event.stopPropagation()"
+        >
+          <span class="material-icons">menu</span>
+        </button>
 
-        <p>Modern Hospital Workspace</p>
+        <div>
+          <h1>BootStrap HMS</h1>
+
+          <p>Hospital Workspace</p>
+        </div>
       </div>
 
-      @if( authService.currentUser | async; as user ){
-
+      @if( authService.currentUser(); as user ){
       <div class="topbar-right">
         <!-- System Status -->
 
-        <div class="system-status">
+        <div class="system-status" [class.inactive]="systemHealth.status() === 'inactive'">
           <div class="status-dot"></div>
 
-          <span id="active">System Active</span>
+          <span id="active">
+            {{ systemHealth.status() === 'active' ? 'System Active' : 'System Inactive' }}
+          </span>
         </div>
 
         <!-- Profile -->
 
-        <div
+        <div class="top-profile-menu">
+        <button
+          type="button"
           class="top-profile"
           (click)=" toggleProfile();
 
@@ -68,30 +93,28 @@
         >
           <!-- Avatar -->
 
-          <div class="top-avatar">{{ user?.email ?.charAt(0) ?.toUpperCase() }}</div>
+          <span class="top-avatar">{{ user?.email ?.charAt(0) ?.toUpperCase() }}</span>
 
           <!-- Info -->
 
-          <div class="top-user-info">
-            <h4>{{ user?.employeeId?.name || 'User' }}</h4>
+          <span class="top-user-info">
+            <span class="top-user-name">{{ user?.employeeId?.name || 'User' }}</span>
 
-            <p>{{ user?.roles?.[0] }}</p>
-          </div>
+            <span class="top-user-role">{{ user?.roles?.[0] }}</span>
+          </span>
+        </button>
 
           <!-- Dropdown -->
 
           @if(isProfileOpen){
-
           <div class="profile-dropdown">
             <a routerLink="/my-profile">My Profile</a>
 
             <button (click)="logout()">Logout</button>
           </div>
-
           }
         </div>
       </div>
-
       }
     </header>
 

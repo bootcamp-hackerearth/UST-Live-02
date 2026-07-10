@@ -3,24 +3,21 @@ const Consultation = require("../../models/Consultation");
 const ROLES = require("../../constants/roles");
 const mongoose = require("mongoose");
 const {
+  buildCursorPaginationMeta,
+  decodeCursor,
   getPagination,
   buildPaginationMeta,
 } = require("../../utils/pagination");
 
 const getHealthRecordsService = async (user, query) => {
-  const { page, limit, search } = query;
+  const { page, limit, search, cursor, pagination: paginationMode } = query;
 
   const pagination = getPagination(page, limit);
+  const isCursorPagination = paginationMode === "cursor" || Boolean(cursor);
 
   const matchStage = {
     isDeleted: false,
   };
-
-  /*
-    |--------------------------------------------------------------------------
-    | Doctor Visibility
-    |--------------------------------------------------------------------------
-    */
 
   if (user.roles?.includes(ROLES.DOCTOR)) {
     matchStage.doctorEmployeeId = new mongoose.Types.ObjectId(user.employeeId);
@@ -30,49 +27,34 @@ const getHealthRecordsService = async (user, query) => {
     {
       $match: matchStage,
     },
-
     {
       $group: {
         _id: "$patientId",
-
         totalVisits: {
           $sum: 1,
         },
-
         lastVisit: {
           $max: "$createdAt",
         },
       },
     },
-
     {
       $lookup: {
         from: "patients",
-
         localField: "_id",
-
         foreignField: "_id",
-
         as: "patient",
       },
     },
-
     {
       $unwind: "$patient",
     },
-
     {
       $match: {
         "patient.isDeleted": false,
       },
     },
   ];
-
-  /*
-    |--------------------------------------------------------------------------
-    | Search
-    |--------------------------------------------------------------------------
-    */
 
   if (search?.trim()) {
     pipeline.push({
@@ -101,12 +83,6 @@ const getHealthRecordsService = async (user, query) => {
     });
   }
 
-  /*
-    |--------------------------------------------------------------------------
-    | Total Count
-    |--------------------------------------------------------------------------
-    */
-
   const countPipeline = [
     ...pipeline,
     {
@@ -118,55 +94,79 @@ const getHealthRecordsService = async (user, query) => {
 
   const total = countResult[0]?.total || 0;
 
-  /*
-    |--------------------------------------------------------------------------
-    | Pagination
-    |--------------------------------------------------------------------------
-    */
+  if (isCursorPagination && cursor) {
+    const decodedCursor = decodeCursor(cursor);
+
+    if (decodedCursor) {
+      pipeline.push({
+        $match: {
+          $or: [
+            {
+              lastVisit: {
+                $lt: new Date(decodedCursor.createdAt),
+              },
+            },
+            {
+              lastVisit: new Date(decodedCursor.createdAt),
+              _id: {
+                $lt: new mongoose.Types.ObjectId(decodedCursor.id),
+              },
+            },
+          ],
+        },
+      });
+    }
+  }
 
   pipeline.push(
     {
       $sort: {
         lastVisit: -1,
+        _id: -1,
       },
     },
     {
-      $skip: pagination.skip,
+      $skip: isCursorPagination ? 0 : pagination.skip,
     },
     {
-      $limit: pagination.limit,
+      $limit: isCursorPagination ? pagination.limit + 1 : pagination.limit,
     },
     {
       $project: {
         patient: {
           _id: "$patient._id",
-
           patientId: "$patient.patientId",
-
           firstName: "$patient.firstName",
-
           lastName: "$patient.lastName",
-
           phone: "$patient.phone",
-
           gender: "$patient.gender",
-
           bloodGroup: "$patient.bloodGroup",
         },
-
+        _id: 1,
+        createdAt: "$lastVisit",
         totalVisits: 1,
-
         lastVisit: 1,
       },
     },
   );
 
   const healthRecords = await Consultation.aggregate(pipeline);
+  const hasNextCursorPage =
+    isCursorPagination && healthRecords.length > pagination.limit;
+  const data = hasNextCursorPage
+    ? healthRecords.slice(0, pagination.limit)
+    : healthRecords;
 
   return {
-    data: healthRecords,
-
-    meta: buildPaginationMeta(pagination.page, pagination.limit, total),
+    data,
+    meta: isCursorPagination
+      ? buildCursorPaginationMeta(
+          pagination.limit,
+          data,
+          hasNextCursorPage,
+          total,
+        )
+      : buildPaginationMeta(pagination.page, pagination.limit, total),
   };
 };
 

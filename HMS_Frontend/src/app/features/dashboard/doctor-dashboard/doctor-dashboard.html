@@ -5,10 +5,8 @@
     <div>
       <p class="hero-label">Doctor Workspace</p>
 
-      @if( authService.currentUser | async; as user ){
-
+      @if( authService.currentUser(); as user ){
       <h1>Welcome Dr. {{ user?.employeeId?.name || 'Doctor' }} 👋</h1>
-
       }
 
       <p class="hero-subtitle">Manage appointments, patient queue and availability.</p>
@@ -87,7 +85,6 @@
 
       <div class="employee-list">
         @for( appointment of todayAppointments || []; track appointment._id ){
-
         <div class="employee-card">
           <div class="employee-avatar">{{ appointment ?.patientId ?.firstName ?.charAt(0) }}</div>
 
@@ -97,7 +94,6 @@
             <p>{{ appointment ?.timeSlot }}</p>
           </div>
         </div>
-
         }
       </div>
     </div>
@@ -118,25 +114,19 @@
 
           Queue
         </a>
-        }
-
-        @if(nodeService.canAccessPath('/appointments')){
+        } @if(nodeService.canAccessPath('/appointments')){
         <a routerLink="/appointments" class="quick-card">
           <span>📅</span>
 
           Appointments
         </a>
-        }
-
-        @if(nodeService.canAccessPath('/patients')){
+        } @if(nodeService.canAccessPath('/patients')){
         <a routerLink="/patients" class="quick-card">
           <span>🧑</span>
 
           Patients
         </a>
-        }
-
-        @if(nodeService.canAccessPath('/doctor-availability')){
+        } @if(nodeService.canAccessPath('/doctor-availability')){
         <a routerLink="/doctor-availability" class="quick-card">
           <span>⏰</span>
 

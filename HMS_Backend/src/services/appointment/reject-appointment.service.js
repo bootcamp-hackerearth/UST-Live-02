@@ -53,11 +53,8 @@ const rejectAppointment = async (
   if (patient?.email) {
     const htmlContent = appointmentRejectedTemplate({
       patientName: `${patient.firstName} ${patient.lastName}`,
-
       doctorName: doctor?.name,
-
       appointmentDate: appointment.appointmentDate.toISOString().split("T")[0],
-
       appointmentTime: appointment.timeSlot,
     });
 

@@ -1,5 +1,4 @@
 import React from "react";
-
 import {
   TouchableOpacity,
   Text,
@@ -48,54 +47,35 @@ export default function PrimaryButton({
 const styles = StyleSheet.create({
   button: {
     height: 58,
-
     borderRadius: 18,
-
     backgroundColor: "#2563EB",
-
     justifyContent: "center",
-
     alignItems: "center",
-
     marginTop: 12,
-
     shadowColor: "#2563EB",
-
     shadowOpacity: 0.25,
-
     shadowRadius: 18,
-
     shadowOffset: {
       width: 0,
       height: 8,
     },
-
     elevation: 6,
   },
-
   disabled: {
     opacity: 0.8,
   },
-
   content: {
     flexDirection: "row",
-
     alignItems: "center",
   },
-
   loaderRow: {
     flexDirection: "row",
-
     alignItems: "center",
   },
-
   text: {
     color: "#FFFFFF",
-
     fontWeight: "800",
-
     fontSize: 16,
-
     marginHorizontal: 8,
   },
 });

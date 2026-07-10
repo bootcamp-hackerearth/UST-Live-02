@@ -245,7 +245,6 @@
   .patient-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-
   .timeline-top {
     flex-direction: column;
   }
@@ -255,17 +254,14 @@
   .patient-grid {
     grid-template-columns: 1fr;
   }
-
   .section-card {
     padding: 22px;
   }
-
   .section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 20px;
   }
-
   .title-row {
     flex-direction: column;
     align-items: flex-start;
@@ -441,7 +437,6 @@
   .timeline-header {
     flex-direction: column;
   }
-
   .timeline-actions {
     flex-wrap: wrap;
   }
@@ -450,11 +445,9 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   z-index: 1000;
 }
 
@@ -463,7 +456,6 @@
   background: white;
   border-radius: 28px;
   padding: 32px;
-
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -536,25 +528,16 @@
 }
 .empty-state {
   width: 100%;
-
   min-height: 250px;
-
   display: flex;
   flex-direction: column;
-
   justify-content: center;
   align-items: center;
-
   text-align: center;
-
   padding: 40px;
-
   border-radius: 24px;
-
   background: #f8fafc;
-
   border: 2px dashed #cbd5e1;
-
   gap: 16px;
 }
 
@@ -564,16 +547,12 @@
 
 .empty-state h3 {
   color: #0f172a;
-
   margin: 0;
 }
 
 .empty-state p {
   color: #64748b;
-
   max-width: 420px;
-
   line-height: 1.6;
-
   margin: 0;
 }

@@ -1,6 +1,30 @@
 const mongoose = require("mongoose");
 const STATUS = require("../constants/status");
 
+const requiredRef = (ref) => ({
+  type: mongoose.Schema.Types.ObjectId,
+  ref,
+  required: true,
+});
+
+const nullableRef = (ref) => ({
+  type: mongoose.Schema.Types.ObjectId,
+  ref,
+  default: null,
+});
+
+const softDeleteFields = () => ({
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  deletedBy: nullableRef("User"),
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
+});
+
 const appointmentSchema = new mongoose.Schema(
   {
     appointmentId: {
@@ -9,34 +33,24 @@ const appointmentSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-
     patientId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Patient",
-      required: true,
+      ...requiredRef("Patient"),
     },
-
     doctorEmployeeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-      required: true,
+      ...requiredRef("Employee"),
     },
-
     appointmentDate: {
       type: Date,
       required: true,
     },
-
     timeSlot: {
       type: String,
       required: true,
       trim: true,
     },
-
     tokenNumber: {
       type: Number,
     },
-
     status: {
       type: String,
       enum: [
@@ -50,18 +64,12 @@ const appointmentSchema = new mongoose.Schema(
       ],
       default: STATUS.BOOKED,
     },
-
     createdByEmployeeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-      default: null,
+      ...nullableRef("Employee"),
     },
     createdByPatientId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Patient",
-      default: null,
+      ...nullableRef("Patient"),
     },
-
     // Type of appointment
     appointmentType: {
       type: String,
@@ -74,28 +82,24 @@ const appointmentSchema = new mongoose.Schema(
       ],
       default: "CONSULTATION",
     },
-
     // Appointment priority level
     priority: {
       type: String,
       enum: ["NORMAL", "URGENT", "CRITICAL"],
       default: "NORMAL",
     },
-
     // Payment status of the appointment
     paymentStatus: {
       type: String,
       enum: ["PENDING", "PAID", "INSURANCE"],
       default: "PENDING",
     },
-
     // Consultation mode
     visitMode: {
       type: String,
       enum: ["OFFLINE", "ONLINE", "HOME_VISIT"],
       default: "OFFLINE",
     },
-
     // Patient symptoms
     symptoms: [
       {
@@ -103,54 +107,28 @@ const appointmentSchema = new mongoose.Schema(
       },
     ],
     updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+      ...nullableRef("User"),
     },
-
     approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+      ...nullableRef("User"),
     },
-
     approvalDate: {
       type: Date,
       default: null,
     },
-
     rejectedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+      ...nullableRef("User"),
     },
-
     rejectedDate: {
       type: Date,
       default: null,
     },
-
     rejectionReason: {
       type: String,
       trim: true,
       default: null,
     },
-
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
-
-    deletedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
-
-    deletedAt: {
-      type: Date,
-      default: null,
-    },
+    ...softDeleteFields(),
   },
   {
     timestamps: true,
@@ -184,6 +162,15 @@ appointmentSchema.index({
   status: 1,
   isDeleted: 1,
 });
+
+// Supports the default unfiltered, cursor-paginated list query
+// (filter: { isDeleted: false }, sort: { createdAt: -1, _id: -1 })
+appointmentSchema.index({
+  isDeleted: 1,
+  createdAt: -1,
+  _id: -1,
+});
+
 const Appointment =
   mongoose.models.Appointment ||
   mongoose.model("Appointment", appointmentSchema);

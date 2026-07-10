@@ -1,7 +1,7 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-
 import { PrescriptionGroup } from "../types/HealthRecord";
+import { logger } from "./logger";
 
 export async function downloadPrescriptionPdf(prescription: PrescriptionGroup) {
   try {
@@ -118,6 +118,6 @@ export async function downloadPrescriptionPdf(prescription: PrescriptionGroup) {
       });
     }
   } catch (error) {
-    console.log("Prescription PDF Error", error);
+    logger.error("Prescription PDF generation failed", error);
   }
 }

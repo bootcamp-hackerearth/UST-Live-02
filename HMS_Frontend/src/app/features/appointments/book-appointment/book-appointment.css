@@ -50,40 +50,27 @@ button {
 }
 .appointment-page {
   display: flex;
-
   flex-direction: column;
-
   gap: 24px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Header
-|--------------------------------------------------------------------------
-*/
+/* Header */
 .appointment-header {
   padding: 32px;
-
   border-radius: 30px;
 }
 
 .page-label {
   color: #3b82f6;
-
   font-size: 13px;
-
   font-weight: 700;
-
   text-transform: uppercase;
-
   margin-bottom: 10px;
 }
 
 .appointment-header h1 {
   font-size: 42px;
-
   margin-bottom: 10px;
-
   color: #0f172a;
 }
 
@@ -91,39 +78,24 @@ button {
   color: #64748b;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Form
-|--------------------------------------------------------------------------
-*/
+/* Form */
 .appointment-form {
   padding: 35px;
-
   border-radius: 30px;
-
   display: flex;
-
   flex-direction: column;
-
   gap: 32px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Sections
-|--------------------------------------------------------------------------
-*/
+/* Sections */
 .form-section {
   display: flex;
-
   flex-direction: column;
-
   gap: 24px;
 }
 
 .section-title h2 {
   color: #0f172a;
-
   margin-bottom: 6px;
 }
 
@@ -131,62 +103,37 @@ button {
   color: #64748b;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Grid
-|--------------------------------------------------------------------------
-*/
+/* Grid */
 .grid-2 {
   display: grid;
-
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-
   gap: 22px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Form Group
-|--------------------------------------------------------------------------
-*/
+/* Form Group */
 .form-group {
   display: flex;
-
   flex-direction: column;
-
   gap: 10px;
 }
 
 .form-group label {
   font-size: 14px;
-
   font-weight: 600;
-
   color: #334155;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Inputs
-|--------------------------------------------------------------------------
-*/
+/* Inputs */
 input,
 select,
 textarea {
   width: 100%;
-
   padding: 16px 18px;
-
   border-radius: 18px;
-
   border: 1px solid rgba(148, 163, 184, 0.25);
-
   background: rgba(255, 255, 255, 0.65);
-
   font-size: 15px;
-
   transition: all 0.3s ease;
-
   box-sizing: border-box;
 }
 
@@ -194,47 +141,29 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-
   border-color: #3b82f6;
-
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Textarea
-|--------------------------------------------------------------------------
-*/
+/* Textarea */
 textarea {
   min-height: 120px;
-
   resize: vertical;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Slots
-|--------------------------------------------------------------------------
-*/
+/* Slots */
 .slots-card {
   padding: 28px;
-
   border-radius: 24px;
-
   background: rgba(248, 250, 252, 0.75);
-
   border: 1px solid rgba(226, 232, 240, 0.8);
-
   display: flex;
-
   flex-direction: column;
-
   gap: 24px;
 }
 
 .slot-header h2 {
   margin-bottom: 6px;
-
   color: #0f172a;
 }
 
@@ -244,68 +173,43 @@ textarea {
 
 .slots-container {
   display: flex;
-
   flex-wrap: wrap;
-
   gap: 14px;
 }
 
 .slot-btn {
   border: none;
-
   padding: 14px 20px;
-
   border-radius: 16px;
-
   background: rgba(59, 130, 246, 0.08);
-
   color: #2563eb;
-
   font-weight: 700;
-
   cursor: pointer;
-
   transition: all 0.3s ease;
 }
 
 .slot-btn:hover {
   transform: translateY(-2px);
-
   background: rgba(59, 130, 246, 0.14);
 }
 
 .slot-btn.active {
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-
   color: white;
-
   box-shadow: 0 15px 30px rgba(59, 130, 246, 0.25);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Submit
-|--------------------------------------------------------------------------
-*/
+/* Submit */
 .submit-btn {
   border: none;
-
   padding: 18px;
-
   border-radius: 20px;
-
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-
   color: white;
-
   font-size: 16px;
-
   font-weight: 700;
-
   cursor: pointer;
-
   transition: all 0.3s ease;
-
   box-shadow: 0 20px 40px rgba(59, 130, 246, 0.22);
 }
 
@@ -315,44 +219,30 @@ textarea {
 
 .submit-btn:disabled {
   opacity: 0.7;
-
   cursor: not-allowed;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Full Width
-|--------------------------------------------------------------------------
-*/
+/* Full Width */
 .full-width {
   grid-column: 1 / -1;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Responsive
-|--------------------------------------------------------------------------
-*/
+/* Responsive */
 @media (max-width: 768px) {
   .appointment-form {
     padding: 22px;
   }
-
   .slots-container {
     gap: 10px;
   }
-
   .slot-btn {
     width: 100%;
   }
 }
 .consultation-fee {
   margin-top: 14px;
-
   font-size: 18px;
-
   font-weight: 700;
-
   color: #16a34a;
 }
 

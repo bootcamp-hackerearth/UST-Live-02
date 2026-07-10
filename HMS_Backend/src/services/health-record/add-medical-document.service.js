@@ -18,15 +18,11 @@ const addMedicalDocumentService = async (patientId, data, file, uploadedBy) => {
 
   patient.medicalDocuments.push({
     ...data,
-
     documentUrl: `/uploads/medical-documents/${file.filename}`,
-
     uploadedBy,
     uploadedAt: new Date(),
-
     updatedBy: null,
     updatedAt: null,
-
     isDeleted: false,
     deletedBy: null,
     deletedAt: null,

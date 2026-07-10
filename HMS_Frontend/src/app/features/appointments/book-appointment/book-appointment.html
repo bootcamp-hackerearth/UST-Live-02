@@ -27,17 +27,15 @@
         <!-- Patient -->
 
         <div class="form-group">
-          <label>Patient</label>
+          <label for="book-appointment-patient">Patient</label>
 
-          <select formControlName="patientId">
+          <select id="book-appointment-patient" formControlName="patientId">
             <option value="">Select Patient</option>
 
             @for( patient of patients; track patient._id ){
-
             <option [value]="patient._id">
               {{ patient.patientId }} - {{ patient.firstName }} {{ patient.lastName }}
             </option>
-
             }
           </select>
           @if(appointmentForm.get('patientId')?.invalid && appointmentForm.get('patientId')?.touched){
@@ -48,9 +46,9 @@
         <!-- Department -->
 
         <div class="form-group">
-          <label>Department</label>
+          <label for="book-appointment-department">Department</label>
 
-          <select formControlName="department" (change)="filterDoctors()">
+          <select id="book-appointment-department" formControlName="department" (change)="filterDoctors()">
             <option value="">Select Department</option>
 
             <option value="CARDIOLOGY">Cardiology</option>
@@ -102,26 +100,6 @@
           }
         </div>
 
-        <!-- Doctor -->
-
-        <div class="form-group">
-          <label>Doctor</label>
-
-          <select formControlName="doctorId" (change)="onDoctorChange()">
-            <option value="">Select Doctor</option>
-
-            <option *ngFor="let doctor of filteredDoctors" [value]="doctor._id">{{ doctor.name }}</option>
-          </select>
-
-          <!-- Consultation Fee -->
-
-          @if(selectedDoctor){
-
-          <p class="consultation-fee">Consultation Fee: ₹{{ selectedDoctor ?.consultationFee || 0 }}</p>
-
-          }
-        </div>
-
         <!-- Appointment Date -->
 
         <div class="form-group">
@@ -132,12 +110,46 @@
             type="date"
             formControlName="appointmentDate"
             [min]="minDate"
-            (change)="fetchAvailableSlots()"
+            (change)="onAppointmentDateChange()"
           />
           @if(appointmentForm.get('appointmentDate')?.invalid && appointmentForm.get('appointmentDate')?.touched){
           <span class="error-text">Appointment Date is required</span>
           } @if(noSlotsError){
           <span class="error-text">Doctor is not available on this day</span>
+          }
+
+          <!-- Consultation Fee -->
+
+          @if(false){
+          <p class="consultation-fee">Consultation Fee: ₹{{ selectedDoctor ?.consultationFee || 0 }}</p>
+          }
+        </div>
+
+        <!-- Doctor -->
+
+        <div class="form-group">
+          <label for="book-appointment-doctor">Doctor</label>
+
+          <select
+            id="book-appointment-doctor"
+            formControlName="doctorId"
+            [disabled]="!appointmentForm.get('appointmentDate')?.value"
+            (change)="onDoctorChange()"
+          >
+            <option value="">Select Doctor</option>
+
+            <option *ngFor="let doctor of filteredDoctors" [value]="doctor._id">{{ doctor.name }}</option>
+          </select>
+
+          @if(!appointmentForm.get('appointmentDate')?.value){}
+           @else if(appointmentForm.get('department')?.value && filteredDoctors.length === 0){
+          <span class="helper-text">No joined doctors available for this date and department.</span>
+          }
+
+          <!-- Consultation Fee -->
+
+          @if(selectedDoctor){
+          <p class="consultation-fee">Consultation Fee: ₹{{ selectedDoctor ?.consultationFee || 0 }}</p>
           }
         </div>
       </div>
@@ -156,7 +168,6 @@
 
       <div class="slots-container">
         @for( slot of availableSlots; track slot ){
-
         <button
           type="button"
           class="slot-btn"
@@ -179,7 +190,6 @@
         >
           {{ slot }}
         </button>
-
         }
       </div>
     </div>
@@ -197,9 +207,9 @@
         <!-- Appointment Type -->
 
         <div class="form-group">
-          <label>Appointment Type</label>
+          <label for="book-appointment-type">Appointment Type</label>
 
-          <select formControlName="appointmentType">
+          <select id="book-appointment-type" formControlName="appointmentType">
             <option value="">Select appointment type</option>
             <option value="CONSULTATION">Consultation</option>
 
@@ -219,9 +229,9 @@
         <!-- Priority -->
 
         <div class="form-group">
-          <label>Priority</label>
+          <label for="book-appointment-priority">Priority</label>
 
-          <select formControlName="priority">
+          <select id="book-appointment-priority" formControlName="priority">
             <option value="">Select Priority</option>
             <option value="NORMAL">Normal</option>
 
@@ -237,9 +247,9 @@
         <!-- Payment Status -->
 
         <div class="form-group">
-          <label>Payment Status</label>
+          <label for="book-appointment-payment-status">Payment Status</label>
 
-          <select formControlName="paymentStatus">
+          <select id="book-appointment-payment-status" formControlName="paymentStatus">
             <option value="">Select Payment Status</option>
             <option value="PENDING">Pending</option>
 
@@ -255,9 +265,9 @@
         <!-- Visit Mode -->
 
         <div class="form-group">
-          <label>Visit Mode</label>
+          <label for="book-appointment-visit-mode">Visit Mode</label>
 
-          <select formControlName="visitMode">
+          <select id="book-appointment-visit-mode" formControlName="visitMode">
             <option value="">Select visit Mode</option>
             <option value="OFFLINE">Offline</option>
 
@@ -274,25 +284,25 @@
       <!-- Symptoms -->
 
       <div class="form-group full-width">
-        <label>Symptoms</label>
+        <label for="book-appointment-symptoms">Symptoms</label>
 
-        <textarea formControlName="symptoms" placeholder="Enter symptoms"></textarea>
+        <textarea id="book-appointment-symptoms" formControlName="symptoms" placeholder="Enter symptoms"></textarea>
       </div>
 
       <!-- Reason -->
 
       <div class="form-group full-width">
-        <label>Reason</label>
+        <label for="book-appointment-reason">Reason</label>
 
-        <textarea formControlName="reason" placeholder="Reason for appointment"></textarea>
+        <textarea id="book-appointment-reason" formControlName="reason" placeholder="Reason for appointment"></textarea>
       </div>
 
       <!-- Notes -->
 
       <div class="form-group full-width">
-        <label>Notes</label>
+        <label for="book-appointment-notes">Notes</label>
 
-        <textarea formControlName="notes" placeholder="Additional notes"></textarea>
+        <textarea id="book-appointment-notes" formControlName="notes" placeholder="Additional notes"></textarea>
       </div>
     </div>
 

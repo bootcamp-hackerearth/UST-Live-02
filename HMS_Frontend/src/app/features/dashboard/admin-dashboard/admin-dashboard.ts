@@ -1,66 +1,65 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
-
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Subscription, timer, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth';
-import { DashboardService } from '../../../core/services/dashboard';
 import { NodeService } from '../../../core/services/node';
+import { DashboardService } from '../../../core/services/dashboard';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [RouterLink, AsyncPipe],
+  imports: [CommonModule, RouterLink],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminDashboard implements OnInit {
+export class AdminDashboard implements OnInit, OnDestroy {
   stats: any = {};
 
   recentEmployees: any[] = [];
 
+  auditLogs: any[] = [];
+
+  private auditLogSubscription?: Subscription;
+
   constructor(
     public readonly authService: AuthService,
     public readonly nodeService: NodeService,
+    private readonly route: ActivatedRoute,
     private readonly dashboardService: DashboardService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
-  // Load dashboard data
   ngOnInit(): void {
-    this.loadStats();
-    this.loadRecentEmployees();
+    const dashboard = this.route.snapshot.data['dashboard'];
+
+    this.stats = dashboard?.stats?.data || {};
+    this.recentEmployees = dashboard?.recentEmployees?.data || [];
+    this.auditLogs = dashboard?.auditLogs?.data || [];
+    this.startAuditLogPolling();
   }
 
-  // Fetch dashboard statistics
-  loadStats(): void {
-    this.dashboardService.getAdminStats().subscribe({
-      next: (response) => {
-        console.log(response);
-
-        this.stats = response.data;
-
-        this.cdr.detectChanges();
-      },
-
-      error: (error) => {
-        console.log(error);
-      }
-    });
+  ngOnDestroy(): void {
+    this.auditLogSubscription?.unsubscribe();
   }
 
-  // Fetch recently added employees
-  loadRecentEmployees(): void {
-    this.dashboardService.getRecentEmployees().subscribe({
-      next: (response) => {
-        console.log(response);
+  getActorName(log: any): string {
+    return log?.performedBy?.employeeId?.name || log?.performedBy?.email || 'System';
+  }
 
-        this.recentEmployees = response.data;
-      },
+  getAuditSummary(log: any): string {
+    return `${log?.action || 'Action'} ${log?.entityType || log?.module || 'record'}`;
+  }
 
-      error: (error) => {
-        console.log(error);
-      }
-    });
+  private startAuditLogPolling(): void {
+    this.auditLogSubscription = timer(5000, 5000)
+      .pipe(switchMap(() => this.dashboardService.getAuditLogs()))
+      .subscribe({
+        next: (response) => {
+          this.auditLogs = response?.data || [];
+          this.cdr.markForCheck();
+        }
+      });
   }
 }

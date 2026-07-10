@@ -151,11 +151,7 @@ button {
   color: white;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Sidebar
-|--------------------------------------------------------------------------
-*/
+/* Sidebar */
 .sidebar {
   width: 320px; /* 280 → 320 */
   background: rgba(15, 23, 42, 0.92);
@@ -169,11 +165,7 @@ button {
   height: 100vh;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Logo
-|--------------------------------------------------------------------------
-*/
+/* Logo */
 .logo-section {
   display: flex;
   align-items: center;
@@ -206,11 +198,7 @@ button {
   font-size: 14px; /* 13 → 14 */
 }
 
-/*
-|--------------------------------------------------------------------------
-| Sidebar Profile
-|--------------------------------------------------------------------------
-*/
+/* Sidebar Profile */
 .profile-card {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -246,11 +234,7 @@ button {
   font-size: 13px; /* 12 → 13 */
 }
 
-/*
-|--------------------------------------------------------------------------
-| Navigation
-|--------------------------------------------------------------------------
-*/
+/* Navigation */
 .nav-links {
   display: flex;
   flex-direction: column;
@@ -286,21 +270,13 @@ button {
   box-shadow: 0 10px 25px rgba(59, 130, 246, 0.18);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Main Content
-|--------------------------------------------------------------------------
-*/
+/* Main Content */
 .main-content {
   flex: 1;
   padding: 30px; /* 24 → 30 */
 }
 
-/*
-|--------------------------------------------------------------------------
-| Topbar
-|--------------------------------------------------------------------------
-*/
+/* Topbar */
 .topbar {
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(18px);
@@ -328,22 +304,14 @@ button {
   font-size: 15px; /* added explicit size */
 }
 
-/*
-|--------------------------------------------------------------------------
-| Topbar Right
-|--------------------------------------------------------------------------
-*/
+/* Topbar Right */
 .topbar-right {
   display: flex;
   align-items: center;
   gap: 20px; /* 18 → 20 */
 }
 
-/*
-|--------------------------------------------------------------------------
-| System Status
-|--------------------------------------------------------------------------
-*/
+/* System Status */
 .system-status {
   display: flex;
   align-items: center;
@@ -351,6 +319,15 @@ button {
   color: #334155;
   font-weight: 500;
   font-size: 15px; /* added explicit size */
+}
+
+.system-status.inactive {
+  color: #991b1b;
+}
+
+.system-status.inactive .status-dot {
+  background: #ef4444;
+  box-shadow: 0 0 12px #ef4444;
 }
 
 .status-dot {
@@ -361,13 +338,12 @@ button {
   box-shadow: 0 0 12px #22c55e;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Top Profile
-|--------------------------------------------------------------------------
-*/
-.top-profile {
+/* Top Profile */
+.top-profile-menu {
   position: relative;
+}
+
+.top-profile {
   display: flex;
   align-items: center;
   gap: 16px; /* 14 → 16 */
@@ -376,6 +352,8 @@ button {
   padding: 12px 18px; /* 10/14 → 12/18 */
   border-radius: 20px; /* 18 → 20 */
   cursor: pointer;
+  font: inherit;
+  text-align: left;
   transition: all 0.3s ease;
 }
 
@@ -383,11 +361,7 @@ button {
   background: rgba(255, 255, 255, 0.95);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Top Avatar
-|--------------------------------------------------------------------------
-*/
+/* Top Avatar */
 .top-avatar {
   width: 52px; /* 46 → 52 */
   height: 52px;
@@ -401,27 +375,24 @@ button {
   font-size: 20px; /* 18 → 20 */
 }
 
-/*
-|--------------------------------------------------------------------------
-| Top User Info
-|--------------------------------------------------------------------------
-*/
-.top-user-info h4 {
+/* Top User Info */
+.top-user-info {
+  display: grid;
+}
+
+.top-user-name {
   color: #0f172a;
   font-size: 16px; /* 14 → 16 */
   margin-bottom: 4px; /* 3 → 4 */
+  font-weight: 700;
 }
 
-.top-user-info p {
+.top-user-role {
   color: #64748b;
   font-size: 13px; /* 12 → 13 */
 }
 
-/*
-|--------------------------------------------------------------------------
-| Profile Dropdown
-|--------------------------------------------------------------------------
-*/
+/* Profile Dropdown */
 .profile-dropdown {
   position: absolute;
   top: 86px; /* 78 → 86 */
@@ -437,11 +408,7 @@ button {
   z-index: 9999;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Dropdown Links
-|--------------------------------------------------------------------------
-*/
+/* Dropdown Links */
 .profile-dropdown a,
 .profile-dropdown button {
   width: 100%;
@@ -467,60 +434,51 @@ button {
   color: #dc2626;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Page Content
-|--------------------------------------------------------------------------
-*/
+/* Page Content */
 .page-content {
   min-height: calc(100vh - 140px);
   position: relative;
   z-index: 1;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Responsive
-|--------------------------------------------------------------------------
-*/
+/* Responsive */
 @media (max-width: 992px) {
   .sidebar {
     width: 100px; /* 90 → 100 */
   }
-
   .logo-section div,
   .profile-card div,
   .top-user-info {
     display: none;
   }
-
   .nav-links a {
     justify-content: center;
   }
-
   .topbar {
     padding: 22px; /* 20 → 22 */
   }
-
   .topbar-right {
     gap: 14px; /* 12 → 14 */
   }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Compact HMS Shell Overrides
-|--------------------------------------------------------------------------
-*/
+/* Compact HMS Shell Overrides */
 .dashboard-shell {
   background: #f4f7fb;
 }
 
 .sidebar {
   width: 260px;
+  flex: 0 0 260px;
   padding: 22px 16px;
   background: #0f172a;
   backdrop-filter: none;
+  overflow-y: auto;
+  transition:
+    flex-basis 0.24s ease,
+    width 0.24s ease,
+    padding 0.24s ease,
+    opacity 0.18s ease;
 }
 
 .logo-section {
@@ -616,4 +574,215 @@ button {
 
 .page-content {
   min-height: calc(100vh - 94px);
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+.mobile-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 10px;
+  color: #0f172a;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.mobile-menu-btn .material-icons {
+  font-size: 22px;
+}
+
+.topbar-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-shell.sidebar-collapsed .sidebar {
+  width: 0;
+  flex-basis: 0;
+  padding-inline: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-right: 0;
+}
+
+.dashboard-shell.sidebar-collapsed .main-content {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .dashboard-shell {
+    display: block;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .sidebar,
+  .dashboard-shell.sidebar-collapsed .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(82vw, 300px);
+    flex-basis: auto;
+    height: 100dvh;
+    z-index: 1000;
+    padding: 18px 14px;
+    opacity: 1;
+    overflow-y: auto;
+    transform: translateX(-104%);
+    transition: transform 0.24s ease;
+    box-shadow: 18px 0 36px rgba(15, 23, 42, 0.22);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: block;
+    min-height: 100dvh;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgba(15, 23, 42, 0.46);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .sidebar-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .main-content {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .topbar {
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .topbar-title {
+    flex: 1;
+  }
+
+  .topbar h1 {
+    font-size: 18px;
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+
+  .topbar p {
+    font-size: 12px;
+  }
+
+  .topbar-right {
+    gap: 8px;
+  }
+
+  .system-status,
+  .top-user-info {
+    display: none;
+  }
+
+  .top-profile {
+    padding: 6px;
+  }
+
+  .top-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .profile-dropdown {
+    position: fixed;
+    top: 66px;
+    right: 12px;
+    width: min(220px, calc(100vw - 24px));
+  }
+
+  .page-content {
+    min-height: calc(100dvh - 76px);
+  }
+
+  .logo-section {
+    margin-bottom: 18px;
+  }
+
+  .profile-card {
+    align-items: flex-start;
+  }
+
+  .profile-card span {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 420px) {
+  .main-content {
+    padding: 10px;
+  }
+
+  .topbar {
+    padding: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 769px) {
+  .dashboard-shell {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 260px;
+    height: 100dvh;
+    z-index: 200;
+    overflow-y: auto;
+    border-right: 1px solid #1e293b;
+  }
+
+  .main-content {
+    width: auto;
+    min-height: 100vh;
+    margin-left: 260px;
+    transition: margin-left 0.24s ease;
+  }
+
+  .dashboard-shell.sidebar-collapsed .sidebar {
+    width: 260px;
+    padding: 22px 16px;
+    opacity: 1;
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+
+  .dashboard-shell.sidebar-collapsed .main-content {
+    width: auto;
+    margin-left: 0;
+  }
 }

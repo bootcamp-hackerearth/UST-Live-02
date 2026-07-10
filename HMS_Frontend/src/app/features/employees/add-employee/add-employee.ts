@@ -1,7 +1,6 @@
-import { Component, ChangeDetectorRef, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-
 import { ToastService } from '../../../core/services/toast';
 import { EmployeeService } from '../../../core/services/employee';
 
@@ -20,7 +19,7 @@ export class AddEmployee implements OnInit {
   errorMessage = '';
 
   isSubmitting = false;
-  designations = ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'LAB_TECHNICIAN', 'PHARMACIST'];
+  designations = ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'LAB_TECH', 'PHARMACIST'];
 
   ngOnInit(): void {
     const role = localStorage.getItem('role');
@@ -42,51 +41,32 @@ export class AddEmployee implements OnInit {
         '',
         [Validators.required, Validators.minLength(2), Validators.maxLength(100), Validators.pattern(/^[A-Za-z\s]+$/)]
       ],
-
       email: ['', [Validators.required, Validators.email]],
-
       countryCode: ['+91', Validators.required],
-
       phone: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-
       gender: ['', Validators.required],
-
       designation: ['', Validators.required],
-
       department: ['', Validators.required],
-
       joiningDate: ['', Validators.required],
-
       // Doctor Details
       medicalRegistrationNo: [
         '',
         [Validators.minLength(5), Validators.maxLength(50), Validators.pattern(/^[A-Za-z0-9\-/]+$/)]
       ],
-
       specialization: [''],
-
       qualification: [
         '',
         [Validators.minLength(2), Validators.maxLength(100), Validators.pattern(/^[A-Za-z0-9\s.,()-]+$/)]
       ],
-
       consultationFee: [0, [Validators.min(0)]],
-
       availabilitySlots: [''],
-
       // Doctor Availability
       workingDays: [[]],
-
       startTime: [''],
-
       endTime: [''],
-
       slotDuration: [15],
-
       breakStartTime: [''],
-
       breakEndTime: [''],
-
       maxPatientsPerDay: [40]
     });
 
@@ -229,7 +209,6 @@ export class AddEmployee implements OnInit {
           designation: ''
         });
       },
-
       error: (error) => {
         console.log('FULL ERROR');
         console.log(error);

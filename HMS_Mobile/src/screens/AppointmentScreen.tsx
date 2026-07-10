@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-
 import {
   ActivityIndicator,
   FlatList,
@@ -13,15 +12,23 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { useNavigation } from "@react-navigation/native";
-
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import AppointmentCard from "../../src/components/cards/AppointmentCard";
 import useAppointments from "../../src/hooks/useAppointments";
 import CardSkeleton from "../../src/components/loaders/CardSkeleton";
+import OfflineBanner from "../../src/components/common/OfflineBanner";
+import OfflineSkeletonState from "../../src/components/loaders/OfflineSkeletonState";
+import useOfflineStatus from "../../src/hooks/useOfflineStatus";
 
 export default function Appointments() {
   const navigation = useNavigation<any>();
+  const offline = useOfflineStatus();
+
+  const [search, setSearch] = useState("");
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const [selectedFilter, setSelectedFilter] = useState("ALL");
 
   const {
     appointments,
@@ -30,16 +37,13 @@ export default function Appointments() {
     loadingMore,
     loadAppointments,
     refresh,
-  } =
-    useAppointments();
+  } = useAppointments(debouncedSearch, selectedFilter);
 
-  const [page, setPage] = useState(1);
-
-  const [search, setSearch] = useState("");
-
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  const [selectedFilter, setSelectedFilter] = useState("ALL");
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   const filters = useMemo(
     () => ["ALL", "PENDING", "BOOKED", "COMPLETED", "REJECTED", "CANCELLED"],
@@ -54,36 +58,32 @@ export default function Appointments() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    setPage(1);
-    loadAppointments(1, debouncedSearch, selectedFilter);
-  }, [debouncedSearch, selectedFilter, loadAppointments]);
-
   const onRefresh = useCallback(() => {
-    setPage(1);
-    refresh(1, debouncedSearch, selectedFilter);
-  }, [debouncedSearch, selectedFilter, refresh]);
+    refresh();
+  }, [refresh]);
 
   const loadMoreAppointments = useCallback(() => {
     if (!appointments || loading || loadingMore) {
       return;
     }
 
-    if (page >= appointments.meta.totalPages) {
+    if (!appointments.meta.hasNextPage || !appointments.meta.nextCursor) {
       return;
     }
 
-    const nextPage = page + 1;
-
-    setPage(nextPage);
-    loadAppointments(nextPage, debouncedSearch, selectedFilter, false, true);
+    loadAppointments(
+      appointments.meta.nextCursor,
+      debouncedSearch,
+      selectedFilter,
+      false,
+      true,
+    );
   }, [
     appointments,
     debouncedSearch,
     loadAppointments,
     loading,
     loadingMore,
-    page,
     selectedFilter,
   ]);
   const goToBookAppointment = useCallback(() => {
@@ -107,12 +107,18 @@ export default function Appointments() {
     ),
     [navigation],
   );
-  if (loading && !appointments) {
+  if ((loading || offline) && !appointments) {
     return (
       <SafeAreaView style={styles.container}>
-        <CardSkeleton />
-        <CardSkeleton />
-        <CardSkeleton />
+        {offline ? (
+          <OfflineSkeletonState message="Loading saved appointments while offline." />
+        ) : (
+          <>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </>
+        )}
       </SafeAreaView>
     );
   }
@@ -137,6 +143,8 @@ export default function Appointments() {
         }}
         ListHeaderComponent={
           <>
+            {offline ? <OfflineBanner /> : null}
+
             <View style={styles.header}>
               <Text style={styles.title}>My Appointments</Text>
 
@@ -159,7 +167,6 @@ export default function Appointments() {
                 value={search}
                 onChangeText={(text) => {
                   setSearch(text);
-                  setPage(1);
                 }}
                 style={styles.search}
               />
@@ -169,8 +176,6 @@ export default function Appointments() {
                   <TouchableOpacity
                     key={item}
                     onPress={() => {
-                      setPage(1);
-
                       setSelectedFilter(item);
                     }}
                     style={[
@@ -217,23 +222,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F7FC",
   },
-
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
   },
-
   title: {
     fontSize: 30,
     fontWeight: "800",
     color: "#0F172A",
   },
-
   subtitle: {
     color: "#64748B",
     marginTop: 8,
   },
-
   bookButton: {
     marginHorizontal: 20,
     marginTop: 20,
@@ -243,18 +244,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   bookText: {
     color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 16,
   },
-
   searchContainer: {
     paddingHorizontal: 20,
     marginTop: 18,
   },
-
   search: {
     height: 52,
     backgroundColor: "#FFFFFF",
@@ -264,7 +262,6 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     marginBottom: 16,
   },
-
   filterChip: {
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -274,37 +271,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
-
   activeChip: {
     backgroundColor: "#2563EB",
   },
-
   filterText: {
     fontWeight: "700",
     color: "#334155",
   },
-
   activeFilterText: {
     color: "#FFFFFF",
   },
-
   emptyContainer: {
     alignItems: "center",
     marginTop: 100,
   },
-
   emptyTitle: {
     fontSize: 20,
     fontWeight: "700",
     color: "#0F172A",
   },
-
   emptyText: {
     marginTop: 8,
     color: "#64748B",
     textAlign: "center",
   },
-
   loadingMoreContainer: {
     paddingVertical: 18,
     alignItems: "center",

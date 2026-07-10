@@ -1,48 +1,80 @@
-import { Injectable } from '@angular/core';
-
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-
-import { BehaviorSubject } from 'rxjs';
-
+import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
 import { API_BASE_URL } from '../constants/api.constants';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NodeService {
-  nodes = new BehaviorSubject<any[]>([]);
+  readonly nodes = signal<any[]>([]);
 
   constructor(private readonly http: HttpClient) {
     const storedNodes = localStorage.getItem('nodes');
 
     if (storedNodes) {
-      this.nodes.next(JSON.parse(storedNodes));
+      this.nodes.set(JSON.parse(storedNodes));
     }
   }
 
-  getNodes() {
-    return this.http.get<any>(`${API_BASE_URL}/nodes`);
-  }
-
-  loadNodes(): void {
-    this.getNodes().subscribe({
-      next: (response) => {
-        this.nodes.next(response.data);
-
-        localStorage.setItem('nodes', JSON.stringify(response.data));
-      },
-
-      error: () => {
-        this.nodes.next([]);
-
-        localStorage.removeItem('nodes');
-      }
+  getNodes(params?: any) {
+    return this.http.get<any>(`${API_BASE_URL}/nodes`, {
+      params
     });
   }
 
-  clearNodes(): void {
-    this.nodes.next([]);
+  getManagementNodes() {
+    return this.getNodes({
+      management: true
+    });
+  }
 
+  createNode(data: any) {
+    return this.http.post<any>(`${API_BASE_URL}/nodes`, data);
+  }
+
+  updateNode(id: string, data: any) {
+    return this.http.put<any>(`${API_BASE_URL}/nodes/${id}`, data);
+  }
+
+  deleteNode(id: string) {
+    return this.http.delete<any>(`${API_BASE_URL}/nodes/${id}`);
+  }
+
+  loadNodes(): void {
+    this.fetchAndStoreNodes().subscribe({
+      error: () => this.clearNodes()
+    });
+  }
+
+  ensureNodesLoaded(): Observable<any[]> {
+    const currentNodes = this.nodes();
+
+    if (currentNodes.length) {
+      return of(currentNodes);
+    }
+
+    return this.fetchAndStoreNodes();
+  }
+
+  private fetchAndStoreNodes(): Observable<any[]> {
+    return this.getNodes().pipe(
+      map((response) => response.data || []),
+      tap((nodes) => this.setNodes(nodes)),
+      catchError((error) => {
+        this.clearNodes();
+        return throwError(() => error);
+      })
+    );
+  }
+
+  setNodes(nodes: any[]): void {
+    this.nodes.set(nodes);
+    localStorage.setItem('nodes', JSON.stringify(nodes));
+  }
+
+  clearNodes(): void {
+    this.nodes.set([]);
     localStorage.removeItem('nodes');
   }
 
@@ -60,16 +92,19 @@ export class NodeService {
         const methodMatches = permissionMethod === requestMethod || permissionMethod === 'ALL';
         const pathMatches = permission.path === path;
         const permissionRoles = permission.roles || [];
-        const roleMatches =
-          !permissionRoles.length || permissionRoles.some((role: string) => userRoles.includes(role));
+        const roleMatches = !permissionRoles.length || permissionRoles.some((role: string) => userRoles.includes(role));
 
         return methodMatches && pathMatches && roleMatches;
       })
     );
   }
 
+  isSuperAdmin(): boolean {
+    return this.getUserRoles().includes('SUPER_ADMIN');
+  }
+
   private getFlatNodes(): any[] {
-    return this.nodes.value.flatMap((node) => [node, ...(node.children || [])]);
+    return this.nodes().flatMap((node) => [node, ...(node.children || [])]);
   }
 
   private getUserRoles(): string[] {

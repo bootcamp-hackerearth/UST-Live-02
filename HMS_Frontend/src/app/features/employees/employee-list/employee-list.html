@@ -22,7 +22,7 @@
       <div class="search-box">
         <span>🔍</span>
 
-        <input type="text" placeholder="Search employee..." [(ngModel)]="search" (input)="onSearch()" />
+        <input type="text" placeholder="Search employee..." [(ngModel)]="search" (input)="onFilterTextInput()" />
       </div>
 
       <select [(ngModel)]="status" (change)="onFilterChange()">
@@ -42,7 +42,7 @@
         department
       "
         (input)="
-        onFilterChange()
+        onFilterTextInput()
       "
       />
 
@@ -53,7 +53,7 @@
         designation
       "
         (input)="
-        onFilterChange()
+        onFilterTextInput()
       "
       />
 
@@ -68,6 +68,17 @@
     </div>
   </div>
 
+  @if(isLoading){
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
+
+  } @else if(employees.length === 0) {
+  <app-empty-state
+    icon="groups"
+    title="No Employees Found"
+    message="Try changing filters or add a new employee."
+  ></app-empty-state>
+
+  } @else {
   <!-- Table -->
 
   <div class="table-wrapper glass-card">
@@ -89,12 +100,8 @@
       </thead>
 
       <tbody>
-        <tr
-          *ngFor="
-                  let employee
-                 of employees
-                  "
-        >
+        @for (employee of employees; track employee._id) {
+        <tr>
           <!-- Employee -->
 
           <td>
@@ -152,80 +159,49 @@
           <!-- Actions -->
 
           <td>
-  <div class="actions">
+            <div class="actions">
+              <!-- View -->
+              <a [routerLink]="['/employees', employee._id]" class="action-btn view">View</a>
 
-    <!-- View -->
-    <a
-      [routerLink]="['/employees', employee._id]"
-      class="action-btn view"
-    >
-      View
-    </a>
+              <!-- Edit -->
+              @if(nodeService.canUseApi('PUT', '/api/employees/:id')){
+              <a [routerLink]="['/employees/edit', employee._id]" class="action-btn edit">Edit</a>
+              }
 
-    <!-- Edit -->
-    @if(nodeService.canUseApi('PUT', '/api/employees/:id')){
-      <a
-        [routerLink]="['/employees/edit', employee._id]"
-        class="action-btn edit"
-      >
-        Edit
-      </a>
-    }
+              <!-- Activate -->
+              @if( employee.status === 'INACTIVE' && ( nodeService.canUseApi('PATCH', '/api/employees/:id/activate') )
+              ){
+              <button type="button" class="action-btn activate" (click)="activateEmployee(employee._id)">
+                Activate
+              </button>
+              }
 
-    <!-- Activate -->
-    @if(
-      employee.status === 'INACTIVE' &&
-      (
-        nodeService.canUseApi('PATCH', '/api/employees/:id/activate')
-      )
-    ){
-      <button
-        type="button"
-        class="action-btn activate"
-        (click)="activateEmployee(employee._id)"
-      >
-        Activate
-      </button>
-    }
+              <!-- Deactivate -->
+              @if( employee.status === 'ACTIVE' && ( nodeService.canUseApi('PATCH', '/api/employees/:id/deactivate') )
+              ){
+              <button type="button" class="action-btn deactivate" (click)="deactivateEmployee(employee._id)">
+                Deactivate
+              </button>
+              }
 
-    <!-- Deactivate -->
-    @if(
-      employee.status === 'ACTIVE' &&
-      (
-        nodeService.canUseApi('PATCH', '/api/employees/:id/deactivate')
-      )
-    ){
-      <button
-        type="button"
-        class="action-btn deactivate"
-        (click)="deactivateEmployee(employee._id)"
-      >
-        Deactivate
-      </button>
-    }
-
-    <!-- Delete -->
-    @if(nodeService.canUseApi('DELETE', '/api/employees/:id')){
-      <button
-        type="button"
-        class="action-btn delete"
-        (click)="deleteEmployee(employee._id)"
-      >
-        Delete
-      </button>
-    }
-
-  </div>
-</td>
+              <!-- Delete -->
+              @if(nodeService.canUseApi('DELETE', '/api/employees/:id')){
+              <button type="button" class="action-btn delete" (click)="deleteEmployee(employee._id)">Delete</button>
+              }
+            </div>
+          </td>
         </tr>
+        }
       </tbody>
     </table>
   </div>
   <app-pagination
     [page]="page"
-    [totalPages]="totalPages"
+    [totalPages]="page + (nextCursor ? 1 : 0)"
     [totalRecords]="total"
     [limit]="limit"
+    [cursorMode]="true"
+    [hasNextPage]="!!nextCursor"
     (previous)="previousPage()"
     (next)="nextPage()"
     (pageSizeChange)="
@@ -234,4 +210,5 @@
     loadEmployees(false)
   "
   ></app-pagination>
+  }
 </div>

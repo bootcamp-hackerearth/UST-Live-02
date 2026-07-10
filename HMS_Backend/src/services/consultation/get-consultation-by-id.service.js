@@ -8,21 +8,18 @@ const getConsultationByIdService = async (id) => {
   })
     .populate({
       path: "patientId",
-
       match: {
         isDeleted: false,
       },
     })
     .populate({
       path: "doctorEmployeeId",
-
       match: {
         isDeleted: false,
       },
     })
     .populate({
       path: "appointmentId",
-
       match: {
         isDeleted: false,
       },

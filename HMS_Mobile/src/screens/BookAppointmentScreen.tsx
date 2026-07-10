@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { minLength } from "../../src/utils/validators";
@@ -15,20 +14,31 @@ import ChipSelector from "../../src/components/selectors/ChipSelector";
 import DoctorCard from "../../src/components/cards/DoctorCard";
 import TimeSlotSelector from "../../src/components/selectors/TimeSlotSelectors";
 import PrimaryButton from "../../src/components/buttons/PrimaryButton";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { getDoctors } from "../../src/services/employee.service";
-
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAvailableSlots,
   bookAppointment,
   clearAppointmentCache,
 } from "../../src/services/appointment.service";
-import { formatLocalDate } from "../../src/utils/date";
+import {
+  filterFutureSlotsForDate,
+  formatLocalDate,
+  isPastSlotForDate,
+} from "../../src/utils/date";
+import { showToast } from "../services/toast.service";
+import { logger } from "../utils/logger";
+
+type Doctor = {
+  _id: string;
+  department: string;
+  [key: string]: any;
+};
 
 export default function BookAppointment() {
   const navigation = useNavigation<any>();
-
-  const [doctors, setDoctors] = useState<any[]>([]);
+  const queryClient = useQueryClient();
 
   const [selectedDepartment, setSelectedDepartment] = useState("");
 
@@ -40,48 +50,59 @@ export default function BookAppointment() {
 
   const [symptoms, setSymptoms] = useState("");
 
-  const [slots, setSlots] = useState<string[]>([]);
   const [errors, setErrors] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
-  useEffect(() => {
-    loadDoctors();
-  }, []);
-
-  const loadDoctors = async () => {
-    try {
+  const { data: doctors = [] } = useQuery<Doctor[]>({
+    queryKey: ["doctors"],
+    queryFn: async () => {
       const response = await getDoctors();
 
-      setDoctors(response.data.data);
-    } catch (error) {
-      console.log("DOCTOR ERROR", error);
+      return response.data.data ?? [];
+    },
+  });
 
-      Alert.alert("Failed to load doctors");
-    }
-  };
+  const slotsQuery = useQuery<string[]>({
+    queryKey: ["available-slots", doctorId, appointmentDate],
+    queryFn: async () => {
+      const response = await getAvailableSlots(doctorId, appointmentDate);
 
-  const departments = [...new Set(doctors.map((doctor) => doctor.department))];
+      return response.data.data ?? [];
+    },
+    enabled: false,
+  });
 
-  const filteredDoctors = doctors.filter(
-    (doctor) => doctor.department === selectedDepartment,
+  const slots = useMemo(
+    () => filterFutureSlotsForDate(slotsQuery.data ?? [], appointmentDate),
+    [appointmentDate, slotsQuery.data],
+  );
+
+  const departments = useMemo(
+    () => [...new Set(doctors.map((doctor) => doctor.department))],
+    [doctors],
+  );
+
+  const filteredDoctors = useMemo(
+    () =>
+      doctors.filter((doctor) => doctor.department === selectedDepartment),
+    [doctors, selectedDepartment],
   );
 
   const loadSlots = async () => {
     try {
       if (!doctorId || !appointmentDate) {
-        Alert.alert("Please select doctor and date");
+        showToast("Please select doctor and date", "error");
 
         return;
       }
 
-      const response = await getAvailableSlots(doctorId, appointmentDate);
-
-      setSlots(response.data.data);
+      await slotsQuery.refetch();
     } catch (error: any) {
-      Alert.alert(
-        "Failed",
+      logger.error("Available slots load failed", error);
+      showToast(
         error.response?.data?.message ||
           error.message ||
           "Failed to load slots",
+        "error",
       );
     }
   };
@@ -103,6 +124,8 @@ export default function BookAppointment() {
 
     if (!appointmentTime) {
       newErrors.appointmentTime = "Please select time slot";
+    } else if (isPastSlotForDate(appointmentTime, appointmentDate)) {
+      newErrors.appointmentTime = "Please select a future time slot";
     }
 
     if (symptoms && !minLength(symptoms.trim(), 5)) {
@@ -128,24 +151,18 @@ export default function BookAppointment() {
 
       await bookAppointment({
         doctorId,
-
         appointmentDate,
-
         appointmentTime,
-
         symptoms: symptoms.trim() ? [symptoms] : [],
       });
       clearAppointmentCache();
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "patient"] });
 
-      Alert.alert("Success", "Appointment request sent", [
-        {
-          text: "OK",
-
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      showToast("Appointment request sent", "success");
+      navigation.goBack();
     } catch (error: any) {
-      Alert.alert("Failed", error?.response?.data?.message || "Booking failed");
+      showToast(error?.response?.data?.message || "Booking failed", "error");
     } finally {
       setSubmitting(false);
     }
@@ -177,7 +194,7 @@ export default function BookAppointment() {
 
               setDoctorId("");
 
-              setSlots([]);
+              queryClient.removeQueries({ queryKey: ["available-slots"] });
 
               setAppointmentTime("");
             }}
@@ -207,7 +224,7 @@ export default function BookAppointment() {
                 onPress={() => {
                   setDoctorId(doctor._id);
 
-                  setSlots([]);
+                  queryClient.removeQueries({ queryKey: ["available-slots"] });
 
                   setAppointmentTime("");
                 }}
@@ -262,7 +279,7 @@ export default function BookAppointment() {
                   const date = formatLocalDate(selectedDate);
 
                   setAppointmentDate(date);
-                  setSlots([]);
+                  queryClient.removeQueries({ queryKey: ["available-slots"] });
                   setAppointmentTime("");
                   setErrors({
                     ...errors,
@@ -375,28 +392,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F7FC",
     paddingHorizontal: 20,
   },
-
   title: {
     fontSize: 30,
     fontWeight: "800",
     color: "#0F172A",
     marginTop: 20,
   },
-
   subtitle: {
     color: "#64748B",
     marginTop: 8,
     marginBottom: 25,
     lineHeight: 22,
   },
-
   section: {
     fontSize: 18,
     fontWeight: "700",
     color: "#0F172A",
     marginBottom: 15,
   },
-
   dateButton: {
     height: 56,
     backgroundColor: "#FFFFFF",
@@ -406,12 +419,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
-
   dateText: {
     color: "#334155",
     fontSize: 15,
   },
-
   loadSlots: {
     backgroundColor: "#2563EB",
     height: 52,
@@ -420,12 +431,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 16,
   },
-
   loadSlotsText: {
     color: "#FFFFFF",
     fontWeight: "700",
   },
-
   textArea: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -436,7 +445,6 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     color: "#0F172A",
   },
-
   summary: {
     fontSize: 15,
     color: "#334155",

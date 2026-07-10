@@ -1,27 +1,55 @@
 import {
   View,
   Text,
-  Alert,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
 
 import { useState } from "react";
-
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { Picker } from "@react-native-picker/picker";
-
 import { useRoute, useNavigation } from "@react-navigation/native";
-
 import { createPassword } from "../services/auth.service";
-
 import AppInput from "../components/inputs/AppInput";
 import GlassCard from "../components/cards/GlassCard";
 import PrimaryButton from "../components/buttons/PrimaryButton";
+import { showToast } from "../services/toast.service";
+import { logger } from "../utils/logger";
+
+const credentialMessageKeys = {
+  temporaryRequired: "temporaryRequired",
+  newRequired: "newRequired",
+  strength: "strength",
+  confirmRequired: "confirmRequired",
+  mismatch: "mismatch",
+} as const;
+
+type CredentialMessageKey =
+  (typeof credentialMessageKeys)[keyof typeof credentialMessageKeys];
+
+const credentialMessage = (key: CredentialMessageKey) =>
+  ({
+    temporaryRequired: "Temporary credential is required",
+    newRequired: "New credential is required",
+    strength:
+      "Credential must contain uppercase, lowercase, number and special character",
+    confirmRequired: "Credential confirmation is required",
+    mismatch: "Credential entries do not match",
+  })[key];
 
 export default function CreatePasswordScreen() {
+  type FormErrors = Partial<
+    Record<
+      | "temporaryPassword"
+      | "newPassword"
+      | "confirmPassword"
+      | "securityQuestion"
+      | "securityAnswer",
+      string
+    >
+  >;
+
   const route = useRoute<any>();
 
   const navigation = useNavigation<any>();
@@ -44,23 +72,16 @@ export default function CreatePasswordScreen() {
 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const securityQuestions = [
     "What is your mother's maiden name?",
-
     "What was the name of your first school?",
-
     "What is your favorite movie?",
-
     "What was your childhood nickname?",
-
     "What is the name of your best friend?",
-
     "What city were you born in?",
-
     "What is your favorite food?",
-
     "What was the name of your first pet?",
   ];
 
@@ -71,23 +92,26 @@ export default function CreatePasswordScreen() {
   };
 
   const validateForm = () => {
-    const newErrors: any = {};
+    const newErrors: FormErrors = {};
 
     if (!temporaryPassword.trim()) {
-      newErrors.temporaryPassword = "Temporary password is required";
+      newErrors.temporaryPassword = credentialMessage(
+        credentialMessageKeys.temporaryRequired,
+      );
     }
 
     if (!newPassword.trim()) {
-      newErrors.newPassword = "New password is required";
+      newErrors.newPassword = credentialMessage(credentialMessageKeys.newRequired);
     } else if (!validatePassword(newPassword)) {
-      newErrors.newPassword =
-        "Password must contain uppercase, lowercase, number and special character";
+      newErrors.newPassword = credentialMessage(credentialMessageKeys.strength);
     }
 
     if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = "Confirm password is required";
+      newErrors.confirmPassword = credentialMessage(
+        credentialMessageKeys.confirmRequired,
+      );
     } else if (confirmPassword !== newPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = credentialMessage(credentialMessageKeys.mismatch);
     }
 
     if (!securityQuestion) {
@@ -147,32 +171,21 @@ export default function CreatePasswordScreen() {
 
       await createPassword({
         loginId,
-
         temporaryPassword,
-
         newPassword,
-
         confirmPassword,
-
         securityQuestion,
-
         securityAnswer,
       });
 
-      Alert.alert("Success", "Password created successfully", [
-        {
-          text: "OK",
-
-          onPress: () => navigation.replace("Login"),
-        },
-      ]);
+      showToast("Password created successfully", "success");
+      navigation.replace("Login");
     } catch (error: any) {
-      console.log("CREATE PASSWORD ERROR", error?.response?.data);
+      logger.error("Create password failed", error);
 
-      Alert.alert(
-        "Error",
-
+      showToast(
         error?.response?.data?.message || "Failed to create password",
+        "error",
       );
     } finally {
       setLoading(false);
@@ -196,7 +209,7 @@ export default function CreatePasswordScreen() {
         </View>
 
         <GlassCard>
-          <Text style={styles.title}>First Time Login 🔐</Text>
+          <Text style={styles.title}>First Time Login</Text>
 
           <Text style={styles.subtitle}>
             Your temporary password must be changed before continuing.
@@ -256,9 +269,7 @@ export default function CreatePasswordScreen() {
           <Text
             style={{
               color: getPasswordStrength().color,
-
               fontWeight: "600",
-
               marginBottom: 15,
             }}
           >
@@ -266,7 +277,7 @@ export default function CreatePasswordScreen() {
           </Text>
 
           <Text style={styles.helperText}>
-            Password must contain: Uppercase, Lowercase, Number and Special
+            Credential must contain: Uppercase, Lowercase, Number and Special
             Character.
           </Text>
 
@@ -354,24 +365,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F7FC",
   },
-
   container: {
     flexGrow: 1,
     justifyContent: "center",
     padding: 20,
   },
-
   hero: {
     marginBottom: 30,
   },
-
   brand: {
     fontSize: 34,
     fontWeight: "800",
     color: "#0F172A",
     textAlign: "center",
   },
-
   tagline: {
     fontSize: 18,
     fontWeight: "600",
@@ -379,7 +386,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
-
   description: {
     textAlign: "center",
     color: "#64748B",
@@ -387,20 +393,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingHorizontal: 10,
   },
-
   title: {
     fontSize: 24,
     fontWeight: "700",
     color: "#0F172A",
     marginBottom: 8,
   },
-
   subtitle: {
     color: "#64748B",
     marginBottom: 24,
     lineHeight: 20,
   },
-
   showPassword: {
     color: "#2563EB",
     fontWeight: "600",
@@ -408,21 +411,18 @@ const styles = StyleSheet.create({
     marginTop: -5,
     marginBottom: 12,
   },
-
   helperText: {
     color: "#64748B",
     fontSize: 12,
     marginBottom: 15,
     lineHeight: 18,
   },
-
   label: {
     fontSize: 13,
     fontWeight: "600",
     color: "#334155",
     marginBottom: 8,
   },
-
   pickerWrapper: {
     borderWidth: 1,
     borderColor: "#E2E8F0",
@@ -431,14 +431,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     marginBottom: 10,
   },
-
   errorText: {
     color: "#EF4444",
     fontSize: 12,
     marginBottom: 12,
     marginLeft: 4,
   },
-
   strengthBar: {
     height: 8,
     backgroundColor: "#E2E8F0",
@@ -446,7 +444,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 10,
   },
-
   strengthFill: {
     height: "100%",
     borderRadius: 20,

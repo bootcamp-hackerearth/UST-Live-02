@@ -4,7 +4,6 @@ const ApiError = require("../../utils/ApiError");
 const updateConsultationService = async (consultationId, data, updatedBy) => {
   const consultation = await Consultation.findOne({
     _id: consultationId,
-
     isDeleted: false,
   });
 

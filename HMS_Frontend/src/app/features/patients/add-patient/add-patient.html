@@ -41,25 +41,35 @@
       <div class="grid-2">
         <!-- First Name -->
         <div class="form-field">
-          <input type="text" placeholder="First Name" formControlName="firstName" />
-          @if(patientForm.get('firstName')?.invalid && patientForm.get('firstName')?.touched){
-          <span class="error-text">First Name is required</span>
+          <input
+            type="text"
+            placeholder="First Name"
+            formControlName="firstName"
+            (input)="markFieldInteracted('firstName')"
+          />
+          @if(showFieldError('firstName')){
+          <span class="error-text">{{ nameErrorMessage('firstName', 'First Name', 50) }}</span>
           }
         </div>
 
         <!-- Last Name -->
         <div class="form-field">
-          <input type="text" placeholder="Last Name" formControlName="lastName" />
-          @if(patientForm.get('lastName')?.invalid && patientForm.get('lastName')?.touched){
-          <span class="error-text">Last Name is required</span>
+          <input
+            type="text"
+            placeholder="Last Name"
+            formControlName="lastName"
+            (input)="markFieldInteracted('lastName')"
+          />
+          @if(showFieldError('lastName')){
+          <span class="error-text">{{ nameErrorMessage('lastName', 'Last Name', 50) }}</span>
           }
         </div>
 
         <!-- Date of Birth -->
         <div class="form-field">
-          <label class="field-label">Date of Birth</label>
-          <input type="date" formControlName="dateOfBirth" [max]="today" />
-          @if(patientForm.get('dateOfBirth')?.invalid && patientForm.get('dateOfBirth')?.touched){
+          <label class="field-label" for="add-patient-date-of-birth">Date of Birth</label>
+          <input id="add-patient-date-of-birth" type="date" formControlName="dateOfBirth" [max]="today" />
+          @if(showFieldError('dateOfBirth')){
           <span class="error-text">Date of Birth is required</span>
           @if (patientForm.get('dateOfBirth')?.errors?.['futureDate']) {
           <p class="error">Date of Birth cannot be in the future</p>
@@ -75,7 +85,7 @@
             <option value="FEMALE">Female</option>
             <option value="OTHER">Other</option>
           </select>
-          @if(patientForm.get('gender')?.invalid && patientForm.get('gender')?.touched){
+          @if(showFieldError('gender')){
           <span class="error-text">Gender is required</span>
           }
         </div>
@@ -93,7 +103,7 @@
             <option value="O+">O+</option>
             <option value="O-">O-</option>
           </select>
-          @if(patientForm.get('bloodGroup')?.invalid && patientForm.get('bloodGroup')?.touched){
+          @if(showFieldError('bloodGroup')){
           <span class="error-text">Blood Group is required</span>
           }
         </div>
@@ -106,7 +116,7 @@
             <option value="MARRIED">Married</option>
             <option value="DIVORCED">Divorced</option>
           </select>
-          @if(patientForm.get('maritalStatus')?.invalid && patientForm.get('maritalStatus')?.touched){
+          @if(showFieldError('maritalStatus')){
           <span class="error-text">Marital Status is required</span>
           }
         </div>
@@ -133,10 +143,9 @@
             </select>
             <input type="text" placeholder="Phone" maxlength="10" formControlName="phone" />
           </div>
-          @if(patientForm.get('phone')?.invalid && patientForm.get('phone')?.touched){
+          @if(showFieldError('phone')){
           <span class="error-text">
-            @if(patientForm.get('phone')?.errors?.['required']){ Phone number is required } 
-            @else if(patientForm.get('phone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
+            @if(patientForm.get('phone')?.errors?.['required']){ Phone number is required } @else if(patientForm.get('phone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
           </span>
           }
         </div>
@@ -144,10 +153,9 @@
         <!-- Email -->
         <div class="form-field">
           <input type="email" placeholder="Email" formControlName="email" />
-          @if(patientForm.get('email')?.invalid && patientForm.get('email')?.touched){
+          @if(showFieldError('email')){
           <span class="error-text">
-            @if(patientForm.get('email')?.errors?.['required']){ Email is required } 
-            @else if(patientForm.get('email')?.errors?.['email']){ Enter a valid email address }
+            @if(patientForm.get('email')?.errors?.['required']){ Email is required } @else if(patientForm.get('email')?.errors?.['email']){ Enter a valid email address }
           </span>
           }
         </div>
@@ -155,26 +163,25 @@
         <!-- Address -->
         <div class="form-field">
           <input type="text" placeholder="Address" formControlName="address" />
-          @if(patientForm.get('address')?.invalid && patientForm.get('address')?.touched){
-          <span class="error-text">Address is required</span>
-
+          @if(showFieldError('address')){
+          <span class="error-text">
+            @if(patientForm.get('address')?.errors?.['required']){ Address is required }
+            @else { Address must be 5 to 250 characters }
+          </span>
           }
         </div>
 
         <!-- State -->
         <div class="form-field">
           <select [value]="selectedStateId" (change)="onStateChange($event)" [disabled]="isLoadingStates">
-            <option value="">
-              @if(isLoadingStates){ Loading states... } @else { Select State }
-            </option>
+            <option value="">@if(isLoadingStates){ Loading states... } @else { Select State }</option>
             @for (state of states; track state.id) {
             <option [value]="state.id">{{ state.name }}</option>
             }
           </select>
-          @if(patientForm.get('state')?.invalid && patientForm.get('state')?.touched){
+          @if(showFieldError('state')){
           <span class="error-text">State is required</span>
           @if ( patientForm.get('state')?.touched && patientForm.get('state')?.invalid ) {
-
           <div class="error-message">Select a valid state</div>
 
           } }
@@ -182,18 +189,19 @@
 
         <!-- City / District -->
         <div class="form-field">
-          <select formControlName="city" [disabled]="!selectedStateId || isLoadingDistricts" (change)="onDistrictChange()">
-            <option value="">
-              @if(isLoadingDistricts){ Loading cities... } @else { Select City }
-            </option>
+          <select
+            formControlName="city"
+            [disabled]="!selectedStateId || isLoadingDistricts"
+            (change)="onDistrictChange()"
+          >
+            <option value="">@if(isLoadingDistricts){ Loading cities... } @else { Select City }</option>
             @for (district of districts; track district) {
             <option [value]="district">{{ district }}</option>
             }
           </select>
-          @if(patientForm.get('city')?.invalid && patientForm.get('city')?.touched){
+          @if(showFieldError('city')){
           <span class="error-text">City is required</span>
           @if ( patientForm.get('city')?.touched && patientForm.get('city')?.invalid ) {
-
           <div class="error-message">Select a valid city</div>
 
           } }
@@ -208,14 +216,12 @@
             [disabled]="!patientForm.get('city')?.value || isLoadingTaluks"
             (change)="onTalukChange()"
           >
-            <option value="">
-              @if(isLoadingTaluks){ Loading taluks... } @else { Select Taluk }
-            </option>
+            <option value="">@if(isLoadingTaluks){ Loading taluks... } @else { Select Taluk }</option>
             @for (taluk of taluks; track taluk) {
             <option [value]="taluk">{{ taluk }}</option>
             }
           </select>
-          @if(patientForm.get('taluk')?.invalid && patientForm.get('taluk')?.touched){
+          @if(showFieldError('taluk')){
           <span class="error-text">Taluk is required</span>
           }
         </div>
@@ -229,14 +235,12 @@
             [disabled]="!patientForm.get('taluk')?.value || isLoadingAreas"
             (change)="onPostOfficeChange($event)"
           >
-            <option value="">
-              @if(isLoadingAreas){ Loading areas... } @else { Select Post Office / Area }
-            </option>
+            <option value="">@if(isLoadingAreas){ Loading areas... } @else { Select Post Office / Area }</option>
             @for (area of filteredPostOfficeAreas; track area.name + area.pincode; let i = $index) {
             <option [value]="i">{{ area.name }}</option>
             }
           </select>
-          @if(patientForm.get('postOffice')?.invalid && patientForm.get('postOffice')?.touched){
+          @if(showFieldError('postOffice')){
           <span class="error-text">Post Office / Area is required</span>
           }
         </div>
@@ -252,25 +256,26 @@
             readonly
             (input)="
       $any($event.target).value =
-      $any($event.target).value.replace(/[^0-9]/g,'')
+      $any($event.target).value.replaceAll(/[^0-9]/g,'')
     "
           />
 
-          @if(patientForm.get('pincode')?.invalid && patientForm.get('pincode')?.touched){
-
+          @if(showFieldError('pincode')){
           <span class="error-text">
-            @if(patientForm.get('pincode')?.errors?.['required']){ Pincode is required } 
-            @else if(patientForm.get('pincode')?.errors?.['pattern']){ Enter valid 6-digit pincode }
+            @if(patientForm.get('pincode')?.errors?.['required']){ Pincode is required } @else if(patientForm.get('pincode')?.errors?.['pattern']){ Enter valid 6-digit pincode }
           </span>
-
           }
         </div>
 
         <!-- Emergency Contact Name -->
         <div class="form-field">
           <input type="text" placeholder="Emergency Contact Name" formControlName="emergencyContactName" />
-          @if(patientForm.get('emergencyContactName')?.invalid && patientForm.get('emergencyContactName')?.touched){
-          <span class="error-text">Emergency Contact Name is required</span>
+          @if(showFieldError('emergencyContactName')){
+          <span class="error-text">
+            @if(patientForm.get('emergencyContactName')?.errors?.['required']){ Emergency Contact Name is required }
+            @else if(patientForm.get('emergencyContactName')?.errors?.['pattern']){ Emergency Contact Name can contain only letters, spaces, apostrophes and hyphens }
+            @else { Emergency Contact Name must be 2 to 100 characters }
+          </span>
           }
         </div>
 
@@ -282,14 +287,13 @@
             maxlength="10"
             formControlName="emergencyContactPhone"
           />
-          @if(patientForm.get('emergencyContactPhone')?.invalid && patientForm.get('emergencyContactPhone')?.touched){
+          @if(showFieldError('emergencyContactPhone')){
           <span class="error-text">
             @if(patientForm.get('emergencyContactPhone')?.errors?.['required']){ Emergency Contact Phone is required }
             @else if(patientForm.get('emergencyContactPhone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
           </span>
           @if ( patientForm.get('emergencyContactPhone')?.touched && patientForm.get('emergencyContactPhone')?.invalid )
           {
-
           <div class="error-message">Emergency Contact Number must be 10 digits</div>
 
           } }
@@ -338,8 +342,8 @@
 
         <!-- Insurance Expiry Date (optional) -->
         <div class="form-field">
-          <label class="field-label">Insurance Expiry Date (optional)</label>
-          <input type="date" formControlName="insuranceExpiryDate" />
+          <label class="field-label" for="add-patient-insurance-expiry-date">Insurance Expiry Date (optional)</label>
+          <input id="add-patient-insurance-expiry-date" type="date" formControlName="insuranceExpiryDate" />
         </div>
 
         <!-- Coverage Amount (optional) -->
@@ -355,7 +359,7 @@
             <option value="IPD">IPD</option>
             <option value="EMERGENCY">Emergency</option>
           </select>
-          @if(patientForm.get('patientType')?.invalid && patientForm.get('patientType')?.touched){
+          @if(showFieldError('patientType')){
           <span class="error-text">Patient Type is required</span>
           }
         </div>
@@ -377,4 +381,3 @@
     </div>
   </form>
 </div>
- 

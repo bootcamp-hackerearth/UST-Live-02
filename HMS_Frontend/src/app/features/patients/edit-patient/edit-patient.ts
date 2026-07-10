@@ -2,8 +2,11 @@ import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-
 import { PatientService } from '../../../core/services/patient';
+import { ToastService } from '../../../core/services/toast';
+
+const NAME_PATTERN = /^[A-Za-z\s'-]+$/;
+const PHONE_PATTERN = /^\d{10}$/;
 
 @Component({
   selector: 'app-edit-patient',
@@ -25,15 +28,16 @@ export class EditPatient implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly patientService: PatientService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly toast: ToastService
   ) {
     this.patientForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
+      firstName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(NAME_PATTERN)]],
+      lastName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(NAME_PATTERN)]],
       gender: [''],
       bloodGroup: [''],
-      phone: [''],
-      email: [''],
+      phone: ['', Validators.pattern(PHONE_PATTERN)],
+      email: ['', Validators.email],
       medicalHistory: [''],
       allergies: [''],
       insuranceProvider: [''],
@@ -57,7 +61,6 @@ export class EditPatient implements OnInit {
         this.doctors = response.data;
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.log(error);
         this.cdr.markForCheck();
@@ -89,7 +92,6 @@ export class EditPatient implements OnInit {
 
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.log(error);
         this.cdr.markForCheck();
@@ -100,6 +102,7 @@ export class EditPatient implements OnInit {
   // Update patient
   onSubmit(): void {
     if (this.patientForm.invalid) {
+      this.patientForm.markAllAsTouched();
       return;
     }
 
@@ -110,17 +113,17 @@ export class EditPatient implements OnInit {
       next: (response) => {
         console.log(response);
 
-        alert('Patient Updated Successfully');
+        this.toast.success('Patient updated successfully');
 
         this.isSubmitting = false;
         this.cdr.markForCheck();
 
         this.router.navigate(['/patients']);
       },
-
       error: (error) => {
         console.log(error);
 
+        this.toast.error(error?.error?.message || 'Unable to update patient');
         this.isSubmitting = false;
         this.cdr.markForCheck();
       }

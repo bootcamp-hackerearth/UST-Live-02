@@ -6,7 +6,12 @@ const validateMiddleware = require("../middleware/validate.middleware");
 
 const {
   registerEmployeeValidation,
+  updateEmployeeValidation,
+  doctorAvailabilityValidation,
 } = require("../validations/employee.validation");
+const {
+  paginationQueryValidation,
+} = require("../validations/common.validation");
 
 const {
   createEmployee,
@@ -27,7 +32,6 @@ const {
 const router = express.Router();
 
 // Create Employee
-
 router.post(
   "/",
   authMiddleware,
@@ -38,13 +42,7 @@ router.post(
 );
 
 // Doctors
-
-router.get(
-  "/doctors",
-  authMiddleware,
-  nodePermissionMiddleware,
-  getDoctors,
-);
+router.get("/doctors", authMiddleware, nodePermissionMiddleware, getDoctors);
 
 router.get(
   "/doctor/availability",
@@ -57,20 +55,22 @@ router.patch(
   "/doctor/availability",
   authMiddleware,
   nodePermissionMiddleware,
+  doctorAvailabilityValidation,
+  validateMiddleware,
   updateDoctorAvailability,
 );
 
 // Employee List
-
 router.get(
   "/",
   authMiddleware,
   nodePermissionMiddleware,
+  paginationQueryValidation,
+  validateMiddleware,
   getEmployees,
 );
 
 // Pending Employees
-
 router.get(
   "/pending-employees",
   authMiddleware,
@@ -79,7 +79,6 @@ router.get(
 );
 
 // Employee Approval
-
 router.patch(
   "/:id/approve-employee",
   authMiddleware,
@@ -95,25 +94,19 @@ router.patch(
 );
 
 // Employee Details
-
-router.get(
-  "/:id",
-  authMiddleware,
-  nodePermissionMiddleware,
-  getEmployeeById,
-);
+router.get("/:id", authMiddleware, nodePermissionMiddleware, getEmployeeById);
 
 // Update Employee
-
 router.put(
   "/:id",
   authMiddleware,
   nodePermissionMiddleware,
+  updateEmployeeValidation,
+  validateMiddleware,
   updateEmployee,
 );
 
 // Activate Employee
-
 router.patch(
   "/:id/activate",
   authMiddleware,
@@ -122,7 +115,6 @@ router.patch(
 );
 
 // Deactivate Employee
-
 router.patch(
   "/:id/deactivate",
   authMiddleware,
@@ -131,12 +123,6 @@ router.patch(
 );
 
 // Delete Employee
-
-router.delete(
-  "/:id",
-  authMiddleware,
-  nodePermissionMiddleware,
-  deleteEmployee,
-);
+router.delete("/:id", authMiddleware, nodePermissionMiddleware, deleteEmployee);
 
 module.exports = router;

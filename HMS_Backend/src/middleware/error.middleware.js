@@ -1,4 +1,5 @@
 const ApiError = require("../utils/ApiError");
+const logger = require("../utils/logger");
 
 const messageStatusMap = [
   {
@@ -86,7 +87,10 @@ const normalizeError = (error) => {
     };
   }
 
-  if (error?.name === "JsonWebTokenError" || error?.name === "TokenExpiredError") {
+  if (
+    error?.name === "JsonWebTokenError" ||
+    error?.name === "TokenExpiredError"
+  ) {
     return {
       statusCode: 401,
       message: "Invalid or expired token",
@@ -95,6 +99,14 @@ const normalizeError = (error) => {
   }
 
   if (error?.name === "MulterError") {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return {
+        statusCode: 400,
+        message: "File size must not exceed 5 MB",
+        errorCode: "FILE_TOO_LARGE",
+      };
+    }
+
     return {
       statusCode: 400,
       message: error.message,
@@ -123,9 +135,21 @@ const normalizeError = (error) => {
 };
 
 const errorMiddleware = (error, req, res, next) => {
-  console.error(error);
-
   const normalizedError = normalizeError(error);
+  const logLevel = normalizedError.statusCode >= 500 ? "error" : "warn";
+
+  logger[logLevel]("Request failed", {
+    requestId: req.requestId,
+    method: req.method,
+    path: req.originalUrl,
+    statusCode: normalizedError.statusCode,
+    errorCode: normalizedError.errorCode,
+    userId: req.user?._id || req.user?.id,
+    employeeId: req.user?.employeeId,
+    roles: req.user?.roles,
+    message: normalizedError.message,
+    stack: normalizedError.statusCode >= 500 ? error.stack : undefined,
+  });
 
   return res
     .status(normalizedError.statusCode)

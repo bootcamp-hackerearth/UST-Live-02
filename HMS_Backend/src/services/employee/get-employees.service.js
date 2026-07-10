@@ -1,67 +1,60 @@
 const Employee = require("../../models/Employee");
 
 const {
+  applyCursorFilter,
+  buildPagedResult,
   getPagination,
-  buildPaginationMeta,
 } = require("../../utils/pagination");
 
-const getEmployeesService = async (query) => {
-  const { search, status, department, designation, page, limit } = query;
+const applySearchFilter = (filter, search) => {
+  if (!search?.trim()) {
+    return;
+  }
 
+  filter.$or = [
+    { name: { $regex: search, $options: "i" } },
+    { email: { $regex: search, $options: "i" } },
+    { employeeCode: { $regex: search, $options: "i" } },
+  ];
+};
+
+const applyExactTextFilter = (filter, filterKey, value) => {
+  if (!value?.trim()) {
+    return;
+  }
+
+  filter[filterKey] = {
+    $regex: `^${value.trim()}$`,
+    $options: "i",
+  };
+};
+
+const applyFilters = (filter, query) => {
+  if (query.status) {
+    filter.status = query.status;
+  }
+
+  applyExactTextFilter(filter, "department", query.department);
+  applyExactTextFilter(filter, "designation", query.designation);
+};
+
+const getEmployeesService = async (query) => {
   const filter = {
     isDeleted: false,
   };
 
-  // search
-
-  if (search?.trim()) {
-    filter.$or = [
-      {
-        name: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        email: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        employeeCode: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-    ];
-  }
-
-  // filters
-
-  if (status) {
-    filter.status = status;
-  }
-
-  if (department?.trim()) {
-    filter.department = {
-      $regex: `^${department.trim()}$`,
-      $options: "i",
-    };
-  }
-
-  if (designation?.trim()) {
-    filter.designation = {
-      $regex: `^${designation.trim()}$`,
-      $options: "i",
-    };
-  }
+  applySearchFilter(filter, query.search);
+  applyFilters(filter, query);
 
   // pagination
+  const pagination = getPagination(query.page, query.limit);
+  const isCursorPagination =
+    query.pagination === "cursor" || Boolean(query.cursor);
+  const totalFilter = { ...filter };
 
-  const pagination = getPagination(page, limit);
+  applyCursorFilter(filter, isCursorPagination ? query.cursor : null);
 
-  const total = await Employee.countDocuments(filter);
+  const total = await Employee.countDocuments(totalFilter);
 
   const employees = await Employee.find(filter)
     .select(
@@ -69,15 +62,18 @@ const getEmployeesService = async (query) => {
     )
     .sort({
       createdAt: -1,
+      _id: -1,
     })
-    .skip(pagination.skip)
-    .limit(pagination.limit)
+    .skip(isCursorPagination ? 0 : pagination.skip)
+    .limit(isCursorPagination ? pagination.limit + 1 : pagination.limit)
     .lean();
 
-  return {
-    data: employees,
-    meta: buildPaginationMeta(pagination.page, pagination.limit, total),
-  };
+  return buildPagedResult({
+    items: employees,
+    pagination,
+    isCursorPagination,
+    total,
+  });
 };
 
 module.exports = getEmployeesService;

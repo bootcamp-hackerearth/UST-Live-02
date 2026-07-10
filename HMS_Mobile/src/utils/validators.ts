@@ -1,5 +1,18 @@
 export const isEmail = (value: string): boolean => {
-  return /^\S+@\S+\.\S+$/.test(value.trim());
+  const email = value.trim();
+  const atIndex = email.indexOf("@");
+  const lastAtIndex = email.lastIndexOf("@");
+  const domainStart = atIndex + 1;
+  const dotAfterAt = email.indexOf(".", domainStart);
+
+  return (
+    email.length <= 254 &&
+    atIndex > 0 &&
+    atIndex === lastAtIndex &&
+    dotAfterAt > domainStart &&
+    dotAfterAt < email.length - 1 &&
+    !email.includes(" ")
+  );
 };
 
 export const isPhone = (value: string): boolean => {
@@ -11,7 +24,7 @@ export const isPincode = (value: string): boolean => {
 };
 
 export const onlyLetters = (value: string): boolean => {
-  return /^[A-Za-z ]+$/.test(value.trim());
+  return /^[A-Za-z\s'-]+$/.test(value.trim());
 };
 
 export const strongPassword = (value: string): boolean => {
@@ -35,7 +48,7 @@ export const isRequired = (value: string): boolean => {
 };
 
 export const isValidName = (value: string): boolean => {
-  return /^[A-Za-z ]{2,50}$/.test(value.trim());
+  return /^[A-Za-z\s'-]{2,50}$/.test(value.trim());
 };
 
 export const isValidAddress = (value: string): boolean => {

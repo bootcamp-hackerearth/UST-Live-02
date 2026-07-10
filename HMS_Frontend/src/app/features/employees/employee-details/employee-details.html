@@ -35,25 +35,25 @@
 
       <div class="info-list">
         <div class="info-item">
-          <label>Employee Code</label>
+          <span class="info-label">Employee Code</span>
 
           <p>{{ emp.employeeCode }}</p>
         </div>
 
         <div class="info-item">
-          <label>Email</label>
+          <span class="info-label">Email</span>
 
           <p>{{ emp.email }}</p>
         </div>
 
         <div class="info-item">
-          <label>Phone</label>
+          <span class="info-label">Phone</span>
 
           <p>{{ emp.countryCode }} {{ emp.phone }}</p>
         </div>
 
         <div class="info-item">
-          <label>Gender</label>
+          <span class="info-label">Gender</span>
 
           <p>{{ emp.gender || 'N/A' }}</p>
         </div>
@@ -67,25 +67,25 @@
 
       <div class="info-list">
         <div class="info-item">
-          <label>Designation</label>
+          <span class="info-label">Designation</span>
 
           <p>{{ emp.designation }}</p>
         </div>
 
         <div class="info-item">
-          <label>Department</label>
+          <span class="info-label">Department</span>
 
           <p>{{ emp.department }}</p>
         </div>
 
         <div class="info-item">
-          <label>Joining Date</label>
+          <span class="info-label">Joining Date</span>
 
           <p>{{ emp.joiningDate | date }}</p>
         </div>
 
         <div class="info-item">
-          <label>Status</label>
+          <span class="info-label">Status</span>
 
           <p>{{ emp.status }}</p>
         </div>
@@ -105,25 +105,25 @@
 
       <div class="info-list">
         <div class="info-item">
-          <label>Specialization</label>
+          <span class="info-label">Specialization</span>
 
           <p>{{ emp.specialization || 'N/A' }}</p>
         </div>
 
         <div class="info-item">
-          <label>Qualification</label>
+          <span class="info-label">Qualification</span>
 
           <p>{{ emp.qualification && emp.qualification.length > 0 ? emp.qualification[0] : 'N/A' }}</p>
         </div>
 
         <div class="info-item">
-          <label>Consultation Fee</label>
+          <span class="info-label">Consultation Fee</span>
 
           <p>₹ {{ emp.consultationFee || 0 }}</p>
         </div>
 
         <div class="info-item">
-          <label>Availability</label>
+          <span class="info-label">Availability</span>
 
           <p>{{ emp.availabilitySlots && emp.availabilitySlots.length > 0 ? emp.availabilitySlots : 'N/A' }}</p>
         </div>

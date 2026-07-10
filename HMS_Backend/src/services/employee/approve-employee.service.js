@@ -2,6 +2,9 @@ const Employee = require("../../models/Employee");
 const User = require("../../models/User");
 const STATUS = require("../../constants/status");
 const ApiError = require("../../utils/ApiError");
+const sendEmail = require("../../utils/sendEmail");
+const employeeApprovedTemplate = require("../../templates/employee-approved.template");
+const logger = require("../../utils/logger");
 
 const approveEmployeeService = async (
   employeeId,
@@ -26,7 +29,13 @@ const approveEmployeeService = async (
     throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
   }
 
-  if (employee.designation === "DOCTOR" && !consultationFee) {
+  if (
+    employee.designation === "DOCTOR" &&
+    (consultationFee === null ||
+      consultationFee === undefined ||
+      consultationFee === "" ||
+      Number(consultationFee) < 0)
+  ) {
     throw new ApiError(
       400,
       "Consultation fee is required for doctors",
@@ -50,6 +59,29 @@ const approveEmployeeService = async (
 
   await employee.save();
   await user.save();
+
+  if (employee.email) {
+    const htmlContent = employeeApprovedTemplate({
+      name: employee.name,
+      email: employee.email,
+      employeeCode: employee.employeeCode,
+      department: employee.department,
+      designation: employee.designation,
+      consultationFee: employee.consultationFee,
+    });
+
+    await sendEmail({
+      to: employee.email,
+      subject: "Your HMS employee registration is approved",
+      htmlContent,
+    }).catch((error) => {
+      logger.warn("Employee approval email failed", {
+        employeeId,
+        email: employee.email,
+        error,
+      });
+    });
+  }
 
   return employee;
 };

@@ -1,8 +1,9 @@
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const Patient = require("../../models/Patient");
 const ApiError = require("../../utils/ApiError");
+const logger = require("../../utils/logger");
 
 const deleteMedicalDocumentService = async (
   patientId,
@@ -28,12 +29,7 @@ const deleteMedicalDocumentService = async (
 
   const document = patient.medicalDocuments[index];
 
-  /*
-  |--------------------------------------------------------------------------
-  | Delete Physical File
-  |--------------------------------------------------------------------------
-  */
-
+  /* Delete Physical File */
   if (document.documentUrl) {
     const filePath = path.join(
       process.cwd(),
@@ -45,23 +41,20 @@ const deleteMedicalDocumentService = async (
         await fs.promises.unlink(filePath);
       }
     } catch (error) {
-      console.error("Unable to delete medical document file", error);
+      logger.warn("Unable to delete medical document file", {
+        patientId,
+        documentId,
+        filePath,
+        error,
+      });
     }
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Remove Document
-  |--------------------------------------------------------------------------
-  */
-
+  /* Remove Document */
   document.isDeleted = true;
   document.deletedBy = deletedBy;
   document.deletedAt = new Date();
 
-  patient.markModified("medicalDocuments");
-
-  await patient.save();
   patient.markModified("medicalDocuments");
 
   await patient.save();

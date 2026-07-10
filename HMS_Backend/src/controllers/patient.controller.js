@@ -12,6 +12,7 @@ const updateMyProfile = require("../services/patient/update-my-profile.service")
 const getPatientDashboardService = require("../services/patient/get-patient-dashboard.service");
 const deletePatientService = require("../services/patient/delete-patient.service");
 const getPatientsService = require("../services/patient/get-patients.service");
+const { auditFromRequestSafe } = require("../services/audit-log/audit-log.service");
 
 const validateObjectId = (id, message) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -21,10 +22,25 @@ const validateObjectId = (id, message) => {
 
 const createPatient = asyncHandler(async (req, res) => {
   const serviceResponse = await registerPatient(req.body);
+  const { patient } = serviceResponse;
+
+  auditFromRequestSafe(req, {
+    action: "Patient Registered",
+    module: "Patient",
+    entityId: patient._id,
+    entityType: "Patient",
+    details: {
+      patientId: patient.patientId,
+      patientType: patient.patientType,
+      assignedDoctor: patient.assignedDoctor,
+    },
+  });
 
   return res
     .status(201)
-    .json(new ApiResponse(201, "Patient registered successfully", serviceResponse));
+    .json(
+      new ApiResponse(201, "Patient registered successfully", serviceResponse),
+    );
 });
 
 const getPatients = asyncHandler(async (req, res) => {
@@ -66,6 +82,17 @@ const updatePatient = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Patient not found", "PATIENT_NOT_FOUND");
   }
 
+  auditFromRequestSafe(req, {
+    action: "Patient Updated",
+    module: "Patient",
+    entityId: patient._id,
+    entityType: "Patient",
+    details: {
+      patientId: patient.patientId,
+      updatedFields: Object.keys(req.body),
+    },
+  });
+
   return res
     .status(200)
     .json(new ApiResponse(200, "Patient updated successfully", patient));
@@ -73,10 +100,24 @@ const updatePatient = asyncHandler(async (req, res) => {
 
 const registerPatientMobile = asyncHandler(async (req, res) => {
   const serviceResponse = await selfRegisterPatient(req.body);
+  const { patient } = serviceResponse;
+
+  auditFromRequestSafe(req, {
+    action: "Patient Registered",
+    module: "Patient",
+    entityId: patient._id,
+    entityType: "Patient",
+    details: {
+      patientId: patient.patientId,
+      source: "Mobile",
+    },
+  });
 
   return res
     .status(201)
-    .json(new ApiResponse(201, "Patient registered successfully", serviceResponse));
+    .json(
+      new ApiResponse(201, "Patient registered successfully", serviceResponse),
+    );
 });
 
 const getProfile = asyncHandler(async (req, res) => {
@@ -84,11 +125,24 @@ const getProfile = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Patient profile retrieved successfully", patient));
+    .json(
+      new ApiResponse(200, "Patient profile retrieved successfully", patient),
+    );
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
   const patient = await updateMyProfile(req.user.patientId, req.body);
+
+  auditFromRequestSafe(req, {
+    action: "Patient Profile Updated",
+    module: "Patient",
+    entityId: patient._id,
+    entityType: "Patient",
+    details: {
+      patientId: patient.patientId,
+      updatedFields: Object.keys(req.body),
+    },
+  });
 
   return res
     .status(200)
@@ -100,11 +154,24 @@ const getPatientDashboard = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Patient dashboard retrieved successfully", dashboard));
+    .json(
+      new ApiResponse(
+        200,
+        "Patient dashboard retrieved successfully",
+        dashboard,
+      ),
+    );
 });
 
 const deletePatient = asyncHandler(async (req, res) => {
   const result = await deletePatientService(req.params.id, req.user.userId);
+
+  auditFromRequestSafe(req, {
+    action: "Patient Deleted",
+    module: "Patient",
+    entityId: req.params.id,
+    entityType: "Patient",
+  });
 
   return res.status(200).json(new ApiResponse(200, result.message, result));
 });

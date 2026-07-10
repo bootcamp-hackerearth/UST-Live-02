@@ -2,7 +2,6 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  Alert,
   View,
   StyleSheet,
 } from "react-native";
@@ -12,21 +11,23 @@ import {
   isPhone,
   isPincode,
   onlyLetters,
+  isValidName,
   futureDate,
 } from "../../src/utils/validators";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 import { getProfile, updateProfile } from "../../src/services/patient.service";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import GlassCard from "../../src/components/cards/GlassCard";
 import PrimaryButton from "../../src/components/buttons/PrimaryButton";
 import AppInput from "../../src/components/inputs/AppInput";
-
 import ChipSelector from "../../src/components/selectors/ChipSelector";
+import { showToast } from "../services/toast.service";
 
 export default function EditProfile() {
   const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -106,7 +107,7 @@ export default function EditProfile() {
 
       setPastSurgeries(profile.pastSurgeries?.join(", ") || "");
     } catch {
-      Alert.alert("Failed to load profile");
+      showToast("Failed to load profile", "error");
     }
   };
 
@@ -163,8 +164,9 @@ export default function EditProfile() {
 
     if (!emergencyContactName.trim()) {
       newErrors.emergencyContactName = "Contact name is required";
-    } else if (!onlyLetters(emergencyContactName)) {
-      newErrors.emergencyContactName = "Only letters allowed";
+    } else if (!isValidName(emergencyContactName)) {
+      newErrors.emergencyContactName =
+        "Use 2-50 letters, spaces, apostrophes or hyphens";
     }
 
     if (!emergencyContactPhone.trim()) {
@@ -187,7 +189,7 @@ export default function EditProfile() {
 
     setLoading(true);
     try {
-      await updateProfile({
+      const response = await updateProfile({
         dateOfBirth,
         gender,
         bloodGroup,
@@ -211,13 +213,21 @@ export default function EditProfile() {
           ? pastSurgeries.split(",").map((s) => s.trim())
           : [],
       });
+      const updatedProfile = response.data.data;
 
-      Alert.alert("Profile updated successfully");
+      queryClient.setQueryData(["profile", "patient"], updatedProfile);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["profile", "patient"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard", "patient"] }),
+        queryClient.invalidateQueries({ queryKey: ["health-record", "me"] }),
+      ]);
+
+      showToast("Profile updated successfully", "success");
       navigation.goBack();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to update profile";
-      Alert.alert("Failed to update profile", message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -474,28 +484,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F7FC",
     paddingHorizontal: 20,
   },
-
   title: {
     fontSize: 30,
     fontWeight: "800",
     color: "#0F172A",
     marginTop: 20,
   },
-
   subtitle: {
     color: "#64748B",
     marginTop: 8,
     marginBottom: 25,
     lineHeight: 22,
   },
-
   section: {
     fontSize: 18,
     fontWeight: "700",
     color: "#0F172A",
     marginBottom: 18,
   },
-
   dateButton: {
     height: 56,
     justifyContent: "center",
@@ -506,7 +512,6 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     marginBottom: 20,
   },
-
   dateText: {
     color: "#334155",
   },

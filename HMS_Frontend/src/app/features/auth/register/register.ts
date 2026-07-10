@@ -1,8 +1,7 @@
-import { Component, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+import { Component, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-
 import { AuthService } from '../../../core/services/auth';
 import { ToastService } from '../../../core/services/toast';
 
@@ -41,7 +40,6 @@ export class Register {
         '',
         [Validators.required, Validators.minLength(2), Validators.maxLength(100), Validators.pattern('^[A-Za-z ]+$')]
       ],
-
       email: ['', [Validators.required, Validators.email]],
       gender: ['', Validators.required],
       countryCode: ['+91', Validators.required],
@@ -49,23 +47,19 @@ export class Register {
       department: ['', Validators.required],
       designation: ['', Validators.required],
       joiningDate: ['', Validators.required],
-
       // Doctor specific fields
       qualification: [''],
       specialization: [''],
       medicalRegistrationNo: [''],
       consultationFee: [''],
-
       // Security details
       securityQuestion: ['', Validators.required],
       securityAnswer: ['', Validators.required],
-
       // Password fields
       password: [
         '',
         [Validators.required, Validators.pattern(String.raw`^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,20}$`)]
       ],
-
       confirmPassword: ['', Validators.required]
     });
 
@@ -200,7 +194,6 @@ export class Register {
           this.router.navigate(['/login']);
         }, 2500);
       },
-
       error: (error) => {
         this.toastService.show(error?.error?.message || 'Registration failed', 'error');
 

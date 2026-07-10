@@ -1,4 +1,5 @@
 const Appointment = require("../models/Appointment");
+const logger = require("./logger");
 
 const getDateRange = (appointmentDate) => {
   const date = new Date(appointmentDate);
@@ -16,9 +17,12 @@ const getDateRange = (appointmentDate) => {
 };
 
 const getNextTokenNumber = async (doctorEmployeeId, appointmentDate) => {
-  console.log("Received appointmentDate:", appointmentDate);
+  logger.debug("Calculating next appointment token number", {
+    doctorEmployeeId,
+    appointmentDate,
+    parsedAppointmentDate: new Date(appointmentDate),
+  });
 
-  console.log("Parsed:", new Date(appointmentDate));
   const { startOfDay, endOfDay } = getDateRange(appointmentDate);
 
   const latestAppointment = await Appointment.findOne({

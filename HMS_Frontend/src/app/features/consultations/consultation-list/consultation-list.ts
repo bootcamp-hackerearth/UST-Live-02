@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,11 +6,12 @@ import { EmployeeService } from '../../../core/services/employee';
 import { PatientService } from '../../../core/services/patient';
 import { ConsultationService } from '../../../core/services/consultation';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-consultation-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent, SkeletonLoaderComponent],
   templateUrl: './consultation-list.html',
   styleUrls: ['./consultation-list.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,6 +31,8 @@ export class ConsultationList implements OnInit {
 
   page = 1;
   limit = 10;
+  cursorStack: string[] = [''];
+  nextCursor = '';
 
   doctors: any[] = [];
   patients: any[] = [];
@@ -71,7 +74,9 @@ export class ConsultationList implements OnInit {
 
     const params: any = {
       page: this.page,
-      limit: this.limit
+      limit: this.limit,
+      pagination: 'cursor',
+      cursor: this.cursorStack[this.page - 1] || ''
     };
 
     if (this.search) {
@@ -103,12 +108,18 @@ export class ConsultationList implements OnInit {
         this.consultations = response.data;
 
         this.meta = response.meta;
+        this.nextCursor = response.meta?.nextCursor || '';
+
+        if (this.page > 1 && this.consultations.length === 0) {
+          this.page = Math.max(this.meta?.totalPages || 1, 1);
+          this.loadConsultations(false);
+          return;
+        }
 
         this.isLoading = false;
 
         this.cdr.detectChanges();
       },
-
       error: (error) => {
         console.log(error);
 
@@ -118,6 +129,8 @@ export class ConsultationList implements OnInit {
   }
   onFilterChange(): void {
     this.page = 1;
+    this.cursorStack = [''];
+    this.nextCursor = '';
 
     this.loadConsultations(false);
   }
@@ -132,10 +145,11 @@ export class ConsultationList implements OnInit {
   }
 
   nextPage(): void {
-    if (this.page >= this.meta.totalPages) {
+    if (!this.nextCursor) {
       return;
     }
 
+    this.cursorStack[this.page] = this.nextCursor;
     this.page++;
 
     this.loadConsultations(false);
@@ -148,7 +162,6 @@ export class ConsultationList implements OnInit {
 
         globalThis.open(fileURL);
       },
-
       error: (error) => {
         console.log(error);
       }

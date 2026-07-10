@@ -53,13 +53,9 @@ const approveAppointment = async (appointmentId, approvedBy) => {
   if (patient?.email) {
     const htmlContent = appointmentApprovedTemplate({
       patientName: `${patient.firstName} ${patient.lastName}`,
-
       doctorName: doctor?.name,
-
       appointmentDate: appointment.appointmentDate.toISOString().split("T")[0],
-
       appointmentTime: appointment.timeSlot,
-
       tokenNumber: appointment.tokenNumber,
     });
 

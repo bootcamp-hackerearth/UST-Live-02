@@ -3,6 +3,7 @@ const path = require("node:path");
 
 const Patient = require("../../models/Patient");
 const ApiError = require("../../utils/ApiError");
+const logger = require("../../utils/logger");
 
 const updateMedicalDocumentService = async (
   patientId,
@@ -26,12 +27,7 @@ const updateMedicalDocumentService = async (
     throw new ApiError(404, "Medical document not found", "DOCUMENT_NOT_FOUND");
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Update Metadata
-  |--------------------------------------------------------------------------
-  */
-
+  /* Update Metadata */
   document.title = data.title ?? document.title;
 
   document.documentType = data.documentType ?? document.documentType;
@@ -47,12 +43,7 @@ const updateMedicalDocumentService = async (
 
   document.updatedAt = new Date();
 
-  /*
-  |--------------------------------------------------------------------------
-  | Replace File
-  |--------------------------------------------------------------------------
-  */
-
+  /* Replace File */
   if (file) {
     if (document.documentUrl) {
       const oldFilePath = path.join(
@@ -65,7 +56,12 @@ const updateMedicalDocumentService = async (
           await fs.promises.unlink(oldFilePath);
         }
       } catch (error) {
-        console.error("Unable to delete old file", error);
+        logger.warn("Unable to delete old medical document file", {
+          patientId,
+          documentId,
+          filePath: oldFilePath,
+          error,
+        });
       }
     }
 

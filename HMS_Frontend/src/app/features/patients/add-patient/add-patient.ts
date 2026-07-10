@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
 import { ToastService } from '../../../core/services/toast';
 import { PatientService } from '../../../core/services/patient';
 
@@ -15,6 +14,9 @@ type PostOfficeArea = {
   name: string;
   pincode: string;
 };
+
+const NAME_PATTERN = /^[A-Za-z\s'-]+$/;
+const PHONE_PATTERN = /^\d{10}$/;
 
 @Component({
   selector: 'app-add-patient',
@@ -52,29 +54,29 @@ export class AddPatient implements OnInit {
   ) {
     this.patientForm = this.fb.group({
       // Basic Information
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
+      firstName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(NAME_PATTERN)]],
+      lastName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50), Validators.pattern(NAME_PATTERN)]],
       dateOfBirth: ['', [Validators.required, this.futureDateValidator]],
       gender: ['', Validators.required],
       bloodGroup: ['', Validators.required],
       maritalStatus: ['', Validators.required],
-
       // Contact Information
       countryCode: ['+91', Validators.required],
-      phone: ['', [Validators.required, Validators.pattern('^[0-9]{10}$')]],
-      email: ['', Validators.required],
-      address: ['', Validators.required],
+      phone: ['', [Validators.required, Validators.pattern(PHONE_PATTERN)]],
+      email: ['', [Validators.required, Validators.email]],
+      address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(250)]],
       city: ['', Validators.required],
       state: ['', Validators.required],
       taluk: ['', Validators.required],
       postOffice: ['', Validators.required],
       pincode: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
       country: ['India'],
-
       // Emergency Contact
-      emergencyContactName: ['', Validators.required],
-      emergencyContactPhone: ['', Validators.required],
-
+      emergencyContactName: [
+        '',
+        [Validators.required, Validators.minLength(2), Validators.maxLength(100), Validators.pattern(NAME_PATTERN)]
+      ],
+      emergencyContactPhone: ['', [Validators.required, Validators.pattern(PHONE_PATTERN)]],
       // Medical Information
       medicalHistory: [''],
       allergies: [''],
@@ -82,13 +84,11 @@ export class AddPatient implements OnInit {
       currentMedications: [''],
       pastSurgeries: [''],
       familyMedicalHistory: [''],
-
       // Insurance Information
       insuranceProvider: [''],
       insurancePolicyNumber: [''],
       insuranceExpiryDate: [''],
       insuranceCoverageAmount: [''],
-
       // Hospital Information
       department: [''],
       patientType: ['', Validators.required]
@@ -324,6 +324,38 @@ export class AddPatient implements OnInit {
       : null;
   };
 
+  showFieldError(fieldName: string): boolean {
+    const control = this.patientForm.get(fieldName);
+
+    return Boolean(control?.invalid && (control.touched || control.dirty));
+  }
+
+  markFieldInteracted(fieldName: string): void {
+    this.patientForm.get(fieldName)?.markAsTouched();
+  }
+
+  nameErrorMessage(fieldName: string, label: string, maxLength: number): string {
+    const errors = this.patientForm.get(fieldName)?.errors;
+
+    if (!errors) {
+      return '';
+    }
+
+    if (errors['required']) {
+      return `${label} is required`;
+    }
+
+    if (errors['pattern']) {
+      return `${label} can contain only letters, spaces, apostrophes and hyphens`;
+    }
+
+    if (errors['minlength'] || errors['maxlength']) {
+      return `${label} must be 2 to ${maxLength} characters`;
+    }
+
+    return `Enter a valid ${label.toLowerCase()}`;
+  }
+
   // Move to next step after validating current step
   nextStep(): void {
     const stepFields: { [key: number]: string[] } = {
@@ -425,12 +457,18 @@ export class AddPatient implements OnInit {
         this.isSubmitting = false;
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.log('FULL ERROR =>', error);
         console.log('VALIDATION ERRORS =>', error?.error?.errors);
 
-        alert(JSON.stringify(error?.error?.errors, null, 2));
+        const validationMessage = Array.isArray(error?.error?.errors)
+          ? error.error.errors
+              .map((item: any) => item.msg || item.message)
+              .filter(Boolean)
+              .join(', ')
+          : error?.error?.message;
+
+        this.toastService.error(validationMessage || 'Unable to register patient');
 
         this.isSubmitting = false;
         this.cdr.markForCheck();
@@ -438,4 +476,3 @@ export class AddPatient implements OnInit {
     });
   }
 }
- 

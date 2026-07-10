@@ -1,10 +1,8 @@
 <div class="health-record-details-page">
   @if (isLoading) {
-
-  <div class="loading-card">Loading Health Record...</div>
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
 
   } @else {
-
   <!-- =========================
        Patient Information
   ========================== -->
@@ -19,6 +17,10 @@
 
       <div class="avatar">{{ patient?.firstName?.charAt(0) }}</div>
     </div>
+
+    <button type="button" class="secondary-btn" (click)="downloadCompleteRecord()" [disabled]="isDownloadingRecord">
+      {{ isDownloadingRecord ? 'Downloading...' : 'Download Complete Record' }}
+    </button>
 
     <div class="patient-grid">
       <div class="info-item">
@@ -53,9 +55,7 @@
 
         <div class="chips">
           @for ( item of patient?.allergies; track $index ) {
-
           <span class="chip">{{ item }}</span>
-
           }
         </div>
       </div>
@@ -65,9 +65,7 @@
 
         <div class="chips">
           @for ( item of patient?.chronicDiseases; track $index ) {
-
           <span class="chip">{{ item }}</span>
-
           }
         </div>
       </div>
@@ -77,9 +75,7 @@
 
         <div class="chips">
           @for ( item of patient?.currentMedications; track $index ) {
-
           <span class="chip">{{ item }}</span>
-
           }
         </div>
       </div>
@@ -97,7 +93,6 @@
 
     <div class="timeline-container">
       @if(consultations.length){ @for ( consultation of consultations; track consultation._id ) {
-
       <div class="timeline-card">
         <div class="timeline-header">
           <div class="timeline-left">
@@ -140,7 +135,6 @@
         </div>
 
         @if( expandedTimeline[ consultation._id ] ){
-
         <div class="timeline-details">
           <!-- Symptoms -->
 
@@ -149,9 +143,7 @@
 
             <div class="chips">
               @for( symptom of consultation?.symptoms; track $index ){
-
               <span class="chip">{{ symptom }}</span>
-
               }
             </div>
           </div>
@@ -203,7 +195,6 @@
 
             <div class="medicine-list">
               @for( medicine of consultation ?.prescriptions; track $index ){
-
               <div class="medicine-card">
                 <h5>{{ medicine ?.medicineName }}</h5>
 
@@ -213,17 +204,14 @@
 
                 <p>Duration: {{ medicine ?.duration }}</p>
               </div>
-
               }
             </div>
           </div>
         </div>
-
         }
       </div>
 
       } }@else {
-
       <div class="empty-state">
         <div class="empty-icon">🩺</div>
 
@@ -231,13 +219,11 @@
 
         <p>No consultations have been recorded for this patient yet.</p>
       </div>
-
       }
     </div>
   </div>
 
   @if( timelineMeta?.totalPages > 1 ){
-
   <app-pagination
     [page]="
     timelineMeta.page
@@ -261,7 +247,6 @@
     )
   "
   ></app-pagination>
-
   }
   <!-- =========================
        Lab Reports
@@ -276,7 +261,6 @@
 
     <div class="document-list">
       @if(patient?.labReports?.length){ @for ( report of patient?.labReports; track report._id ) {
-
       <div class="document-card">
         <h4>{{ report.title }}</h4>
 
@@ -286,7 +270,6 @@
 
         <div class="document-actions">
           @if(report.documentUrl){
-
           <button
             class="view-btn"
             (click)="
@@ -297,9 +280,9 @@
           >
             View
           </button>
-
           }
           <button class="view-btn" (click)="editLabReport(report)">Edit</button>
+          @if(canDeleteHealthRecordDocuments){
           <button
             class="delete-btn"
             (click)="
@@ -310,11 +293,11 @@
           >
             Delete
           </button>
+          }
         </div>
       </div>
 
       } }@else {
-
       <div class="empty-state">
         <div class="empty-icon">🧪</div>
 
@@ -322,12 +305,10 @@
 
         <p>No lab reports have been uploaded for this patient.</p>
       </div>
-
       }
     </div>
   </div>
   @if( labMeta?.totalPages > 1 ){
-
   <app-pagination
     [page]="
     labMeta.page
@@ -351,7 +332,6 @@
     )
   "
   ></app-pagination>
-
   }
 
   <!-- =========================
@@ -374,7 +354,6 @@
 
     <div class="document-list">
       @if( patient?.medicalDocuments?.length ){ @for ( document of patient?.medicalDocuments; track document._id ) {
-
       <div class="document-card">
         <h4>{{ document.title }}</h4>
 
@@ -383,7 +362,6 @@
         <span>{{ document.recordDate | date }}</span>
         <div class="document-actions">
           @if(document.documentUrl){
-
           <button
             class="view-btn"
             (click)="
@@ -394,10 +372,10 @@
           >
             View
           </button>
-
           }
           <button class="view-btn" (click)="editMedicalDocument(document)">Edit</button>
 
+          @if(canDeleteHealthRecordDocuments){
           <button
             class="delete-btn"
             (click)="
@@ -408,11 +386,11 @@
           >
             Delete
           </button>
+          }
         </div>
       </div>
 
       } } @else {
-
       <div class="empty-state">
         <div class="empty-icon">📄</div>
 
@@ -420,15 +398,12 @@
 
         <p>No medical documents have been uploaded for this patient.</p>
       </div>
-
       }
     </div>
   </div>
-
   }
 </div>
 @if( documentMeta?.totalPages > 1 ){
-
 <app-pagination
   [page]="
     documentMeta.page
@@ -454,7 +429,6 @@
 ></app-pagination>
 
 } @if(showLabReportModal){
-
 <div class="modal-backdrop">
   <div class="modal-card">
     <h2>{{ editingLabReportId ? 'Edit Lab Report' : 'Add Lab Report' }}</h2>
@@ -471,13 +445,11 @@
 
       <input type="date" formControlName="reportDate" [max]="todayDate" />
       @if(labReportForm.get('reportDate')?.invalid && labReportForm.get('reportDate')?.touched){
-        @if(labReportForm.get('reportDate')?.errors?.['required']){
-        <span class="error-text">Report date is required</span>
-        }
-        @if(labReportForm.get('reportDate')?.errors?.['futureDate']){
-        <span class="error-text">Report date cannot be in the future</span>
-        }
-      }
+      @if(labReportForm.get('reportDate')?.errors?.['required']){
+      <span class="error-text">Report date is required</span>
+      } @if(labReportForm.get('reportDate')?.errors?.['futureDate']){
+      <span class="error-text">Report date cannot be in the future</span>
+      } }
 
       <input type="text" placeholder="Lab Name" formControlName="labName" />
 
@@ -485,10 +457,8 @@
 
       <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onLabFileChange($event)" />
       @if(labFileError){
-      <span class="error-text">Report file is required</span>
-      }
-      @if(editingLabReportId){
-
+      <span class="error-text">{{ labFileError }}</span>
+      } @if(editingLabReportId){
       <p class="file-name">Leave empty to keep the existing file.</p>
 
       } @if(selectedLabFile){
@@ -500,6 +470,7 @@
         <button type="button" class="secondary-btn" (click)="closeLabModal()">Cancel</button>
 
         <button
+          type="button"
           class="primary-btn"
           (click)="saveLabReport()"
           [disabled]="
@@ -515,7 +486,6 @@
 </div>
 
 } @if(showMedicalDocumentModal){
-
 <div class="modal-backdrop">
   <div class="modal-card">
     <h2>{{ editingMedicalDocumentId ? 'Edit Medical Document' : 'Add Medical Document' }}</h2>
@@ -537,19 +507,15 @@
 
       <input type="date" formControlName="recordDate" [max]="todayDate" />
       @if(medicalDocumentForm.get('recordDate')?.invalid && medicalDocumentForm.get('recordDate')?.touched){
-        @if(medicalDocumentForm.get('recordDate')?.errors?.['required']){
-        <span class="error-text">Record date is required</span>
-        }
-        @if(medicalDocumentForm.get('recordDate')?.errors?.['futureDate']){
-        <span class="error-text">Record date cannot be in the future</span>
-        }
-      }
+      @if(medicalDocumentForm.get('recordDate')?.errors?.['required']){
+      <span class="error-text">Record date is required</span>
+      } @if(medicalDocumentForm.get('recordDate')?.errors?.['futureDate']){
+      <span class="error-text">Record date cannot be in the future</span>
+      } }
       <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onMedicalFileChange($event)" />
       @if(medicalFileError){
-      <span class="error-text">Document file is required</span>
-      }
-      @if(editingMedicalDocumentId){
-
+      <span class="error-text">{{ medicalFileError }}</span>
+      } @if(editingMedicalDocumentId){
       <p class="file-name">Leave empty to keep the existing file.</p>
 
       } @if(selectedMedicalFile){
@@ -562,6 +528,7 @@
         <button type="button" class="secondary-btn" (click)="closeDocumentModal()">Cancel</button>
 
         <button
+          type="button"
           class="primary-btn"
           (click)="
     saveMedicalDocument()
@@ -577,5 +544,4 @@
     </form>
   </div>
 </div>
-
 }

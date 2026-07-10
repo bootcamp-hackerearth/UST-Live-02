@@ -17,6 +17,7 @@ const getDoctorsService = require("../services/employee/get-doctors.service");
 const updateDoctorAvailabilityService = require("../services/employee/update-doctor-availability.service");
 const getDoctorAvailabilityService = require("../services/employee/get-doctor-availability.service");
 const deleteEmployeeService = require("../services/employee/delete-employee.service");
+const { auditFromRequestSafe } = require("../services/audit-log/audit-log.service");
 
 const validateObjectId = (id, message) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -26,6 +27,18 @@ const validateObjectId = (id, message) => {
 
 const createEmployee = asyncHandler(async (req, res) => {
   const employee = await registerEmployee(req.body, req.user);
+
+  auditFromRequestSafe(req, {
+    action: "Employee Created",
+    module: "Employee",
+    entityId: employee._id,
+    entityType: "Employee",
+    details: {
+      employeeCode: employee.employeeCode,
+      designation: employee.designation,
+      department: employee.department,
+    },
+  });
 
   return res
     .status(201)
@@ -69,6 +82,17 @@ const updateEmployee = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Employee not found", "EMPLOYEE_NOT_FOUND");
   }
 
+  auditFromRequestSafe(req, {
+    action: "Employee Updated",
+    module: "Employee",
+    entityId: employee._id,
+    entityType: "Employee",
+    details: {
+      employeeCode: employee.employeeCode,
+      updatedFields: Object.keys(updateData),
+    },
+  });
+
   return res
     .status(200)
     .json(new ApiResponse(200, "Employee updated successfully", employee));
@@ -77,6 +101,13 @@ const updateEmployee = asyncHandler(async (req, res) => {
 const deactivateEmployee = asyncHandler(async (req, res) => {
   await deactivateEmployeeService(req.params.id);
 
+  auditFromRequestSafe(req, {
+    action: "Employee Deactivated",
+    module: "Employee",
+    entityId: req.params.id,
+    entityType: "Employee",
+  });
+
   return res
     .status(200)
     .json(new ApiResponse(200, "Employee deactivated successfully"));
@@ -84,6 +115,13 @@ const deactivateEmployee = asyncHandler(async (req, res) => {
 
 const activateEmployee = asyncHandler(async (req, res) => {
   await activateEmployeeService(req.params.id);
+
+  auditFromRequestSafe(req, {
+    action: "Employee Activated",
+    module: "Employee",
+    entityId: req.params.id,
+    entityType: "Employee",
+  });
 
   return res
     .status(200)
@@ -95,14 +133,32 @@ const getPendingEmployees = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Pending employees retrieved successfully", employees));
+    .json(
+      new ApiResponse(
+        200,
+        "Pending employees retrieved successfully",
+        employees,
+      ),
+    );
 });
 
 const approveEmployee = asyncHandler(async (req, res) => {
   const employee = await approveEmployeeService(
     req.params.id,
     req.body.consultationFee,
+    req.user.userId,
   );
+
+  auditFromRequestSafe(req, {
+    action: "Employee Approved",
+    module: "Employee",
+    entityId: employee._id,
+    entityType: "Employee",
+    details: {
+      employeeCode: employee.employeeCode,
+      designation: employee.designation,
+    },
+  });
 
   return res
     .status(200)
@@ -110,7 +166,21 @@ const approveEmployee = asyncHandler(async (req, res) => {
 });
 
 const rejectEmployee = asyncHandler(async (req, res) => {
-  await rejectEmployeeService(req.params.id);
+  await rejectEmployeeService(
+    req.params.id,
+    req.user.userId,
+    req.body.rejectionReason,
+  );
+
+  auditFromRequestSafe(req, {
+    action: "Employee Rejected",
+    module: "Employee",
+    entityId: req.params.id,
+    entityType: "Employee",
+    details: {
+      hasRejectionReason: Boolean(req.body.rejectionReason),
+    },
+  });
 
   return res
     .status(200)
@@ -126,11 +196,26 @@ const getDoctors = asyncHandler(async (req, res) => {
 });
 
 const updateDoctorAvailability = asyncHandler(async (req, res) => {
-  const doctor = await updateDoctorAvailabilityService(req.user.userId, req.body);
+  const doctor = await updateDoctorAvailabilityService(
+    req.user.userId,
+    req.body,
+  );
+
+  auditFromRequestSafe(req, {
+    action: "Doctor Availability Updated",
+    module: "Employee",
+    entityId: doctor._id,
+    entityType: "Employee",
+    details: {
+      employeeCode: doctor.employeeCode,
+    },
+  });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Doctor availability updated successfully", doctor));
+    .json(
+      new ApiResponse(200, "Doctor availability updated successfully", doctor),
+    );
 });
 
 const getDoctorAvailability = asyncHandler(async (req, res) => {
@@ -149,6 +234,13 @@ const getDoctorAvailability = asyncHandler(async (req, res) => {
 
 const deleteEmployee = asyncHandler(async (req, res) => {
   const result = await deleteEmployeeService(req.params.id, req.user.userId);
+
+  auditFromRequestSafe(req, {
+    action: "Employee Deleted",
+    module: "Employee",
+    entityId: req.params.id,
+    entityType: "Employee",
+  });
 
   return res.status(200).json(new ApiResponse(200, result.message, result));
 });

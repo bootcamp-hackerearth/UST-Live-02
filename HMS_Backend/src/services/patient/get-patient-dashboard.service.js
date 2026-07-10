@@ -3,6 +3,13 @@ const ApiError = require("../../utils/ApiError");
 const Appointment = require("../../models/Appointment");
 const STATUS = require("../../constants/status");
 
+const getStartOfToday = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return today;
+};
+
 const getPatientDashboard = async (patientId) => {
   const patient = await Patient.findOne({
     _id: patientId,
@@ -40,43 +47,37 @@ const getPatientDashboard = async (patientId) => {
 
   const upcomingAppointment = await Appointment.findOne({
     ...baseFilter,
-
     status: {
       $in: [STATUS.PENDING, STATUS.BOOKED],
+    },
+    appointmentDate: {
+      $gte: getStartOfToday(),
     },
   })
     .populate({
       path: "doctorEmployeeId",
-
       select: "name department specialization",
-
       match: {
         isDeleted: false,
       },
     })
     .sort({
       appointmentDate: 1,
+      timeSlot: 1,
     });
 
   return {
     patient: {
       firstName: patient.firstName,
-
       lastName: patient.lastName,
-
       patientId: patient.patientId,
     },
-
     appointmentSummary: {
       pending: pendingCount,
-
       booked: bookedCount,
-
       completed: completedCount,
-
       cancelled: cancelledCount,
     },
-
     upcomingAppointment,
   };
 };

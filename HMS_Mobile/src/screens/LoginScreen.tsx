@@ -1,26 +1,38 @@
 import { useState } from "react";
-
 import {
   View,
   Text,
-  Alert,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useNavigation } from "@react-navigation/native";
-
 import { login } from "../services/auth.service";
-
-import { saveToken, saveRefreshToken } from "../storage/token.storage";
+import { saveTokens } from "../storage/token.storage";
 import { isEmail } from "../utils/validators";
 import AppInput from "../components/inputs/AppInput";
 import PrimaryButton from "../components/buttons/PrimaryButton";
 import GlassCard from "../components/cards/GlassCard";
+import { showToast } from "../services/toast.service";
+
+const credentialMessageKeys = {
+  required: "required",
+  minLength: "minLength",
+} as const;
+
+type CredentialMessageKey =
+  (typeof credentialMessageKeys)[keyof typeof credentialMessageKeys];
+
+const credentialMessage = (key: CredentialMessageKey) =>
+  ({
+    required: "Password is required",
+    minLength: "Password must be at least 8 characters",
+  })[key];
 
 export default function Login() {
+  type FormErrors = Partial<Record<"email" | "password", string>>;
+
   const navigation = useNavigation<any>();
 
   const [email, setEmail] = useState("");
@@ -29,10 +41,10 @@ export default function Login() {
 
   const [loading, setLoading] = useState(false);
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const validateForm = () => {
-    const newErrors: any = {};
+    const newErrors: FormErrors = {};
 
     if (!email.trim()) {
       newErrors.email = "Email is required";
@@ -41,9 +53,9 @@ export default function Login() {
     }
 
     if (!password.trim()) {
-      newErrors.password = "Password is required";
+      newErrors.password = credentialMessage(credentialMessageKeys.required);
     } else if (password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+      newErrors.password = credentialMessage(credentialMessageKeys.minLength);
     }
 
     setErrors(newErrors);
@@ -63,13 +75,10 @@ export default function Login() {
 
       const loginResponse = response.data.data;
 
-      const accessToken = response.data.data.accessToken;
+      const accessToken = loginResponse.accessToken;
+      const refreshToken = loginResponse.refreshToken;
 
-      const refreshToken = response.data.data.refreshToken;
-
-      await saveToken(accessToken);
-
-      await saveRefreshToken(refreshToken);
+      await saveTokens(accessToken, refreshToken);
 
       if (loginResponse.user?.isFirstLogin) {
         navigation.replace("CreatePassword", {
@@ -81,10 +90,7 @@ export default function Login() {
 
       navigation.replace("PatientTabs");
     } catch (error: any) {
-      Alert.alert(
-        "Login Failed",
-        error?.response?.data?.message || "Unknown Error",
-      );
+      showToast(error?.response?.data?.message || "Login failed", "error");
     } finally {
       setLoading(false);
     }
@@ -176,25 +182,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F7FC",
   },
-
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 20,
     paddingVertical: 30,
   },
-
   heroSection: {
     marginBottom: 30,
   },
-
   brand: {
     fontSize: 36,
     fontWeight: "800",
     color: "#0F172A",
     textAlign: "center",
   },
-
   tagline: {
     fontSize: 18,
     fontWeight: "600",
@@ -202,7 +204,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
-
   description: {
     textAlign: "center",
     color: "#64748B",
@@ -210,20 +211,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingHorizontal: 10,
   },
-
   heading: {
     fontSize: 24,
     fontWeight: "700",
     color: "#0F172A",
     marginBottom: 8,
   },
-
   subHeading: {
     color: "#64748B",
     marginBottom: 24,
     lineHeight: 20,
   },
-
   forgotPassword: {
     color: "#2563EB",
     fontWeight: "600",
@@ -231,14 +229,12 @@ const styles = StyleSheet.create({
     marginTop: -2,
     marginBottom: 12,
   },
-
   registerText: {
     textAlign: "center",
     marginTop: 24,
     color: "#64748B",
     fontSize: 14,
   },
-
   registerLink: {
     color: "#2563EB",
     fontWeight: "700",

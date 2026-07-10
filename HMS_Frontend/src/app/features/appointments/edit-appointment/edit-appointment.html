@@ -5,8 +5,8 @@
     <div class="grid">
       <!-- Doctor -->
       <div class="form-group">
-        <label>Doctor</label>
-        <select formControlName="doctorEmployeeId" (change)="fetchAvailableSlots()">
+        <label for="edit-appointment-doctor">Doctor</label>
+        <select id="edit-appointment-doctor" formControlName="doctorEmployeeId" (change)="fetchAvailableSlots()">
           <option value="">Select Doctor</option>
           @for ( doctor of doctors; track doctor._id ) {
           <option [value]="doctor._id">{{ doctor.name }}</option>
@@ -19,8 +19,8 @@
 
       <!-- Appointment Date -->
       <div class="form-group">
-        <label>Appointment Date</label>
-        <input type="date" formControlName="appointmentDate" (change)="fetchAvailableSlots()" />
+        <label for="edit-appointment-date">Appointment Date</label>
+        <input id="edit-appointment-date" type="date" formControlName="appointmentDate" (change)="fetchAvailableSlots()" />
         @if(appointmentForm.get('appointmentDate')?.invalid && appointmentForm.get('appointmentDate')?.touched){
         <span class="error-text">Appointment Date is required</span>
         } @if(noSlotsError){
@@ -30,8 +30,8 @@
 
       <!-- Appointment Type -->
       <div class="form-group">
-        <label>Appointment Type</label>
-        <select formControlName="appointmentType">
+        <label for="edit-appointment-type">Appointment Type</label>
+        <select id="edit-appointment-type" formControlName="appointmentType">
           <option value="">Select Appointment Type</option>
           <option value="CONSULTATION">Consultation</option>
           <option value="FOLLOW_UP">Follow Up</option>
@@ -46,8 +46,8 @@
 
       <!-- Priority -->
       <div class="form-group">
-        <label>Priority</label>
-        <select formControlName="priority">
+        <label for="edit-appointment-priority">Priority</label>
+        <select id="edit-appointment-priority" formControlName="priority">
           <option value="">Select Priority</option>
           <option value="NORMAL">Normal</option>
           <option value="URGENT">Urgent</option>
@@ -60,8 +60,8 @@
 
       <!-- Payment Status -->
       <div class="form-group">
-        <label>Payment Status</label>
-        <select formControlName="paymentStatus">
+        <label for="edit-appointment-payment-status">Payment Status</label>
+        <select id="edit-appointment-payment-status" formControlName="paymentStatus">
           <option value="">Select Payment Status</option>
           <option value="PENDING">Pending</option>
           <option value="PAID">Paid</option>
@@ -74,8 +74,8 @@
 
       <!-- Visit Mode -->
       <div class="form-group">
-        <label>Visit Mode</label>
-        <select formControlName="visitMode">
+        <label for="edit-appointment-visit-mode">Visit Mode</label>
+        <select id="edit-appointment-visit-mode" formControlName="visitMode">
           <option value="">Select Visit Mode</option>
           <option value="OFFLINE">Offline</option>
           <option value="ONLINE">Online</option>
@@ -88,8 +88,8 @@
 
       <!-- Status -->
       <div class="form-group">
-        <label>Status</label>
-        <select formControlName="status">
+        <label for="edit-appointment-status">Status</label>
+        <select id="edit-appointment-status" formControlName="status">
           <option value="">Select Status</option>
           <option value="BOOKED">Booked</option>
           <option value="IN_CONSULTATION">In Consultation</option>
@@ -126,20 +126,20 @@
 
     <!-- Symptoms -->
     <div class="form-group full-width">
-      <label>Symptoms</label>
-      <textarea formControlName="symptoms" placeholder="Enter symptoms"></textarea>
+      <label for="edit-appointment-symptoms">Symptoms</label>
+      <textarea id="edit-appointment-symptoms" formControlName="symptoms" placeholder="Enter symptoms"></textarea>
     </div>
 
     <!-- Reason -->
     <div class="form-group full-width">
-      <label>Reason</label>
-      <textarea formControlName="reason"></textarea>
+      <label for="edit-appointment-reason">Reason</label>
+      <textarea id="edit-appointment-reason" formControlName="reason"></textarea>
     </div>
 
     <!-- Notes -->
     <div class="form-group full-width">
-      <label>Notes</label>
-      <textarea formControlName="notes"></textarea>
+      <label for="edit-appointment-notes">Notes</label>
+      <textarea id="edit-appointment-notes" formControlName="notes"></textarea>
     </div>
 
     <!-- Submit -->

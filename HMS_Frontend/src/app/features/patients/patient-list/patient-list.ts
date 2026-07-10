@@ -1,24 +1,25 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
-
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { FormsModule } from '@angular/forms';
-
-import { RouterLink } from '@angular/router';
-
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PatientService } from '../../../core/services/patient';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 import { NodeService } from '../../../core/services/node';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog';
+import { ToastService } from '../../../core/services/toast';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state';
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 @Component({
   selector: 'app-patient-list',
-
   standalone: true,
-
-  imports: [CommonModule, FormsModule, RouterLink, PaginationComponent],
-
+  imports: [CommonModule, FormsModule, RouterLink, PaginationComponent, SkeletonLoaderComponent, EmptyStateComponent],
   templateUrl: './patient-list.html',
-
   styleUrls: ['./patient-list.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -36,27 +37,46 @@ export class PatientList implements OnInit {
 
   page = 1;
   limit = 10;
+  cursorStack: string[] = [''];
+  nextCursor = '';
 
   totalRecords = 0;
   totalPages = 0;
+  isLoading = false;
+
+  private readonly searchChanged$ = new Subject<void>();
 
   constructor(
     private readonly patientService: PatientService,
     public readonly nodeService: NodeService,
-
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+    private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly confirmDialog: ConfirmDialogService,
+    private readonly toast: ToastService
+  ) {
+    this.searchChanged$
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), takeUntilDestroyed())
+      .subscribe(() => this.onFilterChange());
+  }
 
   ngOnInit(): void {
     this.userRole = localStorage.getItem('role') || '';
 
-    this.loadPatients();
+    this.applyPatientsResponse(this.route.snapshot.data['patients']);
+  }
+
+  onSearchInput(): void {
+    this.searchChanged$.next();
   }
 
   loadPatients(): void {
+    this.isLoading = true;
+
     const params: any = {
       page: this.page,
-      limit: this.limit
+      limit: this.limit,
+      pagination: 'cursor',
+      cursor: this.cursorStack[this.page - 1] || ''
     };
 
     if (this.search.trim()) {
@@ -83,23 +103,32 @@ export class PatientList implements OnInit {
       next: (response) => {
         console.log(response);
 
-        this.patients = response.data;
+        this.applyPatientsResponse(response);
 
-        this.totalRecords = response.meta?.total || 0;
+        if (this.page > 1 && this.patients.length === 0) {
+          this.page = Math.max(this.totalPages || 1, 1);
+          this.loadPatients();
+          return;
+        }
 
-        this.totalPages = response.meta?.totalPages || 0;
+        this.isLoading = false;
 
         this.cdr.detectChanges();
       },
-
       error: (error) => {
         console.log(error);
+
+        this.isLoading = false;
+
+        this.cdr.detectChanges();
       }
     });
   }
 
   onFilterChange(): void {
     this.page = 1;
+    this.cursorStack = [''];
+    this.nextCursor = '';
 
     this.loadPatients();
   }
@@ -113,7 +142,8 @@ export class PatientList implements OnInit {
   }
 
   nextPage(): void {
-    if (this.page < this.totalPages) {
+    if (this.nextCursor) {
+      this.cursorStack[this.page] = this.nextCursor;
       this.page++;
 
       this.loadPatients();
@@ -126,28 +156,47 @@ export class PatientList implements OnInit {
     this.limit = Number(select.value);
 
     this.page = 1;
+    this.cursorStack = [''];
+    this.nextCursor = '';
 
     this.loadPatients();
   }
-  deletePatient(id: string): void {
-  if (
-    !confirm(
-      'Delete this patient?'
-    )
-  ) {
-    return;
-  }
+  async deletePatient(id: string): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete patient?',
+      message: 'This patient will be removed from active records.',
+      confirmText: 'Delete',
+      tone: 'danger'
+    });
 
-  this.patientService
-    .deletePatient(id)
-    .subscribe({
+    if (!confirmed) {
+      return;
+    }
+
+    this.patientService.deletePatient(id).subscribe({
       next: () => {
+        this.page = this.getPageAfterDelete();
+        this.toast.success('Patient deleted successfully');
         this.loadPatients();
       },
-
       error: (error) => {
         console.log(error);
       }
     });
-}
+  }
+
+  private getPageAfterDelete(): number {
+    const totalAfterDelete = Math.max(this.totalRecords - 1, 0);
+    const totalPagesAfterDelete = Math.max(Math.ceil(totalAfterDelete / this.limit), 1);
+
+    return Math.min(this.page, totalPagesAfterDelete);
+  }
+
+  private applyPatientsResponse(response: any): void {
+    this.patients = response?.data || [];
+    this.totalRecords = response?.meta?.totalRecords ?? response?.meta?.total ?? 0;
+    this.totalPages = response?.meta?.totalPages || Math.max(Math.ceil(this.totalRecords / this.limit), 1);
+    this.nextCursor = response?.meta?.nextCursor || '';
+    this.isLoading = false;
+  }
 }

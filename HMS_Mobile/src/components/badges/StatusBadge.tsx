@@ -1,7 +1,5 @@
 import React from "react";
-
 import { Text, View, StyleSheet } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
@@ -85,25 +83,16 @@ export default function StatusBadge({ status }: Props) {
 const styles = StyleSheet.create({
   badge: {
     flexDirection: "row",
-
     alignItems: "center",
-
     paddingHorizontal: 12,
-
     paddingVertical: 7,
-
     borderRadius: 999,
-
     alignSelf: "flex-start",
   },
-
   text: {
     fontWeight: "700",
-
     fontSize: 12,
-
     marginLeft: 5,
-
     letterSpacing: 0.3,
   },
 });

@@ -1,36 +1,31 @@
-import { Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
-
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-
-import { AsyncPipe, NgClass } from '@angular/common';
-
-import { Observable } from 'rxjs';
-
-import { ToastService, ToastState } from './core/services/toast';
-
+import { NgClass } from '@angular/common';
+import { ToastService } from './core/services/toast';
 import { AuthService } from './core/services/auth';
 import { NodeService } from './core/services/node';
 import { TokenService } from './core/services/token';
+import { NetworkStatusService } from './core/services/network-status';
+import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confirm-dialog';
+import { InputDialogComponent } from './shared/components/input-dialog/input-dialog';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, AsyncPipe, NgClass],
+  imports: [RouterOutlet, NgClass, ConfirmDialogComponent, InputDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class App implements OnInit {
-  toastState$: Observable<ToastState | null>;
+  private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
+  private readonly nodeService = inject(NodeService);
+  private readonly tokenService = inject(TokenService);
+  private readonly networkStatus = inject(NetworkStatusService);
 
-  constructor(
-    private readonly toastService: ToastService,
-    private readonly authService: AuthService,
-    private readonly nodeService: NodeService,
-    private readonly tokenService: TokenService
-  ) {
-    this.toastState$ = this.toastService.toast$;
-  }
+  readonly toast = this.toastService.toast;
+  readonly online = this.networkStatus.online;
 
   ngOnInit(): void {
     const token = this.tokenService.getAccessToken();
@@ -39,16 +34,16 @@ export class App implements OnInit {
       return;
     }
 
-    if (!this.authService.currentUser.value) {
+    if (!this.authService.currentUser()) {
       this.authService.loadCurrentUser();
     }
 
-    if (!this.nodeService.nodes.value.length) {
+    if (!this.nodeService.nodes().length) {
       this.nodeService.loadNodes();
     }
   }
 
   dismissToast(): void {
-    this.toastService.toast$.next(null);
+    this.toastService.dismiss();
   }
 }

@@ -1,15 +1,11 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-
-import { AsyncPipe } from '@angular/common';
-
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-
 import { NodeService } from '../../../core/services/node';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [AsyncPipe, RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -21,11 +17,22 @@ export class Sidebar {
   ) {}
 
   navigate(path: string): void {
-    this.router.navigate([path]);
+    const currentPath = this.router.url.split('?')[0];
+    const shouldResetList = currentPath === path && ['/employees', '/patients', '/appointments'].includes(path);
+
+    this.router.navigate([path], {
+      queryParams: shouldResetList ? { navReset: Date.now() } : undefined
+    });
   }
+
+  isActive(path: string): boolean {
+    return this.router.url.split('?')[0] === path;
+  }
+
   expandedMenus: Record<string, boolean> = {};
 
-  toggleMenu(nodeId: string): void {
+  toggleMenu(nodeId: string, event?: MouseEvent): void {
+    event?.stopPropagation();
     this.expandedMenus[nodeId] = !this.expandedMenus[nodeId];
   }
 }

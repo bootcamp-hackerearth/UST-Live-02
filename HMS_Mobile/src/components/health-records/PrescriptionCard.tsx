@@ -1,9 +1,6 @@
 import React from "react";
-
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
 import GlassCard from "../cards/GlassCard";
-
 import { PrescriptionGroup } from "../../types/HealthRecord";
 
 interface Props {
@@ -50,35 +47,26 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     marginBottom: 10,
   },
-
   text: {
     color: "#475569",
     marginBottom: 4,
   },
-
   count: {
     marginTop: 12,
     color: "#2563EB",
     fontWeight: "600",
   },
-
   actions: {
     flexDirection: "row",
     marginTop: 18,
   },
-
   button: {
     backgroundColor: "#EFF6FF",
-
     paddingHorizontal: 18,
-
     paddingVertical: 10,
-
     borderRadius: 14,
-
     marginRight: 12,
   },
-
   buttonText: {
     color: "#2563EB",
     fontWeight: "600",

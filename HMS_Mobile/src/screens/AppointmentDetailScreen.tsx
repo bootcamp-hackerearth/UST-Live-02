@@ -2,15 +2,13 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
   ScrollView,
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { useCallback, useEffect, useState } from "react";
-
+import { useState } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppointmentSkeleton from "../../src/components/loaders/AppointmentSkeleton";
 import {
   getAppointmentById,
@@ -21,70 +19,60 @@ import {
 import GlassCard from "../../src/components/cards/GlassCard";
 import StatusBadge from "../../src/components/badges/StatusBadge";
 import InfoRow from "../../src/components/cards/InfoRow";
+import { showToast } from "../services/toast.service";
+import { confirmAction } from "../services/confirm.service";
+import { logger } from "../utils/logger";
 
 export default function AppointmentDetails() {
   const navigation = useNavigation<any>();
 
   const route = useRoute<any>();
+  const queryClient = useQueryClient();
 
   const { id } = route.params;
-  const [appointment, setAppointment] = useState<any>(null);
   const [cancelling, setCancelling] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const loadAppointment = useCallback(async () => {
-    try {
-      setLoading(true);
-
+  const { data: appointment, isPending } = useQuery({
+    queryKey: ["appointment", id],
+    queryFn: async () => {
       const response = await getAppointmentById(id as string);
 
-      setAppointment(response.data.data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+      return response.data.data;
+    },
+  });
 
-  useEffect(() => {
-    loadAppointment();
-  }, [loadAppointment]);
   const confirmCancel = async () => {
     try {
       setCancelling(true);
 
       await cancelMyAppointment(appointment._id);
 
-      Alert.alert("Success", "Appointment cancelled successfully");
+      showToast("Appointment cancelled successfully", "success");
       clearAppointmentCache();
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointment", id] });
       navigation.goBack();
     } catch (error) {
-      console.log("Cancel Error", error);
+      logger.error("Appointment cancellation failed", error);
 
-      Alert.alert("Error", "Failed to cancel appointment");
+      showToast("Failed to cancel appointment", "error");
     } finally {
       setCancelling(false);
     }
   };
-  const handleCancel = () => {
-    Alert.alert(
-      "Cancel Appointment",
-      "Are you sure you want to cancel this appointment?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          style: "destructive",
-          onPress: confirmCancel,
-        },
-      ],
-    );
+  const handleCancel = async () => {
+    const confirmed = await confirmAction({
+      title: "Cancel Appointment",
+      message: "Are you sure you want to cancel this appointment?",
+      confirmText: "Cancel Appointment",
+      destructive: true,
+    });
+
+    if (confirmed) {
+      confirmCancel();
+    }
   };
 
-  if (loading) {
+  if (isPending && !appointment) {
     return (
       <SafeAreaView style={styles.container}>
         <View
@@ -248,18 +236,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F7FC",
     padding: 20,
   },
-
   title: {
     fontSize: 30,
     fontWeight: "800",
     color: "#0F172A",
     marginBottom: 20,
   },
-
   badgeContainer: {
     marginBottom: 20,
   },
-
   doctorAvatar: {
     width: 80,
     height: 80,
@@ -269,7 +254,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
   },
-
   avatarText: {
     color: "#fff",
     fontSize: 30,
@@ -282,19 +266,16 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#0F172A",
   },
-
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 20,
     color: "#0F172A",
   },
-
   symptoms: {
     color: "#334155",
     lineHeight: 22,
   },
-
   editButton: {
     backgroundColor: "#2563EB",
     height: 56,
@@ -303,7 +284,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
   },
-
   cancelButton: {
     backgroundColor: "#EF4444",
     height: 56,
@@ -313,7 +293,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 40,
   },
-
   buttonText: {
     color: "#FFFFFF",
     fontWeight: "700",

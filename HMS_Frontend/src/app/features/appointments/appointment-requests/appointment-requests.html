@@ -16,7 +16,6 @@
   <!-- Empty State -->
 
   @if( appointments.length === 0 ){
-
   <div class="empty-state glass-card">
     <div class="empty-icon">📅</div>
 
@@ -26,10 +25,8 @@
   </div>
 
   } @else {
-
   <div class="employee-grid">
     @for( appointment of appointments; track appointment._id ){
-
     <div class="employee-card glass-card">
       <!-- Patient -->
 
@@ -91,9 +88,7 @@
         >
           Approve
         </button>
-        }
-
-        @if(nodeService.canUseApi('PATCH', '/api/appointments/:id/reject')){
+        } @if(nodeService.canUseApi('PATCH', '/api/appointments/:id/reject')){
         <button
           class="reject-btn"
           (click)="
@@ -107,9 +102,7 @@
         }
       </div>
     </div>
-
     }
   </div>
-
   }
 </div>

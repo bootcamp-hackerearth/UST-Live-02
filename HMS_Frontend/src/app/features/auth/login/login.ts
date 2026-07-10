@@ -1,9 +1,6 @@
-import { Component, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
-
+import { Component, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-
 import { AuthService } from '../../../core/services/auth';
 import { TokenService } from '../../../core/services/token';
 import { ToastService } from '../../../core/services/toast';
@@ -60,15 +57,11 @@ export class Login {
         console.log('ACCESS TOKEN', response.data.accessToken);
         const accessToken = response.data.accessToken;
 
-        const refreshToken = response.data.refreshToken;
-
         const user = response.data.user;
 
         this.tokenService.setAccessToken(accessToken);
 
-        this.tokenService.setRefreshToken(refreshToken);
-
-        this.authService.currentUser.next(user);
+        this.authService.setCurrentUser(user);
 
         localStorage.setItem('role', user.roles?.[0]);
 
@@ -87,9 +80,7 @@ export class Login {
         // Load nodes before navigation
         this.nodeService.getNodes().subscribe({
           next: (nodeResponse: any) => {
-            this.nodeService.nodes.next(nodeResponse.data);
-
-            localStorage.setItem('nodes', JSON.stringify(nodeResponse.data));
+            this.nodeService.setNodes(nodeResponse.data || []);
 
             this.toastService.show('Login successful', 'success');
 
@@ -117,7 +108,6 @@ export class Login {
                 this.router.navigate(['/login']);
             }
           },
-
           error: () => {
             this.isSubmitting = false;
 
@@ -125,7 +115,6 @@ export class Login {
           }
         });
       },
-
       error: (error) => {
         this.toastService.show(error?.error?.message || 'Login failed', 'error');
 

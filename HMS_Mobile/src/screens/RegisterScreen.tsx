@@ -1,27 +1,51 @@
 import { useState } from "react";
-import {
-  Text,
-  Alert,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useNavigation } from "@react-navigation/native";
-
 import { registerPatient } from "../services/patient.service";
 import {
   isEmail,
   isPhone,
-  onlyLetters,
+  isValidName,
   strongPassword,
 } from "../utils/validators";
 import AppInput from "../components/inputs/AppInput";
 import PrimaryButton from "../components/buttons/PrimaryButton";
 import GlassCard from "../components/cards/GlassCard";
+import { showToast } from "../services/toast.service";
+import { logger } from "../utils/logger";
+
+const credentialMessageKeys = {
+  required: "required",
+  strength: "strength",
+  confirmRequired: "confirmRequired",
+  mismatch: "mismatch",
+} as const;
+
+type CredentialMessageKey =
+  (typeof credentialMessageKeys)[keyof typeof credentialMessageKeys];
+
+const credentialMessage = (key: CredentialMessageKey) =>
+  ({
+    required: "Credential is required",
+    strength: "Must contain uppercase, lowercase, number & special character",
+    confirmRequired: "Credential confirmation is required",
+    mismatch: "Credential entries do not match",
+  })[key];
 
 export default function Register() {
+  type FormErrors = Partial<
+    Record<
+      | "firstName"
+      | "lastName"
+      | "email"
+      | "phone"
+      | "password"
+      | "confirmPassword",
+      string
+    >
+  >;
+
   const navigation = useNavigation<any>();
 
   const [firstName, setFirstName] = useState("");
@@ -38,50 +62,53 @@ export default function Register() {
 
   const [loading, setLoading] = useState(false);
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const validateForm = () => {
-    const newErrors: any = {};
+    const newErrors: FormErrors = {};
+    const normalizedFirstName = firstName.trim();
+    const normalizedLastName = lastName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.trim();
 
-    if (!firstName.trim()) {
+    if (!normalizedFirstName) {
       newErrors.firstName = "First name is required";
-    } else if (!onlyLetters(firstName)) {
-      newErrors.firstName = "Only letters allowed";
-    } else if (firstName.length < 2) {
-      newErrors.firstName = "Minimum 2 characters required";
+    } else if (!isValidName(normalizedFirstName)) {
+      newErrors.firstName =
+        "Use 2-50 letters, spaces, apostrophes or hyphens";
     }
 
-    if (!lastName.trim()) {
+    if (!normalizedLastName) {
       newErrors.lastName = "Last name is required";
-    } else if (!onlyLetters(lastName)) {
-      newErrors.lastName = "Only letters allowed";
-    } else if (lastName.length < 2) {
-      newErrors.lastName = "Minimum 2 characters required";
+    } else if (!isValidName(normalizedLastName)) {
+      newErrors.lastName =
+        "Use 2-50 letters, spaces, apostrophes or hyphens";
     }
 
-    if (!email.trim()) {
+    if (!normalizedEmail) {
       newErrors.email = "Email is required";
-    } else if (!isEmail(email)) {
+    } else if (!isEmail(normalizedEmail)) {
       newErrors.email = "Enter valid email address";
     }
 
-    if (!phone.trim()) {
+    if (!normalizedPhone) {
       newErrors.phone = "Phone number is required";
-    } else if (!isPhone(phone)) {
+    } else if (!isPhone(normalizedPhone)) {
       newErrors.phone = "Enter valid 10 digit mobile number";
     }
 
     if (!password.trim()) {
-      newErrors.password = "Password is required";
+      newErrors.password = credentialMessage(credentialMessageKeys.required);
     } else if (!strongPassword(password)) {
-      newErrors.password =
-        "Must contain uppercase, lowercase, number & special character";
+      newErrors.password = credentialMessage(credentialMessageKeys.strength);
     }
 
     if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = "Confirm password is required";
+      newErrors.confirmPassword = credentialMessage(
+        credentialMessageKeys.confirmRequired,
+      );
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = credentialMessage(credentialMessageKeys.mismatch);
     }
 
     setErrors(newErrors);
@@ -98,28 +125,22 @@ export default function Register() {
 
     try {
       await registerPatient({
-        firstName,
-        lastName,
-        email,
-        phone,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
         password,
         confirmPassword,
       });
 
-      Alert.alert("Success", "Account created successfully", [
-        {
-          text: "OK",
-          onPress: () => navigation.navigate("Login"),
-        },
-      ]);
+      showToast("Account created successfully", "success");
+      navigation.navigate("Login");
     } catch (error: any) {
-      console.log("REGISTER ERROR", error);
+      logger.error("Registration failed", error);
 
-      console.log("REGISTER RESPONSE", error?.response?.data);
-
-      Alert.alert(
-        "Registration Failed",
-        JSON.stringify(error?.response?.data, null, 2),
+      showToast(
+        error?.response?.data?.message || "Registration failed",
+        "error",
       );
     } finally {
       setLoading(false);
@@ -249,7 +270,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F7FC",
     paddingHorizontal: 20,
   },
-
   brand: {
     fontSize: 34,
     fontWeight: "800",
@@ -257,7 +277,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 30,
   },
-
   tagline: {
     fontSize: 18,
     fontWeight: "600",
@@ -265,21 +284,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
-
   description: {
     textAlign: "center",
     color: "#64748B",
     marginTop: 10,
     marginBottom: 30,
   },
-
   loginText: {
     textAlign: "center",
     marginTop: 24,
     marginBottom: 30,
     color: "#64748B",
   },
-
   loginLink: {
     color: "#2563EB",
     fontWeight: "700",

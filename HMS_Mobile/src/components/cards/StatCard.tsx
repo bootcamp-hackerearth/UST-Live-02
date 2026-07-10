@@ -1,7 +1,5 @@
 import React from "react";
-
 import { View, Text, StyleSheet } from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
@@ -68,66 +66,40 @@ export default React.memo(StatCard);
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-
     backgroundColor: "rgba(255,255,255,0.95)",
-
     borderRadius: 24,
-
     paddingVertical: 22,
-
     paddingHorizontal: 10,
-
     borderWidth: 1,
-
     borderColor: "#E2E8F0",
-
     alignItems: "center",
-
     shadowColor: "#2563EB",
-
     shadowOpacity: 0.08,
-
     shadowRadius: 16,
-
     shadowOffset: {
       width: 0,
       height: 8,
     },
-
     elevation: 4,
   },
-
   iconContainer: {
     width: 42,
-
     height: 42,
-
     borderRadius: 21,
-
     justifyContent: "center",
-
     alignItems: "center",
-
     marginBottom: 12,
   },
-
   value: {
     fontSize: 30,
-
     fontWeight: "800",
-
     color: "#0F172A",
   },
-
   title: {
     marginTop: 6,
-
     color: "#64748B",
-
     fontSize: 13,
-
     fontWeight: "600",
-
     textAlign: "center",
   },
 });

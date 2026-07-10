@@ -5,11 +5,9 @@ const updateEmployeeService = async (employeeId, updateData, updatedBy) => {
   if (updateData.medicalRegistrationNo) {
     const existingDoctor = await Employee.findOne({
       medicalRegistrationNo: updateData.medicalRegistrationNo,
-
       _id: {
         $ne: employeeId,
       },
-
       isDeleted: false,
     });
 

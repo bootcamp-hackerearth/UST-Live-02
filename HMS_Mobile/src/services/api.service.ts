@@ -1,16 +1,27 @@
 import axiosDefault, { AxiosError, AxiosRequestConfig, create } from "axios";
-
 import { API_BASE_URL } from "../constants/api";
-
 import {
-  getToken,
   getRefreshToken,
-  saveToken,
+  getToken,
   removeTokens,
+  saveTokens,
 } from "../storage/token.storage";
-
 import { resetToLogin } from "../navigation/RootNavigation";
 import { clearServiceCaches } from "./cache.service";
+import { queryClient } from "./query-client";
+import { showToast } from "./toast.service";
+import { isOffline, setOfflineStatus } from "./offline-status.service";
+import { logger } from "../utils/logger";
+import {
+  cacheGetResponse,
+  enqueueOfflineRequest,
+  getCachedResponse,
+  getOfflineQueue,
+  isAuthUrl,
+  isFormDataBody,
+  isMutationMethod,
+  setOfflineQueue,
+} from "./offline.service";
 
 interface RetryAxiosRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
@@ -19,9 +30,30 @@ interface RetryAxiosRequestConfig extends AxiosRequestConfig {
 const api = create({
   baseURL: API_BASE_URL,
   timeout: 15000,
+  withCredentials: true,
 });
 
 let isRefreshing = false;
+let isReplayingOfflineQueue = false;
+
+// A single slow/failed request shouldn't flip the whole app into "offline"
+// mode - that's what caused the banner to flap on transient blips. Only
+// declare offline once a couple of requests in a row fail to get a response.
+const OFFLINE_FAILURE_THRESHOLD = 2;
+let consecutiveNetworkFailures = 0;
+
+const registerNetworkSuccess = () => {
+  consecutiveNetworkFailures = 0;
+  setOfflineStatus(false);
+};
+
+const registerNetworkFailure = () => {
+  consecutiveNetworkFailures += 1;
+
+  if (consecutiveNetworkFailures >= OFFLINE_FAILURE_THRESHOLD) {
+    setOfflineStatus(true);
+  }
+};
 
 let failedQueue: {
   resolve: (token: string) => void;
@@ -42,12 +74,67 @@ const processQueue = (error: unknown, token?: string) => {
 
 const logoutUser = async () => {
   clearServiceCaches();
+  queryClient.clear();
 
   await removeTokens();
 
   setTimeout(() => {
     resetToLogin();
   }, 0);
+};
+
+const replayOfflineQueue = async () => {
+  if (isReplayingOfflineQueue) {
+    return;
+  }
+
+  const queue = await getOfflineQueue();
+
+  if (!queue.length) {
+    return;
+  }
+
+  isReplayingOfflineQueue = true;
+
+  try {
+    const remaining = [...queue];
+
+    while (remaining.length) {
+      const nextRequest = remaining[0];
+
+      await api.request({
+        method: nextRequest.method,
+        url: nextRequest.url,
+        params: nextRequest.params,
+        data: nextRequest.data,
+      });
+
+      remaining.shift();
+      await setOfflineQueue(remaining);
+    }
+
+    showToast("Offline changes synced successfully.", "success");
+    logger.info("Offline queue synced", { syncedRequests: queue.length });
+  } catch (error) {
+    logger.warn("Offline queue sync failed", { error });
+    showToast("Some offline changes could not sync yet.", "error");
+  } finally {
+    isReplayingOfflineQueue = false;
+  }
+};
+
+const refreshCachedDataAfterMutation = async (config?: AxiosRequestConfig) => {
+  if (
+    !config ||
+    !isMutationMethod(config.method) ||
+    isAuthUrl(config.url)
+  ) {
+    return;
+  }
+
+  await queryClient.invalidateQueries({
+    refetchType: "all",
+  });
 };
 
 api.interceptors.request.use(async (config) => {
@@ -63,15 +150,86 @@ api.interceptors.request.use(async (config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  async (response) => {
+    registerNetworkSuccess();
 
+    await cacheGetResponse(response.config, response.data);
+    await refreshCachedDataAfterMutation(response.config);
+
+    if (!isReplayingOfflineQueue) {
+      replayOfflineQueue().catch((replayError) => {
+        logger.warn("Offline queue replay failed", { error: replayError });
+      });
+    }
+
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryAxiosRequestConfig;
 
+    if (!error.response) {
+      registerNetworkFailure();
+      logger.warn("Network request failed before receiving a response", {
+        baseURL: API_BASE_URL,
+        errorCode: error.code,
+        errorMessage: error.message,
+        method: originalRequest?.method,
+        url: originalRequest?.url,
+      });
+
+      if (isOffline()) {
+        showToast(
+          "You appear to be offline. Please check your connection.",
+          "error",
+        );
+      }
+
+      const cached = await getCachedResponse(originalRequest);
+
+      if (cached) {
+        showToast("Offline mode", "info");
+
+        return {
+          data: cached,
+          status: 200,
+          statusText: "OK",
+          headers: {},
+          config: originalRequest,
+        };
+      }
+
+      if (
+        originalRequest &&
+        isMutationMethod(originalRequest.method) &&
+        !isAuthUrl(originalRequest.url) &&
+        !isFormDataBody(originalRequest.data)
+      ) {
+        await enqueueOfflineRequest(originalRequest);
+        showToast(
+          "Offline change queued. It will sync automatically.",
+          "success",
+        );
+
+        return {
+          data: {
+            success: true,
+            statusCode: 202,
+            message: "Offline request queued",
+            data: null,
+          },
+          status: 202,
+          statusText: "Accepted",
+          headers: {},
+          config: originalRequest,
+        };
+      }
+    }
+
     if (originalRequest?.url?.includes("/auth/refresh-token")) {
+      logger.warn("Refresh token request failed");
       await logoutUser();
 
-      return Promise.reject(error);
+      throw error;
     }
 
     if (
@@ -102,7 +260,7 @@ api.interceptors.response.use(
         const refreshToken = await getRefreshToken();
 
         if (!refreshToken) {
-          throw error;
+          throw new Error("Refresh token is missing");
         }
 
         const response = await axiosDefault.post(
@@ -110,11 +268,15 @@ api.interceptors.response.use(
           {
             refreshToken,
           },
+          {
+            withCredentials: true,
+          },
         );
 
         const newAccessToken = response.data.data.accessToken;
+        const newRefreshToken = response.data.data.refreshToken;
 
-        await saveToken(newAccessToken);
+        await saveTokens(newAccessToken, newRefreshToken);
 
         processQueue(null, newAccessToken);
 
@@ -124,17 +286,24 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch (refreshError) {
+        logger.warn("Token refresh failed", { error: refreshError });
         processQueue(refreshError);
 
         await logoutUser();
 
-        return Promise.reject(refreshError);
+        throw refreshError;
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(error);
+    logger.error("API request failed", error, {
+      method: originalRequest?.method,
+      url: originalRequest?.url,
+      status: error.response?.status,
+    });
+
+    throw error;
   },
 );
 

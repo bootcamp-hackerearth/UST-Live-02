@@ -10,7 +10,7 @@
       <p class="section-subtitle">Complete medical history and consultation records of patients.</p>
     </div>
 
-    <div class="record-count">Total: {{ meta.total || 0 }}</div>
+    <div class="record-count">Total: {{ meta.totalRecords ?? meta.total ?? 0 }}</div>
   </div>
 
   <!-- Search -->
@@ -33,19 +33,12 @@
   <!-- Loading -->
 
   @if (isLoading) {
-
-  <div class="loading-card">
-    <div class="loader"></div>
-
-    <p>Loading health records...</p>
-  </div>
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
 
   } @else {
-
   <!-- Empty State -->
 
   @if (healthRecords.length === 0) {
-
   <div class="empty-state">
     <div class="empty-icon">🩺</div>
 
@@ -55,7 +48,6 @@
   </div>
 
   } @else {
-
   <!-- Table -->
 
   <div class="table-container">
@@ -73,7 +65,6 @@
 
       <tbody>
         @for ( record of healthRecords; track record.patient._id ) {
-
         <tr>
           <!-- Patient -->
 
@@ -127,7 +118,6 @@
             </a>
           </td>
         </tr>
-
         }
       </tbody>
     </table>
@@ -138,21 +128,19 @@
   <app-pagination
     [page]="page"
     [totalPages]="
-      meta.totalPages || 1
+      page + (meta.hasNextPage ? 1 : 0)
     "
     [totalRecords]="
-      meta.total || 0
+      meta.totalRecords ?? meta.total ?? 0
     "
     [limit]="limit"
+    [cursorMode]="true"
+    [hasNextPage]="meta.hasNextPage"
     (previous)="
       previousPage()
     "
     (next)="nextPage()"
-    (pageSizeChange)="
-      limit = $event;
-      page = 1;
-      loadHealthRecords(false)
-    "
+    (pageSizeChange)="onPageSizeChange($event)"
   ></app-pagination>
 
   } }

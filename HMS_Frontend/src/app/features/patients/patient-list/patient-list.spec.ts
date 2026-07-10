@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { PatientList } from './patient-list';
 
 describe('PatientList', () => {

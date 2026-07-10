@@ -62,14 +62,13 @@
           </div>
         </div>
         @if(currentStep === 1){
-
         <div class="step-section">
           <!-- Name -->
 
           <div class="form-group">
-            <label>Full Name</label>
+            <label for="register-name">Full Name</label>
 
-            <input type="text" formControlName="name" placeholder="Enter full name" />
+            <input id="register-name" type="text" formControlName="name" placeholder="Enter full name" />
             @if(registerForm.get('medicalRegistrationNo')?.invalid &&
             registerForm.get('medicalRegistrationNo')?.touched){
             <span class="error-text">Medical Registration Number is required</span>
@@ -81,9 +80,9 @@
           <!-- Gender -->
 
           <div class="form-group">
-            <label>Gender</label>
+            <label for="register-gender">Gender</label>
 
-            <select formControlName="gender">
+            <select id="register-gender" formControlName="gender">
               <option value="" disabled>Select Gender</option>
 
               <option [value]="'MALE'">Male</option>
@@ -101,9 +100,9 @@
           <!-- Email -->
 
           <div class="form-group">
-            <label>Email</label>
+            <label for="register-email">Email</label>
 
-            <input type="email" formControlName="email" placeholder="Enter email" />
+            <input id="register-email" type="email" formControlName="email" placeholder="Enter email" />
 
             @if(registerForm.get('email')?.invalid && registerForm.get('email')?.touched){
             @if(registerForm.get('email')?.hasError('required')){
@@ -116,10 +115,10 @@
           <!-- Phone -->
 
           <div class="form-group">
-            <label>Phone Number</label>
+            <label for="register-phone">Phone Number</label>
 
             <div class="phone-group">
-              <select formControlName="countryCode">
+              <select id="register-country-code" formControlName="countryCode" aria-label="Country code">
                 <option value="+91">+91 🇮🇳</option>
 
                 <option value="+1">+1 🇺🇸</option>
@@ -127,21 +126,19 @@
                 <option value="+44">+44 🇬🇧</option>
               </select>
 
-              <input type="text" formControlName="phone" placeholder="9876543210" maxlength="10" />
+              <input id="register-phone" type="text" formControlName="phone" placeholder="9876543210" maxlength="10" />
             </div>
 
             @if( registerForm .get('phone') ?.touched && registerForm .get('phone') ?.invalid ){
-
             <p class="error-text">Enter valid 10 digit phone number</p>
-
             }
           </div>
           <!-- Designation -->
 
           <div class="form-group">
-            <label>Designation</label>
+            <label for="register-designation">Designation</label>
 
-            <select formControlName="designation">
+            <select id="register-designation" formControlName="designation">
               <option value="">Select Designation</option>
 
               <option value="DOCTOR">Doctor</option>
@@ -150,7 +147,7 @@
 
               <option value="RECEPTIONIST">Receptionist</option>
 
-              <option value="LAB_TECHNICIAN">Lab Technician</option>
+              <option value="LAB_TECH">Lab Technician</option>
 
               <option value="PHARMACIST">Pharmacist</option>
 
@@ -162,9 +159,9 @@
           </div>
 
           <div class="input-group">
-            <label>Department</label>
+            <label for="register-department">Department</label>
 
-            <select formControlName="department">
+            <select id="register-department" formControlName="department">
               <option value="">Select Department</option>
 
               <option value="CARDIOLOGY">Cardiology</option>
@@ -226,9 +223,9 @@
           <!-- Joining Date -->
 
           <div class="form-group">
-            <label>Joining Date</label>
+            <label for="register-joining-date">Joining Date</label>
 
-            <input type="date" formControlName="joiningDate" />
+            <input id="register-joining-date" type="date" formControlName="joiningDate" />
 
             @if(registerForm.get('joiningDate')?.invalid && registerForm.get('joiningDate')?.touched){
             <span class="error-text">Joining date is required</span>
@@ -239,16 +236,14 @@
         <button type="button" class="submit-btn" (click)="nextStep()">Next</button>
 
         } @if(currentStep === 2){
-
         <div class="step-section">
           @if(isDoctor()){
-
           <!-- Specialization -->
 
           <div class="input-group">
-            <label>Specialization</label>
+            <label for="register-specialization">Specialization</label>
 
-            <select formControlName="specialization">
+            <select id="register-specialization" formControlName="specialization">
               <option value="">Select Specialization</option>
 
               <option value="GENERAL_PHYSICIAN">General Physician</option>
@@ -309,9 +304,9 @@
           <!-- Qualification -->
 
           <div class="form-group">
-            <label>Qualification</label>
+            <label for="register-qualification">Qualification</label>
 
-            <input type="text" formControlName="qualification" placeholder="Enter qualification" />
+            <input id="register-qualification" type="text" formControlName="qualification" placeholder="Enter qualification" />
 
             @if(registerForm.get('qualification')?.invalid && registerForm.get('qualification')?.touched){
             <span class="error-text">Qualification is required</span>
@@ -321,9 +316,9 @@
           <!-- Registration -->
 
           <div class="form-group">
-            <label>Medical Registration No</label>
+            <label for="register-medical-registration-no">Medical Registration No</label>
 
-            <input type="text" formControlName="medicalRegistrationNo" placeholder="Enter registration number" />
+            <input id="register-medical-registration-no" type="text" formControlName="medicalRegistrationNo" placeholder="Enter registration number" />
 
             @if(registerForm.get('name')?.invalid && registerForm.get('name')?.touched){
             <span class="error-text">Medical Registration Number is required</span>
@@ -331,9 +326,7 @@
           </div>
 
           } @if(!isDoctor()){
-
           <div class="feature-card">No additional information required for this designation.</div>
-
           }
         </div>
 
@@ -344,14 +337,13 @@
         </div>
 
         } @if(currentStep === 3){
-
         <div class="step-section">
           <!-- Password -->
 
           <div class="form-group">
-            <label>Password</label>
+            <label for="register-password">Password</label>
 
-            <input type="password" formControlName="password" placeholder="Enter password" />
+            <input id="register-password" type="password" formControlName="password" placeholder="Enter password" />
 
             @if(registerForm.get('password')?.errors?.['required']){
             <span class="error-text">Password is required</span>
@@ -363,9 +355,9 @@
           <!-- Confirm Password -->
 
           <div class="form-group">
-            <label>Confirm Password</label>
+            <label for="register-confirm-password">Confirm Password</label>
 
-            <input type="password" formControlName="confirmPassword" placeholder="Confirm password" />
+            <input id="register-confirm-password" type="password" formControlName="confirmPassword" placeholder="Confirm password" />
 
             @if( registerForm.value.password && registerForm.value.confirmPassword && registerForm.value.password !==
             registerForm.value.confirmPassword ){
@@ -376,15 +368,13 @@
           <!-- Security Question -->
 
           <div class="form-group">
-            <label>Security Question</label>
+            <label for="register-security-question">Security Question</label>
 
-            <select formControlName="securityQuestion">
+            <select id="register-security-question" formControlName="securityQuestion">
               <option value="">Select Question</option>
 
               @for( question of securityQuestions; track question ){
-
               <option [value]="question">{{ question }}</option>
-
               }
             </select>
 
@@ -396,9 +386,9 @@
           <!-- Security Answer -->
 
           <div class="form-group">
-            <label>Security Answer</label>
+            <label for="register-security-answer">Security Answer</label>
 
-            <input type="text" formControlName="securityAnswer" placeholder="Enter answer" />
+            <input id="register-security-answer" type="text" formControlName="securityAnswer" placeholder="Enter answer" />
 
             @if(registerForm.get('securityAnswer')?.invalid && registerForm.get('securityAnswer')?.touched){
             <span class="error-text">Security Answer is required</span>
@@ -413,7 +403,6 @@
             @if(isSubmitting){ Registering... } @else { Register }
           </button>
         </div>
-
         }
       </form>
 

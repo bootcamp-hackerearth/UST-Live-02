@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import { API_BASE_URL } from '../constants/api.constants';
 
 @Injectable({
@@ -77,10 +76,7 @@ export class PatientService {
     return this.http.put(`${this.apiUrl}/${id}`, patientData);
   }
   // Delete patient
-deletePatient(id: string): Observable<any> {
-  return this.http.delete(
-    `${this.apiUrl}/${id}`
-  );
+  deletePatient(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
 }
-}
- 

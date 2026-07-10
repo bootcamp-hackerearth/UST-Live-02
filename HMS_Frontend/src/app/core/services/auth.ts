@@ -1,18 +1,45 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../constants/api.constants';
+
+export type EmployeeProfile = {
+  _id?: string;
+  name?: string;
+  employeeCode?: string;
+  email?: string;
+  countryCode?: string;
+  phone?: string;
+  gender?: string;
+  designation?: string;
+  department?: string;
+  joiningDate?: string;
+  status?: string;
+  specialization?: string;
+  qualification?: string[];
+  consultationFee?: number;
+};
+
+export type CurrentUser = {
+  roles?: string[];
+  employeeId?: EmployeeProfile | null;
+  email?: string;
+  status?: string;
+  createdAt?: string;
+};
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  currentUser = new BehaviorSubject<any>(null);
-  currentUser$ = this.currentUser.asObservable();
+  readonly currentUser = signal<CurrentUser | null>(null);
+
   constructor(private readonly http: HttpClient) {}
 
   login(data: { loginId: string; password: string }): Observable<any> {
-    return this.http.post(`${API_BASE_URL}/auth/login`, data);
+    return this.http.post(`${API_BASE_URL}/auth/login`, data, {
+      withCredentials: true
+    });
   }
 
   getCurrentUser(): Observable<any> {
@@ -22,12 +49,20 @@ export class AuthService {
   loadCurrentUser(): void {
     this.getCurrentUser().subscribe({
       next: (response) => {
-        this.currentUser.next(response.data);
+        this.setCurrentUser(response.data);
       },
       error: () => {
-        this.currentUser.next(null);
+        this.clearCurrentUser();
       }
     });
+  }
+
+  setCurrentUser(user: CurrentUser | null): void {
+    this.currentUser.set(user);
+  }
+
+  clearCurrentUser(): void {
+    this.currentUser.set(null);
   }
 
   createPassword(data: any): Observable<any> {
@@ -40,24 +75,32 @@ export class AuthService {
 
   // Check if current user has a specific role
   hasRole(role: string): boolean {
-    const user = this.currentUser.value;
+    const user = this.currentUser();
 
     if (!user) {
       return false;
     }
 
-    return user.roles?.includes(role);
+    return user.roles?.includes(role) ?? false;
   }
-  refreshToken(refreshToken: string): Observable<any> {
-    return this.http.post(`${API_BASE_URL}/auth/refresh-token`, {
-      refreshToken
-    });
+  refreshToken(): Observable<any> {
+    return this.http.post(
+      `${API_BASE_URL}/auth/refresh-token`,
+      {},
+      {
+        withCredentials: true
+      }
+    );
   }
 
-  logout(refreshToken: string): Observable<any> {
-    return this.http.post(`${API_BASE_URL}/auth/logout`, {
-      refreshToken
-    });
+  logout(): Observable<any> {
+    return this.http.post(
+      `${API_BASE_URL}/auth/logout`,
+      {},
+      {
+        withCredentials: true
+      }
+    );
   }
 
   // Get security question for password recovery

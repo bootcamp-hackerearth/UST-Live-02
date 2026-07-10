@@ -1,89 +1,51 @@
 /* You can add global styles to this file, and also import other style files */
-/*
-|--------------------------------------------------------------------------
-| Google Font
-|--------------------------------------------------------------------------
-*/
+/* Google Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import 'ngx-toastr/toastr';
-/*
-|--------------------------------------------------------------------------
-| Root Variables
-|--------------------------------------------------------------------------
-*/
+/* Root Variables */
 :root {
   /* Colors */
-
   --primary: #2563eb;
-
   --primary-dark: #1d4ed8;
-
   --secondary: #0f766e;
-
   --success: #22c55e;
-
   --danger: #ef4444;
-
   --warning: #f59e0b;
-
   --dark: #0f172a;
-
   --dark-light: #1e293b;
-
   --text: #0f172a;
-
   --text-light: #64748b;
-
   --border: rgba(255, 255, 255, 0.2);
-
   /* Backgrounds */
-
   --bg: #f4f7fb;
-
   --card-bg: #ffffff;
-
   /* Effects */
-
   --blur: none;
-
   --radius: 12px;
-
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 24px rgba(15, 23, 42, 0.05);
-
   --transition: all 0.3s ease;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Global Reset
-|--------------------------------------------------------------------------
-*/
+/* Global Reset */
 * {
   margin: 0;
-
   padding: 0;
-
   box-sizing: border-box;
 }
 
 html,
 body {
+  width: 100%;
+  max-width: 100%;
   font-family: 'Inter', sans-serif;
-
   background: var(--bg);
-
   color: var(--text);
-
   min-height: 100vh;
-
+  overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Scrollbar
-|--------------------------------------------------------------------------
-*/
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -94,7 +56,6 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: rgba(59, 130, 246, 0.25);
-
   border-radius: 20px;
 }
 
@@ -102,78 +63,54 @@ body {
   background: rgba(59, 130, 246, 0.45);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Typography
-|--------------------------------------------------------------------------
-*/
+/* Typography */
 h1 {
   font-size: 28px;
-
   font-weight: 700;
-
   letter-spacing: -1px;
 }
 
 h2 {
   font-size: 24px;
-
   font-weight: 600;
 }
 
 h3 {
   font-size: 18px;
-
   font-weight: 600;
 }
 
 p {
   color: var(--text-light);
-
   line-height: 1.6;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Links
-|--------------------------------------------------------------------------
-*/
+/* Links */
 a {
   text-decoration: none;
-
   color: inherit;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Buttons
-|--------------------------------------------------------------------------
-*/
+/* Buttons */
 button {
   border: none;
-
   outline: none;
-
   cursor: pointer;
-
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
   font-family: inherit;
 }
 
 .primary-btn {
   background: var(--primary);
-
   color: white;
-
   padding: 10px 16px;
-
   border-radius: 10px;
-
   font-weight: 600;
-
   box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
-
   transition: var(--transition);
 }
 
@@ -181,32 +118,19 @@ button {
   background: var(--primary-dark);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Inputs
-|--------------------------------------------------------------------------
-*/
+/* Inputs */
 input,
 select,
 textarea {
   width: 100%;
-
   padding: 10px 12px;
-
   border: 1px solid #cbd5e1;
-
   background: #ffffff;
-
   backdrop-filter: var(--blur);
-
   border-radius: 10px;
-
   font-size: 14px;
-
   transition: var(--transition);
-
   font-family: inherit;
-
   color: var(--text);
 }
 
@@ -214,40 +138,104 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-
   border-color: rgba(59, 130, 246, 0.4);
-
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+}
+
+/* Shared Admin Polish */
+.glass-card,
+.table-wrapper,
+.table-container,
+.filters-wrapper,
+.section-card,
+.loading-card,
+.empty-state,
+.empty-card {
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.top-section,
+.patients-header,
+.employees-header,
+.queue-header,
+.page-header {
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.action-btn,
+.view-btn,
+.secondary-btn,
+.delete-btn,
+.submit-btn {
+  border-radius: 8px !important;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+thead th {
+  color: #334155;
+  background: #f8fafc;
+  font-weight: 800;
+}
+
+tbody tr {
+  transition: background 0.18s ease;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+.error-text {
+  display: block;
+  margin-top: 6px;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+button:disabled,
+.primary-btn:disabled,
+.submit-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 720px) {
+  .top-section,
+  .patients-header,
+  .employees-header,
+  .queue-header,
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 
 textarea {
   resize: none;
-
   min-height: 120px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Glass Card
-|--------------------------------------------------------------------------
-*/
+/* Glass Card */
 .glass-card {
   background: var(--card-bg);
-
   backdrop-filter: var(--blur);
-
   border: 1px solid #e2e8f0;
-
   border-radius: var(--radius);
-
   box-shadow: var(--shadow);
 }
 
-/*
-|--------------------------------------------------------------------------
-| HMS Compact UI System
-|--------------------------------------------------------------------------
-*/
+/* HMS Compact UI System */
 .page-shell,
 .health-record-list-container,
 .consultation-list-container,
@@ -287,10 +275,6 @@ textarea {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-table {
-  font-size: 14px;
-}
-
 thead th,
 tbody td {
   padding: 12px 16px;
@@ -304,14 +288,11 @@ tbody td {
   }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Cross-App HMS Normalization Layer
-|--------------------------------------------------------------------------
-| Many feature components have their own CSS. These rules intentionally use
-| common HMS class names with !important so list, card, form, and action
-| surfaces stay visually consistent across Angular templates.
-*/
+/* Cross-App HMS Normalization Layer
+ * Many feature components have their own CSS. These rules intentionally use
+ * common HMS class names with !important so list, card, form, and action
+ * surfaces stay visually consistent across Angular templates.
+ */
 :where(
   .appointments-page,
   .patients-page,
@@ -352,23 +333,25 @@ tbody td {
 }
 
 :where(
-  .appointments-header,
-  .patients-header,
-  .employees-header,
-  .pending-header,
-  .availability-header,
-  .top-section,
-  .section-header
-) h1,
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header
+  )
+  h1,
 :where(
-  .appointments-header,
-  .patients-header,
-  .employees-header,
-  .pending-header,
-  .availability-header,
-  .top-section,
-  .section-header
-) h2 {
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header
+  )
+  h2 {
   margin: 0 0 4px !important;
   color: #0f172a !important;
   font-size: 26px !important;
@@ -391,11 +374,7 @@ tbody td {
   line-height: 1.5 !important;
 }
 
-:where(
-  .filters-wrapper,
-  .filters-row,
-  .filter-toolbar
-) {
+:where(.filters-wrapper, .filters-row, .filter-toolbar) {
   width: 100% !important;
   display: flex !important;
   flex-direction: row !important;
@@ -433,10 +412,7 @@ tbody td {
   border-radius: 10px !important;
 }
 
-:where(
-  .table-wrapper,
-  .table-container
-) {
+:where(.table-wrapper, .table-container) {
   width: 100% !important;
   overflow-x: auto !important;
   padding: 0 !important;
@@ -527,13 +503,7 @@ tbody td {
   font-size: 16px !important;
 }
 
-:where(
-  .patient-count,
-  .employee-count,
-  .appointment-count,
-  .consultation-count,
-  .record-count
-) {
+:where(.patient-count, .employee-count, .appointment-count, .consultation-count, .record-count) {
   padding: 8px 12px !important;
   border-radius: 10px !important;
   background: #eff6ff !important;
@@ -597,30 +567,12 @@ tbody td {
   transform: none !important;
 }
 
-:where(
-  .book-btn,
-  .request-btn,
-  .add-btn,
-  .submit-btn,
-  .primary-btn,
-  .search-btn,
-  .view-btn,
-  .download-btn
-) {
+:where(.book-btn, .request-btn, .add-btn, .submit-btn, .primary-btn, .search-btn, .view-btn, .download-btn) {
   background: #2563eb !important;
   color: #ffffff !important;
 }
 
-:where(
-  .book-btn,
-  .request-btn,
-  .add-btn,
-  .submit-btn,
-  .primary-btn,
-  .search-btn,
-  .view-btn,
-  .download-btn
-):hover {
+:where(.book-btn, .request-btn, .add-btn, .submit-btn, .primary-btn, .search-btn, .view-btn, .download-btn):hover {
   background: #1d4ed8 !important;
 }
 
@@ -631,12 +583,7 @@ tbody td {
   flex-wrap: wrap !important;
 }
 
-:where(
-  .pagination-card,
-  .pagination-footer,
-  .pagination,
-  .pagination-wrapper
-) {
+:where(.pagination-card, .pagination-footer, .pagination, .pagination-wrapper) {
   margin-top: 12px !important;
   padding: 10px 14px !important;
   border-radius: 12px !important;
@@ -658,6 +605,34 @@ tbody td {
   border-radius: 8px !important;
 }
 
+/* List filter sizing overrides
+ * The normalization layer above uses flex for common filter rows. These list
+ * pages need grid tracks so the search field can take most of the width while
+ * secondary filters stay compact.
+ */
+.appointments-page > .filters-wrapper {
+  display: grid !important;
+  grid-template-columns: minmax(420px, 2.4fr) minmax(130px, 150px) minmax(130px, 150px) minmax(240px, 0.9fr) !important;
+  align-items: end !important;
+}
+
+.patients-page > .filters-wrapper {
+  display: grid !important;
+  grid-template-columns: minmax(420px, 1fr) minmax(130px, 160px) !important;
+}
+
+.employees-page .filters-row {
+  display: grid !important;
+  grid-template-columns: minmax(420px, 2.2fr) minmax(130px, 150px) minmax(130px, 160px) minmax(130px, 160px) auto !important;
+}
+
+.appointments-page .search-box,
+.patients-page .search-box,
+.employees-page .search-box {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
 @media (max-width: 640px) {
   :where(
     .appointments-header,
@@ -671,18 +646,29 @@ tbody td {
     align-items: flex-start !important;
     flex-direction: column !important;
   }
-
   :where(.filters-wrapper, .filters-row, .filter-toolbar) {
     align-items: stretch !important;
     flex-direction: column !important;
   }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Sidebar Exceptions
-|--------------------------------------------------------------------------
-*/
+@media (max-width: 1180px) and (min-width: 641px) {
+  .appointments-page > .filters-wrapper {
+    grid-template-columns: minmax(360px, 1fr) minmax(130px, 150px) minmax(130px, 150px) !important;
+  }
+
+  .appointments-page .date-range {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 980px) and (min-width: 641px) {
+  .employees-page .filters-row {
+    grid-template-columns: minmax(360px, 1fr) minmax(130px, 150px) minmax(130px, 160px) !important;
+  }
+}
+
+/* Sidebar Exceptions */
 .sidebar .profile-card {
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -697,12 +683,9 @@ tbody td {
   color: rgba(255, 255, 255, 0.68) !important;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Auth Theme Exceptions
-|--------------------------------------------------------------------------
-*/
-:where(.login-page, .register-page, .forgot-page, .reset-page, .create-password-page) :where(.submit-btn, button[type='submit']) {
+/* Auth Theme Exceptions */
+:where(.login-page, .register-page, .forgot-page, .reset-page, .create-password-page)
+  :where(.submit-btn, button[type='submit']) {
   background: linear-gradient(135deg, #2563eb, #0f766e) !important;
   color: #ffffff !important;
   box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22) !important;
@@ -737,11 +720,241 @@ tbody td {
   -webkit-backdrop-filter: blur(12px) !important;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Utility Classes
-|--------------------------------------------------------------------------
-*/
+/* Mobile Responsiveness Layer */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+:where(.page-content, router-outlet + *, app-root, app-dashboard-layout) {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  :where(
+    .dashboard-wrapper,
+    .dashboard-content,
+    .stats-grid,
+    .quick-grid,
+    .content-grid,
+    .overview-grid,
+    .details-grid,
+    .info-grid,
+    .form-grid,
+    .form-row,
+    .node-layout,
+    .cards-grid,
+    .appointments-grid,
+    .requests-grid,
+    .records-grid,
+    .profile-grid,
+    .availability-grid
+  ) {
+    grid-template-columns: 1fr !important;
+  }
+
+  :where(.page-header, .top-section, .patients-header, .employees-header, .appointments-header, .pending-header) {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  :where(.header-actions, .actions, .action-buttons, .form-actions, .btn-row) {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 24px;
+    letter-spacing: 0;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  h3 {
+    font-size: 17px;
+  }
+
+  :where(
+    .appointments-page,
+    .patients-page,
+    .employees-page,
+    .pending-page,
+    .availability-page,
+    .consultation-list-container,
+    .health-record-list-container,
+    .profile-page,
+    .node-page,
+    .page-shell,
+    .dashboard-wrapper
+  ) {
+    gap: 12px !important;
+  }
+
+  :where(
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header,
+    .page-header
+  ) {
+    padding: 14px !important;
+    border-radius: 12px !important;
+  }
+
+  :where(
+      .appointments-header,
+      .patients-header,
+      .employees-header,
+      .pending-header,
+      .availability-header,
+      .top-section,
+      .section-header,
+      .page-header
+    )
+    h1,
+  :where(
+      .appointments-header,
+      .patients-header,
+      .employees-header,
+      .pending-header,
+      .availability-header,
+      .top-section,
+      .section-header,
+      .page-header
+    )
+    h2 {
+    font-size: 22px !important;
+    letter-spacing: 0 !important;
+  }
+
+  :where(.page-subtitle, .section-subtitle) {
+    font-size: 13px !important;
+  }
+
+  :where(.filters-wrapper, .filters-row, .filter-toolbar, .search-filter-row) {
+    align-items: stretch !important;
+    flex-direction: column !important;
+    padding: 10px !important;
+  }
+
+  :where(.filters-wrapper > *, .filters-row > *, .filter-toolbar > *, .search-filter-row > *) {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  :where(input, select, textarea) {
+    min-width: 0 !important;
+    font-size: 16px !important;
+  }
+
+  :where(.table-wrapper, .table-container) {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :where(.table-wrapper table, .table-container table) {
+    min-width: 760px;
+  }
+
+  :where(thead th, tbody td) {
+    padding: 10px 12px !important;
+  }
+
+  :where(.card, .glass-card, .section-card, .employee-card, .profile-card, .stat-card, .quick-card) {
+    border-radius: 10px !important;
+  }
+
+  :where(.form-actions, .header-actions, .actions, .action-buttons, .btn-row) {
+    width: 100% !important;
+    align-items: stretch !important;
+  }
+
+  :where(.form-actions > button, .form-actions > a, .header-actions > button, .header-actions > a) {
+    width: 100% !important;
+  }
+
+  :where(.pagination-card, .pagination-footer, .pagination, .pagination-wrapper, app-pagination) {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 520px) {
+  :where(
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header,
+    .page-header
+  ) {
+    padding: 12px !important;
+  }
+
+  :where(
+      .appointments-header,
+      .patients-header,
+      .employees-header,
+      .pending-header,
+      .availability-header,
+      .top-section,
+      .section-header,
+      .page-header
+    )
+    h1,
+  :where(
+      .appointments-header,
+      .patients-header,
+      .employees-header,
+      .pending-header,
+      .availability-header,
+      .top-section,
+      .section-header,
+      .page-header
+    )
+    h2 {
+    font-size: 20px !important;
+  }
+
+  :where(.book-btn, .request-btn, .add-btn, .submit-btn, .primary-btn, .search-btn, .view-btn, .download-btn) {
+    width: 100% !important;
+  }
+
+  :where(.table-wrapper table, .table-container table) {
+    min-width: 680px;
+  }
+
+  :where(.global-toast-wrapper) {
+    left: 12px;
+    right: 12px;
+    transform: none;
+  }
+
+  :where(.global-toast) {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    padding: 14px 16px;
+    white-space: normal;
+  }
+
+  :where(.toast-message) {
+    font-size: 14px;
+    text-align: left;
+  }
+}
+
+/* Utility Classes */
 .flex {
   display: flex;
 }
@@ -758,11 +971,7 @@ tbody td {
   gap: 20px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Fade Animation
-|--------------------------------------------------------------------------
-*/
+/* Fade Animation */
 .fade-in {
   animation: fadeIn 0.5s ease;
 }
@@ -770,13 +979,10 @@ tbody td {
 @keyframes fadeIn {
   from {
     opacity: 0;
-
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
-
     transform: translateY(0);
   }
 }

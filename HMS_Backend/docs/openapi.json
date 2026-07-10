@@ -1,0 +1,168 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "HMS API",
+    "version": "1.0.0",
+    "description": "Hospital Management System API covering authentication, RBAC node permissions, patients, employees, appointments, consultations, and health records."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api",
+      "description": "Local development"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "statusCode": { "type": "integer", "example": 200 },
+          "message": { "type": "string", "example": "Request completed successfully" },
+          "data": {}
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer", "example": 1 },
+          "limit": { "type": "integer", "example": 10 },
+          "total": { "type": "integer", "example": 42 },
+          "totalPages": { "type": "integer", "example": 5 },
+          "hasNextPage": { "type": "boolean", "example": true },
+          "hasPreviousPage": { "type": "boolean", "example": false }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "Login and receive access and refresh tokens",
+        "security": [],
+        "responses": {
+          "200": { "description": "Login successful" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Get the authenticated user profile",
+        "responses": {
+          "200": { "description": "Current user returned" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/nodes": {
+      "get": {
+        "summary": "Get navigation and permission nodes for the current role",
+        "parameters": [
+          {
+            "name": "management",
+            "in": "query",
+            "schema": { "type": "boolean" },
+            "description": "When true, Super Admin receives all non-deleted nodes for management."
+          }
+        ],
+        "responses": {
+          "200": { "description": "Nodes returned" }
+        }
+      },
+      "post": {
+        "summary": "Create a node. Super Admin only.",
+        "responses": {
+          "201": { "description": "Node created" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/nodes/{id}": {
+      "put": {
+        "summary": "Update a node. Super Admin only.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Node updated" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Node not found" }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a node. Super Admin only.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Node deleted" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Node not found" }
+        }
+      }
+    },
+    "/patients": {
+      "get": {
+        "summary": "Get paginated patients",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Patients returned" }
+        }
+      },
+      "post": {
+        "summary": "Register a patient",
+        "responses": {
+          "201": { "description": "Patient registered" }
+        }
+      }
+    },
+    "/appointments": {
+      "get": {
+        "summary": "Get paginated appointments",
+        "responses": {
+          "200": { "description": "Appointments returned" }
+        }
+      }
+    },
+    "/health-records": {
+      "get": {
+        "summary": "Get paginated patient health-record summaries",
+        "responses": {
+          "200": { "description": "Health records returned" }
+        }
+      }
+    },
+    "/health-records/{patientId}": {
+      "get": {
+        "summary": "Get one patient's health record with paginated consultations, reports, and documents",
+        "parameters": [
+          { "name": "patientId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "timelinePage", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "labPage", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "documentPage", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 5 } }
+        ],
+        "responses": {
+          "200": { "description": "Health record returned" }
+        }
+      }
+    }
+  }
+}

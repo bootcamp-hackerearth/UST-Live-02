@@ -5,33 +5,12 @@ const Patient = require("../../models/Patient");
 const Employee = require("../../models/Employee");
 
 const {
-  getPagination,
-  buildPaginationMeta,
+  applyMappedFilters,
+  executePagedQuery,
+  preparePagedFilter,
 } = require("../../utils/pagination");
 
-const getAppointmentsService = async (user, query) => {
-  const {
-    search,
-    status,
-    doctor,
-    appointmentDate,
-    visitMode,
-    appointmentType,
-    priority,
-    page,
-    limit,
-  } = query;
-
-  const filter = {
-    isDeleted: false,
-  };
-
-  /*
-    |--------------------------------------------------------------------------
-    | Role Based Visibility
-    |--------------------------------------------------------------------------
-    */
-
+const applyRoleVisibility = (filter, user) => {
   if (user.roles?.includes("DOCTOR")) {
     filter.doctorEmployeeId = user.employeeId;
   }
@@ -39,126 +18,113 @@ const getAppointmentsService = async (user, query) => {
   if (user.roles?.includes("PATIENT")) {
     filter.patientId = user.patientId;
   }
+};
 
-  /*
-    |--------------------------------------------------------------------------
-    | Filters
-    |--------------------------------------------------------------------------
-    */
+const applyBasicFilters = (filter, query) => {
+  const filterMap = {
+    doctor: "doctorEmployeeId",
+    visitMode: "visitMode",
+    appointmentType: "appointmentType",
+    priority: "priority",
+  };
 
-  if (status && status !== "ALL") {
-    filter.status = status;
-  }
-  if (doctor) {
-    filter.doctorEmployeeId = doctor;
-  }
-
-  if (visitMode) {
-    filter.visitMode = visitMode;
+  if (query.status && query.status !== "ALL") {
+    filter.status = query.status;
   }
 
-  if (appointmentType) {
-    filter.appointmentType = appointmentType;
+  applyMappedFilters(filter, query, filterMap);
+};
+
+const applyAppointmentDateFilter = (filter, appointmentDate) => {
+  if (!appointmentDate) {
+    return;
   }
 
-  if (priority) {
-    filter.priority = priority;
+  const selectedDate = new Date(appointmentDate);
+  selectedDate.setHours(0, 0, 0, 0);
+
+  const nextDay = new Date(selectedDate);
+  nextDay.setDate(nextDay.getDate() + 1);
+
+  filter.appointmentDate = {
+    $gte: selectedDate,
+    $lt: nextDay,
+  };
+};
+
+const findMatchingIdsForSearch = async (search) => {
+  const patients = await Patient.find({
+    $or: [
+      { firstName: { $regex: search, $options: "i" } },
+      { lastName: { $regex: search, $options: "i" } },
+      { patientId: { $regex: search, $options: "i" } },
+    ],
+  })
+    .select("_id")
+    .lean();
+
+  const doctors = await Employee.find({
+    name: {
+      $regex: search,
+      $options: "i",
+    },
+  })
+    .select("_id")
+    .lean();
+
+  return {
+    patientIds: patients.map((patient) => patient._id),
+    doctorIds: doctors.map((doctor) => doctor._id),
+  };
+};
+
+const applySearchFilter = async (filter, search) => {
+  if (!search?.trim()) {
+    return;
   }
 
-  /*
-    |--------------------------------------------------------------------------
-    | Appointment Date
-    |--------------------------------------------------------------------------
-    */
+  const { patientIds, doctorIds } = await findMatchingIdsForSearch(search);
 
-  if (appointmentDate) {
-    const selectedDate = new Date(appointmentDate);
+  filter.$or = [
+    { appointmentId: { $regex: search, $options: "i" } },
+    { patientId: { $in: patientIds } },
+    { doctorEmployeeId: { $in: doctorIds } },
+  ];
+};
 
-    selectedDate.setHours(0, 0, 0, 0);
+const getAppointmentSort = (isCursorPagination) =>
+  isCursorPagination
+    ? {
+        createdAt: -1,
+        _id: -1,
+      }
+    : {
+        appointmentDate: -1,
+        timeSlot: -1,
+      };
 
-    const nextDay = new Date(selectedDate);
+const getAppointmentsService = async (user, query) => {
+  const filter = {
+    isDeleted: false,
+  };
 
-    nextDay.setDate(nextDay.getDate() + 1);
+  applyRoleVisibility(filter, user);
+  applyBasicFilters(filter, query);
+  applyAppointmentDateFilter(filter, query.appointmentDate);
+  await applySearchFilter(filter, query.search);
 
-    filter.appointmentDate = {
-      $gte: selectedDate,
-      $lt: nextDay,
-    };
-  }
+  const { pagination, isCursorPagination, totalFilter } = preparePagedFilter(
+    filter,
+    query,
+  );
 
-  /*
-    |--------------------------------------------------------------------------
-    | Search
-    |--------------------------------------------------------------------------
-    */
-
-  if (search?.trim()) {
-    const patients = await Patient.find({
-      $or: [
-        {
-          firstName: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          lastName: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-        {
-          patientId: {
-            $regex: search,
-            $options: "i",
-          },
-        },
-      ],
-    })
-      .select("_id")
-      .lean();
-
-    const doctors = await Employee.find({
-      name: {
-        $regex: search,
-        $options: "i",
-      },
-    })
-      .select("_id")
-      .lean();
-
-    filter.$or = [
-      {
-        appointmentId: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        patientId: {
-          $in: patients.map((patient) => patient._id),
-        },
-      },
-      {
-        doctorEmployeeId: {
-          $in: doctors.map((doctor) => doctor._id),
-        },
-      },
-    ];
-  }
-
-  /*
-    |--------------------------------------------------------------------------
-    | Pagination
-    |--------------------------------------------------------------------------
-    */
-
-  const pagination = getPagination(page, limit);
-
-  const total = await Appointment.countDocuments(filter);
-
-  const appointments = await Appointment.find(filter)
-    .populate({
+  return executePagedQuery({
+    model: Appointment,
+    filter,
+    totalFilter,
+    pagination,
+    isCursorPagination,
+    buildQuery: (appointments) => appointments.populate({
       path: "patientId",
       select: "patientId firstName lastName phone",
       match: {
@@ -187,18 +153,8 @@ const getAppointmentsService = async (user, query) => {
           createdAt
         `,
     )
-    .sort({
-      appointmentDate: -1,
-      timeSlot: -1,
-    })
-    .skip(pagination.skip)
-    .limit(pagination.limit)
-    .lean();
-
-  return {
-    data: appointments,
-    meta: buildPaginationMeta(pagination.page, pagination.limit, total),
-  };
+    .sort(getAppointmentSort(isCursorPagination)),
+  });
 };
 
 module.exports = getAppointmentsService;

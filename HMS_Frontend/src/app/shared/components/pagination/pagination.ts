@@ -1,5 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy} from '@angular/core';
-
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -24,6 +23,12 @@ export class PaginationComponent {
   limit = 10;
   @Input()
   showPageSize = true;
+
+  @Input()
+  cursorMode = false;
+
+  @Input()
+  hasNextPage = false;
 
   @Output()
   previous = new EventEmitter<void>();

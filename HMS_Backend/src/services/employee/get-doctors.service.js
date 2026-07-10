@@ -7,7 +7,7 @@ const getDoctorsService = async () => {
     status: STATUS.ACTIVE,
     isDeleted: false,
   })
-    .select("name department specialization availability consultationFee")
+    .select("name department specialization availability consultationFee joiningDate")
     .sort({
       name: 1,
     })

@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
 import { EmployeeService } from '../../../core/services/employee';
 
 @Component({
@@ -36,22 +35,16 @@ export class EditEmployee implements OnInit {
         '',
         [Validators.required, Validators.minLength(2), Validators.maxLength(100), Validators.pattern(/^[A-Za-z ]+$/)]
       ],
-
       email: [
         {
           value: '',
           disabled: true
         }
       ],
-
       phone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-
       gender: ['', Validators.required],
-
       department: ['', Validators.required],
-
       designation: ['', Validators.required],
-
       joiningDate: ['', Validators.required]
     });
   }
@@ -81,7 +74,6 @@ export class EditEmployee implements OnInit {
 
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.error(error);
 
@@ -123,7 +115,6 @@ export class EditEmployee implements OnInit {
           this.router.navigate(['/employees']);
         }, 1000);
       },
-
       error: (error) => {
         console.error(error);
 

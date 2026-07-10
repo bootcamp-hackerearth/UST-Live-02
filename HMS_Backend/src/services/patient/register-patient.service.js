@@ -21,7 +21,6 @@ const registerPatient = async (patientData) => {
     gender,
     bloodGroup,
     maritalStatus,
-
     // Contact information
     phone,
     email,
@@ -30,12 +29,10 @@ const registerPatient = async (patientData) => {
     state,
     pincode,
     country,
-
     // Emergency contact
     emergencyContactName,
     emergencyContactPhone,
     relationship,
-
     // Medical information
     allergies,
     chronicDiseases,
@@ -43,13 +40,11 @@ const registerPatient = async (patientData) => {
     pastSurgeries,
     medicalHistory,
     familyMedicalHistory,
-
     // Insurance information
     insuranceProvider,
     insurancePolicyNumber,
     insuranceExpiryDate,
     insuranceCoverageAmount,
-
     // Hospital information
     assignedDoctor,
     department,
@@ -83,14 +78,12 @@ const registerPatient = async (patientData) => {
   // Create patient record
   const patient = await Patient.create({
     patientId,
-
     firstName,
     lastName,
     dateOfBirth,
     gender,
     bloodGroup,
     maritalStatus,
-
     phone,
     email,
     address,
@@ -98,23 +91,19 @@ const registerPatient = async (patientData) => {
     state,
     pincode,
     country,
-
     emergencyContactName,
     emergencyContactPhone,
     relationship,
-
     allergies,
     chronicDiseases,
     currentMedications,
     pastSurgeries,
     medicalHistory,
     familyMedicalHistory,
-
     insuranceProvider,
     insurancePolicyNumber,
     insuranceExpiryDate,
     insuranceCoverageAmount,
-
     assignedDoctor,
     department,
     patientType,
@@ -126,31 +115,22 @@ const registerPatient = async (patientData) => {
 
   await User.create({
     email: email.toLowerCase(),
-
     temporaryPasswordHash,
-
     patientId: patient._id,
-
     roles: [ROLES.PATIENT],
-
     isFirstLogin: true,
-
     status: STATUS.ACTIVE,
   });
   if (patient.email) {
     const htmlContent = patientCreatedTemplate({
       patientName: `${patient.firstName} ${patient.lastName}`,
-
       email: patient.email,
-
       temporaryPassword,
     });
 
     await sendEmail({
       to: patient.email,
-
       subject: "Your HMS Account Credentials",
-
       htmlContent,
     });
   }

@@ -1,196 +1,121 @@
-/*
-|--------------------------------------------------------------------------
-| Dashboard Wrapper
-|--------------------------------------------------------------------------
-*/
+/* Dashboard Wrapper */
 .dashboard-wrapper {
   display: flex;
-
   flex-direction: column;
-
   gap: 28px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Hero
-|--------------------------------------------------------------------------
-*/
+/* Hero */
 .hero-section {
   display: flex;
-
   justify-content: space-between;
-
   align-items: center;
-
   padding: 36px;
-
   border-radius: 30px;
-
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.45));
-
   position: relative;
-
   overflow: hidden;
 }
 
 .hero-section::before {
   content: '';
-
   position: absolute;
-
   top: -100px;
-
   right: -100px;
-
   width: 260px;
-
   height: 260px;
-
   background: radial-gradient(rgba(59, 130, 246, 0.18), transparent);
-
   border-radius: 50%;
 }
 
 .hero-label {
   color: #3b82f6;
-
   font-weight: 700;
-
   margin-bottom: 12px;
-
   text-transform: uppercase;
-
   letter-spacing: 1px;
-
   font-size: 13px;
 }
 
 .hero-section h1 {
   font-size: 42px;
-
   line-height: 1.2;
-
   margin-bottom: 14px;
-
   color: #0f172a;
 }
 
 .hero-subtitle {
   color: #64748b;
-
   max-width: 500px;
-
   font-size: 16px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Status Badge
-|--------------------------------------------------------------------------
-*/
+/* Status Badge */
 .hero-badge {
   display: flex;
-
   align-items: center;
-
   gap: 10px;
-
   background: rgba(255, 255, 255, 0.7);
-
   border: 1px solid rgba(255, 255, 255, 0.35);
-
   padding: 14px 18px;
-
   border-radius: 18px;
-
   font-weight: 600;
-
   color: #334155;
 }
 
 .pulse-dot {
   width: 10px;
-
   height: 10px;
-
   border-radius: 50%;
-
   background: #22c55e;
-
   box-shadow: 0 0 12px #22c55e;
-
   animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
   0% {
     transform: scale(1);
-
     opacity: 1;
   }
-
   50% {
     transform: scale(1.3);
-
     opacity: 0.6;
   }
-
   100% {
     transform: scale(1);
-
     opacity: 1;
   }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Stats
-|--------------------------------------------------------------------------
-*/
+/* Stats */
 .stats-grid {
   display: grid;
-
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-
   gap: 22px;
 }
 
 .stat-card {
   display: flex;
-
   align-items: center;
-
   gap: 18px;
-
   padding: 28px;
-
   border-radius: 24px;
-
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
-
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
 }
 
 .stat-icon {
   width: 68px;
-
   height: 68px;
-
   border-radius: 20px;
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   font-size: 28px;
-
   color: white;
 }
 
@@ -212,9 +137,7 @@
 
 .stat-card h2 {
   font-size: 34px;
-
   margin-bottom: 8px;
-
   color: #0f172a;
 }
 
@@ -222,38 +145,24 @@
   color: #64748b;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Bottom Grid
-|--------------------------------------------------------------------------
-*/
+/* Bottom Grid */
 .bottom-grid {
   display: grid;
-
   grid-template-columns: 1.4fr 1fr;
-
   gap: 24px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Sections
-|--------------------------------------------------------------------------
-*/
+/* Sections */
 .recent-section,
 .quick-section {
   padding: 28px;
-
   border-radius: 28px;
 }
 
 .section-header {
   display: flex;
-
   justify-content: space-between;
-
   align-items: center;
-
   margin-bottom: 26px;
 }
 
@@ -263,113 +172,72 @@
 
 .section-header span {
   color: #64748b;
-
   font-size: 14px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Employee Cards
-|--------------------------------------------------------------------------
-*/
+/* Employee Cards */
 .employee-list {
   display: flex;
-
   flex-direction: column;
-
   gap: 16px;
 }
 
 .employee-card {
   display: flex;
-
   align-items: center;
-
   gap: 16px;
-
   padding: 18px;
-
   border-radius: 20px;
-
   background: rgba(255, 255, 255, 0.5);
-
   transition: all 0.3s ease;
 }
 
 .employee-card:hover {
   transform: translateX(4px);
-
   background: rgba(255, 255, 255, 0.8);
 }
 
 .employee-avatar {
   width: 52px;
-
   height: 52px;
-
   border-radius: 16px;
-
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   color: white;
-
   font-weight: 700;
-
   font-size: 20px;
 }
 
 .employee-card h4 {
   margin-bottom: 4px;
-
   color: #0f172a;
 }
 
 .employee-card p {
   color: #64748b;
-
   font-size: 14px;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Quick Actions
-|--------------------------------------------------------------------------
-*/
+/* Quick Actions */
 .quick-grid {
   display: grid;
-
   grid-template-columns: repeat(2, 1fr);
-
   gap: 18px;
 }
 
 .quick-card {
   background: rgba(255, 255, 255, 0.55);
-
   border: 1px solid rgba(255, 255, 255, 0.35);
-
   border-radius: 22px;
-
   padding: 24px;
-
   display: flex;
-
   flex-direction: column;
-
   gap: 16px;
-
   transition: all 0.3s ease;
-
   text-decoration: none;
-
   color: #0f172a;
-
   font-weight: 600;
 }
 
@@ -379,27 +247,18 @@
 
 .quick-card:hover {
   transform: translateY(-5px);
-
   background: rgba(255, 255, 255, 0.85);
-
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Responsive
-|--------------------------------------------------------------------------
-*/
+/* Responsive */
 @media (max-width: 1100px) {
   .bottom-grid {
     grid-template-columns: 1fr;
   }
-
   .hero-section {
     flex-direction: column;
-
     align-items: flex-start;
-
     gap: 20px;
   }
 }
@@ -408,7 +267,6 @@
   .quick-grid {
     grid-template-columns: 1fr;
   }
-
   .hero-section h1 {
     font-size: 32px;
   }

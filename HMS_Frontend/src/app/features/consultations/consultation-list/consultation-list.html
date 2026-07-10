@@ -8,7 +8,7 @@
       <h1>Consultations</h1>
     </div>
 
-    <div class="consultation-count">Total: {{ consultations.length }}</div>
+    <div class="consultation-count">Total: {{ meta.totalRecords ?? meta.total ?? 0 }}</div>
   </div>
   <div class="filters-wrapper">
     <input type="text" placeholder="Search consultation" [(ngModel)]="search" (input)="onFilterChange()" />
@@ -17,9 +17,7 @@
       <option value="">All Doctors</option>
 
       @for( doctor of doctors; track doctor._id ){
-
       <option [value]="doctor._id">{{ doctor.name }}</option>
-
       }
     </select>
 
@@ -27,9 +25,7 @@
       <option value="">All Patients</option>
 
       @for( patient of patients; track patient._id ){
-
       <option [value]="patient._id">{{ patient.firstName }} {{ patient.lastName }}</option>
-
       }
     </select>
 
@@ -59,19 +55,12 @@
   <!-- Loading -->
 
   @if(isLoading){
-
-  <div class="loading-card">
-    <div class="loader"></div>
-
-    <p>Loading consultations...</p>
-  </div>
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
 
   } @else {
-
   <!-- Empty State -->
 
   @if( consultations.length === 0 ){
-
   <div class="empty-state">
     <div class="empty-icon">📄</div>
 
@@ -81,7 +70,6 @@
   </div>
 
   } @else {
-
   <!-- Table -->
 
   <div class="table-container">
@@ -102,7 +90,6 @@
 
       <tbody>
         @for( consultation of consultations; track consultation._id ){
-
         <tr>
           <!-- Patient -->
 
@@ -167,21 +154,24 @@
             </div>
           </td>
         </tr>
-
         }
       </tbody>
     </table>
   </div>
   <app-pagination
     [page]="page"
-    [totalPages]="meta.totalPages || 1"
-    [totalRecords]="meta.total || 0"
+    [totalPages]="page + (nextCursor ? 1 : 0)"
+    [totalRecords]="meta.totalRecords ?? meta.total ?? 0"
     [limit]="limit"
+    [cursorMode]="true"
+    [hasNextPage]="!!nextCursor"
     (previous)="previousPage()"
     (next)="nextPage()"
     (pageSizeChange)="
     limit = $event;
     page = 1;
+    cursorStack = [''];
+    nextCursor = '';
     loadConsultations(false)
   "
   ></app-pagination>

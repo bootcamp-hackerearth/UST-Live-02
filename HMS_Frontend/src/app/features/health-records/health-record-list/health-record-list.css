@@ -1,8 +1,4 @@
-/*
-|------------------------------------------------------------
-| Container
-|------------------------------------------------------------
-*/
+/* Container */
 
 .health-record-list-container {
   display: flex;
@@ -10,11 +6,7 @@
   gap: 24px;
 }
 
-/*
-|------------------------------------------------------------
-| Header
-|------------------------------------------------------------
-*/
+/* Header */
 
 .top-section {
   display: flex;
@@ -43,25 +35,15 @@
 
 .record-count {
   background: rgba(255, 255, 255, 0.75);
-
   border: 1px solid rgba(255, 255, 255, 0.4);
-
   backdrop-filter: blur(10px);
-
   padding: 14px 20px;
-
   border-radius: 18px;
-
   color: #334155;
-
   font-weight: 700;
 }
 
-/*
-|------------------------------------------------------------
-| Search
-|------------------------------------------------------------
-*/
+/* Search */
 
 .filters-wrapper {
   display: flex;
@@ -71,39 +53,25 @@
 
 .filters-wrapper input {
   width: 360px;
-
   padding: 14px 18px;
-
   border: 1px solid #e2e8f0;
-
   border-radius: 16px;
-
   background: white;
-
   outline: none;
-
   font-size: 14px;
 }
 
 .search-btn {
   border: none;
-
   background: linear-gradient(135deg, #3b82f6, #2563eb);
-
   color: white;
-
   display: flex;
   align-items: center;
   gap: 8px;
-
   padding: 14px 22px;
-
   border-radius: 16px;
-
   cursor: pointer;
-
   font-weight: 600;
-
   transition: 0.3s;
 }
 
@@ -111,37 +79,25 @@
   transform: translateY(-2px);
 }
 
-/*
-|------------------------------------------------------------
-| Loading
-|------------------------------------------------------------
-*/
+/* Loading */
 
 .loading-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
-
   padding: 80px;
-
   background: rgba(255, 255, 255, 0.7);
-
   border-radius: 28px;
-
   backdrop-filter: blur(16px);
 }
 
 .loader {
   width: 48px;
   height: 48px;
-
   border-radius: 50%;
-
   border: 4px solid #dbeafe;
-
   border-top: 4px solid #3b82f6;
-
   animation: spin 1s linear infinite;
 }
 
@@ -156,21 +112,13 @@
   font-weight: 500;
 }
 
-/*
-|------------------------------------------------------------
-| Empty State
-|------------------------------------------------------------
-*/
+/* Empty State */
 
 .empty-state {
   background: rgba(255, 255, 255, 0.7);
-
   border-radius: 28px;
-
   padding: 90px 30px;
-
   text-align: center;
-
   backdrop-filter: blur(16px);
 }
 
@@ -188,23 +136,14 @@
   color: #64748b;
 }
 
-/*
-|------------------------------------------------------------
-| Table
-|------------------------------------------------------------
-*/
+/* Table */
 
 .table-container {
   background: rgba(255, 255, 255, 0.72);
-
   border: 1px solid rgba(255, 255, 255, 0.35);
-
   border-radius: 28px;
-
   overflow: hidden;
-
   backdrop-filter: blur(18px);
-
   box-shadow: 0 15px 40px rgba(15, 23, 42, 0.06);
 }
 
@@ -219,15 +158,10 @@ thead {
 
 thead th {
   padding: 22px;
-
   text-align: left;
-
   color: #0f172a;
-
   font-size: 14px;
-
   font-weight: 700;
-
   border-bottom: 1px solid rgba(226, 232, 240, 0.7);
 }
 
@@ -241,17 +175,11 @@ tbody tr:hover {
 
 tbody td {
   padding: 22px;
-
   color: #334155;
-
   border-bottom: 1px solid rgba(226, 232, 240, 0.55);
 }
 
-/*
-|------------------------------------------------------------
-| Patient
-|------------------------------------------------------------
-*/
+/* Patient */
 
 .patient-info {
   display: flex;
@@ -262,19 +190,13 @@ tbody td {
 .avatar {
   width: 54px;
   height: 54px;
-
   border-radius: 16px;
-
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   color: white;
-
   font-size: 18px;
-
   font-weight: 700;
 }
 
@@ -288,33 +210,21 @@ tbody td {
   font-size: 13px;
 }
 
-/*
-|------------------------------------------------------------
-| Badges
-|------------------------------------------------------------
-*/
+/* Badges */
 
 .uhid-badge {
   background: rgba(99, 102, 241, 0.08);
-
   color: #4f46e5;
-
   padding: 8px 14px;
-
   border-radius: 12px;
-
   font-weight: 600;
 }
 
 .visit-badge {
   background: rgba(59, 130, 246, 0.08);
-
   color: #2563eb;
-
   padding: 8px 14px;
-
   border-radius: 14px;
-
   font-weight: 600;
 }
 
@@ -323,49 +233,32 @@ tbody td {
   font-weight: 500;
 }
 
-/*
-|------------------------------------------------------------
-| Actions
-|------------------------------------------------------------
-*/
+/* Actions */
 
 .view-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
   background: linear-gradient(135deg, #3b82f6, #2563eb);
-
   color: white;
-
   padding: 12px 18px;
-
   border-radius: 14px;
-
   text-decoration: none;
-
   font-weight: 600;
-
   transition: 0.3s ease;
 }
 
 .view-btn:hover {
   transform: translateY(-2px);
-
   box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
 }
 
-/*
-|------------------------------------------------------------
-| Responsive
-|------------------------------------------------------------
-*/
+/* Responsive */
 
 @media (max-width: 992px) {
   .table-container {
     overflow-x: auto;
   }
-
   table {
     min-width: 900px;
   }
@@ -377,26 +270,19 @@ tbody td {
     align-items: flex-start;
     gap: 18px;
   }
-
   .filters-wrapper {
     flex-direction: column;
     align-items: stretch;
   }
-
   .filters-wrapper input {
     width: 100%;
   }
-
   .top-section h1 {
     font-size: 30px;
   }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Compact HMS List Redesign
-|--------------------------------------------------------------------------
-*/
+/* Compact HMS List Redesign */
 .health-record-list-container {
   width: 100%;
   gap: 14px;

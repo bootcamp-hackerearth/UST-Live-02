@@ -1,15 +1,18 @@
 import api from "./api.service";
 
 export const getMyHealthRecord = (
-  timelinePage = 1,
-  labPage = 1,
-  documentPage = 1,
+  timelineCursor = "",
+  labCursor = "",
+  documentCursor = "",
+  limit?: number,
 ) => {
   return api.get("/health-records/me", {
     params: {
-      timelinePage,
-      labPage,
-      documentPage,
+      pagination: "cursor",
+      timelineCursor,
+      labCursor,
+      documentCursor,
+      ...(limit ? { limit } : {}),
     },
   });
 };

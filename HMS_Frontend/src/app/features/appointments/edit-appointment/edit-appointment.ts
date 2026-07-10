@@ -82,7 +82,6 @@ export class EditAppointment implements OnInit {
         this.doctors = response.data;
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.log(error);
         this.cdr.markForCheck();
@@ -128,7 +127,6 @@ export class EditAppointment implements OnInit {
 
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.log(error);
         this.cdr.markForCheck();
@@ -200,7 +198,6 @@ export class EditAppointment implements OnInit {
 
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         this.availableSlots = [];
 
@@ -257,7 +254,6 @@ export class EditAppointment implements OnInit {
         this.isSubmitting = false;
         this.cdr.markForCheck();
       },
-
       error: (error) => {
         console.log(error);
 

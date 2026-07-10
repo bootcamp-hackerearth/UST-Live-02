@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -50,7 +50,6 @@ export class ConsultationForm implements OnInit {
       diagnosis: ['', Validators.required],
       symptoms: [''],
       doctorNotes: [''],
-
       vitals: this.fb.group({
         bloodPressure: ['', Validators.pattern(/^\d{2,3}\/\d{2,3}$/)],
         pulseRate: ['', [Validators.min(1), Validators.max(250)]],
@@ -58,7 +57,6 @@ export class ConsultationForm implements OnInit {
         temperature: ['', [Validators.min(30), Validators.max(45)]],
         weight: ['', [Validators.min(0), Validators.max(500)]]
       }),
-
       prescriptions: this.fb.array([this.createPrescription()])
     });
   }
@@ -96,7 +94,6 @@ export class ConsultationForm implements OnInit {
 
         this.appointment = response.data;
       },
-
       error: (error) => {
         console.log(error);
       }
@@ -117,15 +114,10 @@ export class ConsultationForm implements OnInit {
     const consultationData = {
       appointmentId: this.appointment?._id,
       patientId: this.appointment?.patientId?._id,
-
       diagnosis: this.consultationForm.value.diagnosis,
-
       symptoms: this.consultationForm.value.symptoms?.split(',').map((symptom: string) => symptom.trim()),
-
       doctorNotes: this.consultationForm.value.doctorNotes,
-
       vitals: this.consultationForm.value.vitals,
-
       prescriptions: this.consultationForm.value.prescriptions
     };
 
@@ -141,7 +133,6 @@ export class ConsultationForm implements OnInit {
 
         this.router.navigate(['/doctor-queue']);
       },
-
       error: (error) => {
         console.log(error);
 

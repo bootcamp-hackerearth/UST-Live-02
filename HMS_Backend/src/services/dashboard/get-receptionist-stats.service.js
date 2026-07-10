@@ -12,13 +12,11 @@ const getReceptionistStatsService = async () => {
 
   const checkedInPatients = await Appointment.countDocuments({
     status: STATUS.IN_CONSULTATION,
-
     isDeleted: false,
   });
 
   const pendingAppointments = await Appointment.countDocuments({
     status: STATUS.BOOKED,
-
     isDeleted: false,
   });
 

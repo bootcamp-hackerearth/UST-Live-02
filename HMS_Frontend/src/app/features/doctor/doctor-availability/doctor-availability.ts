@@ -1,8 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-
 import { EmployeeService } from '../../../core/services/employee';
+import { ToastService } from '../../../core/services/toast';
 
 @Component({
   selector: 'app-doctor-availability',
@@ -22,21 +22,17 @@ export class DoctorAvailability implements OnInit {
   constructor(
     private readonly fb: FormBuilder,
     private readonly employeeService: EmployeeService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly toast: ToastService
   ) {
     this.availabilityForm = this.fb.group({
       workingDays: [[]],
-
       startTime: ['', Validators.required],
       endTime: ['', Validators.required],
-
-      slotDuration: [15, Validators.required],
-
+      slotDuration: [15, [Validators.required, Validators.min(5), Validators.max(240)]],
       breakStartTime: [''],
       breakEndTime: [''],
-
-      maxPatientsPerDay: [40, Validators.required],
-
+      maxPatientsPerDay: [40, [Validators.required, Validators.min(1), Validators.max(500)]],
       isAvailable: [true]
     });
   }
@@ -65,7 +61,6 @@ export class DoctorAvailability implements OnInit {
 
         this.cdr.detectChanges();
       },
-
       error: (error) => {
         console.log(error);
       }
@@ -99,6 +94,28 @@ export class DoctorAvailability implements OnInit {
       return;
     }
 
+    const { startTime, endTime, breakStartTime, breakEndTime } = this.availabilityForm.value;
+
+    if (endTime <= startTime) {
+      this.toast.error('End time must be after start time');
+      return;
+    }
+
+    if (breakStartTime && breakEndTime && breakEndTime <= breakStartTime) {
+      this.toast.error('Break end time must be after break start time');
+      return;
+    }
+
+    if ((breakStartTime && !breakEndTime) || (!breakStartTime && breakEndTime)) {
+      this.toast.error('Both break start and end time are required');
+      return;
+    }
+
+    if (breakStartTime && (breakStartTime < startTime || breakEndTime > endTime)) {
+      this.toast.error('Break time must be inside working hours');
+      return;
+    }
+
     this.isSubmitting = true;
 
     this.employeeService.updateDoctorAvailability(this.availabilityForm.value).subscribe({
@@ -107,11 +124,11 @@ export class DoctorAvailability implements OnInit {
 
         this.cdr.detectChanges();
 
-        alert('Availability updated successfully');
+        this.toast.success('Availability updated successfully');
       },
-
       error: (error) => {
         console.log(error);
+        this.toast.error(error?.error?.message || 'Unable to update availability');
 
         this.isSubmitting = false;
 

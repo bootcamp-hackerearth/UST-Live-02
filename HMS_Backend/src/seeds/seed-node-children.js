@@ -1,5 +1,6 @@
 const connectDB = require("../config/db");
 const Node = require("../models/Node");
+const logger = require("../utils/logger");
 const ROLES = require("../constants/roles");
 const mongoose = require("mongoose");
 require("dotenv").config();
@@ -20,10 +21,7 @@ const seedNodeChildren = async () => {
       path: "/appointments",
     });
 
-    // =====================
     // Employee Children
-    // =====================
-
     await Node.findOneAndUpdate(
       {
         path: "/employees/create",
@@ -34,9 +32,7 @@ const seedNodeChildren = async () => {
         parent: employees._id,
         order: 11,
         roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-        apiPermissions: [
-          { method: "POST", path: "/api/employees" },
-        ],
+        apiPermissions: [{ method: "POST", path: "/api/employees" }],
         isDeleted: false,
         isActive: true,
       },
@@ -71,10 +67,7 @@ const seedNodeChildren = async () => {
       },
     );
 
-    // =====================
     // Patient Children
-    // =====================
-
     await Node.findOneAndUpdate(
       {
         path: "/patients/create",
@@ -105,9 +98,7 @@ const seedNodeChildren = async () => {
         setDefaultsOnInsert: true,
       },
     );
-    // =====================
     // Appointment Children
-    // =====================
     await Node.findOneAndUpdate(
       {
         path: "/appointments/book",
@@ -159,11 +150,11 @@ const seedNodeChildren = async () => {
       },
     );
 
-    console.log("Node children seeded successfully");
+    logger.info("Node children seeded successfully");
 
     process.exit(0);
   } catch (error) {
-    console.error("NODE CHILD SEED ERROR:", error);
+    logger.error("Node child seed failed", { error });
 
     process.exit(1);
   }

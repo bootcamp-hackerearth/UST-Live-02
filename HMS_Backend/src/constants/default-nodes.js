@@ -1,8 +1,17 @@
 const ROLES = require("./roles");
 
+const api = (method, path, roles) => ({
+  method,
+  path,
+  ...(roles ? { roles } : {}),
+});
+
+const adminReception = [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.RECEPTIONIST];
+const adminsOnly = [ROLES.SUPER_ADMIN, ROLES.ADMIN];
+const superAdminOnly = [ROLES.SUPER_ADMIN];
+
 module.exports = [
   //dashboards
-
   {
     name: "Admin Dashboard",
     path: "/dashboard/admin",
@@ -10,14 +19,14 @@ module.exports = [
     order: 1,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     apiPermissions: [
-      { method: "GET", path: "/api/dashboard/admin-stats" },
-      { method: "GET", path: "/api/dashboard/recent-employees" },
-      { method: "POST", path: "/api/nodes" },
-      { method: "PUT", path: "/api/nodes/:id" },
-      { method: "DELETE", path: "/api/nodes/:id" },
+      api("GET", "/api/dashboard/admin-stats"),
+      api("GET", "/api/dashboard/recent-employees"),
+      api("GET", "/api/dashboard/audit-logs"),
+      api("POST", "/api/nodes"),
+      api("PUT", "/api/nodes/:id"),
+      api("DELETE", "/api/nodes/:id"),
     ],
   },
-
   {
     name: "Doctor Dashboard",
     path: "/dashboard/doctor",
@@ -25,11 +34,10 @@ module.exports = [
     order: 2,
     roles: [ROLES.DOCTOR],
     apiPermissions: [
-      { method: "GET", path: "/api/dashboard/doctor-stats" },
-      { method: "GET", path: "/api/dashboard/today-appointments" },
+      api("GET", "/api/dashboard/doctor-stats"),
+      api("GET", "/api/dashboard/today-appointments"),
     ],
   },
-
   {
     name: "Receptionist Dashboard",
     path: "/dashboard/receptionist",
@@ -37,13 +45,11 @@ module.exports = [
     order: 3,
     roles: [ROLES.RECEPTIONIST],
     apiPermissions: [
-      { method: "GET", path: "/api/dashboard/receptionist-stats" },
-      { method: "GET", path: "/api/dashboard/today-appointments" },
+      api("GET", "/api/dashboard/receptionist-stats"),
+      api("GET", "/api/dashboard/today-appointments"),
     ],
   },
-
   // parent menus
-
   {
     name: "Employees",
     path: "/employees",
@@ -51,16 +57,15 @@ module.exports = [
     order: 10,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     apiPermissions: [
-      { method: "GET", path: "/api/employees" },
-      { method: "GET", path: "/api/employees/doctors" },
-      { method: "GET", path: "/api/employees/:id" },
-      { method: "PUT", path: "/api/employees/:id" },
-      { method: "PATCH", path: "/api/employees/:id/activate" },
-      { method: "PATCH", path: "/api/employees/:id/deactivate" },
-      { method: "DELETE", path: "/api/employees/:id" },
+      api("GET", "/api/employees"),
+      api("GET", "/api/employees/doctors"),
+      api("GET", "/api/employees/:id"),
+      api("PUT", "/api/employees/:id"),
+      api("PATCH", "/api/employees/:id/activate"),
+      api("PATCH", "/api/employees/:id/deactivate"),
+      api("DELETE", "/api/employees/:id"),
     ],
   },
-
   {
     name: "Patients",
     path: "/patients",
@@ -68,21 +73,12 @@ module.exports = [
     order: 20,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.RECEPTIONIST, ROLES.DOCTOR],
     apiPermissions: [
-      { method: "GET", path: "/api/patients" },
-      { method: "GET", path: "/api/patients/:id" },
-      {
-        method: "PUT",
-        path: "/api/patients/:id",
-        roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.RECEPTIONIST],
-      },
-      {
-        method: "DELETE",
-        path: "/api/patients/:id",
-        roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-      },
+      api("GET", "/api/patients"),
+      api("GET", "/api/patients/:id"),
+      api("PUT", "/api/patients/:id", adminReception),
+      api("DELETE", "/api/patients/:id", adminsOnly),
     ],
   },
-
   {
     name: "Appointments",
     path: "/appointments",
@@ -90,23 +86,14 @@ module.exports = [
     order: 30,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.RECEPTIONIST, ROLES.DOCTOR],
     apiPermissions: [
-      { method: "GET", path: "/api/appointments" },
-      { method: "GET", path: "/api/appointments/available-slots" },
-      { method: "GET", path: "/api/employees/doctors" },
-      { method: "GET", path: "/api/appointments/:id" },
-      {
-        method: "PUT",
-        path: "/api/appointments/:id",
-        roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.RECEPTIONIST],
-      },
-      {
-        method: "DELETE",
-        path: "/api/appointments/:id",
-        roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.RECEPTIONIST],
-      },
+      api("GET", "/api/appointments"),
+      api("GET", "/api/appointments/available-slots"),
+      api("GET", "/api/employees/doctors"),
+      api("GET", "/api/appointments/:id"),
+      api("PUT", "/api/appointments/:id", adminReception),
+      api("DELETE", "/api/appointments/:id", adminReception),
     ],
   },
-
   {
     name: "Health Records",
     path: "/health-records",
@@ -114,43 +101,21 @@ module.exports = [
     order: 40,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.RECEPTIONIST, ROLES.DOCTOR],
     apiPermissions: [
-      { method: "GET", path: "/api/health-records" },
-      { method: "GET", path: "/api/health-records/:patientId" },
-      { method: "POST", path: "/api/health-records/:patientId/lab-reports" },
-      {
-        method: "PUT",
-        path: "/api/health-records/:patientId/lab-reports/:reportId",
-      },
-      {
-        method: "DELETE",
-        path: "/api/health-records/:patientId/lab-reports/:reportId",
-        roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-      },
-      {
-        method: "POST",
-        path: "/api/health-records/:patientId/medical-documents",
-      },
-      {
-        method: "PUT",
-        path: "/api/health-records/:patientId/medical-documents/:documentId",
-      },
-      {
-        method: "DELETE",
-        path: "/api/health-records/:patientId/medical-documents/:documentId",
-        roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-      },
-      { method: "GET", path: "/api/consultations" },
-      { method: "GET", path: "/api/consultations/appointment/:appointmentId" },
-      { method: "GET", path: "/api/consultations/:id" },
-      { method: "GET", path: "/api/consultations/prescription/:consultationId" },
-      {
-        method: "DELETE",
-        path: "/api/consultations/:id",
-        roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-      },
+      api("GET", "/api/health-records"),
+      api("GET", "/api/health-records/:patientId"),
+      api("POST", "/api/health-records/:patientId/lab-reports"),
+      api("PUT", "/api/health-records/:patientId/lab-reports/:reportId"),
+      api("DELETE", "/api/health-records/:patientId/lab-reports/:reportId", adminsOnly),
+      api("POST", "/api/health-records/:patientId/medical-documents"),
+      api("PUT", "/api/health-records/:patientId/medical-documents/:documentId"),
+      api("DELETE", "/api/health-records/:patientId/medical-documents/:documentId", adminsOnly),
+      api("GET", "/api/consultations"),
+      api("GET", "/api/consultations/appointment/:appointmentId"),
+      api("GET", "/api/consultations/:id"),
+      api("GET", "/api/consultations/prescription/:consultationId"),
+      api("DELETE", "/api/consultations/:id", adminsOnly),
     ],
   },
-
   {
     name: "Doctor Queue",
     path: "/doctor-queue",
@@ -158,12 +123,11 @@ module.exports = [
     order: 50,
     roles: [ROLES.DOCTOR],
     apiPermissions: [
-      { method: "GET", path: "/api/appointments/doctor-queue" },
-      { method: "POST", path: "/api/consultations" },
-      { method: "PUT", path: "/api/consultations/:id" },
+      api("GET", "/api/appointments/doctor-queue"),
+      api("POST", "/api/consultations"),
+      api("PUT", "/api/consultations/:id"),
     ],
   },
-
   {
     name: "Doctor Availability",
     path: "/doctor-availability",
@@ -171,11 +135,23 @@ module.exports = [
     order: 60,
     roles: [ROLES.DOCTOR],
     apiPermissions: [
-      { method: "GET", path: "/api/employees/doctor/availability" },
-      { method: "PATCH", path: "/api/employees/doctor/availability" },
+      api("GET", "/api/employees/doctor/availability"),
+      api("PATCH", "/api/employees/doctor/availability"),
     ],
   },
-
+  {
+    name: "Node Management",
+    path: "/node-management",
+    icon: "account_tree",
+    order: 90,
+    roles: [ROLES.SUPER_ADMIN],
+    apiPermissions: [
+      api("GET", "/api/nodes", superAdminOnly),
+      api("POST", "/api/nodes", superAdminOnly),
+      api("PUT", "/api/nodes/:id", superAdminOnly),
+      api("DELETE", "/api/nodes/:id", superAdminOnly),
+    ],
+  },
   {
     name: "My Profile",
     path: "/my-profile",
@@ -183,7 +159,6 @@ module.exports = [
     order: 100,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.RECEPTIONIST, ROLES.DOCTOR],
   },
-
   {
     name: "Patient Portal",
     path: "/patient-portal",
@@ -191,17 +166,17 @@ module.exports = [
     order: 200,
     roles: [ROLES.PATIENT],
     apiPermissions: [
-      { method: "GET", path: "/api/patients/profile" },
-      { method: "PUT", path: "/api/patients/profile" },
-      { method: "GET", path: "/api/patients/dashboard" },
-      { method: "GET", path: "/api/appointments/available-slots" },
-      { method: "GET", path: "/api/employees/doctors" },
-      { method: "POST", path: "/api/appointments/patient/book" },
-      { method: "GET", path: "/api/appointments/my" },
-      { method: "GET", path: "/api/appointments/my/:id" },
-      { method: "PUT", path: "/api/appointments/my/:id" },
-      { method: "PATCH", path: "/api/appointments/my/:id/cancel" },
-      { method: "GET", path: "/api/health-records/me" },
+      api("GET", "/api/patients/profile"),
+      api("PUT", "/api/patients/profile"),
+      api("GET", "/api/patients/dashboard"),
+      api("GET", "/api/appointments/available-slots"),
+      api("GET", "/api/employees/doctors"),
+      api("POST", "/api/appointments/patient/book"),
+      api("GET", "/api/appointments/my"),
+      api("GET", "/api/appointments/my/:id"),
+      api("PUT", "/api/appointments/my/:id"),
+      api("PATCH", "/api/appointments/my/:id/cancel"),
+      api("GET", "/api/health-records/me"),
     ],
   },
 ];

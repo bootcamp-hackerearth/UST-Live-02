@@ -1,5 +1,4 @@
 import React from "react";
-
 import { View, StyleSheet } from "react-native";
 
 export default function DashboardSkeleton() {
@@ -30,27 +29,23 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
-
   hero: {
     height: 140,
     borderRadius: 30,
     backgroundColor: "#E2E8F0",
     marginBottom: 20,
   },
-
   card: {
     height: 140,
     borderRadius: 28,
     backgroundColor: "#E2E8F0",
     marginBottom: 20,
   },
-
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 18,
   },
-
   quickCard: {
     width: "48%",
     height: 100,

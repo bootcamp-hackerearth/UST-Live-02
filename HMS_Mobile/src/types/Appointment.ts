@@ -31,10 +31,12 @@ export interface Appointment {
 }
 
 export interface AppointmentMeta {
-  page: number;
   limit: number;
-  totalRecords: number;
-  totalPages: number;
+  nextCursor?: string | null;
+  hasNextPage: boolean;
+  page?: number;
+  totalRecords?: number;
+  totalPages?: number;
 }
 
 export interface AppointmentResponse {

@@ -4,10 +4,8 @@
   <div class="hero-section glass-card">
     <div>
       <p class="hero-label">Smart Healthcare Workspace</p>
-      @if( authService.currentUser | async; as user ){
-
+      @if( authService.currentUser(); as user ){
       <h1>Welcome, {{ user?.employeeId?.name || 'Administrator' }} 👋</h1>
-
       }
 
       <p class="hero-subtitle">Here’s what’s happening in your hospital today.</p>
@@ -72,6 +70,38 @@
     </div>
   </div>
 
+  <div class="audit-section glass-card">
+    <div class="section-header">
+      <h2>Audit Logs</h2>
+
+      <span>Live Activity</span>
+    </div>
+
+    <div class="audit-list">
+      @for( log of auditLogs || []; track log._id ){
+      <div class="audit-card">
+        <div class="audit-marker" [class.failed]="log.status === 'FAILED'"></div>
+
+        <div class="audit-content">
+          <div class="audit-topline">
+            <h4>{{ getAuditSummary(log) }}</h4>
+
+            <time>{{ log.timestamp | date: 'short' }}</time>
+          </div>
+
+          <p>
+            {{ getActorName(log) }} · {{ log.module || 'System' }} · {{ log.status || 'SUCCESS' }}
+          </p>
+        </div>
+      </div>
+      } @empty {
+      <div class="audit-empty">
+        No audit activity yet.
+      </div>
+      }
+    </div>
+  </div>
+
   <!-- Bottom Grid -->
 
   <div class="bottom-grid">
@@ -86,7 +116,6 @@
 
       <div class="employee-list">
         @for( employee of recentEmployees || []; track employee._id ){
-
         <div class="employee-card">
           <div class="employee-avatar">{{ employee.name ?.charAt(0) }}</div>
 
@@ -96,7 +125,6 @@
             <p>{{ employee.designation }}</p>
           </div>
         </div>
-
         }
       </div>
     </div>
@@ -117,25 +145,19 @@
 
           Book Appointment
         </a>
-        }
-
-        @if(nodeService.canAccessPath('/patients/create')){
+        } @if(nodeService.canAccessPath('/patients/create')){
         <a routerLink="/patients/create" class="quick-card">
           <span>🧑</span>
 
           Add Patient
         </a>
-        }
-
-        @if(nodeService.canAccessPath('/employees/create')){
+        } @if(nodeService.canAccessPath('/employees/create')){
         <a routerLink="/employees/create" class="quick-card">
           <span>👨‍⚕️</span>
 
           Add Employee
         </a>
-        }
-
-        @if(nodeService.canAccessPath('/appointments')){
+        } @if(nodeService.canAccessPath('/appointments')){
         <a routerLink="/appointments" class="quick-card">
           <span>📋</span>
 

@@ -1,59 +1,113 @@
-# HMSFrontend
+# 🏥 Hospital Management System - Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.10.
+## 📖 Overview
 
-## Development server
+Angular Admin Portal for Hospital Management System.
 
-To start a local development server, run:
+---
+
+## 🚀 Technology Stack
+
+- Angular
+- TypeScript
+- RxJS
+- Bootstrap
+- HTML
+- CSS
+
+---
+
+## ✨ Features
+
+- Login
+- Dashboard
+- Employee Management
+- Patient Management
+- Appointment Management
+- Consultation
+- Health Records
+- Audit Logs
+
+---
+
+## 📂 Project Structure
+
+src/
+├── app
+├── assets
+├── environments
+└── styles
+
+---
+
+## ⚙️ Installation
 
 ```bash
+git clone <repo>
+
+npm install
+
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 🏗 Production Build
 
 ```bash
-ng generate component component-name
+ng build --configuration production
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
 
-```bash
-ng generate --help
-```
+## 🚀 Deployment
 
-## Building
+Hosted on
 
-To build the project run:
+- AWS EC2
+- Nginx
+- GitHub Actions
 
-```bash
-ng build
-```
+Deployment Flow
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+GitHub
 
-## Running unit tests
+↓
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+GitHub Actions
 
-```bash
-ng test
-```
+↓
 
-## Running end-to-end tests
+SSH
 
-For end-to-end (e2e) testing, run:
+↓
 
-```bash
-ng e2e
-```
+EC2
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+↓
 
-## Additional Resources
+Angular Build
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+↓
+
+Nginx
+
+---
+
+## 🔒 Security
+
+- HTTPS
+- SSL
+- Secure API Communication
+
+---
+
+## 📸 Screenshots
+
+(Add screenshots)
+
+---
+
+## 👨‍💻 Contributors
+
+Bootstrap Team

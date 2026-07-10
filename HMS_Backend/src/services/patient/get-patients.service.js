@@ -2,127 +2,85 @@ const Patient = require("../../models/Patient");
 const Appointment = require("../../models/Appointment");
 
 const {
+  applyCursorFilter,
+  buildPagedResult,
   getPagination,
-  buildPaginationMeta,
 } = require("../../utils/pagination");
 
-const getPatientsService = async (user, query) => {
-  const {
-    search,
-    status,
-    patientType,
-    assignedDoctor,
-    department,
-    gender,
-    page,
-    limit,
-  } = query;
+const applySearchFilter = (filter, search) => {
+  if (!search?.trim()) {
+    return;
+  }
 
+  filter.$or = [
+    { firstName: { $regex: search, $options: "i" } },
+    { lastName: { $regex: search, $options: "i" } },
+    { patientId: { $regex: search, $options: "i" } },
+    { email: { $regex: search, $options: "i" } },
+    { phone: { $regex: search, $options: "i" } },
+  ];
+};
+
+const applyBasicFilters = (filter, query) => {
+  const filterMap = {
+    status: "status",
+    patientType: "patientType",
+    assignedDoctor: "assignedDoctor",
+    department: "department",
+    gender: "gender",
+    bloodGroup: "bloodGroup",
+  };
+
+  Object.entries(filterMap).forEach(([queryKey, filterKey]) => {
+    if (query[queryKey]) {
+      filter[filterKey] = query[queryKey];
+    }
+  });
+};
+
+const getDoctorPatientIds = async (employeeId) => {
+  const appointments = await Appointment.find({
+    doctorEmployeeId: employeeId,
+    isDeleted: false,
+  })
+    .select("patientId")
+    .lean();
+
+  return [
+    ...new Set(
+      appointments.map((appointment) => appointment.patientId.toString()),
+    ),
+  ];
+};
+
+const applyDoctorVisibility = async (filter, user) => {
+  if (!user.roles?.includes("DOCTOR")) {
+    return;
+  }
+
+  filter._id = {
+    $in: await getDoctorPatientIds(user.employeeId),
+  };
+};
+
+const getPatientsService = async (user, query) => {
   const filter = {
     isDeleted: false,
   };
 
-  /*
-  |--------------------------------------------------------------------------
-  | Search
-  |--------------------------------------------------------------------------
-  */
+  applySearchFilter(filter, query.search);
+  applyBasicFilters(filter, query);
+  await applyDoctorVisibility(filter, user);
 
-  if (search?.trim()) {
-    filter.$or = [
-      {
-        firstName: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        lastName: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        patientId: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        email: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        phone: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-    ];
-  }
+  /* Pagination */
+  const pagination = getPagination(query.page, query.limit);
+  const isCursorPagination =
+    query.pagination === "cursor" || Boolean(query.cursor);
+  const totalFilter = { ...filter };
 
-  /*
-  |--------------------------------------------------------------------------
-  | Filters
-  |--------------------------------------------------------------------------
-  */
+  applyCursorFilter(filter, isCursorPagination ? query.cursor : null);
 
-  if (status) {
-    filter.status = status;
-  }
-
-  if (patientType) {
-    filter.patientType = patientType;
-  }
-
-  if (assignedDoctor) {
-    filter.assignedDoctor = assignedDoctor;
-  }
-
-  if (department) {
-    filter.department = department;
-  }
-
-  if (gender) {
-    filter.gender = gender;
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Doctor Visibility
-  |--------------------------------------------------------------------------
-  */
-
-  if (user.roles?.includes("DOCTOR")) {
-    const appointments = await Appointment.find({
-      doctorEmployeeId: user.employeeId,
-      isDeleted: false,
-    })
-      .select("patientId")
-      .lean();
-
-    const patientIds = [
-      ...new Set(
-        appointments.map((appointment) => appointment.patientId.toString()),
-      ),
-    ];
-
-    filter._id = {
-      $in: patientIds,
-    };
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Pagination
-  |--------------------------------------------------------------------------
-  */
-
-  const pagination = getPagination(page, limit);
-
-  const total = await Patient.countDocuments(filter);
+  const total = await Patient.countDocuments(totalFilter);
 
   const patients = await Patient.find(filter)
     .populate({
@@ -140,6 +98,7 @@ const getPatientsService = async (user, query) => {
         phone
         email
         gender
+        bloodGroup
         patientType
         status
         department
@@ -149,15 +108,18 @@ const getPatientsService = async (user, query) => {
     )
     .sort({
       createdAt: -1,
+      _id: -1,
     })
-    .skip(pagination.skip)
-    .limit(pagination.limit)
+    .skip(isCursorPagination ? 0 : pagination.skip)
+    .limit(isCursorPagination ? pagination.limit + 1 : pagination.limit)
     .lean();
 
-  return {
-    data: patients,
-    meta: buildPaginationMeta(pagination.page, pagination.limit, total),
-  };
+  return buildPagedResult({
+    items: patients,
+    pagination,
+    isCursorPagination,
+    total,
+  });
 };
 
 module.exports = getPatientsService;

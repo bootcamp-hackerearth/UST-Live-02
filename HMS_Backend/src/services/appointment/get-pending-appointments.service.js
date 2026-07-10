@@ -5,7 +5,6 @@ const STATUS = require("../../constants/status");
 const getPendingAppointments = async () => {
   return Appointment.find({
     status: STATUS.PENDING,
-
     isDeleted: false,
   })
     .populate({
@@ -16,7 +15,6 @@ const getPendingAppointments = async () => {
     })
     .populate({
       path: "doctorEmployeeId",
-
       match: {
         isDeleted: false,
       },

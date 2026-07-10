@@ -4,6 +4,7 @@
     "slug": "HMSMobile",
     "version": "1.0.0",
     "orientation": "portrait",
+    
     "icon": "./assets/images/icon.png",
     "scheme": "hmsmobile",
     "userInterfaceStyle": "automatic",
@@ -12,6 +13,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.rabjot.hmsmobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -39,11 +41,20 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-secure-store",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0005a058-599f-4a0c-a9d3-eb9a3982f449"
+      }
+    },
+    "owner": "rabjot"
   }
 }

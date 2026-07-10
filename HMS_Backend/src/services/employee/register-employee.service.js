@@ -12,7 +12,7 @@ const generateSequentialId = require("../../utils/generateSequentialId");
 const ApiError = require("../../utils/ApiError");
 
 const sendEmail = require("../../utils/sendEmail");
-const employeeWelcomeTemplate = require("../../templates/employeeWelcomeTemplate");
+const employeeWelcomeTemplate = require("../../templates/employeeWelcometemplate");
 
 const registerEmployee = async (employeeData, currentUser) => {
   const {
@@ -37,7 +37,6 @@ const registerEmployee = async (employeeData, currentUser) => {
     maxPatientsPerDay,
     securityQuestion,
     securityAnswer: hashedSecurityAnswer,
-    role,
   } = employeeData;
 
   // Super admin authorization
@@ -45,11 +44,7 @@ const registerEmployee = async (employeeData, currentUser) => {
     designation === ROLES.ADMIN &&
     !currentUser.roles?.includes(ROLES.SUPER_ADMIN)
   ) {
-    throw new ApiError(
-      403,
-      "Only Super Admin can create Admin",
-      "FORBIDDEN",
-    );
+    throw new ApiError(403, "Only Super Admin can create Admin", "FORBIDDEN");
   }
 
   // Check if email is already in use

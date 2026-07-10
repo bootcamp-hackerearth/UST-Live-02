@@ -1,9 +1,6 @@
 import { useCallback, useEffect } from "react";
-
 import { View, ActivityIndicator } from "react-native";
-
 import { getToken } from "../storage/token.storage";
-
 import { getCurrentUser } from "../services/auth.service";
 
 export default function SplashScreen({ navigation }: any) {

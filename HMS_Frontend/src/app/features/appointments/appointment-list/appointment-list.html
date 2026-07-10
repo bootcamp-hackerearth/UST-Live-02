@@ -27,7 +27,7 @@
         search
       "
         (input)="
-        onFilterChange()
+        onSearchInput()
       "
       />
     </div>
@@ -133,7 +133,6 @@
 
       <tbody>
         @for ( appointment of appointments; track appointment._id ) {
-
         <tr>
           <!-- Appointment -->
 
@@ -226,6 +225,11 @@
                           ?.status
                           === 'CANCELLED'
                           "
+              [class.rejected]="
+                          appointment
+                          ?.status
+                          === 'REJECTED'
+                          "
               [class.consultation]="
                           appointment
                           ?.status
@@ -243,7 +247,6 @@
               <!-- Admin -->
 
               @if(nodeService.canUseApi('PUT', '/api/appointments/:id')){
-
               <button
                 class="action-btn edit"
                 [routerLink]="[
@@ -254,10 +257,7 @@
                 Edit
               </button>
 
-              }
-
-              @if(nodeService.canUseApi('DELETE', '/api/appointments/:id')){
-
+              } @if(nodeService.canUseApi('DELETE', '/api/appointments/:id')){
               <button
                 class="action-btn delete"
                 (click)="
@@ -268,13 +268,11 @@
               >
                 Delete
               </button>
-
               }
 
               <!-- Doctor -->
 
               @if(nodeService.canAccessPath('/patients')){
-
               <button
                 class="action-btn view"
                 [routerLink]="[
@@ -286,26 +284,28 @@
               >
                 View Patient
               </button>
-
               }
             </div>
           </td>
         </tr>
-
         }
       </tbody>
     </table>
   </div>
   <app-pagination
     [page]="page"
-    [totalPages]="totalPages"
+    [totalPages]="page + (nextCursor ? 1 : 0)"
     [totalRecords]="totalRecords"
     [limit]="limit"
+    [cursorMode]="true"
+    [hasNextPage]="!!nextCursor"
     (previous)="previousPage()"
     (next)="nextPage()"
     (pageSizeChange)="
     limit = $event;
     page = 1;
+    cursorStack = [''];
+    nextCursor = '';
     loadAppointments()
   "
   ></app-pagination>

@@ -30,7 +30,6 @@ const createConsultationService = async (data, createdBy) => {
 
   const appointment = await Appointment.findOne({
     _id: appointmentId,
-
     isDeleted: false,
   });
 
@@ -42,15 +41,12 @@ const createConsultationService = async (data, createdBy) => {
     appointmentId,
     patientId: appointment.patientId,
     doctorEmployeeId: appointment.doctorEmployeeId,
-
     diagnosis,
     symptoms,
     doctorNotes,
     vitals,
     prescriptions,
-
     status: STATUS.COMPLETED,
-
     createdBy,
     updatedBy: createdBy,
   });

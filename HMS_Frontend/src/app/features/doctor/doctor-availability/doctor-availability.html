@@ -12,13 +12,10 @@
 
     <div class="availability-status">
       @if( availabilityForm .value .isAvailable ){
-
       <span class="status active">Available</span>
 
       } @else {
-
       <span class="status inactive">Unavailable</span>
-
       }
     </div>
   </div>
@@ -35,9 +32,9 @@
         <p>Enable or disable appointment booking.</p>
       </div>
 
-      <label class="switch">
-        <input type="checkbox" formControlName="isAvailable" />
-
+      <input id="doctor-is-available" class="switch-input" type="checkbox" formControlName="isAvailable" />
+      <label class="switch" for="doctor-is-available">
+        <span class="switch-label">Doctor availability</span>
         <span class="slider"></span>
       </label>
     </div>
@@ -49,7 +46,6 @@
 
       <div class="days-container">
         @for( day of workingDays; track day ){
-
         <button
           type="button"
           class="day-btn"
@@ -65,7 +61,6 @@
         >
           {{ day }}
         </button>
-
         }
       </div>
     </div>
@@ -79,41 +74,41 @@
         <!-- Start -->
 
         <div class="form-group">
-          <label>Start Time</label>
+          <label for="doctor-start-time">Start Time</label>
 
-          <input type="time" formControlName="startTime" />
+          <input id="doctor-start-time" type="time" formControlName="startTime" />
         </div>
 
         <!-- End -->
 
         <div class="form-group">
-          <label>End Time</label>
+          <label for="doctor-end-time">End Time</label>
 
-          <input type="time" formControlName="endTime" />
+          <input id="doctor-end-time" type="time" formControlName="endTime" />
         </div>
 
         <!-- Break Start -->
 
         <div class="form-group">
-          <label>Break Start</label>
+          <label for="doctor-break-start-time">Break Start</label>
 
-          <input type="time" formControlName="breakStartTime" />
+          <input id="doctor-break-start-time" type="time" formControlName="breakStartTime" />
         </div>
 
         <!-- Break End -->
 
         <div class="form-group">
-          <label>Break End</label>
+          <label for="doctor-break-end-time">Break End</label>
 
-          <input type="time" formControlName="breakEndTime" />
+          <input id="doctor-break-end-time" type="time" formControlName="breakEndTime" />
         </div>
 
         <!-- Slot Duration -->
 
         <div class="form-group">
-          <label>Slot Duration</label>
+          <label for="doctor-slot-duration">Slot Duration</label>
 
-          <select formControlName="slotDuration">
+          <select id="doctor-slot-duration" formControlName="slotDuration">
             <option value="15">15 Minutes</option>
 
             <option value="30">30 Minutes</option>
@@ -127,9 +122,9 @@
         <!-- Max Patients -->
 
         <div class="form-group">
-          <label>Max Patients Per Day</label>
+          <label for="doctor-max-patients">Max Patients Per Day</label>
 
-          <input type="number" formControlName="maxPatientsPerDay" />
+          <input id="doctor-max-patients" type="number" formControlName="maxPatientsPerDay" />
         </div>
       </div>
     </div>

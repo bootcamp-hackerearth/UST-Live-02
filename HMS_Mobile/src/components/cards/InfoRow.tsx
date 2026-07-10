@@ -1,5 +1,4 @@
 import React from "react";
-
 import { View, Text, StyleSheet } from "react-native";
 
 interface Props {
@@ -23,12 +22,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 16,
   },
-
   label: {
     color: "#64748B",
     fontSize: 14,
   },
-
   value: {
     color: "#0F172A",
     fontWeight: "600",

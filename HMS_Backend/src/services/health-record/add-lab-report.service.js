@@ -18,15 +18,11 @@ const addLabReportService = async (patientId, data, file, uploadedBy) => {
 
   patient.labReports.push({
     ...data,
-
     documentUrl: `/uploads/lab-reports/${file.filename}`,
-
     uploadedBy,
     uploadedAt: new Date(),
-
     updatedBy: null,
     updatedAt: null,
-
     isDeleted: false,
     deletedBy: null,
     deletedAt: null,

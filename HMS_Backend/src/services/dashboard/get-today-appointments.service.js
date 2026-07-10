@@ -16,7 +16,6 @@ const getTodayAppointmentsService = async (user) => {
     })
     .populate({
       path: "doctorEmployeeId",
-
       match: {
         isDeleted: false,
       },

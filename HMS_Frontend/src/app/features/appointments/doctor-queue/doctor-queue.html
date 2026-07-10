@@ -22,19 +22,12 @@
   <!-- Loading -->
 
   @if(isLoading){
-
-  <div class="loading-card glass-card">
-    <div class="loader"></div>
-
-    <p>Loading Queue...</p>
-  </div>
+  <app-skeleton-loader [rows]="4"></app-skeleton-loader>
 
   } @else {
-
   <!-- Empty State -->
 
   @if(appointments.length === 0){
-
   <div class="empty-card glass-card">
     <div class="empty-icon">🩺</div>
 
@@ -44,12 +37,10 @@
   </div>
 
   } @else {
-
   <!-- Queue -->
 
   <div class="queue-grid">
     @for ( appointment of appointments; track appointment._id ) {
-
     <div class="queue-card glass-card">
       <!-- Top -->
 
@@ -151,9 +142,7 @@
 
         <div class="symptoms-list">
           @for ( symptom of appointment ?.symptoms; track symptom ) {
-
           <span class="symptom-tag">{{ symptom }}</span>
-
           }
         </div>
       </div>
@@ -170,7 +159,6 @@
 
       <div class="actions">
         @if( appointment ?.status === 'BOOKED' ){
-
         <button
           class="start-btn"
           [routerLink]="[
@@ -182,7 +170,6 @@
         </button>
 
         } @if( appointment ?.status === 'IN_CONSULTATION' ){
-
         <button
           class="complete-btn"
           (click)="
@@ -193,11 +180,9 @@
         >
           Mark Completed
         </button>
-
         }
       </div>
     </div>
-
     }
   </div>
 
