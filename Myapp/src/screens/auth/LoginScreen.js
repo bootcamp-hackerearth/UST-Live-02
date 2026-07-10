@@ -73,6 +73,50 @@ export default function LoginScreen({ navigation }) {
         updateError("password", "");
     };
 
+    // const handleLogin = async () => {
+    //     const submitErrors = validateLoginSubmit({
+    //         email,
+    //         password,
+    //     });
+
+    //     setErrors((prev) => ({
+    //         ...prev,
+    //         ...submitErrors,
+    //     }));
+
+    //     const message = firstErrorMessage(submitErrors);
+
+    //     if (message) {
+    //         Alert.alert("Validation Error", message);
+    //         return;
+    //     }
+
+    //     try {
+    //         setLoading(true);
+
+    //         await login({
+    //             email,
+    //             password,
+    //         });
+    //     } catch (error) {
+    //         //   NEW: Check if temporary password reset is required
+    //         if (error.requiresPasswordReset) {
+    //             navigation.navigate("ForceResetPassword", {
+    //                 email: error.email,
+    //             });
+    //             return;
+    //         }
+
+    //         Alert.alert(
+    //             "Login Failed",
+    //             error?.response?.data?.message ||
+    //             error?.message ||
+    //             "Something went wrong"
+    //         );
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
     const handleLogin = async () => {
         const submitErrors = validateLoginSubmit({
             email,
@@ -99,7 +143,13 @@ export default function LoginScreen({ navigation }) {
                 password,
             });
         } catch (error) {
-            //   NEW: Check if temporary password reset is required
+            // ADD THESE LOGS
+            console.log("🔴 FULL ERROR OBJECT:", error);
+            console.log("🔴 ERROR CODE:", error?.code);
+            console.log("🔴 ERROR MESSAGE:", error?.message);
+            console.log("🔴 RESPONSE:", error?.response?.data);
+            console.log("🔴 AXIOS CONFIG:", error?.config?.url);
+
             if (error.requiresPasswordReset) {
                 navigation.navigate("ForceResetPassword", {
                     email: error.email,
@@ -117,7 +167,6 @@ export default function LoginScreen({ navigation }) {
             setLoading(false);
         }
     };
-
     return (
         <AppContainer>
             <View style={styles.wrapper}>

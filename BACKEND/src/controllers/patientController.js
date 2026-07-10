@@ -8,6 +8,9 @@ const bcrypt = require("bcryptjs");
 const { cancelPatientAppointments } = require("../controllers/appointmentController");
 const {sendEmail} = require("../utils/sendEmail");
 
+const escapeRegex = (value = "") => {
+    return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+};
 // ─── Create Patient ──────────────────────────────────────────────────────────
 
 exports.createPatient = async (req, res) => {
@@ -108,9 +111,37 @@ exports.getPatients = async (req, res) => {
         const limit = Math.max(Number(req.query.limit) || 10, 1);
         const skip = (page - 1) * limit;
 
-        const totalRecords = await Patient.countDocuments({ isDeleted: false });
+        const { search, gender, status } = req.query;
 
-        const patients = await Patient.find({ isDeleted: false })
+        const query = { isDeleted: false };
+
+        if (gender && gender !== "ALL") {
+            query.gender = gender;
+        }
+
+        if (status && status !== "ALL") {
+            query.status = status === "ACTIVE";
+        }
+
+        if (search?.trim()) {
+            const regex = new RegExp(escapeRegex(search.trim()), "i");
+
+            query.$or = [
+                { UHID: regex },
+                { name: regex },
+                { email: regex },
+                { phone: regex },
+                { gender: regex },
+                { address: regex },
+                { "emergencyContact.name": regex },
+                { "emergencyContact.relation": regex },
+                { "emergencyContact.phone": regex }
+            ];
+        }
+
+        const totalRecords = await Patient.countDocuments(query);
+
+        const patients = await Patient.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -131,7 +162,9 @@ exports.getPatients = async (req, res) => {
             )
         );
     } catch (err) {
-        return res.status(500).json(new ApiError(500, err.message || "Internal Server Error"));
+        return res.status(500).json(
+            new ApiError(500, err.message || "Internal Server Error")
+        );
     }
 };
 

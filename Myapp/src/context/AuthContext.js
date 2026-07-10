@@ -4,15 +4,19 @@ import React, {
     useContext,
     useEffect,
     useMemo,
-    useState,
 } from "react";
+import { signal } from "@preact/signals-react";
+import { useSignals } from "@preact/signals-react/runtime";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import SecureStorage from "../utils/secureStorage";
 
 import {
     loginPatient,
     registerPatient,
+    refreshTokenApi,
+    logoutApi,
 } from "../api/authService";
+
 
 import PropTypes from "prop-types";
 
@@ -22,30 +26,34 @@ import {
 
 const AuthContext = createContext(null);
 
-// JWT Timeout duration in milliseconds (60 minutes)
-const JWT_TIMEOUT_DURATION = 60 * 60 * 1000;
+const tokenSignal = signal(null);
+const userSignal = signal(null);
+const patientSignal = signal(null);
+const authLoadingSignal = signal(true);
+const tokenExpirySignal = signal(null);
 
-// Decode JWT to get expiration time
+const SESSION_KEYS = [
+    "token",
+    "refreshToken",
+    "user",
+    "patient",
+    "tokenExpiry",
+];
+
 const decodeJWT = (token) => {
     try {
         const parts = token.split(".");
         if (parts.length !== 3) return null;
-        
-        const decoded = JSON.parse(
-            Buffer.from(parts[1], "base64").toString()
-        );
-        return decoded;
+        return JSON.parse(Buffer.from(parts[1], "base64").toString());
     } catch (err) {
         console.log("JWT decode error:", err);
         return null;
     }
 };
 
-// Check if token is expired based on custom timeout
-const isCustomTokenExpired = (expiryTime) => {
-    if (!expiryTime) return false;
-    const currentTime = Date.now();
-    return currentTime > expiryTime;
+const getTokenExpiry = (token) => {
+    const decoded = decodeJWT(token);
+    return decoded?.exp ? decoded.exp * 1000 : null;
 };
 
 const normalizePatient = (p) => {
@@ -72,54 +80,115 @@ const normalizeLogin = (payload) => {
 
     return {
         token: d?.token || null,
+        refreshToken: d?.refreshToken || null,
         user: d?.user || null,
         patient: normalizePatient(d?.patient),
     };
 };
 
+const persistTokenSession = async ({
+    token,
+    refreshToken,
+    expiry,
+}) => {
+    await SecureStorage.multiSet([
+        ["token", token],
+        ["refreshToken", refreshToken],
+        ["tokenExpiry", expiry.toString()],
+    ]);
+
+    tokenSignal.value = token;
+    tokenExpirySignal.value = expiry;
+};
+
 export function AuthProvider({ children }) {
-    const [token, setToken] = useState(null);
-    const [user, setUser] = useState(null);
-    const [patient, setPatient] = useState(null);
-    const [authLoading, setAuthLoading] = useState(true);
-    const [tokenExpiry, setTokenExpiry] = useState(null);
+    useSignals();
+
+    const token = tokenSignal.value;
+    const user = userSignal.value;
+    const patient = patientSignal.value;
+    const authLoading = authLoadingSignal.value;
+    const tokenExpiry = tokenExpirySignal.value;
+
+    const clearSession = useCallback(async () => {
+        await SecureStorage.multiRemove(SESSION_KEYS);
+        tokenSignal.value = null;
+        userSignal.value = null;
+        patientSignal.value = null;
+        tokenExpirySignal.value = null;
+    }, []);
+
+    const refreshAccessToken = useCallback(async (refreshToken) => {
+        const refreshed = await refreshTokenApi(refreshToken);
+        const newToken = refreshed?.token;
+        const newRefreshToken = refreshed?.refreshToken;
+
+        if (!newToken || !newRefreshToken) {
+            throw new Error("Empty refresh response");
+        }
+
+        const newExpiry =
+            getTokenExpiry(newToken) ??
+            (Date.now() + 15 * 60 * 1000);
+
+        await persistTokenSession({
+            token: newToken,
+            refreshToken: newRefreshToken,
+            expiry: newExpiry,
+        });
+
+        return {
+            token: newToken,
+            refreshToken: newRefreshToken,
+            expiry: newExpiry,
+        };
+    }, []);
 
     const restoreSession = useCallback(async () => {
         try {
-            const t = await AsyncStorage.getItem("token");
-            const u = await AsyncStorage.getItem("user");
-            const p = await AsyncStorage.getItem("patient");
-            const expiryTime = await AsyncStorage.getItem("tokenExpiry");
+            const [t, rt, u, p, expiryStr] =
+                await SecureStorage.multiGet(SESSION_KEYS);
 
-            if (t && p && expiryTime) {
-                // Check if custom token timeout has expired
-                const expiryTimeNum = Number.parseInt(expiryTime);
-                if (isCustomTokenExpired(expiryTimeNum)) {
-                    console.log("Token has timed out, clearing session");
-                    await AsyncStorage.multiRemove([
-                        "token",
-                        "user",
-                        "patient",
-                        "tokenExpiry",
-                    ]);
-                    setToken(null);
-                    setUser(null);
-                    setPatient(null);
-                    setTokenExpiry(null);
-                } else {
-                    console.log("Token is still valid, restoring session");
-                    setToken(t);
-                    setUser(u ? JSON.parse(u) : null);
-                    setPatient(normalizePatient(JSON.parse(p)));
-                    setTokenExpiry(expiryTimeNum);
+            const storedToken = t[1];
+            const storedRefreshToken = rt[1];
+            const storedUser = u[1];
+            const storedPatient = p[1];
+            const storedExpiry = expiryStr[1];
+
+            if (!storedToken || !storedRefreshToken || !storedPatient) {
+                return;
+            }
+
+            const expiryTime = storedExpiry ? Number.parseInt(storedExpiry) : getTokenExpiry(storedToken);
+            const now = Date.now();
+
+            if (expiryTime && now < expiryTime) {
+                // Access token still valid
+                await persistTokenSession({
+                    token: storedToken,
+                    refreshToken: storedRefreshToken,
+                    expiry: expiryTime,
+                });
+                userSignal.value = storedUser ? JSON.parse(storedUser) : null;
+                patientSignal.value = normalizePatient(JSON.parse(storedPatient));
+            } else {
+                // Access token expired — attempt silent refresh
+                console.log("Access token expired on restore, trying refresh...");
+                try {
+                    await refreshAccessToken(storedRefreshToken);
+                    userSignal.value = storedUser ? JSON.parse(storedUser) : null;
+                    patientSignal.value = normalizePatient(JSON.parse(storedPatient));
+                } catch (error_) {
+                    console.log("Silent refresh failed, clearing session:", error_?.message);
+                    await clearSession();
                 }
             }
         } catch (err) {
             console.log("RESTORE SESSION ERROR:", err);
         } finally {
-            setAuthLoading(false);
+            authLoadingSignal.value = false;
         }
-    }, []);
+    }, [clearSession, refreshAccessToken]);
 
     useEffect(() => {
         restoreSession();
@@ -133,7 +202,6 @@ export function AuthProvider({ children }) {
 
         console.log("LOGIN RESPONSE:", response);
 
-        // NEW: Check if temporary password reset is required
         if (response.requiresPasswordReset) {
             const error = new Error("Temporary password reset required");
             error.requiresPasswordReset = true;
@@ -147,30 +215,30 @@ export function AuthProvider({ children }) {
             throw new Error("Invalid login response from server");
         }
 
-        // Calculate token expiry time
-        const expiryTime = Date.now() + JWT_TIMEOUT_DURATION;
+        const expiry = getTokenExpiry(data.token) ?? (Date.now() + 15 * 60 * 1000);
 
-        await AsyncStorage.setItem("token", data.token);
-        await AsyncStorage.setItem("tokenExpiry", expiryTime.toString());
+        await persistTokenSession({
+            token: data.token,
+            refreshToken: data.refreshToken ?? "",
+            expiry,
+        });
 
-        if (data.user) {
-            await AsyncStorage.setItem(
-                "user",
-                JSON.stringify(data.user)
-            );
-        } else {
-            await AsyncStorage.removeItem("user");
-        }
-
-        await AsyncStorage.setItem(
+        await SecureStorage.setItem(
             "patient",
             JSON.stringify(data.patient)
         );
 
-        setToken(data.token);
-        setTokenExpiry(expiryTime);
-        setUser(data.user || null);
-        setPatient(data.patient);
+        if (data.user) {
+            await SecureStorage.setItem(
+                "user",
+                JSON.stringify(data.user)
+            );
+        } else {
+            await SecureStorage.removeItem("user");
+        }
+
+        userSignal.value = data.user || null;
+        patientSignal.value = data.patient;
 
         return data;
     }, []);
@@ -180,53 +248,58 @@ export function AuthProvider({ children }) {
     }, []);
 
     const logout = useCallback(async () => {
-        await AsyncStorage.multiRemove([
-            "token",
-            "user",
-            "patient",
-            "tokenExpiry",
-        ]);
+        const storedRefreshToken = await SecureStorage.getItem("refreshToken");
+        await logoutApi(storedRefreshToken);
+        await clearSession();
+    }, [clearSession]);
 
-        setToken(null);
-        setUser(null);
-        setPatient(null);
-        setTokenExpiry(null);
-    }, []);
-
-    // Monitor token expiration and auto-logout
+    // Proactively refresh the access token 1 minute before it expires
     useEffect(() => {
         if (!token || !tokenExpiry) return;
 
         const now = Date.now();
-        const timeUntilExpiry = tokenExpiry - now;
+        const timeUntilRefresh = tokenExpiry - now - 60 * 1000; // 1 min before expiry
 
-        if (timeUntilExpiry <= 0) {
-            // Token already expired
-            logout();
+        if (timeUntilRefresh <= 0) {
+            // Already at or past the refresh window — refresh immediately
+            SecureStorage.getItem("refreshToken").then(async (rt) => {
+                if (!rt) { logout(); return; }
+                try {
+                    await refreshAccessToken(rt);
+                } catch (err) {
+                    console.log("Proactive refresh failed:", err?.message);
+                    logout();
+                }
+            });
             return;
         }
 
-        // Set timeout to logout when token expires
-        const timeoutId = setTimeout(() => {
-            console.log("Token expired, logging out...");
-            logout();
-        }, timeUntilExpiry);
+        const timeoutId = setTimeout(async () => {
+            const rt = await SecureStorage.getItem("refreshToken");
+            if (!rt) { logout(); return; }
+            try {
+                await refreshAccessToken(rt);
+            } catch (err) {
+                console.log("Proactive refresh failed:", err?.message);
+                logout();
+            }
+        }, timeUntilRefresh);
 
         return () => clearTimeout(timeoutId);
-    }, [token, tokenExpiry, logout]);
+    }, [token, tokenExpiry, logout, refreshAccessToken]);
 
     const updatePatientState = useCallback(async (p) => {
         const n = normalizePatient(p);
 
         if (!n) {
-            await AsyncStorage.removeItem("patient");
-            setPatient(null);
+            await SecureStorage.removeItem("patient");
+            patientSignal.value = null;
             return;
         }
 
-        setPatient(n);
+        patientSignal.value = n;
 
-        await AsyncStorage.setItem(
+        await SecureStorage.setItem(
             "patient",
             JSON.stringify(n)
         );

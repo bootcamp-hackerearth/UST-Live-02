@@ -1,0 +1,160 @@
+:host {
+    display: block;
+    width: 220px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 8px 10px 16px;
+
+    background: linear-gradient(180deg,
+            #0d47a1 0%,
+            #1565c0 45%,
+            #1976d2 100%);
+
+    border-right: 1px solid #90caf9;
+
+    box-shadow: 4px 0 18px rgba(25, 118, 210, 0.22);
+
+    overflow: hidden;
+}
+
+/* Hidden Brand */
+.sidebar-brand {
+    display: none;
+}
+
+/* Divider */
+.sidebar-divider {
+    height: 1px;
+    background: rgba(187, 222, 251, 0.8);
+    margin: 10px 6px 12px;
+    flex-shrink: 0;
+}
+
+/* Navigation */
+.sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-bottom: 16px;
+
+    scrollbar-width: none;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+/* Dashboard */
+.nav-item--dashboard {
+    min-height: 56px;
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+
+/* Menu Item */
+.nav-item {
+    width: calc(100% - 10px);
+    margin: 0 5px;
+
+    min-height: 46px;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 0 14px;
+
+    border-radius: 12px;
+
+    text-decoration: none;
+
+    color: white;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    transition: 0.2s;
+}
+
+.nav-item mat-icon {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    font-size: 20px;
+}
+
+.nav-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.nav-item.active {
+    background: white;
+    color: #0d47a1;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.nav-item.active:hover {
+    background: white;
+    color: #0d47a1;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    :host {
+        width: 100%;
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 999;
+        height: 100vh;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+    }
+
+    :host(.open) {
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 380px) {
+    :host {
+        width: 85vw;
+    }
+
+    .sidebar-nav {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+        display: none;
+    }
+}
