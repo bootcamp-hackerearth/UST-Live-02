@@ -1,0 +1,50 @@
+name: Ezbon Deploy Frontend
+
+on:
+  push:
+    branches:
+      - feature/ezbon_s5
+    paths:
+      - "HMS_Frontend/**"
+      - ".github/workflows/ezbon-frontend-deploy.yml"
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy frontend to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EZBON_EC2_HOST }}
+          username: ${{ secrets.EZBON_EC2_USER }}
+          key: ${{ secrets.EZBON_EC2_SSH_KEY }}
+          script: |
+            echo "Going to repo folder..."
+            cd /home/ubuntu/sprint5/Vanguard-HMS
+
+            echo "Pulling latest frontend code..."
+            git pull origin feature/ezbon_s5
+
+            echo "Going to frontend folder..."
+            cd HMS_Frontend
+
+            echo "Installing frontend dependencies..."
+            npm install
+
+            echo "Building Angular frontend..."
+            npm run build
+
+            echo "Removing old Nginx frontend files..."
+            sudo rm -rf /var/www/html/*
+
+            echo "Copying Angular build to Nginx folder..."
+            sudo cp -r dist/Admin-Panel/browser/* /var/www/html/
+
+            echo "Testing Nginx config..."
+            sudo nginx -t
+
+            echo "Restarting Nginx..."
+            sudo systemctl restart nginx
+
+            echo "Frontend deployment completed successfully."

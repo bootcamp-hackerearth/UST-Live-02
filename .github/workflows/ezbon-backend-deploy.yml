@@ -1,0 +1,41 @@
+name: Ezbon Deploy Backend
+
+on:
+  push:
+    branches:
+      - feature/ezbon_s5
+    paths:
+      - "HMS_Backend/**"
+      - ".github/workflows/ezbon-backend-deploy.yml"
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy backend to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EZBON_EC2_HOST }}
+          username: ${{ secrets.EZBON_EC2_USER }}
+          key: ${{ secrets.EZBON_EC2_SSH_KEY }}
+          script: |
+            echo "Going to repo folder..."
+            cd /home/ubuntu/sprint5/Vanguard-HMS
+
+            echo "Pulling latest backend code..."
+            git pull origin feature/ezbon_s5
+
+            echo "Going to backend folder..."
+            cd HMS_Backend
+
+            echo "Installing backend dependencies..."
+            npm install
+
+            echo "Restarting backend with PM2..."
+            pm2 restart hms
+
+            echo "Checking PM2 status..."
+            pm2 list
+
+            echo "Backend deployment completed successfully."
