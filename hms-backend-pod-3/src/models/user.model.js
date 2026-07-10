@@ -1,0 +1,24 @@
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+    email: { type: String, required: true, unique: true },
+    passwordHash: { type: String, required: true },
+    status: { type: String, enum: ['Active', 'Inactive', 'Pending'], required: true, default: 'Pending' },
+    role: { type: String, enum: ['Owner', 'Super Admin', 'Admin', 'Doctor', 'Receptionist', 'Cashier', 'Nurse', 'Lab_Tech', 'Pharmacist', 'Patient'], required: true },
+    employeeId: { type: String, ref: 'Employee' },
+    patientId: { type: String, ref: 'Patient' },
+    verification_token: { type: String, unique: true },
+    verification_expiry: { type: Date },
+    refresh_token: { type: String, default: null },
+    reset_token: {type: String, default: null},
+    isVerified: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
+    deletedBy: { type: String },
+    firstLogin: { type: Boolean, default: true },
+    lastLoginAt: { type: Date, default: null }
+},
+    { timestamps: { createdAt: 'created_at' } }
+);
+
+module.exports = mongoose.model('Users', userSchema);
