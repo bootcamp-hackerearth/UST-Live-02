@@ -1,0 +1,180 @@
+<div class="consultation-list-container">
+  <!-- Header -->
+
+  <div class="top-section">
+    <div>
+      <p class="section-label">Hospital Consultation Records</p>
+
+      <h1>Consultations</h1>
+    </div>
+
+    <div class="consultation-count">Total: {{ consultations.length }}</div>
+  </div>
+  <div class="filters-wrapper">
+    <input type="text" placeholder="Search consultation" [(ngModel)]="search" (input)="onFilterChange()" />
+
+    <select [(ngModel)]="doctor" (change)="onFilterChange()">
+      <option value="">All Doctors</option>
+
+      @for( doctor of doctors; track doctor._id ){
+      <option [value]="doctor._id">{{ doctor.name }}</option>
+      }
+    </select>
+
+    <select [(ngModel)]="patient" (change)="onFilterChange()">
+      <option value="">All Patients</option>
+
+      @for( patient of patients; track patient._id ){
+      <option [value]="patient._id">{{ patient.firstName }} {{ patient.lastName }}</option>
+      }
+    </select>
+
+    <select [(ngModel)]="status" (change)="onFilterChange()">
+      <option value="">All Status</option>
+
+      <option value="ACTIVE">Active</option>
+
+      <option value="COMPLETED">Completed</option>
+
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+    <input type="date" [(ngModel)]="startDate" (change)="onFilterChange()" />
+
+    <input type="date" [(ngModel)]="endDate" (change)="onFilterChange()" />
+
+    <select [(ngModel)]="limit" (change)="onFilterChange()">
+      <option [value]="10">10</option>
+
+      <option [value]="20">20</option>
+
+      <option [value]="50">50</option>
+    </select>
+  </div>
+
+  <!-- Loading -->
+
+  @if(isLoading){
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
+
+  } @else {
+  <!-- Empty State -->
+
+  @if( consultations.length === 0 ){
+  <div class="empty-state">
+    <div class="empty-icon">📄</div>
+
+    <h2>No Consultations Found</h2>
+
+    <p>Completed consultations will appear here.</p>
+  </div>
+
+  } @else {
+  <!-- Table -->
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+
+          <th>Doctor</th>
+
+          <th>Diagnosis</th>
+
+          <th>Date</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for( consultation of consultations; track consultation._id ){
+        <tr>
+          <!-- Patient -->
+
+          <td>
+            <div class="patient-info">
+              <div class="patient-avatar">{{ consultation ?.patientId ?.firstName ?.charAt(0) }}</div>
+
+              <div>
+                <h4>{{ consultation ?.patientId ?.firstName }} {{ consultation ?.patientId ?.lastName }}</h4>
+
+                <p>Patient Record</p>
+              </div>
+            </div>
+          </td>
+
+          <!-- Doctor -->
+
+          <td>
+            <div class="doctor-badge">🩺 {{ consultation ?.doctorEmployeeId ?.name }}</div>
+          </td>
+
+          <!-- Diagnosis -->
+
+          <td>
+            <span class="diagnosis-text">{{ consultation ?.diagnosis }}</span>
+          </td>
+
+          <!-- Date -->
+
+          <td>
+            <div class="date-text">{{ consultation ?.createdAt | date: 'mediumDate' }}</div>
+          </td>
+
+          <!-- Actions -->
+
+          <td>
+            <div class="actions">
+              <!-- View -->
+
+              <a
+                class="view-btn"
+                [routerLink]="[
+            '/consultations',
+            consultation._id
+          ]"
+              >
+                View
+              </a>
+
+              <!-- Download -->
+
+              <button
+                class="download-btn"
+                (click)="
+          downloadPdf(
+            consultation._id
+          )
+          "
+              >
+                PDF
+              </button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination
+    [page]="page"
+    [totalPages]="page + (nextCursor ? 1 : 0)"
+    [totalRecords]="meta.total || 0"
+    [limit]="limit"
+    [cursorMode]="true"
+    [hasNextPage]="!!nextCursor"
+    (previous)="previousPage()"
+    (next)="nextPage()"
+    (pageSizeChange)="
+    limit = $event;
+    page = 1;
+    cursorStack = [''];
+    nextCursor = '';
+    loadConsultations(false)
+  "
+  ></app-pagination>
+
+  } }
+</div>

@@ -1,0 +1,108 @@
+<div class="pending-page">
+  <!-- Header -->
+
+  <div class="pending-header glass-card">
+    <div>
+      <p class="page-label">Appointment Management</p>
+
+      <h1>Pending Appointments</h1>
+
+      <p class="page-subtitle">Review and approve patient appointment requests.</p>
+    </div>
+
+    <div class="pending-count">{{ appointments.length }} Pending</div>
+  </div>
+
+  <!-- Empty State -->
+
+  @if( appointments.length === 0 ){
+  <div class="empty-state glass-card">
+    <div class="empty-icon">📅</div>
+
+    <h3>No Pending Requests</h3>
+
+    <p>All appointment requests have been reviewed.</p>
+  </div>
+
+  } @else {
+  <div class="employee-grid">
+    @for( appointment of appointments; track appointment._id ){
+    <div class="employee-card glass-card">
+      <!-- Patient -->
+
+      <div class="employee-top">
+        <div class="avatar">{{ appointment ?.patientId ?.firstName ?.charAt(0) }}</div>
+
+        <div>
+          <h3>{{ appointment ?.patientId ?.firstName }} {{ appointment ?.patientId ?.lastName }}</h3>
+
+          <span class="designation-badge">PATIENT</span>
+        </div>
+      </div>
+
+      <!-- Details -->
+
+      <div class="employee-details">
+        <div class="detail-item">
+          <span>Appointment ID</span>
+
+          <strong>{{ appointment ?.appointmentId }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Doctor</span>
+
+          <strong>Dr. {{ appointment ?.doctorEmployeeId ?.name }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Date</span>
+
+          <strong>{{ appointment ?.appointmentDate | date }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Time Slot</span>
+
+          <strong>{{ appointment ?.timeSlot }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Status</span>
+
+          <span class="status-badge">{{ appointment ?.status }}</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+
+      <div class="actions">
+        @if(nodeService.canUseApi('PATCH', '/api/appointments/:id/approve')){
+        <button
+          class="approve-btn"
+          (click)="
+            approve(
+              appointment._id
+            )
+          "
+        >
+          Approve
+        </button>
+        } @if(nodeService.canUseApi('PATCH', '/api/appointments/:id/reject')){
+        <button
+          class="reject-btn"
+          (click)="
+            reject(
+              appointment._id
+            )
+          "
+        >
+          Reject
+        </button>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

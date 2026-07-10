@@ -1,0 +1,47 @@
+name: Deploy HMS Frontend
+
+on:
+  push:
+    branches:
+      - feature/visagan_sprint_5
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy EC2 Frontend
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_VISAGAN_HOST }}
+          username: ${{ secrets.EC2_VISAGAN_USER }}
+          key: ${{ secrets.EC2_VISAGAN_SSH }}
+          script: |
+            set -e
+
+            cd ~/hms_project/HMS-Frontend
+
+            git update-ref -d refs/remotes/origin/feature/visagan_sprint_5 || true
+            git fetch origin feature/visagan_sprint_5
+            git reset --hard FETCH_HEAD
+
+            sudo rm -rf node_modules
+            sudo rm -f package-lock.json
+
+            npm install
+            ./node_modules/.bin/ng build --configuration production
+
+            sudo mkdir -p /var/www/html
+            sudo rm -rf /var/www/html/* 
+
+            if [ -d "dist/hms-frontend/browser" ]; then
+              sudo cp -r dist/hms-frontend/browser/* /var/www/html/
+            elif [ -d "dist/HMS-Frontend/browser" ]; then
+              sudo cp -r dist/HMS-Frontend/browser/* /var/www/html/
+            else
+              echo "Build folder not found"
+              ls -R dist
+              exit 1
+            fi
+
+            sudo systemctl restart nginx

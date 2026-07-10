@@ -1,0 +1,312 @@
+<div class="appointments-page">
+  <!-- Header -->
+
+  <div class="appointments-header glass-card">
+    <div>
+      <p class="page-label">Appointment Management</p>
+
+      <h1>Appointments</h1>
+
+      <p class="page-subtitle">Manage and monitor patient appointments.</p>
+    </div>
+    <div class="appointment-count">{{ totalRecords }} Appointments</div>
+  </div>
+
+  <!-- Filters -->
+
+  <div class="filters-wrapper glass-card">
+    <!-- Search -->
+
+    <div class="search-box">
+      <span>🔍</span>
+
+      <input
+        type="text"
+        placeholder="Search patient or doctor"
+        [(ngModel)]="
+        search
+      "
+        (input)="
+        onFilterChange()
+      "
+      />
+    </div>
+
+    <!-- Status -->
+
+    <select
+      [(ngModel)]="
+      status
+    "
+      (change)="
+      onFilterChange()
+    "
+    >
+      <option value="">All Status</option>
+
+      <option value="BOOKED">Booked</option>
+
+      <option value="IN_CONSULTATION">In Consultation</option>
+
+      <option value="COMPLETED">Completed</option>
+
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+
+    <!-- Priority -->
+
+    <select
+      [(ngModel)]="
+      priority
+    "
+      (change)="
+      onFilterChange()
+    "
+    >
+      <option value="">All Priorities</option>
+
+      <option value="NORMAL">Normal</option>
+
+      <option value="URGENT">Urgent</option>
+
+      <option value="CRITICAL">Critical</option>
+    </select>
+
+    <!-- Date -->
+
+    <div class="date-range">
+      <div>
+        <label for="filter-start-date">From</label>
+
+        <input
+          id="filter-start-date"
+          type="date"
+          [(ngModel)]="
+        startDate
+      "
+          (change)="
+        onFilterChange()
+      "
+        />
+      </div>
+
+      <div>
+        <label for="filter-end-date">To</label>
+
+        <input
+          id="filter-end-date"
+          type="date"
+          [(ngModel)]="
+        endDate
+      "
+          (change)="
+        onFilterChange()
+      "
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+
+  <div class="table-wrapper glass-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Appointment</th>
+
+          <th>Patient</th>
+
+          <th>Doctor</th>
+
+          <th>Date & Time</th>
+
+          <th>Type</th>
+
+          <th>Priority</th>
+
+          <th>Status</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for ( appointment of appointments; track appointment._id ) {
+        <tr>
+          <!-- Appointment -->
+
+          <td>
+            <div class="appointment-id">
+              <h4>{{ appointment ?.appointmentId }}</h4>
+
+              <span>Token # {{ appointment ?.tokenNumber }}</span>
+            </div>
+          </td>
+
+          <!-- Patient -->
+
+          <td>
+            <div class="patient-info">
+              <div class="avatar">{{ appointment ?.patientId ?.firstName ?.charAt(0) }}</div>
+
+              <div>
+                <h4>{{ appointment ?.patientId ?.firstName }} {{ appointment ?.patientId ?.lastName }}</h4>
+
+                <span>Patient</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Doctor -->
+
+          <td>
+            <div class="doctor-name">🩺 {{ appointment ?.doctorEmployeeId ?.name }}</div>
+          </td>
+
+          <!-- Date -->
+
+          <td>
+            <div class="date-info">
+              <h4>{{ appointment ?.appointmentDate | date }}</h4>
+
+              <span>{{ appointment ?.timeSlot }}</span>
+            </div>
+          </td>
+
+          <!-- Type -->
+
+          <td>
+            <span class="type-badge">{{ appointment ?.appointmentType }}</span>
+          </td>
+
+          <!-- Priority -->
+
+          <td>
+            <span
+              class="priority-badge"
+              [class.normal]="
+                          appointment
+                          ?.priority
+                          === 'NORMAL'
+                          "
+              [class.urgent]="
+                          appointment
+                          ?.priority
+                          === 'URGENT'
+                          "
+              [class.critical]="
+                          appointment
+                          ?.priority
+                          === 'CRITICAL'
+                          "
+            >
+              {{ appointment ?.priority }}
+            </span>
+          </td>
+
+          <!-- Status -->
+
+          <td>
+            <span
+              class="status-badge"
+              [class.booked]="
+                          appointment
+                          ?.status
+                          === 'BOOKED'
+                          "
+              [class.completed]="
+                          appointment
+                          ?.status
+                          === 'COMPLETED'
+                          "
+              [class.cancelled]="
+                          appointment
+                          ?.status
+                          === 'CANCELLED'
+                          "
+              [class.rejected]="
+                          appointment
+                          ?.status
+                          === 'REJECTED'
+                          "
+              [class.consultation]="
+                          appointment
+                          ?.status
+                          === 'IN_CONSULTATION'
+                          "
+            >
+              {{ appointment ?.status }}
+            </span>
+          </td>
+
+          <!-- Actions -->
+
+          <td>
+            <div class="actions">
+              <!-- Admin -->
+
+              @if(nodeService.canUseApi('PUT', '/api/appointments/:id')){
+              <button
+                class="action-btn edit"
+                [routerLink]="[
+                                '/appointments/edit',
+                                appointment._id
+                              ]"
+              >
+                Edit
+              </button>
+
+              } @if(nodeService.canUseApi('DELETE', '/api/appointments/:id')){
+              <button
+                class="action-btn delete"
+                (click)="
+                              deleteAppointment(
+                                appointment._id
+                              )
+                              "
+              >
+                Delete
+              </button>
+              }
+
+              <!-- Doctor -->
+
+              @if(nodeService.canAccessPath('/patients')){
+              <button
+                class="action-btn view"
+                [routerLink]="[
+                                '/patients',
+                                appointment
+                                ?.patientId
+                                ?._id
+                              ]"
+              >
+                View Patient
+              </button>
+              }
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-pagination
+    [page]="page"
+    [totalPages]="page + (nextCursor ? 1 : 0)"
+    [totalRecords]="totalRecords"
+    [limit]="limit"
+    [cursorMode]="true"
+    [hasNextPage]="!!nextCursor"
+    (previous)="previousPage()"
+    (next)="nextPage()"
+    (pageSizeChange)="
+    limit = $event;
+    page = 1;
+    cursorStack = [''];
+    nextCursor = '';
+    loadAppointments()
+  "
+  ></app-pagination>
+</div>

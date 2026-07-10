@@ -1,0 +1,217 @@
+<div class="employees-page">
+  <!-- Header -->
+
+  <div class="employees-header glass-card">
+    <div>
+      <p class="page-label">Workforce Management</p>
+
+      <h1>Employees</h1>
+
+      <p class="page-subtitle">Manage doctors, nurses and hospital staff.</p>
+    </div>
+
+    <div class="header-actions">
+      <div class="employee-count">{{ total }} Employees</div>
+    </div>
+  </div>
+
+  <!-- Search -->
+
+  <div class="filters-wrapper glass-card">
+    <div class="filters-row">
+      <div class="search-box">
+        <span>🔍</span>
+
+        <input type="text" placeholder="Search employee..." [(ngModel)]="search" (input)="onSearch()" />
+      </div>
+
+      <select [(ngModel)]="status" (change)="onFilterChange()">
+        <option value="">All Status</option>
+
+        <option value="ACTIVE">Active</option>
+
+        <option value="INACTIVE">Inactive</option>
+
+        <option value="PENDING">Pending</option>
+      </select>
+
+      <input
+        type="text"
+        placeholder="Department"
+        [(ngModel)]="
+        department
+      "
+        (input)="
+        onFilterChange()
+      "
+      />
+
+      <input
+        type="text"
+        placeholder="Designation"
+        [(ngModel)]="
+        designation
+      "
+        (input)="
+        onFilterChange()
+      "
+      />
+
+      <button
+        class="action-btn view"
+        (click)="
+        resetFilters()
+      "
+      >
+        Reset
+      </button>
+    </div>
+  </div>
+
+  @if(isLoading){
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
+
+  } @else if(employees.length === 0) {
+  <app-empty-state
+    icon="groups"
+    title="No Employees Found"
+    message="Try changing filters or add a new employee."
+  ></app-empty-state>
+
+  } @else {
+  <!-- Table -->
+
+  <div class="table-wrapper glass-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Employee</th>
+
+          <th>Employee Code</th>
+
+          <th>Designation</th>
+
+          <th>Department</th>
+
+          <th>Status</th>
+
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr
+          *ngFor="
+                  let employee
+                 of employees
+                  "
+        >
+          <!-- Employee -->
+
+          <td>
+            <div class="employee-info">
+              <div class="avatar">{{ employee.name ?.charAt(0) }}</div>
+
+              <div>
+                <h4>{{ employee.name }}</h4>
+
+                <span>{{ employee.email }}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Employee Code -->
+
+          <td>
+            <div class="employee-code">{{ employee.employeeCode }}</div>
+          </td>
+
+          <!-- Designation -->
+
+          <td>
+            <span class="designation-badge">{{ employee.designation }}</span>
+          </td>
+
+          <!-- Department -->
+
+          <td>
+            <span class="department-badge">{{ employee.department }}</span>
+          </td>
+
+          <!-- Status -->
+
+          <td>
+            <span
+              class="status-badge"
+              [class.active]="
+                          employee.status
+                          === 'ACTIVE'
+                          "
+              [class.inactive]="
+                          employee.status
+                          === 'INACTIVE'
+                          "
+              [class.pending]="
+                          employee.status
+                          === 'PENDING'
+                          "
+            >
+              {{ employee.status }}
+            </span>
+          </td>
+
+          <!-- Actions -->
+
+          <td>
+            <div class="actions">
+              <!-- View -->
+              <a [routerLink]="['/employees', employee._id]" class="action-btn view">View</a>
+
+              <!-- Edit -->
+              @if(nodeService.canUseApi('PUT', '/api/employees/:id')){
+              <a [routerLink]="['/employees/edit', employee._id]" class="action-btn edit">Edit</a>
+              }
+
+              <!-- Activate -->
+              @if( employee.status === 'INACTIVE' && ( nodeService.canUseApi('PATCH', '/api/employees/:id/activate') )
+              ){
+              <button type="button" class="action-btn activate" (click)="activateEmployee(employee._id)">
+                Activate
+              </button>
+              }
+
+              <!-- Deactivate -->
+              @if( employee.status === 'ACTIVE' && ( nodeService.canUseApi('PATCH', '/api/employees/:id/deactivate') )
+              ){
+              <button type="button" class="action-btn deactivate" (click)="deactivateEmployee(employee._id)">
+                Deactivate
+              </button>
+              }
+
+              <!-- Delete -->
+              @if(nodeService.canUseApi('DELETE', '/api/employees/:id')){
+              <button type="button" class="action-btn delete" (click)="deleteEmployee(employee._id)">Delete</button>
+              }
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <app-pagination
+    [page]="page"
+    [totalPages]="page + (nextCursor ? 1 : 0)"
+    [totalRecords]="total"
+    [limit]="limit"
+    [cursorMode]="true"
+    [hasNextPage]="!!nextCursor"
+    (previous)="previousPage()"
+    (next)="nextPage()"
+    (pageSizeChange)="
+    limit = $event;
+    page = 1;
+    loadEmployees(false)
+  "
+  ></app-pagination>
+  }
+</div>

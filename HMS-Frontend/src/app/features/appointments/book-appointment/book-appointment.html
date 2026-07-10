@@ -1,0 +1,324 @@
+<div class="appointment-page">
+  <!-- Header -->
+
+  <div class="appointment-header glass-card">
+    <div>
+      <p class="page-label">Appointment Management</p>
+
+      <h1>Book Appointment</h1>
+
+      <p class="page-subtitle">Schedule patient consultations and manage doctor slots.</p>
+    </div>
+  </div>
+
+  <!-- Form -->
+
+  <form [formGroup]="appointmentForm" (ngSubmit)="onSubmit()" class="appointment-form glass-card">
+    <!-- Appointment Details -->
+
+    <div class="form-section">
+      <div class="section-title">
+        <h2>Appointment Details</h2>
+
+        <p>Select patient and doctor</p>
+      </div>
+
+      <div class="grid-2">
+        <!-- Patient -->
+
+        <div class="form-group">
+          <label for="book-appointment-patient">Patient</label>
+
+          <select id="book-appointment-patient" formControlName="patientId">
+            <option value="">Select Patient</option>
+
+            @for( patient of patients; track patient._id ){
+            <option [value]="patient._id">
+              {{ patient.patientId }} - {{ patient.firstName }} {{ patient.lastName }}
+            </option>
+            }
+          </select>
+          @if(appointmentForm.get('patientId')?.invalid && appointmentForm.get('patientId')?.touched){
+          <span class="error-text">Patient Id is required</span>
+          }
+        </div>
+
+        <!-- Department -->
+
+        <div class="form-group">
+          <label for="book-appointment-department">Department</label>
+
+          <select id="book-appointment-department" formControlName="department" (change)="filterDoctors()">
+            <option value="">Select Department</option>
+
+            <option value="CARDIOLOGY">Cardiology</option>
+
+            <option value="NEUROLOGY">Neurology</option>
+
+            <option value="ORTHOPEDICS">Orthopedics</option>
+
+            <option value="GENERAL">General</option>
+
+            <option value="PEDIATRICS">Pediatrics</option>
+
+            <option value="DERMATOLOGY">Dermatology</option>
+
+            <option value="GYNECOLOGY">Gynecology</option>
+
+            <option value="ONCOLOGY">Oncology</option>
+
+            <option value="RADIOLOGY">Radiology</option>
+
+            <option value="PATHOLOGY">Pathology</option>
+
+            <option value="EMERGENCY">Emergency</option>
+
+            <option value="ICU">ICU</option>
+
+            <option value="GENERAL_MEDICINE">General Medicine</option>
+
+            <option value="ENT">ENT</option>
+
+            <option value="UROLOGY">Urology</option>
+
+            <option value="PSYCHIATRY">Psychiatry</option>
+
+            <option value="PULMONOLOGY">Pulmonology</option>
+
+            <option value="GASTROENTEROLOGY">Gastroenterology</option>
+
+            <option value="NEPHROLOGY">Nephrology</option>
+
+            <option value="OPHTHALMOLOGY">Ophthalmology</option>
+
+            <option value="SURGERY">Surgery</option>
+
+            <option value="ADMINISTRATION">Administration</option>
+          </select>
+          @if(appointmentForm.get('department')?.invalid && appointmentForm.get('department')?.touched){
+          <span class="error-text">Department is required</span>
+          }
+        </div>
+
+        <!-- Appointment Date -->
+
+        <div class="form-group">
+          <label for="appointmentDate">Appointment Date</label>
+
+          <input
+            id="appointmentDate"
+            type="date"
+            formControlName="appointmentDate"
+            [min]="minDate"
+            (change)="onAppointmentDateChange()"
+          />
+          @if(appointmentForm.get('appointmentDate')?.invalid && appointmentForm.get('appointmentDate')?.touched){
+          <span class="error-text">Appointment Date is required</span>
+          } @if(noSlotsError){
+          <span class="error-text">Doctor is not available on this day</span>
+          }
+
+          <!-- Consultation Fee -->
+
+          @if(false){
+          <p class="consultation-fee">Consultation Fee: ₹{{ selectedDoctor ?.consultationFee || 0 }}</p>
+          }
+        </div>
+
+        <!-- Doctor -->
+
+        <div class="form-group">
+          <label for="book-appointment-doctor">Doctor</label>
+
+          <select
+            id="book-appointment-doctor"
+            formControlName="doctorId"
+            [disabled]="!appointmentForm.get('appointmentDate')?.value"
+            (change)="onDoctorChange()"
+          >
+            <option value="">Select Doctor</option>
+
+            <option *ngFor="let doctor of filteredDoctors" [value]="doctor._id">{{ doctor.name }}</option>
+          </select>
+
+          @if(!appointmentForm.get('appointmentDate')?.value){}
+           @else if(appointmentForm.get('department')?.value && filteredDoctors.length === 0){
+          <span class="helper-text">No joined doctors available for this date and department.</span>
+          }
+
+          <!-- Consultation Fee -->
+
+          @if(selectedDoctor){
+          <p class="consultation-fee">Consultation Fee: ₹{{ selectedDoctor ?.consultationFee || 0 }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Available Slots -->
+
+    <div class="slots-card">
+      <div class="slot-header">
+        <div>
+          <h2>Available Slots</h2>
+
+          <p>Choose an available time</p>
+        </div>
+      </div>
+
+      <div class="slots-container">
+        @for( slot of availableSlots; track slot ){
+        <button
+          type="button"
+          class="slot-btn"
+          [class.active]="
+                  appointmentForm
+                  .get(
+                    'appointmentTime'
+                  )
+                  ?.value === slot
+                  "
+          (click)="
+                  appointmentForm
+                  .get(
+                    'appointmentTime'
+                  )
+                  ?.setValue(
+                    slot
+                  )
+                  "
+        >
+          {{ slot }}
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- Consultation Details -->
+
+    <div class="form-section">
+      <div class="section-title">
+        <h2>Consultation Details</h2>
+
+        <p>Additional appointment info</p>
+      </div>
+
+      <div class="grid-2">
+        <!-- Appointment Type -->
+
+        <div class="form-group">
+          <label for="book-appointment-type">Appointment Type</label>
+
+          <select id="book-appointment-type" formControlName="appointmentType">
+            <option value="">Select appointment type</option>
+            <option value="CONSULTATION">Consultation</option>
+
+            <option value="FOLLOW_UP">Follow Up</option>
+
+            <option value="EMERGENCY">Emergency</option>
+
+            <option value="VIDEO_CONSULTATION">Video Consultation</option>
+
+            <option value="ROUTINE_CHECKUP">Routine Checkup</option>
+          </select>
+          @if(appointmentForm.get('appointmentType')?.invalid && appointmentForm.get('appointmentType')?.touched){
+          <span class="error-text">Appointment type is required</span>
+          }
+        </div>
+
+        <!-- Priority -->
+
+        <div class="form-group">
+          <label for="book-appointment-priority">Priority</label>
+
+          <select id="book-appointment-priority" formControlName="priority">
+            <option value="">Select Priority</option>
+            <option value="NORMAL">Normal</option>
+
+            <option value="URGENT">Urgent</option>
+
+            <option value="CRITICAL">Critical</option>
+          </select>
+          @if(appointmentForm.get('priority')?.invalid && appointmentForm.get('priority')?.touched){
+          <span class="error-text">Priority is required</span>
+          }
+        </div>
+
+        <!-- Payment Status -->
+
+        <div class="form-group">
+          <label for="book-appointment-payment-status">Payment Status</label>
+
+          <select id="book-appointment-payment-status" formControlName="paymentStatus">
+            <option value="">Select Payment Status</option>
+            <option value="PENDING">Pending</option>
+
+            <option value="PAID">Paid</option>
+
+            <option value="INSURANCE">Insurance</option>
+          </select>
+          @if(appointmentForm.get('paymentStatus')?.invalid && appointmentForm.get('paymentStatus')?.touched){
+          <span class="error-text">Payment Status is required</span>
+          }
+        </div>
+
+        <!-- Visit Mode -->
+
+        <div class="form-group">
+          <label for="book-appointment-visit-mode">Visit Mode</label>
+
+          <select id="book-appointment-visit-mode" formControlName="visitMode">
+            <option value="">Select visit Mode</option>
+            <option value="OFFLINE">Offline</option>
+
+            <option value="ONLINE">Online</option>
+
+            <option value="HOME_VISIT">Home Visit</option>
+          </select>
+          @if(appointmentForm.get('visitMode')?.invalid && appointmentForm.get('visitMode')?.touched){
+          <span class="error-text">Visit Mode is required</span>
+          }
+        </div>
+      </div>
+
+      <!-- Symptoms -->
+
+      <div class="form-group full-width">
+        <label for="book-appointment-symptoms">Symptoms</label>
+
+        <textarea id="book-appointment-symptoms" formControlName="symptoms" placeholder="Enter symptoms"></textarea>
+        @if(appointmentForm.get('symptoms')?.errors?.['maxlength'] && appointmentForm.get('symptoms')?.touched){
+        <span class="error-text">Symptoms cannot exceed 500 characters</span>
+        }
+      </div>
+
+      <!-- Reason -->
+
+      <div class="form-group full-width">
+        <label for="book-appointment-reason">Reason</label>
+
+        <textarea id="book-appointment-reason" formControlName="reason" placeholder="Reason for appointment"></textarea>
+        @if(appointmentForm.get('reason')?.errors?.['maxlength'] && appointmentForm.get('reason')?.touched){
+        <span class="error-text">Reason cannot exceed 500 characters</span>
+        }
+      </div>
+
+      <!-- Notes -->
+
+      <div class="form-group full-width">
+        <label for="book-appointment-notes">Notes</label>
+
+        <textarea id="book-appointment-notes" formControlName="notes" placeholder="Additional notes"></textarea>
+        @if(appointmentForm.get('notes')?.errors?.['maxlength'] && appointmentForm.get('notes')?.touched){
+        <span class="error-text">Notes cannot exceed 500 characters</span>
+        }
+      </div>
+    </div>
+
+    <!-- Submit -->
+
+    <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+      @if(isSubmitting){ Booking Appointment... } @else { Confirm Appointment }
+    </button>
+  </form>
+</div>

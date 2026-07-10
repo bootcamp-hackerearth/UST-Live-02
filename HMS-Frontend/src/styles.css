@@ -1,0 +1,944 @@
+/* You can add global styles to this file, and also import other style files */
+/* Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import 'ngx-toastr/toastr';
+/* Root Variables */
+:root {
+  /* Colors */
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --secondary: #0f766e;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --dark: #0f172a;
+  --dark-light: #1e293b;
+  --text: #0f172a;
+  --text-light: #64748b;
+  --border: rgba(255, 255, 255, 0.2);
+  /* Backgrounds */
+  --bg: #f4f7fb;
+  --card-bg: #ffffff;
+  /* Effects */
+  --blur: none;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 24px rgba(15, 23, 42, 0.05);
+  --transition: all 0.3s ease;
+}
+
+/* Global Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.25);
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.45);
+}
+
+/* Typography */
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+p {
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Buttons */
+button {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.primary-btn {
+  background: var(--primary);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
+  transition: var(--transition);
+}
+
+.primary-btn:hover {
+  background: var(--primary-dark);
+}
+
+/* Inputs */
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  backdrop-filter: var(--blur);
+  border-radius: 10px;
+  font-size: 14px;
+  transition: var(--transition);
+  font-family: inherit;
+  color: var(--text);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+}
+
+/* Shared Admin Polish */
+.glass-card,
+.table-wrapper,
+.table-container,
+.filters-wrapper,
+.section-card,
+.loading-card,
+.empty-state,
+.empty-card {
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.top-section,
+.patients-header,
+.employees-header,
+.queue-header,
+.page-header {
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.action-btn,
+.view-btn,
+.secondary-btn,
+.delete-btn,
+.submit-btn {
+  border-radius: 8px !important;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+thead th {
+  color: #334155;
+  background: #f8fafc;
+  font-weight: 800;
+}
+
+tbody tr {
+  transition: background 0.18s ease;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+.error-text {
+  display: block;
+  margin-top: 6px;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+button:disabled,
+.primary-btn:disabled,
+.submit-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 720px) {
+  .top-section,
+  .patients-header,
+  .employees-header,
+  .queue-header,
+  .page-header:where(*) {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+textarea:where(*) {
+  resize: none;
+  min-height: 120px;
+}
+
+/* Glass Card */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: var(--blur);
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* HMS Compact UI System */
+.page-shell,
+.health-record-list-container,
+.consultation-list-container,
+.appointments-page,
+.patients-page,
+.employees-page {
+  width: 100%;
+  max-width: none;
+}
+
+.filter-toolbar,
+.filters-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.filter-toolbar input,
+.filter-toolbar select,
+.filters-wrapper input,
+.filters-wrapper select {
+  min-height: 40px;
+}
+
+.table-container,
+.table-wrapper {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+thead th,
+tbody td {
+  padding: 12px 16px;
+}
+
+@media (max-width: 768px) {
+  .filter-toolbar,
+  .filters-wrapper:where(*) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Cross-App HMS Normalization Layer
+ * Many feature components have their own CSS. These rules intentionally use
+ * common HMS class names with !important so list, card, form, and action
+ * surfaces stay visually consistent across Angular templates.
+ */
+:where(
+  .appointments-page,
+  .patients-page,
+  .employees-page,
+  .pending-page,
+  .availability-page,
+  .consultation-list-container,
+  .health-record-list-container,
+  .profile-page
+) {
+  width: 100% !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+:where(
+  .appointments-header,
+  .patients-header,
+  .employees-header,
+  .pending-header,
+  .availability-header,
+  .top-section,
+  .section-header
+):where(*) {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  padding: 16px 20px !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  backdrop-filter: none !important;
+}
+
+:where(
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header
+  )
+  h1,
+:where(
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header
+  )
+  h2:where(*) {
+  margin: 0 0 4px !important;
+  color: #0f172a !important;
+  font-size: 26px !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+}
+
+:where(.page-label, .section-label) {
+  margin: 0 0 4px !important;
+  color: #2563eb !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.6px !important;
+  text-transform: uppercase !important;
+}
+
+:where(.page-subtitle, .section-subtitle) {
+  color: #64748b !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+:where(.filters-wrapper, .filters-row, .filter-toolbar) {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  backdrop-filter: none !important;
+}
+
+:where(.search-box) {
+  min-height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 0 12px !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:where(.search-box input) {
+  min-height: 38px !important;
+  padding: 8px 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:where(input, select, textarea) {
+  min-height: 40px;
+  border-radius: 10px !important;
+}
+
+:where(.table-wrapper, .table-container) {
+  width: 100% !important;
+  overflow-x: auto !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  backdrop-filter: none !important;
+}
+
+:where(table) {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  font-size: 14px !important;
+}
+
+:where(thead) {
+  background: #f8fafc !important;
+}
+
+:where(thead th) {
+  padding: 12px 14px !important;
+  color: #475569 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.4px !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  white-space: nowrap !important;
+}
+
+:where(tbody tr) {
+  background: #ffffff !important;
+  transition: background 0.18s ease !important;
+}
+
+:where(tbody tr:hover) {
+  background: #f8fafc !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+:where(tbody td) {
+  padding: 12px 14px !important;
+  color: #334155 !important;
+  border-top: 1px solid #e2e8f0 !important;
+  vertical-align: middle !important;
+}
+
+:where(tbody td:first-child, tbody td:last-child) {
+  border-radius: 0 !important;
+}
+
+:where(
+  .glass-card,
+  .employee-card,
+  .profile-card,
+  .status-card,
+  .quick-card,
+  .stat-card,
+  .toggle-card,
+  .modal-card,
+  .loading-card,
+  .empty-state,
+  .availability-form
+):where(*):where(*) {
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  backdrop-filter: none !important;
+}
+
+:where(.employee-card, .quick-card, .stat-card):hover {
+  transform: none !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+:where(.avatar, .patient-avatar, .top-avatar) {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+  background: #2563eb !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+}
+
+:where(.patient-count, .employee-count, .appointment-count, .consultation-count, .record-count) {
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #bfdbfe !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+:where(
+  .gender-badge,
+  .blood-badge,
+  .status-badge,
+  .type-badge,
+  .priority-badge,
+  .designation-badge,
+  .department-badge,
+  .role-badge,
+  .visit-badge,
+  .uhid-badge
+):where(*):where(*):where(*) {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 26px !important;
+  padding: 5px 9px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+:where(
+  .book-btn,
+  .request-btn,
+  .add-btn,
+  .pending-btn,
+  .view-btn,
+  .submit-btn,
+  .primary-btn,
+  .search-btn,
+  .approve-btn,
+  .reject-btn,
+  .download-btn,
+  .print-btn,
+  .action-btn,
+  .slot-btn,
+  .day-btn
+):where(*):where(*):where(*):where(*) {
+  min-height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  text-decoration: none !important;
+  transform: none !important;
+}
+
+:where(.book-btn, .request-btn, .add-btn, .submit-btn, .primary-btn, .search-btn, .view-btn, .download-btn) {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+:where(.book-btn, .request-btn, .add-btn, .submit-btn, .primary-btn, .search-btn, .view-btn, .download-btn):hover {
+  background: #1d4ed8 !important;
+}
+
+:where(.actions, .action-buttons, .header-actions, .btn-row) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+:where(.pagination-card, .pagination-footer, .pagination, .pagination-wrapper) {
+  margin-top: 12px !important;
+  padding: 10px 14px !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+:where(.pagination-controls) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+}
+
+:where(.pagination-controls button, .pagination-controls select) {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  border-radius: 8px !important;
+}
+
+@media (max-width: 640px) {
+  :where(
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header
+  ):where(*):where(*):where(*):where(*):where(*) {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+  :where(.filters-wrapper, .filters-row, .filter-toolbar):where(*) {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+}
+
+/* Sidebar Exceptions */
+.sidebar .profile-card {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+.sidebar .profile-card h4 {
+  color: #ffffff !important;
+}
+
+.sidebar .profile-card span {
+  color: rgba(255, 255, 255, 0.68) !important;
+}
+
+/* Auth Theme Exceptions */
+:where(.login-page, .register-page, .forgot-page, .reset-page, .create-password-page)
+  :where(.submit-btn, button[type='submit']) {
+  background: linear-gradient(135deg, #2563eb, #0f766e) !important;
+  color: #ffffff !important;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22) !important;
+}
+
+:where(.login-page, .register-page, .forgot-page, .reset-page, .create-password-page)
+  :where(.submit-btn, button[type='submit']):hover {
+  box-shadow: 0 18px 34px rgba(37, 99, 235, 0.28) !important;
+}
+
+.register-page .glass-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.reset-page .reset-right.glass-card,
+.create-password-page .form-section.glass-card {
+  background: rgba(255, 255, 255, 0.58) !important;
+  border: 1px solid rgba(255, 255, 255, 0.48) !important;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+.reset-page .visible-question {
+  background: rgba(255, 255, 255, 0.52) !important;
+  border: 1px solid rgba(255, 255, 255, 0.48) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Mobile Responsiveness Layer */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+:where(.page-content, router-outlet + *, app-root, app-dashboard-layout) {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  :where(
+    .dashboard-wrapper,
+    .dashboard-content,
+    .stats-grid,
+    .quick-grid,
+    .content-grid,
+    .overview-grid,
+    .details-grid,
+    .info-grid,
+    .form-grid,
+    .form-row,
+    .node-layout,
+    .cards-grid,
+    .appointments-grid,
+    .requests-grid,
+    .records-grid,
+    .profile-grid,
+    .availability-grid
+  ):where(*):where(*):where(*):where(*):where(*):where(*) {
+    grid-template-columns: 1fr !important;
+  }
+
+  :where(.page-header, .top-section, .patients-header, .employees-header, .appointments-header, .pending-header) {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  :where(.header-actions, .actions, .action-buttons, .form-actions, .btn-row) {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 768px) {
+  h1:where(*) {
+    font-size: 24px;
+    letter-spacing: 0;
+  }
+
+  h2:where(*):where(*) {
+    font-size: 20px;
+  }
+
+  h3:where(*) {
+    font-size: 17px;
+  }
+
+  :where(
+    .appointments-page,
+    .patients-page,
+    .employees-page,
+    .pending-page,
+    .availability-page,
+    .consultation-list-container,
+    .health-record-list-container,
+    .profile-page,
+    .node-page,
+    .page-shell,
+    .dashboard-wrapper
+  ):where(*):where(*):where(*):where(*):where(*):where(*):where(*) {
+    gap: 12px !important;
+  }
+
+  :where(
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header,
+    .page-header
+  ):where(*):where(*):where(*):where(*):where(*):where(*):where(*):where(*) {
+    padding: 14px !important;
+    border-radius: 12px !important;
+  }
+
+  :where(
+      .appointments-header,
+      .patients-header,
+      .employees-header,
+      .pending-header,
+      .availability-header,
+      .top-section,
+      .section-header,
+      .page-header
+    )
+    h1,
+  :where(
+      .appointments-header,
+      .patients-header,
+      .employees-header,
+      .pending-header,
+      .availability-header,
+      .top-section,
+      .section-header,
+      .page-header
+    )
+    h2:where(*):where(*):where(*) {
+    font-size: 22px !important;
+    letter-spacing: 0 !important;
+  }
+
+  :where(.page-subtitle, .section-subtitle):where(*) {
+    font-size: 13px !important;
+  }
+
+  :where(.filters-wrapper, .filters-row, .filter-toolbar, .search-filter-row) {
+    align-items: stretch !important;
+    flex-direction: column !important;
+    padding: 10px !important;
+  }
+
+  :where(.filters-wrapper > *, .filters-row > *, .filter-toolbar > *, .search-filter-row > *) {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  :where(input, select, textarea):where(*) {
+    min-width: 0 !important;
+    font-size: 16px !important;
+  }
+
+  :where(.table-wrapper, .table-container):where(*) {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :where(.table-wrapper table, .table-container table) {
+    min-width: 760px;
+  }
+
+  :where(thead th, tbody td) {
+    padding: 10px 12px !important;
+  }
+
+  :where(.card, .glass-card, .section-card, .employee-card, .profile-card, .stat-card, .quick-card) {
+    border-radius: 10px !important;
+  }
+
+  :where(.form-actions, .header-actions, .actions, .action-buttons, .btn-row) {
+    width: 100% !important;
+    align-items: stretch !important;
+  }
+
+  :where(.form-actions > button, .form-actions > a, .header-actions > button, .header-actions > a) {
+    width: 100% !important;
+  }
+
+  :where(.pagination-card, .pagination-footer, .pagination, .pagination-wrapper, app-pagination) {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 520px) {
+  :where(
+    .appointments-header,
+    .patients-header,
+    .employees-header,
+    .pending-header,
+    .availability-header,
+    .top-section,
+    .section-header,
+    .page-header
+  ):where(*):where(*):where(*):where(*):where(*):where(*):where(*):where(*):where(*) {
+    padding: 12px !important;
+  }
+
+  :where(
+      .appointments-header,
+      .patients-header,
+      .employees-header,
+      .pending-header,
+      .availability-header,
+      .top-section,
+      .section-header,
+      .page-header
+    )
+    h1,
+  :where(
+      .appointments-header,
+      .patients-header,
+      .employees-header,
+      .pending-header,
+      .availability-header,
+      .top-section,
+      .section-header,
+      .page-header
+    )
+    h2:where(*):where(*):where(*):where(*) {
+    font-size: 20px !important;
+  }
+
+  :where(.book-btn, .request-btn, .add-btn, .submit-btn, .primary-btn, .search-btn, .view-btn, .download-btn):where(*) {
+    width: 100% !important;
+  }
+
+  :where(.table-wrapper table, .table-container table):where(*) {
+    min-width: 680px;
+  }
+
+  :where(.global-toast-wrapper) {
+    left: 12px;
+    right: 12px;
+    transform: none;
+  }
+
+  :where(.global-toast) {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    padding: 14px 16px;
+    white-space: normal;
+  }
+
+  :where(.toast-message) {
+    font-size: 14px;
+    text-align: left;
+  }
+}
+
+/* Utility Classes */
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-20 {
+  gap: 20px;
+}
+
+/* Fade Animation */
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

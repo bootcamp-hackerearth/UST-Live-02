@@ -1,0 +1,141 @@
+/* Main Container */
+
+.edit-patient-container {
+  padding: 30px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* Heading */
+
+.edit-patient-container h1 {
+  font-size: 32px;
+  margin-bottom: 30px;
+  color: #0f172a;
+}
+
+/* Form */
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Section */
+
+.section {
+  background: white;
+  padding: 28px;
+  border-radius: 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* Section Heading */
+
+.section h2 {
+  margin-bottom: 24px;
+  color: #0f172a;
+  font-size: 22px;
+}
+
+/* Grid Layout */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* Inputs */
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 15px;
+  font-family: inherit;
+  transition: 0.3s;
+  box-sizing: border-box;
+}
+
+/* Textarea */
+
+textarea:where(*) {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.error-text {
+  display: block;
+  margin-top: 6px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Focus State */
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+/* Hover State */
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #94a3b8;
+}
+
+/* Submit Button */
+
+button {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+/* Button Hover */
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+}
+
+/* Disabled Button */
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .edit-patient-container:where(*) {
+    padding: 15px;
+  }
+  .section:where(*) {
+    padding: 20px;
+  }
+  .grid:where(*) {
+    grid-template-columns: 1fr;
+  }
+}

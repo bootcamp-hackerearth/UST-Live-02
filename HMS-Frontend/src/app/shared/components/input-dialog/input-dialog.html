@@ -1,0 +1,29 @@
+@if(dialog(); as dialog) {
+<button type="button" class="input-backdrop" aria-label="Cancel input dialog" (click)="cancel()"></button>
+  <dialog open class="input-card" aria-modal="true" aria-labelledby="input-dialog-title">
+    <div>
+      <h2 id="input-dialog-title">{{ dialog.title }}</h2>
+      @if(dialog.message) {
+      <p>{{ dialog.message }}</p>
+      }
+    </div>
+
+    <label for="input-dialog-value">
+      <span>{{ dialog.inputLabel }}</span>
+      <input
+        id="input-dialog-value"
+        [ngModel]="value()"
+        (ngModelChange)="value.set($event)"
+        [type]="dialog.inputType"
+        [min]="dialog.min"
+        autofocus
+        (keyup.enter)="submit()"
+      />
+    </label>
+
+    <div class="input-actions">
+      <button type="button" class="cancel-btn" (click)="cancel()">{{ dialog.cancelText }}</button>
+      <button type="button" class="submit-btn" (click)="submit()">{{ dialog.confirmText }}</button>
+    </div>
+  </dialog>
+}

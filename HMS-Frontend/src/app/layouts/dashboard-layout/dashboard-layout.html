@@ -1,0 +1,131 @@
+<div class="global-toast-wrapper"></div>
+<div
+  class="dashboard-shell"
+  [class.sidebar-open]="isSidebarOpen"
+  [class.sidebar-collapsed]="isSidebarCollapsed"
+>
+  <!-- Sidebar -->
+
+  <button
+    type="button"
+    class="sidebar-backdrop"
+    aria-label="Close navigation"
+    [class.visible]="isSidebarOpen"
+    (click)="closeSidebar()"
+  ></button>
+
+  <aside class="sidebar glass" [class.open]="isSidebarOpen">
+    <!-- Logo -->
+
+    <div class="logo-section">
+      <div class="logo-circle">
+        <span class="material-icons">local_hospital</span>
+      </div>
+
+      <div>
+        <h2>BootStrap HMS</h2>
+
+        <p>Smart Healthcare</p>
+      </div>
+    </div>
+
+    @if( authService.currentUser(); as user ){
+    <!-- Profile -->
+
+    <div class="profile-card">
+      <div class="avatar">{{ user.email ?.charAt(0) ?.toUpperCase() }}</div>
+
+      <div>
+        <h4>{{ user.roles?.[0] }}</h4>
+
+        <span>{{ user.email }}</span>
+      </div>
+    </div>
+
+    <app-sidebar />
+    }
+  </aside>
+
+  <!-- Main Content -->
+
+  <main class="main-content">
+    <!-- Topbar -->
+
+    <header class="topbar glass">
+      <div class="topbar-title">
+        <button
+          type="button"
+          class="mobile-menu-btn"
+          [attr.aria-label]="isSidebarOpen || !isSidebarCollapsed ? 'Close navigation' : 'Open navigation'"
+          [attr.aria-expanded]="isSidebarOpen || !isSidebarCollapsed"
+          (click)="toggleNavigation(); $event.stopPropagation()"
+        >
+          <span class="material-icons">menu</span>
+        </button>
+
+        <div>
+          <h1>BootStrap HMS</h1>
+
+          <p>Hospital Workspace</p>
+        </div>
+      </div>
+
+      @if( authService.currentUser(); as user ){
+      <div class="topbar-right">
+        <!-- System Status -->
+
+        <div class="system-status">
+          <div class="status-dot"></div>
+
+          <span id="active">System Active</span>
+        </div>
+
+        <!-- Profile -->
+
+        <div class="top-profile-menu">
+        <button
+          type="button"
+          class="top-profile"
+          (click)=" toggleProfile();
+
+                  $event.stopPropagation()
+                  "
+        >
+          <span class="top-avatar">{{ user?.email ?.charAt(0) ?.toUpperCase() }}</span>
+
+          <!-- Info -->
+
+          <span class="top-user-info">
+            <span class="top-user-name">{{ user?.employeeId?.name || 'User' }}</span>
+
+            <span class="top-user-role">{{ user?.roles?.[0] }}</span>
+          </span>
+        </button>
+
+          <!-- Dropdown -->
+
+          @if(isProfileOpen){
+          <div class="profile-dropdown">
+            <a routerLink="/my-profile">
+              <span class="material-icons">account_circle</span>
+              My Profile
+            </a>
+
+            <button (click)="logout()">
+              <span class="material-icons">logout</span>
+              Logout
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+      }
+    </header>
+
+    <!-- Routed Content -->
+
+    <section class="page-content fade-in">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

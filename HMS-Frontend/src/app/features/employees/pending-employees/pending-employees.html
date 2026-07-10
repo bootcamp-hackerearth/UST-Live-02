@@ -1,0 +1,101 @@
+<div class="pending-page">
+  <!-- Header -->
+
+  <div class="pending-header glass-card">
+    <div>
+      <p class="page-label">Employee Management</p>
+
+      <h1>Pending Employees</h1>
+
+      <p class="page-subtitle">Review and approve employee registration requests.</p>
+    </div>
+
+    <div class="pending-count">{{ pendingEmployees.length }} Pending</div>
+  </div>
+
+  <!-- Empty State -->
+
+  @if( pendingEmployees.length === 0 ){
+  <div class="empty-state glass-card">
+    <div class="empty-icon">📄</div>
+
+    <h3>No Pending Requests</h3>
+
+    <p>All employee requests have been reviewed.</p>
+  </div>
+
+  } @else {
+  <!-- Employee Grid -->
+
+  <div class="employee-grid">
+    @for( employee of pendingEmployees; track employee._id ){
+    <div class="employee-card glass-card">
+      <!-- Top -->
+
+      <div class="employee-top">
+        <div class="avatar">{{ employee?.name ?.charAt(0) }}</div>
+
+        <div>
+          <h3>{{ employee.name }}</h3>
+
+          <span class="designation-badge">{{ employee.designation }}</span>
+        </div>
+      </div>
+
+      <!-- Details -->
+
+      <div class="employee-details">
+        <div class="detail-item">
+          <span>Employee Code</span>
+
+          <strong>{{ employee.employeeCode }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Department</span>
+
+          <strong>{{ employee.department }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Email</span>
+
+          <strong>{{ employee.email }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Phone</span>
+
+          <strong>{{ employee.phone }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Status</span>
+
+          <span class="status-badge">{{ employee.status }}</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+
+      <div class="actions">
+        @if(nodeService.canUseApi('PATCH', '/api/employees/:id/approve-employee')){
+        <button class="approve-btn" (click)="approveEmployee(employee)">Approve</button>
+        } @if(nodeService.canUseApi('PATCH', '/api/employees/:id/reject-employee')){
+        <button
+          class="reject-btn"
+          (click)="
+                    rejectEmployee(
+                      employee
+                    )
+                    "
+        >
+          Reject
+        </button>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

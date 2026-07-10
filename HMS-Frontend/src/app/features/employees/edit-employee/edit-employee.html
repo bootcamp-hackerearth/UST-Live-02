@@ -1,0 +1,134 @@
+<div class="edit-employee-page">
+  <div class="page-header glass-card">
+    <div>
+      <p class="page-label">Employee Management</p>
+
+      <h1>Edit Employee</h1>
+
+      <p class="page-subtitle">Update employee details.</p>
+    </div>
+  </div>
+
+  <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()" class="employee-form glass-card">
+    <div class="form-grid">
+      <!-- Name -->
+
+      <div class="form-group">
+        <label for="edit-employee-name">Full Name</label>
+
+        <input id="edit-employee-name" type="text" formControlName="name" placeholder="Enter full name" />
+
+        @if(employeeForm.get('name')?.touched && employeeForm.get('name')?.invalid){
+        <span class="error-text">
+          @if(employeeForm.get('name')?.errors?.['required']){ Name is required } @else if(employeeForm.get('name')?.errors?.['minlength']){ Name must be at least 2 characters } @else if(employeeForm.get('name')?.errors?.['pattern']){ Only alphabets are allowed }
+        </span>
+        }
+      </div>
+
+      <!-- Email -->
+
+      <div class="form-group">
+        <label for="edit-employee-email">Email</label>
+
+        <input id="edit-employee-email" type="email" formControlName="email" readonly />
+      </div>
+
+      <!-- Phone -->
+
+      <div class="form-group">
+        <label for="edit-employee-phone">Phone Number</label>
+
+        <input id="edit-employee-phone" type="text" maxlength="10" formControlName="phone" placeholder="9876543210" />
+
+        @if(employeeForm.get('phone')?.touched && employeeForm.get('phone')?.invalid){
+        <span class="error-text">
+          @if(employeeForm.get('phone')?.errors?.['required']){ Phone number is required } @else if(employeeForm.get('phone')?.errors?.['pattern']){ Enter valid 10-digit phone number }
+        </span>
+        }
+      </div>
+
+      <!-- Gender -->
+
+      <div class="form-group">
+        <label for="edit-employee-gender">Gender</label>
+
+        <select id="edit-employee-gender" formControlName="gender">
+          <option value="">Select Gender</option>
+
+          <option value="MALE">Male</option>
+
+          <option value="FEMALE">Female</option>
+
+          <option value="OTHER">Other</option>
+        </select>
+
+        @if(employeeForm.get('gender')?.touched && employeeForm.get('gender')?.invalid){
+        <span class="error-text">Gender is required</span>
+        }
+      </div>
+
+      <!-- Department -->
+
+      <div class="form-group">
+        <label for="edit-employee-department">Department</label>
+
+        <input id="edit-employee-department" type="text" formControlName="department" placeholder="Department" />
+
+        @if(employeeForm.get('department')?.touched && employeeForm.get('department')?.invalid){
+        <span class="error-text">
+          @if(employeeForm.get('department')?.errors?.['required']){ Department is required } @else if(employeeForm.get('department')?.errors?.['minlength']){ Department must be at least 2 characters } @else if(employeeForm.get('department')?.errors?.['maxlength']){ Department cannot exceed 100 characters } @else if(employeeForm.get('department')?.errors?.['pattern']){ Department can contain only letters, spaces and underscores }
+        </span>
+        }
+      </div>
+
+      <!-- Designation -->
+
+      <div class="form-group">
+        <label for="edit-employee-designation">Designation</label>
+
+        <select id="edit-employee-designation" formControlName="designation">
+          <option value="">Select Designation</option>
+
+          <option value="DOCTOR">Doctor</option>
+
+          <option value="NURSE">Nurse</option>
+
+          <option value="RECEPTIONIST">Receptionist</option>
+
+          <option value="ADMIN">Admin</option>
+        </select>
+
+        @if(employeeForm.get('designation')?.touched && employeeForm.get('designation')?.invalid){
+        <span class="error-text">Designation is required</span>
+        }
+      </div>
+
+      <!-- Joining Date -->
+
+      <div class="form-group">
+        <label for="edit-employee-joining-date">Joining Date</label>
+
+        <input id="edit-employee-joining-date" type="date" formControlName="joiningDate" />
+
+        @if(employeeForm.get('joiningDate')?.touched && employeeForm.get('joiningDate')?.invalid){
+        <span class="error-text">Joining date is required</span>
+        }
+      </div>
+    </div>
+
+    @if(errorMessage){
+    <div class="error-text">{{ errorMessage }}</div>
+
+    } @if(successMessage){
+    <div class="success-box">{{ successMessage }}</div>
+    }
+
+    <div class="button-group">
+      <button type="button" class="cancel-btn" routerLink="/employees">Cancel</button>
+
+      <button type="submit" class="update-btn" [disabled]="isSubmitting">
+        @if(isSubmitting){ Updating... } @else{ Update Employee }
+      </button>
+    </div>
+  </form>
+</div>

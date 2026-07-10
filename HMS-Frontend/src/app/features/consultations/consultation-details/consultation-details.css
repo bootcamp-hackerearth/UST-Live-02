@@ -1,0 +1,373 @@
+.consultation-details-page {
+  padding: 24px;
+}
+
+/* Glass Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(18px);
+  border-radius: 26px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+/* Header */
+.details-header {
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-label {
+  color: #3b82f6;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.details-header h1 {
+  font-size: 34px;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.page-subtitle {
+  color: #64748b;
+  font-size: 15px;
+}
+
+/* Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.print-btn,
+.pdf-btn {
+  border: none;
+  padding: 14px 22px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s ease;
+}
+
+.print-btn {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.pdf-btn:where(*) {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+}
+
+.print-btn:hover,
+.pdf-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Main Card */
+.consultation-card {
+  padding: 32px;
+}
+
+/* Top Grid */
+.top-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.info-box {
+  background: rgba(248, 250, 252, 0.9);
+  padding: 24px;
+  border-radius: 22px;
+}
+
+.info-box h3 {
+  margin-bottom: 18px;
+  color: #0f172a;
+}
+
+.info-box p {
+  margin-bottom: 12px;
+  color: #475569;
+}
+
+/* Sections */
+.section-box {
+  background: rgba(248, 250, 252, 0.9);
+  padding: 26px;
+  border-radius: 24px;
+  margin-bottom: 24px;
+}
+
+.section-box h2 {
+  margin-bottom: 18px;
+  color: #0f172a;
+  font-size: 22px;
+}
+
+.section-box p {
+  color: #475569;
+  line-height: 1.7;
+}
+
+/* Vitals */
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.vital-card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+}
+
+.vital-card span {
+  display: block;
+  margin-bottom: 10px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.vital-card h3 {
+  color: #0f172a;
+}
+
+/* Prescriptions */
+.prescription-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.medicine-card {
+  background: white;
+  border-radius: 20px;
+  padding: 22px;
+}
+
+.medicine-card h3 {
+  margin-bottom: 14px;
+  color: #2563eb;
+}
+
+.medicine-card p {
+  margin-bottom: 8px;
+}
+
+/* Loading */
+.loading-card {
+  background: white;
+  padding: 40px;
+  border-radius: 24px;
+  text-align: center;
+  font-size: 18px;
+  color: #64748b;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .top-grid:where(*) {
+    grid-template-columns: 1fr;
+  }
+  .vitals-grid:where(*) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .details-header:where(*) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .vitals-grid:where(*):where(*) {
+    grid-template-columns: 1fr;
+  }
+  .consultation-card:where(*) {
+    padding: 20px;
+  }
+  .details-header:where(*):where(*) {
+    padding: 24px;
+  }
+}
+
+/* Print */
+@media print {
+  .header-actions:where(*) {
+    display: none;
+  }
+  body {
+    background: white;
+  }
+  .glass-card:where(*) {
+    box-shadow: none;
+    border: none;
+  }
+}
+/* Medicine Table */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.medicine-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.medicine-table th {
+  background: #eff6ff;
+  color: #1e3a8a;
+  padding: 16px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.medicine-table td {
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 14px;
+}
+
+/* Prescription Footer */
+.prescription-footer {
+  margin-top: 50px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.signature-section {
+  width: 250px;
+  text-align: center;
+}
+
+.signature-line {
+  border-top: 2px solid #0f172a;
+  margin-bottom: 10px;
+}
+
+.signature-section p {
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.signature-section span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Print Optimization */
+@media print {
+  body:where(*) {
+    background: white;
+  }
+  .details-header:where(*):where(*):where(*) {
+    margin-bottom: 10px;
+  }
+  .consultation-card:where(*):where(*) {
+    padding: 0;
+  }
+  .section-box:where(*) {
+    break-inside: avoid;
+  }
+  .medicine-table th:where(*) {
+    background: #f1f5f9 !important;
+  }
+  .pdf-btn,
+  .print-btn:where(*) {
+    display: none;
+  }
+}
+/* Professional Print Layout */
+@page {
+  size: A4;
+  margin: 10mm;
+}
+
+@media print {
+  /* Hide everything first */
+  body * {
+    visibility: hidden;
+  }
+  /* Show only prescription */
+  #print-section,
+  #print-section * {
+    visibility: visible;
+  }
+  /* Position prescription */
+  #print-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  /* Hide buttons and page header */
+  .details-header,
+  .header-actions,
+  .print-btn,
+  .pdf-btn,
+  .no-print {
+    display: none !important;
+  }
+  /* Remove glass effect */
+  .glass-card,
+  .consultation-card,
+  .info-box,
+  .section-box,
+  .vital-card:where(*) {
+    background: white !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    backdrop-filter: none !important;
+  }
+  .consultation-details-page:where(*) {
+    padding: 0 !important;
+  }
+  .consultation-card:where(*):where(*):where(*) {
+    padding: 10px !important;
+  }
+  /* Prevent awkward page breaks */
+  .info-box,
+  .section-box,
+  .table-wrapper,
+  .medicine-table,
+  .vitals-grid,
+  .prescription-footer:where(*) {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  /* Better print table */
+  .medicine-table:where(*) {
+    width: 100%;
+    font-size: 12px;
+  }
+  .medicine-table th,
+  .medicine-table td:where(*) {
+    padding: 8px;
+    border: 1px solid #ccc;
+  }
+  .medicine-table th:where(*):where(*) {
+    background: #f3f4f6 !important;
+    color: black !important;
+  }
+  .signature-section:where(*) {
+    margin-top: 40px;
+  }
+}

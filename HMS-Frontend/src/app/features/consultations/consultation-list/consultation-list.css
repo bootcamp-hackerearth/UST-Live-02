@@ -1,0 +1,392 @@
+/* Container */
+.consultation-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Top Section */
+.top-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-label {
+  color: #3b82f6;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.top-section h1 {
+  font-size: 38px;
+  color: #0f172a;
+}
+
+.consultation-count {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 14px 18px;
+  border-radius: 18px;
+  font-weight: 700;
+  color: #334155;
+  backdrop-filter: blur(10px);
+}
+
+/* Loading */
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 80px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+}
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid #dbeafe;
+  border-top: 4px solid #3b82f6;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-card p {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Empty State */
+.empty-state {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 28px;
+  padding: 80px 30px;
+  text-align: center;
+  backdrop-filter: blur(16px);
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 18px;
+}
+
+.empty-state h2 {
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: #64748b;
+}
+
+/* Table */
+.table-container {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 28px;
+  overflow: hidden;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.06);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+thead th {
+  padding: 22px;
+  text-align: left;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+}
+
+tbody tr {
+  transition: all 0.25s ease;
+}
+
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+tbody td {
+  padding: 22px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.55);
+  color: #334155;
+}
+
+/* Patient Info */
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.patient-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.patient-info h4 {
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.patient-info p {
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Doctor Badge */
+.doctor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  font-weight: 600;
+}
+
+/* Diagnosis */
+.diagnosis-text {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+/* Date */
+.date-text {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Actions */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.download-btn,
+.print-btn {
+  border: none;
+  padding: 12px 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.download-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.print-btn:where(*) {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.download-btn:hover,
+.print-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .table-container:where(*) {
+    overflow-x: auto;
+  }
+  table:where(*) {
+    min-width: 950px;
+  }
+}
+
+@media (max-width: 700px) {
+  .top-section:where(*) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .top-section h1:where(*) {
+    font-size: 30px;
+  }
+}
+.filters-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.filters-wrapper input,
+.filters-wrapper select {
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-top: 30px;
+}
+
+.pagination button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 14px;
+  background: #3b82f6;
+  color: white;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Compact HMS Consultation List Redesign */
+.consultation-list-container:where(*) {
+  width: 100%;
+  gap: 14px;
+}
+
+.top-section:where(*):where(*) {
+  align-items: flex-end;
+}
+
+.section-label:where(*) {
+  margin-bottom: 4px;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+}
+
+.top-section h1:where(*):where(*) {
+  font-size: 28px;
+}
+
+.consultation-count:where(*) {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  backdrop-filter: none;
+}
+
+.filters-wrapper:where(*) {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 180px 180px auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  padding: 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.filters-wrapper input,
+.filters-wrapper select:where(*) {
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.loading-card,
+.empty-state:where(*) {
+  padding: 42px 24px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  backdrop-filter: none;
+}
+
+.table-container:where(*):where(*) {
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+thead:where(*) {
+  background: #f8fafc;
+}
+
+thead th,
+tbody td:where(*) {
+  padding: 12px 16px;
+}
+
+tbody tr:hover:where(*) {
+  background: #f8fafc;
+}
+
+.patient-avatar:where(*) {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #2563eb;
+}
+
+.doctor-badge:where(*) {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.download-btn,
+.print-btn:where(*):where(*) {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.download-btn:where(*) {
+  background: #2563eb;
+}
+
+.print-btn:where(*):where(*):where(*) {
+  background: #0f766e;
+}
+
+.download-btn:hover,
+.print-btn:hover:where(*) {
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 992px) {
+  .filters-wrapper:where(*):where(*) {
+    grid-template-columns: 1fr;
+  }
+}
