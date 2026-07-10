@@ -1,0 +1,33 @@
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #1d4ed8;
+  background: #dbeafe;
+  font-size: 26px;
+}
+
+h3 {
+  margin: 8px 0 0;
+  color: #0f172a;
+}
+
+p {
+  margin: 0;
+  color: #64748b;
+}
+
+

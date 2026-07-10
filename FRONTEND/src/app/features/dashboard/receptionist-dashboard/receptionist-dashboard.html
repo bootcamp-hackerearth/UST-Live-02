@@ -1,0 +1,141 @@
+<div class="dashboard-wrapper">
+  <!-- Hero Section -->
+
+  <div class="hero-section glass-card">
+    <div>
+      <p class="hero-label">Reception Workspace</p>
+
+      @if( authService.currentUser(); as user ){
+      <h1>Welcome, {{ user?.employeeId?.name || 'Receptionist' }} </h1>
+      }
+
+      <p class="hero-subtitle">Manage patients, appointments and front desk operations.</p>
+    </div>
+
+    <div class="hero-badge">
+      <div class="pulse-dot"></div>
+
+      Front Desk Active
+    </div>
+  </div>
+
+  <!-- Stats -->
+
+  <div class="stats-grid">
+    <!-- Today's Appointments -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon blue"><span class="hms-icon hms-icon-calendar" aria-hidden="true"></span></div>
+
+      <div>
+        <h2>{{ stats?.todayAppointments || 0 }}</h2>
+
+        <p>Today's Appointments</p>
+      </div>
+    </div>
+
+    <!-- Total Patients -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon purple"><span class="hms-icon hms-icon-user" aria-hidden="true"></span></div>
+
+      <div>
+        <h2>{{ stats?.totalPatients || 0 }}</h2>
+
+        <p>Total Patients</p>
+      </div>
+    </div>
+
+    <!-- Checked In -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon green"><span class="hms-icon hms-icon-check" aria-hidden="true"></span></div>
+
+      <div>
+        <h2>{{ stats?.checkedInPatients || 0 }}</h2>
+
+        <p>Checked In</p>
+      </div>
+    </div>
+
+    <!-- Pending -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon orange"><span class="hms-icon hms-icon-clock" aria-hidden="true"></span></div>
+
+      <div>
+        <h2>{{ stats?.pendingAppointments || 0 }}</h2>
+
+        <p>Pending Appointments</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Grid -->
+
+  <div class="bottom-grid">
+    <!-- Today's Appointments -->
+
+    <div class="recent-section glass-card">
+      <div class="section-header">
+        <h2>Today's Appointments</h2>
+
+        <span>Front Desk Queue</span>
+      </div>
+
+      <div class="employee-list">
+        @for( appointment of todayAppointments || []; track appointment._id ){
+        <div class="employee-card">
+          <div class="employee-avatar">{{ appointment ?.patientId ?.firstName ?.charAt(0) }}</div>
+
+          <div>
+            <h4>{{ appointment ?.patientId ?.firstName }} {{ appointment ?.patientId ?.lastName }}</h4>
+
+            <p>{{ appointment ?.timeSlot }}</p>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+
+    <div class="quick-section glass-card">
+      <div class="section-header">
+        <h2>Quick Actions</h2>
+
+        <span>Fast Navigation</span>
+      </div>
+
+      <div class="quick-grid">
+        @if(nodeService.canAccessPath('/patients/create')){
+        <a routerLink="/patients/create" class="quick-card">
+          <span class="hms-icon hms-icon-user" aria-hidden="true"></span>
+
+          Add Patient
+        </a>
+        } @if(nodeService.canAccessPath('/appointments/book')){
+        <a routerLink="/appointments/book" class="quick-card">
+          <span class="hms-icon hms-icon-calendar" aria-hidden="true"></span>
+
+          Book Appointment
+        </a>
+        } @if(nodeService.canAccessPath('/appointments')){
+        <a routerLink="/appointments" class="quick-card">
+          <span class="hms-icon hms-icon-clipboard" aria-hidden="true"></span>
+
+          View Appointments
+        </a>
+        } @if(nodeService.canAccessPath('/patients')){
+        <a routerLink="/patients" class="quick-card">
+          <span class="hms-icon hms-icon-users" aria-hidden="true"></span>
+
+          Patients
+        </a>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+

@@ -1,0 +1,11 @@
+const EMPLOYEE_PREFIX = {
+  DOCTOR: "DOC",
+  NURSE: "NUR",
+  RECEPTIONIST: "REC",
+  CASHIER: "CAS",
+  PHARMACIST: "PHA",
+  LAB_TECH: "LAB",
+  ADMIN: "ADM",
+};
+
+module.exports = EMPLOYEE_PREFIX;

@@ -1,0 +1,175 @@
+<div class="node-page">
+  <div class="page-header">
+    <div>
+      <p class="page-label">Super Admin</p>
+      <h1>Node Management</h1>
+      <p class="page-subtitle">Control which screens appear and what each role is allowed to do inside them.</p>
+    </div>
+  </div>
+
+  <div class="node-layout">
+    <section class="node-list">
+      <div class="section-title">
+        <h2>Nodes</h2>
+        <span>{{ flatNodes.length }} total</span>
+      </div>
+
+      @if(isLoading) {
+      <app-skeleton-loader [rows]="5"></app-skeleton-loader>
+      } @else if(flatNodes.length === 0) {
+      <app-empty-state
+        icon="account_tree"
+        title="No Nodes Found"
+        message="Create the first navigation node for this HMS workspace."
+      ></app-empty-state>
+      } @else {
+      <div class="tree">
+        @for(node of nodes; track node._id) {
+        <div class="node-group">
+          <button type="button" class="node-row" [class.active]="selectedNodeId === node._id" (click)="editNode(node)">
+            <span class="material-icons">{{ node.icon || 'radio_button_unchecked' }}</span>
+            <span>
+              <strong>{{ node.name }}</strong>
+              <small>{{ node.path }}</small>
+            </span>
+          </button>
+
+          @for(child of node.children || []; track child._id) {
+          <button
+            type="button"
+            class="node-row child"
+            [class.active]="selectedNodeId === child._id"
+            (click)="editNode(child)"
+          >
+            <span class="material-icons">{{ child.icon || 'subdirectory_arrow_right' }}</span>
+            <span>
+              <strong>{{ child.name }}</strong>
+              <small>{{ child.path }}</small>
+            </span>
+          </button>
+          }
+        </div>
+        }
+      </div>
+      }
+    </section>
+
+    <section class="node-form">
+      <div class="section-title">
+        <h2>{{ form._id ? 'Edit Node' : 'Create Node' }}</h2>
+        @if(form._id) {
+        <button type="button" class="danger-link" (click)="deleteNode(form)">Delete</button>
+        }
+      </div>
+
+      <div class="form-grid">
+        <label for="node-name">
+          <span>Name</span>
+          <input id="node-name" type="text" [(ngModel)]="form.name" placeholder="Employees" />
+        </label>
+
+        <label for="node-path">
+          <span>Screen URL</span>
+          <input id="node-path" type="text" [(ngModel)]="form.path" placeholder="/employees" />
+        </label>
+
+        <label for="node-icon">
+          <span>Menu Icon Name</span>
+          <input id="node-icon" type="text" [(ngModel)]="form.icon" placeholder="groups" />
+        </label>
+
+        <label for="node-order">
+          <span>Menu Position</span>
+          <input id="node-order" type="number" [(ngModel)]="form.order" />
+        </label>
+
+        <label for="node-parent">
+          <span>Place Under</span>
+          <select id="node-parent" [(ngModel)]="form.parent">
+            <option value="">Root node</option>
+            @for(parent of parentOptions; track parent._id) {
+            <option [value]="parent._id">{{ parent.name }} - {{ parent.path }}</option>
+            }
+          </select>
+        </label>
+
+        <label for="node-visibility">
+          <span>Visibility</span>
+          <select id="node-visibility" [(ngModel)]="form.isActive">
+            <option [ngValue]="true">Shown</option>
+            <option [ngValue]="false">Hidden</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="full-field" for="node-roles">
+        <span>Who can see this screen</span>
+        <input id="node-roles" type="text" [(ngModel)]="form.rolesText" placeholder="SUPER_ADMIN, ADMIN" />
+        <small>Available: {{ roles.join(', ') }}</small>
+      </label>
+
+      <div class="permission-header">
+        <div>
+          <h3>Access Rules</h3>
+          <p>Choose what this screen allows each role to do.</p>
+        </div>
+        <button type="button" class="secondary-btn" (click)="addPermission()">
+          <span class="material-icons">add</span>
+          Add Rule
+        </button>
+      </div>
+
+      <div class="permissions">
+        @for(permission of form.apiPermissions; track $index) {
+        <div class="permission-card">
+          <div class="permission-row">
+            <div class="field-control">
+              <span [id]="'permission-action-label-' + $index">Allowed action</span>
+              <select [(ngModel)]="permission.method" [attr.aria-labelledby]="'permission-action-label-' + $index">
+                @for(action of permissionActions; track action.value) {
+                <option [value]="action.value">{{ action.label }}</option>
+                }
+              </select>
+              <small>{{ getActionDescription(permission.method) }}</small>
+            </div>
+
+            <div class="field-control">
+              <span [id]="'permission-area-label-' + $index">System area</span>
+              <select [(ngModel)]="permission.path" [attr.aria-labelledby]="'permission-area-label-' + $index">
+                <option value="">Select area</option>
+                @for(area of systemAreaOptions; track area.path) {
+                <option [value]="area.path">{{ area.label }}</option>
+                }
+              </select>
+              <small>Pick the area this action belongs to.</small>
+            </div>
+
+            <div class="field-control">
+              <span>Role override</span>
+              <input type="text" [(ngModel)]="permission.rolesText" placeholder="Optional: ADMIN, DOCTOR" aria-label="Role override" />
+              <small>Leave empty to use the node's allowed roles.</small>
+            </div>
+
+            <button
+              type="button"
+              class="icon-btn danger"
+              [attr.aria-label]="'Remove ' + getActionLabel(permission.method) + ' rule'"
+              (click)="removePermission($index)"
+            >
+              <span class="material-icons">delete</span>
+            </button>
+          </div>
+
+        </div>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="secondary-btn" (click)="startCreate()">Reset</button>
+        <button type="button" class="primary-btn" [disabled]="isSaving" (click)="saveNode()">
+          {{ isSaving ? 'Saving...' : form._id ? 'Update Node' : 'Create Node' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

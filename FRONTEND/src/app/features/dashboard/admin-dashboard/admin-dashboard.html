@@ -1,0 +1,140 @@
+<div class="dashboard-wrapper">
+  <!-- Hero Section -->
+
+  <div class="hero-section glass-card">
+    <div>
+      <p class="hero-label">Smart Healthcare Workspace</p>
+      @if( authService.currentUser(); as user ){
+      <h1>Welcome, {{ user?.employeeId?.name || 'Administrator' }} </h1>
+      }
+
+      <p class="hero-subtitle">Here’s what’s happening in your hospital today.</p>
+    </div>
+
+    <div class="hero-badge">
+      <div class="pulse-dot"></div>
+
+      System Active
+    </div>
+  </div>
+
+  <!-- Stats -->
+
+  <div class="stats-grid">
+    <!-- Employees -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon blue"><span class="hms-icon hms-icon-users" aria-hidden="true"></span></div>
+
+      <div>
+        <h2>{{ stats?.totalEmployees || 0 }}</h2>
+
+        <p>Total Employees</p>
+      </div>
+    </div>
+
+    <!-- Doctors -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon purple"><span class="hms-icon hms-icon-stethoscope" aria-hidden="true"></span></div>
+
+      <div>
+        <h2>{{ stats?.totalDoctors || 0 }}</h2>
+
+        <p>Doctors</p>
+      </div>
+    </div>
+
+    <!-- Nurses -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon green"><span class="hms-icon hms-icon-user" aria-hidden="true"></span></div>
+
+      <div>
+        <h2>{{ stats?.totalNurses || 0 }}</h2>
+
+        <p>Nurses</p>
+      </div>
+    </div>
+
+    <!-- Pending -->
+
+    <div class="stat-card glass-card">
+      <div class="stat-icon orange"><span class="hms-icon hms-icon-clock" aria-hidden="true"></span></div>
+
+      <div>
+        <h2>{{ stats?.pendingRequests || 0 }}</h2>
+
+        <p>Pending Requests</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Grid -->
+
+  <div class="bottom-grid">
+    <!-- Recent Employees -->
+
+    <div class="recent-section glass-card">
+      <div class="section-header">
+        <h2>Recent Employees</h2>
+
+        <span>Latest Registrations</span>
+      </div>
+
+      <div class="employee-list">
+        @for( employee of recentEmployees || []; track employee._id ){
+        <div class="employee-card">
+          <div class="employee-avatar">{{ employee.name ?.charAt(0) }}</div>
+
+          <div>
+            <h4>{{ employee.name }}</h4>
+
+            <p>{{ employee.designation }}</p>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+
+    <div class="quick-section glass-card">
+      <div class="section-header">
+        <h2>Quick Actions</h2>
+
+        <span>Fast Navigation</span>
+      </div>
+
+      <div class="quick-grid">
+        @if(nodeService.canAccessPath('/appointments/book')){
+        <a routerLink="/appointments/book" class="quick-card">
+          <span class="hms-icon hms-icon-calendar" aria-hidden="true"></span>
+
+          Book Appointment
+        </a>
+        } @if(nodeService.canAccessPath('/patients/create')){
+        <a routerLink="/patients/create" class="quick-card">
+          <span class="hms-icon hms-icon-user" aria-hidden="true"></span>
+
+          Add Patient
+        </a>
+        } @if(nodeService.canAccessPath('/employees/create')){
+        <a routerLink="/employees/create" class="quick-card">
+          <span class="hms-icon hms-icon-users" aria-hidden="true"></span>
+
+          Add Employee
+        </a>
+        } @if(nodeService.canAccessPath('/appointments')){
+        <a routerLink="/appointments" class="quick-card">
+          <span class="hms-icon hms-icon-clipboard" aria-hidden="true"></span>
+
+          View Appointments
+        </a>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+

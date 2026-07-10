@@ -1,0 +1,85 @@
+<nav class="nav-links" aria-label="Main navigation">
+  @if(nodeService.isSuperAdmin() && !nodeService.canAccessPath('/node-management')) {
+  <div class="nav-item">
+    <a routerLink="/node-management" routerLinkActive="active-link">
+      <span class="material-icons">account_tree</span>
+      Node Management
+    </a>
+  </div>
+  } @for ( node of nodeService.nodes(); track node._id ) {
+  <div class="nav-item">
+    <!-- Parent Menu -->
+    @if ( node.children?.length ) {
+    <div class="parent-menu">
+      <!-- Text + Icon -->
+      <button
+        type="button"
+        class="menu-left"
+        (click)="
+          navigate(
+            node.path
+          )
+        "
+      >
+        @if ( node.icon ) {
+        <span class="material-icons">{{ node.icon }}</span>
+        } {{ node.name }}
+      </button>
+
+      <!-- Expand Button -->
+      <button
+        type="button"
+        class="expand-btn"
+        (click)="
+          toggleMenu(
+            node._id
+          )
+        "
+        [attr.aria-expanded]="
+          expandedMenus[
+            node._id
+          ]
+        "
+      >
+        <span class="material-icons">{{ expandedMenus[ node._id ] ? 'expand_less' : 'expand_more' }}</span>
+      </button>
+    </div>
+
+    <!-- Children -->
+    @if ( expandedMenus[ node._id ] ) {
+    <div class="submenu">
+      @for ( child of node.children; track child._id ) {
+      <a
+        [routerLink]="
+          child.path
+        "
+        routerLinkActive="
+          active-link
+        "
+      >
+        @if ( child.icon ) {
+        <span class="material-icons">{{ child.icon }}</span>
+        } {{ child.name }}
+      </a>
+      }
+    </div>
+    } }
+
+    <!-- Simple Menu -->
+    @else {
+    <a
+      [routerLink]="
+        node.path
+      "
+      routerLinkActive="
+        active-link
+      "
+    >
+      @if ( node.icon ) {
+      <span class="material-icons">{{ node.icon }}</span>
+      } {{ node.name }}
+    </a>
+    }
+  </div>
+  }
+</nav>

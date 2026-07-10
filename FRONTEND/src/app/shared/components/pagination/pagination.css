@@ -1,0 +1,94 @@
+.pagination-card {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto minmax(120px, 1fr);
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.total-records {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  justify-self: start;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  justify-self: center;
+}
+
+.pagination-controls span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pagination-controls button {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #bfdbfe;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.page-size span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.page-size select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-weight: 600;
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .pagination-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .total-records,
+  .page-size {
+    justify-self: center;
+  }
+  .pagination-controls {
+    justify-content: center;
+  }
+}
+
+
+

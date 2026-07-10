@@ -1,0 +1,6 @@
+projectKey=SPRINT-5
+serverUrl=http://localhost:9000
+serverVersion=26.1.0.118079
+dashboardUrl=http://localhost:9000/dashboard?id=SPRINT-5
+ceTaskId=6fd022c6-d82a-4c3e-9038-3ab8cc561f00
+ceTaskUrl=http://localhost:9000/api/ce/task?id=6fd022c6-d82a-4c3e-9038-3ab8cc561f00

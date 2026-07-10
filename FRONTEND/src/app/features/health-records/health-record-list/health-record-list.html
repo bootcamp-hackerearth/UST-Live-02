@@ -1,0 +1,150 @@
+<div class="health-record-list-container">
+  <!-- Header -->
+
+  <div class="top-section">
+    <div>
+      <p class="section-label">Patient Medical Repository</p>
+
+      <h1>Health Records</h1>
+
+      <p class="section-subtitle">Complete medical history and consultation records of patients.</p>
+    </div>
+
+    <div class="record-count">Total: {{ meta.total || 0 }}</div>
+  </div>
+
+  <!-- Search -->
+
+  <div class="filters-wrapper">
+    <input
+      type="text"
+      placeholder="Search by patient name or UHID..."
+      [(ngModel)]="search"
+      (input)="onSearchInput()"
+      (keyup.enter)="onSearch()"
+    />
+
+    <button class="search-btn" (click)="onSearch()">
+      <span class="material-icons">search</span>
+
+      Search
+    </button>
+  </div>
+
+  <!-- Loading -->
+
+  @if (isLoading) {
+  <app-skeleton-loader [rows]="5"></app-skeleton-loader>
+
+  } @else {
+  <!-- Empty State -->
+
+  @if (healthRecords.length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon"><span class="hms-icon hms-icon-stethoscope" aria-hidden="true"></span></div>
+
+    <h2>No Health Records Found</h2>
+
+    <p>Patient consultations will automatically appear here.</p>
+  </div>
+
+  } @else {
+  <!-- Table -->
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>UHID</th>
+          <th>Gender</th>
+          <th>Total Visits</th>
+          <th>Last Visit</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for ( record of healthRecords; track record.patient._id ) {
+        <tr>
+          <!-- Patient -->
+
+          <td>
+            <div class="patient-info">
+              <div class="avatar">{{ record.patient.firstName?.charAt( 0 ) }}</div>
+
+              <div>
+                <h4>{{ record.patient.firstName }} {{ record.patient.lastName }}</h4>
+
+                <p>Patient Record</p>
+              </div>
+            </div>
+          </td>
+
+          <!-- UHID -->
+
+          <td>
+            <span class="uhid-badge">{{ record.patient.patientId }}</span>
+          </td>
+
+          <!-- Gender -->
+
+          <td>{{ record.patient.gender || "N/A" }}</td>
+
+          <!-- Visits -->
+
+          <td>
+            <span class="visit-badge">{{ record.totalVisits }} Visits</span>
+          </td>
+
+          <!-- Last Visit -->
+
+          <td>
+            <div class="date-text">{{ record.lastVisit | date: "mediumDate" }}</div>
+          </td>
+
+          <!-- Actions -->
+
+          <td>
+            <a
+              class="view-btn"
+              [routerLink]="[
+                '/health-records',
+                record.patient._id
+              ]"
+            >
+              <span class="material-icons">visibility</span>
+
+              View Record
+            </a>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+
+  <app-pagination
+    [page]="page"
+    [totalPages]="
+      page + (meta.hasNextPage ? 1 : 0)
+    "
+    [totalRecords]="
+      meta.total || 0
+    "
+    [limit]="limit"
+    [cursorMode]="true"
+    [hasNextPage]="meta.hasNextPage"
+    (previous)="
+      previousPage()
+    "
+    (next)="nextPage()"
+    (pageSizeChange)="onPageSizeChange($event)"
+  ></app-pagination>
+
+  } }
+</div>
+
+

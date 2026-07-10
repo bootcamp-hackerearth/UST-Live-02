@@ -1,0 +1,18 @@
+@if(dialog(); as dialog) {
+<button type="button" class="confirm-backdrop" aria-label="Cancel confirmation" (click)="cancel()"></button>
+  <dialog open class="confirm-card" aria-modal="true" aria-labelledby="confirm-dialog-title">
+    <div class="confirm-icon" [ngClass]="dialog.tone">{{ dialog.tone === 'danger' ? '!' : '?' }}</div>
+
+    <div>
+      <h2 id="confirm-dialog-title">{{ dialog.title }}</h2>
+      <p>{{ dialog.message }}</p>
+    </div>
+
+    <div class="confirm-actions">
+      <button type="button" class="cancel-btn" (click)="cancel()">{{ dialog.cancelText }}</button>
+      <button type="button" class="confirm-btn" [ngClass]="dialog.tone" (click)="confirm()">
+        {{ dialog.confirmText }}
+      </button>
+    </div>
+  </dialog>
+}

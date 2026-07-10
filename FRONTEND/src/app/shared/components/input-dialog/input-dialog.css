@@ -1,0 +1,78 @@
+.input-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99997;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(15, 23, 42, 0.34);
+  cursor: pointer;
+}
+
+.input-card {
+  position: fixed;
+  inset: 88px 16px auto;
+  margin: 0 auto;
+  width: min(440px, 100%);
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.24);
+}
+
+h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+}
+
+p {
+  margin: 8px 0 0;
+  color: #475569;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: #334155;
+  font-weight: 700;
+}
+
+input {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.input-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.submit-btn {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+

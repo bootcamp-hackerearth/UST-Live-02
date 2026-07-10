@@ -1,0 +1,208 @@
+.employee-form-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header */
+.form-header {
+  padding: 32px;
+  border-radius: 30px;
+}
+.page-label {
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.form-header h1 {
+  font-size: 42px;
+  margin-bottom: 10px;
+  color: #0f172a;
+}
+
+.page-subtitle {
+  color: #64748b;
+}
+
+/* Form */
+.employee-form {
+  padding: 35px;
+  border-radius: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Section */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section-title h2 {
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.section-title p {
+  color: #64748b;
+}
+
+/* Grid */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+/* Inputs */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.65);
+  font-size: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+/* Phone */
+.phone-group {
+  display: flex;
+  gap: 14px;
+}
+
+.phone-group select {
+  width: 130px;
+}
+
+/* Doctor Card */
+.availability-card {
+  margin-top: 10px;
+  padding: 28px;
+  border-radius: 24px;
+  background: rgba(248, 250, 252, 0.75);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.availability-card h3 {
+  color: #0f172a;
+}
+
+/* Days */
+.days-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.day-pill {
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.day-pill:hover {
+  transform: translateY(-2px);
+  background: #bfdbfe;
+}
+
+.day-pill input {
+  width: auto;
+}
+
+/* Submit */
+.submit-btn {
+  border: none;
+  padding: 18px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #1d4ed8, #6d28d9);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.22);
+}
+
+.submit-btn:hover {
+  transform: translateY(-3px);
+}
+
+/* Success */
+.success-box {
+  margin-top: 20px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: #dcfce7;
+  border: 1px solid #22c55e;
+  color: #14532d;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .employee-form {
+    padding: 22px;
+  }
+  .phone-group {
+    flex-direction: column;
+  }
+  .phone-group select {
+    width: 100%;
+  }
+}
+.error-box {
+  margin-top: 20px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+
+
