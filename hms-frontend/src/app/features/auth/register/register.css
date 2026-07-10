@@ -1,12 +1,13 @@
 :host {
   display: block;
-  min-height: 100dvh;
+  height: 100dvh;
   background: #f5f8ff;
 }
 
 .register-page {
-  min-height: 100dvh;
+  height: 100%;
   padding: 32px;
+  box-sizing: border-box;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -14,11 +15,13 @@
     radial-gradient(circle at top left, #e8efff 0%, transparent 32%),
     linear-gradient(135deg, #f5f8ff 0%, #eef4ff 100%);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .register-card {
-  width: 100%;
+  width: min(1120px, calc(100vw - 64px));
   max-width: 1120px;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: 360px 1fr;
   gap: 28px;
@@ -118,8 +121,37 @@ select:focus {
   box-shadow: 0 0 0 4px rgba(36, 84, 214, 0.12);
 }
 
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9' fill='none'%3E%3Cpath d='M1 1L7 7L13 1' stroke='%232454d6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+select:disabled {
+  background-color: #eef1f6;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+select option:disabled {
+  color: #94a3b8;
+}
+
 .error-text {
   color: #dc2626;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.hint-text {
+  color: #64748b;
   font-size: 0.82rem;
   font-weight: 600;
 }
@@ -248,6 +280,7 @@ button:disabled {
   }
 
   .register-card {
+    width: min(1120px, calc(100vw - 36px));
     padding: 18px;
   }
 
@@ -262,5 +295,26 @@ button:disabled {
 
   .register-card h1 {
     font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .register-page {
+    padding: 10px;
+  }
+
+  .register-card {
+    width: min(1120px, calc(100vw - 20px));
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .register-intro {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .register-card h1 {
+    font-size: 1.35rem;
   }
 }

@@ -1,0 +1,15 @@
+<div class="layout">
+  <app-sidebar [class.open]="sidebarOpen()"></app-sidebar>
+
+  @if (sidebarOpen()) {
+  <button type="button" class="sidebar-overlay" aria-label="Close menu" (click)="closeSidebar()"></button>
+  }
+
+  <div class="main-content">
+    <app-navbar (menuToggle)="toggleSidebar()"></app-navbar>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

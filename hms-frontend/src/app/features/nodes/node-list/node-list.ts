@@ -12,11 +12,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 
 import { ToastrService } from 'ngx-toastr';
-
-import { Navbar } from '../../../shared/components/navbar/navbar';
-import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 import { NodeService } from '../../../core/services/node';
 import { NodeDialog } from '../node-dialog/node-dialog';
+import { MainComponent } from '../../../shared/components/maincomponent/maincomponent';
 
 @Component({
   selector: 'app-node-list',
@@ -30,8 +28,8 @@ import { NodeDialog } from '../node-dialog/node-dialog';
     MatIconModule,
     MatCardModule,
     MatTooltipModule,
-    Navbar,
-    Sidebar,
+    MainComponent,
+
   ],
   templateUrl: './node-list.html',
   styleUrl: './node-list.css',
@@ -95,11 +93,11 @@ export class NodeList implements OnInit {
 
     this.dataSource.data = search
       ? this.nodes.filter((node) =>
-          node.nodeId?.toLowerCase().includes(search) ||
-          node.name?.toLowerCase().includes(search) ||
-          node.path?.toLowerCase().includes(search) ||
-          node.icon?.toLowerCase().includes(search)
-        )
+        node.nodeId?.toLowerCase().includes(search) ||
+        node.name?.toLowerCase().includes(search) ||
+        node.path?.toLowerCase().includes(search) ||
+        node.icon?.toLowerCase().includes(search)
+      )
       : [...this.nodes];
   }
 

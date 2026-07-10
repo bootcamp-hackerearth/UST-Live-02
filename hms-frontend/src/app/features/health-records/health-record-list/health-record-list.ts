@@ -13,8 +13,6 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { ToastrService } from 'ngx-toastr';
 
-import { Navbar } from '../../../shared/components/navbar/navbar';
-import { Sidebar } from '../../../shared/components/sidebar/sidebar';
 import { HealthRecordDialog } from '../health-record-dialog/health-record-dialog';
 
 import {
@@ -24,6 +22,7 @@ import {
 
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { PERMISSIONS } from '../../../constants/permission';
+import { MainComponent } from '../../../shared/components/maincomponent/maincomponent';
 
 @Component({
   selector: 'app-health-record-list',
@@ -38,9 +37,8 @@ import { PERMISSIONS } from '../../../constants/permission';
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    Navbar,
-    Sidebar,
     HasPermissionDirective,
+    MainComponent,
   ],
   templateUrl: './health-record-list.html',
   styleUrl: './health-record-list.css',
@@ -84,7 +82,11 @@ export class HealthRecordList implements OnInit {
     this.cdr.detectChanges();
 
     this.healthRecordService
-      .getHealthRecords(this.pageIndex + 1, this.pageSize)
+      .getHealthRecords(
+        this.pageIndex + 1,
+        this.pageSize,
+        this.searchText
+      )
       .subscribe({
         next: (response: any) => {
           const records = Array.isArray(response?.data?.records)
@@ -117,31 +119,22 @@ export class HealthRecordList implements OnInit {
   }
 
   applyFilter(): void {
-    const search = this.searchText.trim().toLowerCase();
-
-    this.filteredHealthRecords = search
-      ? this.healthRecords.filter((record) =>
-          (record.healthRecordId ?? '').toLowerCase().includes(search) ||
-          (record.appointmentId ?? '').toLowerCase().includes(search) ||
-          (record.patientId ?? '').toLowerCase().includes(search) ||
-          (record.patientName ?? '').toLowerCase().includes(search) ||
-          (record.doctorName ?? '').toLowerCase().includes(search) ||
-          (record.diagnosis ?? '').toLowerCase().includes(search)
-        )
-      : [...this.healthRecords];
-
+    this.pageIndex = 0;
     this.expandedRecord = null;
+    this.loadHealthRecords();
   }
 
   clearSearch(): void {
     this.searchText = '';
-    this.filteredHealthRecords = [...this.healthRecords];
+    this.pageIndex = 0;
     this.expandedRecord = null;
+    this.loadHealthRecords();
   }
 
   onPageChange(event: PageEvent): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
+    this.expandedRecord = null;
     this.loadHealthRecords();
   }
 

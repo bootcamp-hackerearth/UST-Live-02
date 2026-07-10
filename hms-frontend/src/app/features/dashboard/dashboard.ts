@@ -11,8 +11,7 @@ import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 
-import { Navbar } from '../../shared/components/navbar/navbar';
-import { Sidebar } from '../../shared/components/sidebar/sidebar';
+
 
 import { AuthService } from '../../core/services/auth';
 import { EmployeeService } from '../../core/services/employee';
@@ -27,8 +26,6 @@ import { PERMISSIONS } from '../../constants/permission';
     CommonModule,
     MatCardModule,
     MatIconModule,
-    Navbar,
-    Sidebar,
     HasPermissionDirective,
   ],
   templateUrl: './dashboard.html',

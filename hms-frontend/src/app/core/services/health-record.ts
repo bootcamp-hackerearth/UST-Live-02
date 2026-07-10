@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-
+import { environment } from '../../../environments/environment';
 export interface HealthRecordRequest {
   healthRecordId?: string;
 
@@ -31,8 +31,7 @@ export interface HealthRecordRequest {
 export class HealthRecordService {
   private readonly http = inject(HttpClient);
 
-  private readonly baseUrl =
-    'http://localhost:3000/api/health-records';
+  private readonly baseUrl = `${environment.apiUrl}/api/health-records`;
 
   createHealthRecord(
     data: HealthRecordRequest
@@ -45,10 +44,21 @@ export class HealthRecordService {
 
   getHealthRecords(
     page = 1,
-    limit = 5
+    limit = 5,
+    search = ''
   ): Observable<any> {
+    const params: any = {
+      page,
+      limit,
+    };
+
+    if (search.trim()) {
+      params.search = search.trim();
+    }
+
     return this.http.get(
-      `${this.baseUrl}?page=${page}&limit=${limit}`
+      this.baseUrl,
+      { params }
     );
   }
 
@@ -79,8 +89,8 @@ export class HealthRecordService {
   }
 
   getEligibleAppointments(): Observable<any> {
-  return this.http.get(
-    `${this.baseUrl}/eligible-appointments`
-  );
-}
+    return this.http.get(
+      `${this.baseUrl}/eligible-appointments`
+    );
+  }
 }
