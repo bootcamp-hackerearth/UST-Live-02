@@ -1,0 +1,225 @@
+.container {
+  display: flex;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+.box-container {
+  width: 45%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f8f9fb;
+}
+
+.box {
+  width: 80%;
+  max-width: 350px;
+}
+
+h2 {
+  margin-bottom: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  animation: slideUp 0.4s ease-out;
+}
+
+.title-text {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 20px;
+  animation: slideUp 0.5s ease-out;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input {
+  outline: none;
+  border: none;
+  font-size: 14px;
+}
+
+input[type='email'],
+input[type='password'] {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  animation: slideRight 0.6s ease-out;
+}
+
+input[type='email']:focus,
+input[type='password']:focus {
+  box-shadow: 0px 0px 0px 2px #212121;
+}
+
+input::placeholder {
+  color: #bbb;
+}
+
+button {
+  background: #010811;
+  color: white;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: 0.3s ease;
+  animation: slideUp 0.7s ease-out;
+}
+
+input[type='submit']:disabled {
+  background: #3a3a3a;
+  color: white;
+  cursor: not-allowed;
+}
+
+label {
+  font-size: 12px;
+  color: #777;
+  cursor: pointer;
+}
+
+.forgot-password {
+  margin-left: auto;
+  font-size: 12px;
+  color: #a8a8a8;
+  animation: slideUp 0.6s ease-out;
+}
+
+.forgot-password:hover{
+  color:#2c2c2c;
+  cursor: pointer;
+}
+
+.signup {
+  text-align: center;
+  font-size: 12px;
+  animation: slideUp 0.5s ease-out;
+}
+
+small {
+  color: #ff6b6b;
+  font-size: 11px;
+  margin-top: -10px;
+  margin-bottom: -5px;
+  padding: 5px;
+}
+
+form label {
+  color: rgb(36, 36, 36);
+}
+
+@media screen and (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    padding: 15px;
+  }
+
+  .box-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px 0;
+    background: #f8f9fb;
+  }
+
+  .box {
+    width: 100%;
+    max-width: 400px;
+    padding: 0 15px;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    font-size: 26px;
+    text-align: center;
+  }
+
+  .title-text {
+    text-align: center;
+    font-size: 13px;
+    margin-bottom: 25px;
+  }
+
+  form {
+    gap: 18px;
+  }
+
+  input[type='email'],
+  input[type='password'] {
+    padding: 14px;
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  button,
+  input[type='submit'] {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  .forgot-password {
+    text-align: right;
+    margin-left: 0;
+  }
+
+  .signup {
+    margin-top: 10px;
+    font-size: 13px;
+  }
+
+  small {
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  .box {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  .title-text {
+    font-size: 12px;
+    text-align: left;
+  }
+
+  input[type='email'],
+  input[type='password'] {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  button,
+  input[type='submit'] {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  label,
+  .forgot-password,
+  .signup {
+    font-size: 12px;
+  }
+
+  small {
+    font-size: 11px;
+  }
+}
