@@ -1,0 +1,34 @@
+name: Deploy HMS
+
+on:
+  push:
+    branches:
+      - sprint5_aishwarya
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST_AISHWARYA }}
+          username: ${{ secrets.EC2_USER_AISHWARYA }}
+          key: ${{ secrets.EC2_KEY_AISHWARYA }}
+          script: |
+            cd ~/HMS_POD_4
+            git pull origin sprint5_aishwarya
+
+            cd Backend
+            npm install
+            pm2 restart hms-backend
+
+            cd ../Angular
+            npm install
+            npm run build -- --configuration production
+
+            sudo rm -rf /var/www/html/*
+            sudo cp -r dist/FRONTEND/browser/* /var/www/html/
+
+            sudo systemctl restart nginx
