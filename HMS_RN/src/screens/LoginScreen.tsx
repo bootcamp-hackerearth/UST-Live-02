@@ -1,3 +1,18 @@
+/**
+ * @file LoginScreen.tsx
+ * @overview The user authentication/login screen.
+ * @description This screen provides the UI for users to enter their email and password.
+ * It handles form validation and calls the `authService` to perform the login. On successful
+ * authentication, it navigates the user to the main part of the app.
+ * @routes
+ * - `Login`: The initial route of the app.
+ * - Navigates to `MainTabs` on success or `Register` for new users.
+ * @connections
+ * - User clicks Login button -> `handleLoginPress()` -> `authService.login(email, password)`.
+ * - `authService.login` -> `apiClient.post` -> Backend -> On success, stores JWT and profile in `SecureStore`.
+ * - On `authService` success -> `navigation.reset({ routes: [{ name: "MainTabs" }] })` -> Navigates to `HomeScreen`.
+ * - On `authService` failure -> `Toast.show()` (displays error).
+ */
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
@@ -45,7 +60,10 @@ export default function LoginScreen() {
 
   const toggleSecureEntry = useCallback(() => setSecure((s) => !s), []);
 
-  const navigateToRegister = useCallback(() => navigation.navigate("Register"), [navigation]);
+  const navigateToRegister = useCallback(
+    () => navigation.navigate("Register"),
+    [navigation],
+  );
 
   const handleLoginPress = useCallback(async () => {
     const trimmedEmail = email.trim();

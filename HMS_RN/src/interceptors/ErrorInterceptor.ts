@@ -1,3 +1,16 @@
+/**
+ * @file ErrorInterceptor.ts
+ * @overview Axios response interceptor for global error handling.
+ * @description This interceptor catches API errors and standardizes them. It handles 401 unauthorized errors
+ * by attempting to refresh the token. If token refresh fails or for other critical errors, it can reset the user
+ * to the login screen. It also displays user-friendly error messages via toasts.
+ * @connections
+ * - `apiClient.ts` -> Registers `attachErrorInterceptor`.
+ * - After an API response is received with an error -> This interceptor runs.
+ * - On 401 error -> `handleTokenRefresh()` -> `apiClient.post('/api/auth/refresh')` -> On success, retries original request.
+ * - On refresh failure -> `SecureStore.deleteItemAsync` -> `resetToLogin()` from `RootNavigation.ts` -> Navigates user to `LoginScreen`.
+ */
+
 import { AxiosInstance } from "axios";
 import * as SecureStore from "expo-secure-store";
 import { resetToLogin } from "../navigation/RootNavigation";
@@ -42,7 +55,7 @@ const handleTokenRefresh = async (client: AxiosInstance, originalRequest: any) =
                 return client(originalRequest);
             })
             .catch((err) => {
-                throw err; 
+                throw err;
             });
     }
 
@@ -73,7 +86,7 @@ const handleTokenRefresh = async (client: AxiosInstance, originalRequest: any) =
             text2: "Please log in again.",
         });
 
-        throw refreshError; 
+        throw refreshError;
     } finally {
         isRefreshing = false;
     }

@@ -1,4 +1,17 @@
-import { Component, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+/**
+ * @file signup.ts
+ * @description
+ * This file defines the component for the employee self-registration page.
+ *
+ * @overview
+ * This component provides a public form for new employees to sign up for an account.
+ * It features a complex reactive form with custom validators and dynamic fields that appear based on the selected role (e.g., availability slots for doctors).
+ * Upon submission, it sends the registration data to the backend via the `Auth` service.
+ *
+ * Connections:
+ *   User Interaction -> SIGNUP.TS -> AuthService -> HttpClient -> authInterceptor -> Backend API -> (response)
+ */
+import { Component, inject, ChangeDetectorRef, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -11,6 +24,7 @@ import {
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
+import { ApiService } from '../../services/apiService/api-service';
 import { Auth } from '../../services/authService/auth-service';
 import { TimeSlotUtil, GeneratedSlot } from '../../utils/timeSlot';
 import {
@@ -27,19 +41,21 @@ import {
   styleUrl: './signup.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Signup {
+export class Signup implements OnInit {
   private readonly auth = inject(Auth);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly apiService = inject(ApiService);
   private readonly passwordPattern =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   private readonly phonePattern = /^(\+91[\s-]?)?[6789]\d{9}$/;
 
   signupForm: FormGroup;
-  medicalRoles = ['doctor', 'nurse', 'lab_tech', 'pharmacist'];
+  roles: { value: string, label: string }[] = [];
+  medicalRoles: string[] = [];
   rowSubSlotsMap: { [uniqueId: string]: GeneratedSlot[] } = {};
-  departments = ["OPD", "IPD", "LAB", "PHARMACY"];
+  departments: string[] = [];
 
   availableHours: string[] = Array.from({ length: 24 }, (_, i) => {
     const hour = i.toString().padStart(2, '0');
@@ -79,6 +95,62 @@ export class Signup {
     });
   }
 
+  ngOnInit(): void {
+    this.fetchRoles();
+    this.fetchDepartments();
+  }
+
+  fetchDepartments() {
+    this.apiService.getAllDepartments().subscribe({
+      next: (res: any) => {
+        this.departments = (res.data || [])
+          .map((d: any) => d.departmentName)
+          .filter((name: string) => name.toUpperCase() !== 'ADMIN');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load departments', err);
+        this.errorMessage = 'Could not load departments for registration.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  fetchRoles() {
+    this.apiService.getPublicRoles().subscribe({
+      next: (res: any) => {
+        const allRoles = res.data || [];
+        // Filter out roles that shouldn't be available for self-registration
+        const allowedRoles = allRoles.filter((r: any) =>
+          !['ADMIN', 'OWNER', 'PATIENT', 'SUPER_ADMIN'].includes(r.roleName.toUpperCase())
+        );
+
+        this.roles = allowedRoles.map((r: any) => ({
+          value: r.roleName.toUpperCase(),
+          label: this.formatRoleLabel(r.roleName)
+        }));
+
+        this.medicalRoles = allRoles
+          .filter((r: any) => r.isMedicalRole)
+          .map((r: any) => r.roleName.toUpperCase());
+
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load roles', err);
+        this.errorMessage = 'Could not load roles for registration.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  formatRoleLabel(roleName: string): string {
+    if (!roleName) return '';
+    return roleName.split('_').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  }
+
   doctorSlotValidator = (group: AbstractControl): ValidationErrors | null => {
     const role = group.get('role')?.value?.toLowerCase();
     const slots = group.get('availabilitySlots') as FormArray;
@@ -104,12 +176,12 @@ export class Signup {
   };
 
   get isMedicalRole(): boolean {
-    const role = this.signupForm.get('role')?.value;
+    const role = this.signupForm.get('role')?.value?.toUpperCase();
     return this.medicalRoles.includes(role);
   }
 
   get isDoctor(): boolean {
-    return this.signupForm.get('role')?.value === 'doctor';
+    return this.signupForm.get('role')?.value?.toUpperCase() === 'DOCTOR';
   }
 
   get availabilitySlots(): FormArray {
@@ -121,7 +193,7 @@ export class Signup {
   }
 
   addSlot() {
-    const uniqueId = 'slot_' + Date.now() + Math.random().toString(36).substring(2, 7);
+    const uniqueId = 'slot_' + Date.now() + Math.random().toString(36).substring(2, 7); //NOSONAR - Math.random is safe
 
     const slotGroup = this.fb.group({
       id: [uniqueId],
@@ -156,12 +228,12 @@ export class Signup {
   updateMedicalValidators(role: string) {
     const commonMedicalFields = ['medicalRegistrationNo', 'specialization', 'qualification'];
 
-    if (this.medicalRoles.includes(role)) {
+    if (this.medicalRoles.includes(role?.toUpperCase())) {
       commonMedicalFields.forEach((field) => {
         this.signupForm.get(field)?.setValidators([Validators.required]);
       });
 
-      if (role === 'doctor') {
+      if (role?.toUpperCase() === 'DOCTOR') {
         this.signupForm
           .get('consultationFee')
           ?.setValidators([Validators.required, Validators.min(0)]);

@@ -1,3 +1,16 @@
+/**
+ * @file api-service.ts
+ * @description
+ * This file defines a general-purpose service for making API calls to the backend.
+ *
+ * @overview
+ * This service acts as a primary data access layer for many components.
+ * It centralizes a wide range of HTTP requests for different features like employees, patients, roles, permissions, and departments.
+ * Each method in this service corresponds to a specific backend API endpoint.
+ *
+ * Connections:
+ *   (Components) -> APISERVICE.TS -> HttpClient -> authInterceptor -> Backend API -> (response)
+ */
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
@@ -20,8 +33,16 @@ export class ApiService {
 
   constructor(private readonly http: HttpClient) { }
 
-  getMenus(): Observable<MenuNode[]> {
-    return this.http.get<MenuNode[]>(`${this.backendUrl}/api/menuNode/getMenus`);
+  getMenus(fetchAll: boolean = false): Observable<MenuNode[]> {
+    const url = fetchAll
+      ? `${this.backendUrl}/api/menuNode/getMenus?all=true`
+      : `${this.backendUrl}/api/menuNode/getMenus`;
+
+    return this.http.get<MenuNode[]>(url);
+  }
+
+  getSidebarMenu(): Observable<MenuNode[]> {
+    return this.http.get<MenuNode[]>(`${this.backendUrl}/api/menuNode/getSidebarMenu`);
   }
 
   getCurrentUser() {
@@ -38,6 +59,10 @@ export class ApiService {
 
   changeFirstPassword(payload: any) {
     return this.http.post(`${this.backendUrl}/api/auth/setpassword`, payload);
+  }
+
+  requestPasswordReset(payload: any) {
+    return this.http.post(`${this.backendUrl}/api/auth/forgot-password`, payload);
   }
 
   getAllEmployees(params: any = {}) {
@@ -89,4 +114,73 @@ export class ApiService {
       );
   }
 
+  // --- ROLES & PERMISSIONS ---
+
+  getAllRoles() {
+    return this.http.get(`${this.backendUrl}/api/roles/show`);
+  }
+
+  getPublicRoles() {
+    return this.http.get(`${this.backendUrl}/api/roles/public`);
+  }
+
+  createRole(payload: { roleName: string, rolePermissions?: string[], isMedicalRole?: boolean }) {
+    return this.http.post(`${this.backendUrl}/api/roles/create`, payload);
+  }
+  updateRole(id: string, payload: { roleName: string, rolePermissions: string[] }) {
+    return this.http.put(`${this.backendUrl}/api/roles/${id}`, payload);
+  }
+
+  getPermissions() {
+    return this.http.get(`${this.backendUrl}/api/permissions`);
+  }
+
+  createPermission(payload: { name: string }) {
+    return this.http.post(`${this.backendUrl}/api/permissions`, payload);
+  }
+
+  // Note: For assigning/revoking, you can use these individual endpoints, 
+  // but to match the "Save Changes" button in your UI, using the bulk `updateRole` is much more efficient!
+  assignPermission(payload: { roleId: string, permissionName: string }) {
+    return this.http.post(`${this.backendUrl}/api/permissions/assign`, payload);
+  }
+
+  revokePermission(payload: { roleId: string, permissionName: string }) {
+    return this.http.post(`${this.backendUrl}/api/permissions/revoke`, payload);
+  }
+
+  // --- MENU NODES ---
+  createMenuNode(payload: any) {
+    return this.http.post(`${this.backendUrl}/api/menuNode/createMenuNode`, payload);
+  }
+
+  updateMenuNode(id: string, payload: any) {
+    return this.http.put(`${this.backendUrl}/api/menuNode/updateMenuNode/${id}`, payload);
+  }
+
+  deleteMenuNode(id: string) {
+    return this.http.delete(`${this.backendUrl}/api/menuNode/deleteMenuNode/${id}`);
+  }
+
+  // --- DEPARTMENTS ---
+  getAllDepartments(): Observable<any> {
+    return this.http.get(`${this.backendUrl}/api/departments`);
+  }
+
+  createDepartment(departmentData: {
+    departmentName: string;
+  }): Observable<any> {
+    return this.http.post(`${this.backendUrl}/api/departments`, departmentData);
+  }
+
+  updateDepartment(
+    departmentId: string,
+    departmentData: { departmentName: string },
+  ): Observable<any> {
+    return this.http.put(`${this.backendUrl}/api/departments/${departmentId}`, departmentData);
+  }
+
+  deleteDepartment(departmentId: string): Observable<any> {
+    return this.http.delete(`${this.backendUrl}/api/departments/${departmentId}`);
+  }
 }

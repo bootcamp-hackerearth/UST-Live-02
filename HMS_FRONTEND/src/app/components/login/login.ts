@@ -1,3 +1,15 @@
+/**
+ * @file login.ts
+ * @description
+ * This file defines the component for the user login page.
+ *
+ * @overview
+ * This component handles the entire user authentication flow, including standard login, first-time password changes, and forgot password requests.
+ * It uses reactive forms for data capture and validation. It communicates with the backend through the `Auth` and `ApiService` to perform authentication and password management tasks.
+ *
+ * Connections:
+ *   User Interaction -> LOGIN.TS -> [AuthService, ApiService] -> HttpClient -> authInterceptor -> Backend API -> (response)
+ */
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import {
   ReactiveFormsModule,
@@ -13,6 +25,7 @@ import { RouterLink, Router } from '@angular/router';
 import { Auth } from '../../services/authService/auth-service';
 import { ApiService } from '../../services/apiService/api-service';
 import { ToastrService } from 'ngx-toastr';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -30,10 +43,14 @@ export class Login {
   errorMessage: string | null = null;
   loginForm: FormGroup;
   passwordForm: FormGroup;
+  forgotPasswordForm: FormGroup;
   isLoading = false;
+  isForgotPasswordLoading = false;
   showFirstLoginModal = false;
+  showForgotPasswordModal = false;
   tempEmail = '';
   tempOldPassword = '';
+  forgotPasswordMessage: string | null = null;
 
   toast: ToastrService = inject(ToastrService);
 
@@ -52,6 +69,10 @@ export class Login {
         validators: this.passwordMatchValidator,
       },
     );
+
+    this.forgotPasswordForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+    });
   }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -72,6 +93,7 @@ export class Login {
 
       this.auth.login(payload).subscribe({
         next: (response) => {
+
           this.isLoading = false;
           console.log('Backend Login Success:', response);
 
@@ -97,7 +119,24 @@ export class Login {
         },
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Invalid email or password';
+
+          // 1. Check for absolute absence of network response (Status 0)
+          const isNoResponse = error?.status === 0;
+
+          // 2. Check for intermediate gateway errors (Backend crashed, proxy survived)
+          const isGatewayError = error?.status >= 500 && error?.status <= 504;
+
+          if (isNoResponse || isGatewayError) {
+            this.errorMessage = 'Server is down or unreachable. Please try again later.';
+          } else if (error?.status === 401) {
+            this.errorMessage = 'Invalid credentials.';
+          } else {
+            // Provide exact backend message if available, else generic fallback
+            this.errorMessage =
+              error?.error?.message || error?.message ||
+              'An unexpected error occurred.';
+          }
+
           this.cdr.markForCheck();
         },
       });
@@ -134,6 +173,67 @@ export class Login {
         this.toast.error(err.error?.message || 'Failed to update password');
       },
     });
+  }
+
+  openForgotPasswordModal() {
+    this.forgotPasswordMessage = null;
+    this.showForgotPasswordModal = true;
+    this.forgotPasswordForm.reset();
+  }
+
+  closeForgotPasswordModal() {
+    this.showForgotPasswordModal = false;
+    this.forgotPasswordForm.reset();
+    this.forgotPasswordMessage = null;
+  }
+
+  onForgotPasswordSubmit() {
+    if (this.forgotPasswordForm.invalid) {
+      this.forgotPasswordForm.markAllAsTouched();
+      return;
+    }
+
+    this.isForgotPasswordLoading = true;
+    this.forgotPasswordMessage = null;
+
+    this.api
+      .requestPasswordReset({ email: this.forgotPasswordForm.value.email })
+      .pipe(
+        finalize(() => {
+          this.isForgotPasswordLoading = false;
+        }),
+      )
+      .subscribe({
+        next: (res: any) => {
+          const message = res?.message || 'If your account exists, a reset email has been sent.';
+          this.forgotPasswordMessage = message;
+          this.toast.success(message);
+          this.forgotPasswordForm.reset();
+          this.showForgotPasswordModal = false;
+        },
+        error: (err) => {
+          const message = this.getServerErrorMessage(err) || 'Unable to send a password reset email right now.';
+          this.forgotPasswordMessage = message;
+          this.toast.error(message);
+        },
+      });
+  }
+
+  getServerErrorMessage(error: any): string {
+    if (!error) {
+      return 'An unexpected error occurred.';
+    }
+
+    if (error.error?.message) {
+      return error.error.message;
+    }
+
+    if (Array.isArray(error.error?.errors) && error.error.errors.length > 0) {
+      const firstError = error.error.errors[0];
+      return firstError.msg || firstError.message || JSON.stringify(firstError);
+    }
+
+    return error.message || 'An unexpected error occurred.';
   }
 
   cancelPasswordChange() {

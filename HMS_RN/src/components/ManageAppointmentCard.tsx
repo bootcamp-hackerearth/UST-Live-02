@@ -1,3 +1,13 @@
+/**
+ * @file ManageAppointmentCard.tsx
+ * @overview A card component for displaying and managing a single appointment.
+ * @description This component shows detailed information about an appointment and provides interactive controls
+ * for editing or canceling it. The appearance and available actions change based on the appointment's status (e.g., Scheduled, Cancelled).
+ * @connections
+ * - `ViewAppointmentsScreen.tsx` -> Passes `appointment` data, `onEdit`, and `onDelete` callbacks as props -> `MANAGEAPPOINTMENTCARD.TSX`.
+ * - User clicks 'Edit' or 'Cancel' button -> `MANAGEAPPOINTMENTCARD.TSX` -> Invokes the `onEdit` or `onDelete` callback, which is handled by `ViewAppointmentsScreen.tsx`.
+ */
+
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";

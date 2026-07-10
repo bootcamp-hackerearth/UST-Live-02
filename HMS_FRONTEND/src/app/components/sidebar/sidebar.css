@@ -1,19 +1,37 @@
 .sidebar {
   width: 260px;
-  height: 100%;
   background-color: #ffffff;
-  padding: 32px 20px;
+  padding: 32px 0;
   box-sizing: border-box;
   z-index: 100;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 92px); 
+}
+
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0;
 }
 
 .menu-list {
   list-style: none;
-  padding: 0;
+  padding: 0 20px;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto; 
+  flex-grow: 1; 
+  scrollbar-width: none; 
+}
+
+.menu-list::-webkit-scrollbar {
+  display: none; 
 }
 
 .menu-item a {

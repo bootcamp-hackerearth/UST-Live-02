@@ -1,6 +1,0 @@
-projectKey=hms-rn
-serverUrl=http://localhost:9000
-serverVersion=26.1.0.118079
-dashboardUrl=http://localhost:9000/dashboard?id=hms-rn
-ceTaskId=664babda-c6f9-43ab-9afd-f98e92748cf5
-ceTaskUrl=http://localhost:9000/api/ce/task?id=664babda-c6f9-43ab-9afd-f98e92748cf5

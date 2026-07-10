@@ -1,3 +1,17 @@
+/**
+ * @file RegisterScreen.tsx
+ * @overview The user self-registration screen.
+ * @description This screen allows a new user to create an account. It utilizes the `PatientForm` component
+ * to capture all necessary personal and account information. On submission, it calls the `authService`
+ * to register the new patient.
+ * @routes
+ * - `Register`: Accessed from the `LoginScreen`.
+ * - Navigates to `Login` on successful registration.
+ * @connections
+ * - Renders the `PatientForm` component, providing it the `handleRegisterSubmit` callback via the `onSubmit` prop.
+ * - `PatientForm` submits valid data -> `handleRegisterSubmit(data)` -> `authService.register(payload)` -> `apiClient.post` -> Backend.
+ * - On `authService` success -> `Toast.show()` -> `navigation.navigate("Login")`.
+ */
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,

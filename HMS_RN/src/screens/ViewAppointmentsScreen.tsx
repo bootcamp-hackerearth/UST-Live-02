@@ -1,3 +1,19 @@
+/**
+ * @file ViewAppointmentsScreen.tsx
+ * @overview Screen for viewing and managing all of a patient's appointments.
+ * @description This screen fetches and displays a list of the user's past and upcoming appointments.
+ * Each appointment is rendered in a `ManageAppointmentCard`, which provides options to edit or cancel.
+ * It also includes a button to navigate to the booking screen for a new appointment.
+ * @routes
+ * - This is the initial screen in the `AppointmentNavigator` stack.
+ * - Navigates to `EditAppointment` or `BookAppointment`.
+ * @connections
+ * - On focus (`useFocusEffect`) -> `fetchAppointments()` -> `appointmentService.getMyAppointments()` -> Populates `appointments` state.
+ * - Renders a `ManageAppointmentCard` for each appointment, passing `handleEdit` and `handleDelete` as callbacks.
+ * - `handleDelete` -> `Alert` confirmation -> `executeCancellation()` -> `appointmentService.updateAppointment({ status: "Cancelled" })`.
+ * - `handleEdit` -> `navigation.navigate("EditAppointment", ...)` -> Navigates to the edit screen with appointment data.
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,

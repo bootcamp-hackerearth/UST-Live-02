@@ -1,3 +1,15 @@
+/**
+ * @file authService.ts
+ * @overview A service layer for authentication-related API calls.
+ * @description This file handles the logic for logging in, registering, and logging out.
+ * It communicates with the backend via `apiClient` and manages storing/deleting user tokens
+ * and profile data in `SecureStore`.
+ * @connections
+ * - Screens (`LoginScreen`, `RegisterScreen`) -> Call `authService.login()` or `authService.register()`.
+ * - `authService` -> `apiClient.post` -> Backend.
+ * - On successful login -> `authService` -> `SecureStore.setItemAsync` -> Stores JWT and profile data locally.
+ */
+
 import apiClient from "./apiClient";
 import { LoginResponse } from "../features/auth/types";
 import * as SecureStore from "expo-secure-store";

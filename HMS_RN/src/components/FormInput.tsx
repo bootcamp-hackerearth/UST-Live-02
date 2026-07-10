@@ -1,3 +1,13 @@
+/**
+ * @file FormInput.tsx
+ * @overview A reusable text input component integrated with `react-hook-form`.
+ * @description This component wraps a standard `TextInput` and connects it to a `react-hook-form` controller.
+ * It simplifies form creation by handling field state, validation, and error message display automatically.
+ * @connections
+ * - `PatientForm.tsx` (parent) -> `FORMINPUT.TSX` -> Receives `control`, `name`, and `error` props from `react-hook-form`.
+ * - The `Controller` component within `FORMINPUT.TSX` -> Manages the `TextInput` state (value, onBlur, onChange) and connects it to the parent form's state.
+ */
+
 import React from "react";
 import {
   View,

@@ -1,3 +1,13 @@
+/**
+ * @file MedicalRecordCard.tsx
+ * @overview An expandable card to display details of a medical record.
+ * @description This component presents a summary of a medical record and allows the user to expand the card
+ * to view more detailed information, such as complaints, symptoms, medications, and notes.
+ * @connections
+ * - `MedicalRecordsScreen.tsx` (fetches records) -> Passes `record` prop to `MEDICALRECORDCARD.TSX` for rendering.
+ * - User clicks 'Show More'/'Show Less' -> `toggleExpand` callback -> Updates internal `expanded` state to show/hide content.
+ */
+
 import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MedicalRecord } from "../features/auth/types";

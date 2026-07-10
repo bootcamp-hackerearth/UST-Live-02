@@ -1,3 +1,11 @@
+/**
+ * @file types.ts
+ * @overview Defines TypeScript interfaces for authentication and data models.
+ * @description This file contains the core type definitions used throughout the application,
+ * including shapes for user profiles, API responses, medical records, and more. It serves as a
+ * single source of truth for data structures.
+ */
+
 export interface PatientProfile {
     _id: string;
     UHID: string;
@@ -5,7 +13,7 @@ export interface PatientProfile {
     email: string;
     phone: string;
     gender: "Male" | "Female" | "Other";
-    dob: string; 
+    dob: string;
     bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
     allergies?: string[];
     emergencyContact?: string;

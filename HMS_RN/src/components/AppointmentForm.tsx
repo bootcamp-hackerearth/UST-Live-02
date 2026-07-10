@@ -1,3 +1,16 @@
+/**
+ * @file AppointmentForm.tsx
+ * @overview A comprehensive form for creating and editing appointments.
+ * @description This component manages the entire appointment booking/editing process, including doctor search and selection,
+ * date picking, and available slot selection. It uses the `useAppointmentData` hook to manage its state and data fetching logic.
+ * Form submission is handled here, with API calls made through `appointmentService`.
+ * @connections
+ * - `APPOINTMENTFORM.TSX` -> `useAppointmentData.ts` (hook) -> Manages state for doctors, slots, selections.
+ * - User Interaction (e.g., select doctor, date) -> Triggers state updates in `useAppointmentData` -> `appointmentService.ts` -> Fetches new data (e.g., available slots).
+ * - User Submits Form -> `handleFormSubmit()` -> `appointmentService.ts` (`create` or `update` methods) -> `apiClient.ts` -> Backend.
+ * - On API success -> Calls `onSuccess` prop (passed from `AppointmentContainer.tsx`).
+ * - On API failure -> `Toast.show()` (displays error message).
+ */
 import React, {
   useState,
   useCallback,

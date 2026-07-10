@@ -1,3 +1,13 @@
+/**
+ * @file patientService.ts
+ * @overview A service layer for patient-specific API calls.
+ * @description This file provides functions for interacting with the patient data endpoints,
+ * such as updating a patient's profile.
+ * @connections
+ * - `ProfileScreen.tsx` -> Calls `patientService.updateProfile()`.
+ * - `patientService` -> `apiClient.put` -> Backend patient endpoint.
+ */
+
 import apiClient from "./apiClient";
 export const patientService = {
     updateProfile: async (uhid: string, payload: any) => {

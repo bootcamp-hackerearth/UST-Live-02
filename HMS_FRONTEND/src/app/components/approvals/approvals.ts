@@ -1,3 +1,16 @@
+/**
+ * @file approvals.ts
+ * @description
+ * This file defines the component for managing employee account approvals.
+ *
+ * @overview
+ * This component displays a list of employees whose accounts are pending administrative approval.
+ * It allows an administrator to view, filter, and search for pending accounts, and then either approve or reject them.
+ * All interactions are sent to the backend via the `ApiService`.
+ *
+ * Connections:
+ *   User Interaction -> APPROVALS.TS -> ApiService -> HttpClient -> authInterceptor -> Backend API -> (response)
+ */
 import { Component, inject, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -20,8 +33,7 @@ export class Approvals implements OnInit {
 
   searchTerm: string = '';
   selectedDepartment: string = '';
-  departments = ["OPD", "IPD", "ADMIN", "LAB", "PHARMACY"];
-
+  departments: string[] = [];
 
   currentPage = 1;
   pageSize = environment.pageSize;
@@ -40,7 +52,20 @@ export class Approvals implements OnInit {
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.fetchPendingEmployees();
+      this.fetchDepartments();
     }
+  }
+
+  fetchDepartments() {
+    this.apiService.getAllDepartments().subscribe({
+      next: (res: any) => {
+        this.departments = (res.data || []).map((dept: any) => dept.departmentName);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.toast.error('Failed to load departments.');
+      },
+    });
   }
 
   fetchPendingEmployees() {

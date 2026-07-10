@@ -1,3 +1,16 @@
+/**
+ * @file employee.ts
+ * @description
+ * This file defines the component for managing employee records.
+ *
+ * @overview
+ * This is a comprehensive component for the full lifecycle management of employees.
+ * It allows administrators to view, filter, search, create, update, and delete employee records.
+ * It features a complex reactive form within a modal for adding and editing employees, including dynamic fields for medical roles and their availability schedules.
+ *
+ * Connections:
+ *   User Interaction -> EMPLOYEE.TS -> ApiService -> HttpClient -> authInterceptor -> Backend API -> (response)
+ */
 import { Component, inject, OnInit, ChangeDetectorRef, PLATFORM_ID, Inject, HostListener, ElementRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
@@ -52,7 +65,7 @@ export class Employee implements OnInit {
   searchTerm: string = '';
   selectedDepartment: string = '';
   selectedStatus: string = '';
-  departments = ["OPD", "IPD", "ADMIN", "LAB", "PHARMACY"]
+  departments: string[] = [];
 
   showAddModal = false;
   isSubmittingModal = false;
@@ -61,17 +74,9 @@ export class Employee implements OnInit {
 
   userPermissions: string[] = [];
 
-  medicalRoles = ['DOCTOR', 'NURSE', 'LAB_TECH', 'PHARMACIST'];
+  medicalRoles: string[] = [];
 
-  baseRoles = [
-    { value: 'DOCTOR', label: 'Doctor' },
-    { value: 'NURSE', label: 'Nurse' },
-    { value: 'LAB_TECH', label: 'Lab Technician' },
-    { value: 'PHARMACIST', label: 'Pharmacist' },
-    { value: 'RECEPTIONIST', label: 'Receptionist' },
-    { value: 'CASHIER', label: 'Cashier' },
-  ];
-
+  baseRoles: { value: string, label: string }[] = [];
   availableRoles: any[] = [];
 
   rowSubSlotsMap: { [uniqueId: string]: GeneratedSlot[] } = {};
@@ -98,7 +103,8 @@ export class Employee implements OnInit {
   }
 
   ngOnInit() {
-    this.setupAvailableRoles();
+    this.fetchAndSetupRoles();
+    this.fetchDepartments();
 
     this.route.data.subscribe(data => {
       if (data['openApprovalsByDefault']) {
@@ -113,37 +119,83 @@ export class Employee implements OnInit {
     });
   }
 
-  setupAvailableRoles() {
-
-    this.route.data.subscribe(data => {
-      if (data['openApprovalsByDefault']) {
-        this.showPendingApprovals = true;
-        this.selectedStatus = '';
-      } else {
-        this.showPendingApprovals = false;
-        this.selectedStatus = '';
+  fetchDepartments() {
+    this.apiService.getAllDepartments().subscribe({
+      next: (res: any) => {
+        this.departments = (res.data || []).map((d: any) => d.departmentName);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.toast.error("Failed to load departments.");
       }
-      this.applyFilters();
-      this.cdr.detectChanges();
+    })
+  }
+
+  fetchAndSetupRoles() {
+    this.apiService.getAllRoles().subscribe({
+      next: (res: any) => {
+        const allRoles = res.data || [];
+        const employeeRoles = allRoles.filter(
+          (r: any) => r.roleName.toUpperCase() !== 'PATIENT'
+        );
+
+        this.medicalRoles = employeeRoles
+          .filter((r: any) => r.isMedicalRole)
+          .map((r: any) => r.roleName.toUpperCase());
+
+        this.baseRoles = employeeRoles.map((r: any) => ({
+          value: r.roleName.toUpperCase(),
+          label: this.formatRoleLabel(r.roleName)
+        }));
+
+        this.setupAvailableRoles();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.toast.error("Failed to load roles from server.");
+        console.error(err);
+      }
     });
-    this.availableRoles = [...this.baseRoles];
+  }
 
-    if (isPlatformBrowser(this.platformId)) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1].replaceAll('-', '+').replaceAll('_', '/')));
-
-          this.userPermissions = payload.permissions || [];
-
-          if (this.userPermissions.includes('CREATE_ADMIN')) {
-            this.availableRoles.unshift({ value: 'ADMIN', label: 'Admin' });
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }
+  setupAvailableRoles() {
+    if (!isPlatformBrowser(this.platformId)) {
+      this.availableRoles = [...this.baseRoles];
+      return;
     }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.availableRoles = [...this.baseRoles];
+      return;
+    }
+
+    try {
+      const payload = this.decodeTokenPayload(token);
+      this.userPermissions = payload.permissions || [];
+      this.availableRoles = this.getAvailableRoles();
+    } catch (err) {
+      console.error(err);
+      this.availableRoles = [...this.baseRoles];
+    }
+  }
+
+  private decodeTokenPayload(token: string): any {
+    const encodedPayload = token.split('.')[1].replaceAll('-', '+').replaceAll('_', '/');
+    return JSON.parse(atob(encodedPayload));
+  }
+
+  private getAvailableRoles(): any[] {
+    if (!this.userPermissions.includes('CREATE_ADMIN')) {
+      return [...this.baseRoles];
+    }
+
+    const adminRoleExists = this.baseRoles.some((role) => role.value === 'ADMIN');
+    if (adminRoleExists) {
+      return [...this.baseRoles];
+    }
+
+    return [{ value: 'ADMIN', label: 'Admin' }, ...this.baseRoles];
   }
 
   @HostListener('document:mousedown', ['$event'])
@@ -360,7 +412,7 @@ export class Employee implements OnInit {
   }
 
   addSlot() {
-    const uniqueId = 'slot_' + Date.now() + Math.random().toString(36).substring(2, 7);
+    const uniqueId = 'slot_' + Date.now() + Math.random().toString(36).substring(2, 7); //NOSONAR - Math.random is safe
     const slotGroup = this.fb.group({
       id: [uniqueId],
       dayOfWeek: ['', Validators.required],
@@ -393,6 +445,13 @@ export class Employee implements OnInit {
 
   generateHourlySlots(uniqueId: string, slotGroup: FormGroup, start: string, end: string) {
     TimeSlotUtil.populateHalfHourSlots(uniqueId, slotGroup, start, end, this.rowSubSlotsMap);
+  }
+
+  formatRoleLabel(roleName: string): string {
+    if (!roleName) return '';
+    return roleName.split('_').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
   }
 
   updateMedicalValidators(role: string) {

@@ -1,3 +1,16 @@
+/**
+ * @file AppointmentContainer.tsx
+ * @overview A container component that wraps the appointment booking and editing forms.
+ * @description This component provides the main UI structure (background, titles) for the appointment creation and modification screens.
+ * It fetches the patient's profile from secure storage and passes the necessary data down to the `AppointmentForm`.
+ * @routes
+ * - Used by `BookAppointmentScreen` for creating new appointments.
+ * - Used by `EditAppointmentScreen` for modifying existing appointments.
+ * @connections
+ * - `APPOINTMENTCONTAINER.TSX` (on mount) -> `SecureStore.getItemAsync("patient_profile")` -> Sets patient profile state.
+ * - Passes `patientUHID` and `onSuccess` callback down to its child component `AppointmentForm.tsx`.
+ * - `onSuccess` callback -> `navigation.reset()` -> Navigates user back to `ViewAppointmentsScreen`.
+ */
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, ImageBackground } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

@@ -1,3 +1,15 @@
+/**
+ * @file MedicalRecordFilter.tsx
+ * @overview A component for filtering a list of medical records.
+ * @description This component provides a user interface for searching and filtering medical records.
+ * It includes a primary search by appointment ID and an advanced section for filtering by doctor and date.
+ * - MEDICALRECORDFILTER.TSX -> MedicalRecordsScreen.tsx
+ * @connections
+ * - `MedicalRecordsScreen.tsx` -> Passes `doctors`, `initialFilters`, and `onFilterChange` callback to `MEDICALRECORDFILTER.TSX`.
+ * - User interacts with filters (e.g., types in `SearchBar`, selects a `SelectablePill`) -> Updates internal `filters` state.
+ * - User clicks 'Apply' or 'Search' -> `handleApply()` -> Invokes `onFilterChange(filters)` -> `MedicalRecordsScreen.tsx` re-fetches data with new filters.
+ */
+
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   View,

@@ -1,3 +1,12 @@
+/**
+ * @file ProfileField.tsx
+ * @overview A simple component to display a labeled piece of profile data.
+ * @description This is a presentational component used to consistently display a label and its corresponding value
+ * in the user's profile view.
+ * @connections
+ * - `ProfileScreen.tsx` -> Renders a list of `PROFILEFIELD.TSX` components, passing `label` and `value` props for each piece of profile data.
+ */
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 

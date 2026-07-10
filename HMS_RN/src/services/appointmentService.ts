@@ -1,3 +1,13 @@
+/**
+ * @file appointmentService.ts
+ * @overview A service layer for all appointment-related API calls.
+ * @description This file abstracts the API endpoints for appointments. It provides functions for fetching doctors,
+ * checking available slots, creating, updating, and fetching patient appointments.
+ * @connections
+ * - Screens (`HomeScreen`, `ViewAppointmentsScreen`) and Hooks (`useAppointmentData`) -> Call functions on `appointmentService`.
+ * - `appointmentService` functions -> Use `apiClient` to make the actual HTTP requests to the backend appointment endpoints.
+ */
+
 import apiClient from "./apiClient";
 
 export const appointmentService = {

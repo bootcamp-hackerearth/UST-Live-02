@@ -1,3 +1,14 @@
+/**
+ * @file patientValidations.ts
+ * @overview Yup validation schemas for patient data.
+ * @description This file defines validation rules for the patient registration and profile update forms
+ * using the Yup library. It provides a function that returns the appropriate schema based on whether
+ * the form is in 'edit mode' or 'create mode'.
+ * @connections
+ * - `PatientForm.tsx` -> Calls `getPatientValidationSchema(isEditMode)`.
+ * - The returned Yup schema is passed to the `yupResolver` in `PatientForm.tsx`'s `useForm` hook to perform validation.
+ */
+
 import * as Yup from "yup";
 
 const nameRegex = /^[A-Za-z\s.\-']+$/;
@@ -38,7 +49,7 @@ export const getPatientValidationSchema = (isEditMode: boolean) => {
             .nullable()
             .optional()
             .test("is-valid-blood", "Invalid Blood Group", (value) => {
-                if (!value || value.trim() === "") return true; 
+                if (!value || value.trim() === "") return true;
                 return ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].includes(value);
             }),
 
@@ -54,7 +65,7 @@ export const getPatientValidationSchema = (isEditMode: boolean) => {
             .optional()
             .test("is-valid-emergency", "Enter a valid 10-digit emergency number", (value) => {
                 if (!value || value.trim() === "" || value === "+91" || value === "91") {
-                    return true; 
+                    return true;
                 }
                 return indianPhoneRegex.test(value);
             }),

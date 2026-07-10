@@ -1,3 +1,12 @@
+/**
+ * @file HealthSummaryCard.tsx
+ * @overview Displays a patient's key health information.
+ * @description This is a presentational component that shows a snapshot of the patient's health profile,
+ * including blood group, allergies, and emergency contact information.
+ * @connections
+ * - `HomeScreen.tsx` (fetches profile data) -> Passes `profile` prop -> `HEALTHSUMMARYCARD.TSX` (renders data).
+ */
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { PatientProfile } from "../features/auth/types";

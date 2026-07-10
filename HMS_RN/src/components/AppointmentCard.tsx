@@ -1,3 +1,13 @@
+/**
+ * @file AppointmentCard.tsx
+ * @overview Displays a summary of an upcoming appointment.
+ * @description This component is a presentational card that shows key details of a single appointment,
+ * such as the doctor's name, specialization, date, and time. It is used on the home screen to show the next upcoming appointment.
+ * @connections
+ * - `HomeScreen.tsx` (fetches appointment data) -> Passes `appointment` prop -> `APPOINTMENTCARD.TSX` (renders data)
+ * - `APPOINTMENTCARD.TSX` contains helper functions `formatDate` and `formatSpecialization` for data presentation.
+ */
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";

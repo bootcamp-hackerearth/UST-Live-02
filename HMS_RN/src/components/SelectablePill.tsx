@@ -1,3 +1,14 @@
+/**
+ * @file SelectablePill.tsx
+ * @overview A tappable, pill-shaped button for selection.
+ * @description This component is used to create a list of selectable options, such as doctors or time slots.
+ * Its appearance changes to indicate whether it is currently selected.
+ * @connections
+ * - Parent Component (e.g., `AppointmentForm`) -> Renders `SELECTABLEPILL.TSX` inside a list.
+ * - Parent passes `isSelected` (boolean) and `onPress` (callback) props.
+ * - User taps the pill -> `onPress` callback is invoked -> Parent component updates its selection state, causing a re-render.
+ */
+
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 

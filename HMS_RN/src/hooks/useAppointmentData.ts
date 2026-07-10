@@ -1,3 +1,14 @@
+/**
+ * @file useAppointmentData.ts
+ * @overview A custom hook to manage state and logic for the appointment form.
+ * @description This hook encapsulates the complex logic required for the appointment booking/editing process.
+ * It handles fetching doctors and available time slots, managing selected values, and automatically
+ * scrolling to the selected items in the lists.
+ * @connections
+ * - `AppointmentForm.tsx` -> Calls `useAppointmentData()` to get state and setters.
+ * - `useEffect` hooks within `USEAPPOINTMENTDATA.TS` -> Call methods on `appointmentService.ts` (e.g., `getDoctors`, `getAvailableSlots`) to fetch data from the API when dependencies (like `selectedDoctor` or `selectedDate`) change.
+ */
+
 import { useState, useEffect, useRef } from "react";
 import { FlatList } from "react-native";
 import { appointmentService } from "../services/appointmentService";

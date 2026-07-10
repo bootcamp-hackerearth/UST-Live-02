@@ -1,3 +1,15 @@
+/**
+ * @file SearchBar.tsx
+ * @overview A reusable search input component.
+ * @description This component provides a styled text input with a search icon and a clear button
+ * that appears when there is text. It is used across the application for various search functionalities.
+ * - SEARCHBAR.TSX -> AppointmentForm.tsx
+ * @connections
+ * - Parent Component (e.g., `HomeScreen`, `MedicalRecordFilter`) -> Manages the search state (`value`).
+ * - Parent Component -> Renders `SEARCHBAR.TSX`, passing `value` and `onChangeText` callback.
+ * - User types in `TextInput` -> `onChangeText` is called -> Parent component updates its state.
+ */
+
 import React from "react";
 import {
   View,

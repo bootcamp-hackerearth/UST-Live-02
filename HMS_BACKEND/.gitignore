@@ -145,3 +145,6 @@ vite.config.ts.timestamp-*
 .scannerwork/*
 
 .idea/*
+
+HMS-BACKEND.roles.json
+HMS-BACKEND\src\HMS-BACKEND.roles.json

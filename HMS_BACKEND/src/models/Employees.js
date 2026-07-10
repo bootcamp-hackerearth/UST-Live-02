@@ -1,5 +1,24 @@
+/**
+ * @file Employees.js
+ * @description
+ * This file defines the Mongoose schema and model for employees.
+ * It includes sub-schemas for weekly schedules and individual time slots.
+ *
+ * @overview
+ * This schema represents an employee within the Hospital Management System.
+ * It stores personal contact information, employment details like department and designation, and account status.
+ * For medical staff (like doctors), it supports a detailed weekly schedule and professional qualifications.
+ * A pre-save hook automatically generates a unique `employeeCode` for each new employee using a utility.
+ * It also validates that the assigned department exists by checking against the `Departments` model.
+ *
+ * Connections:
+ *   [authController, employeeController, etc.] -> EMPLOYEES.JS
+ *   EMPLOYEES.JS -> generateID.js (utility)
+ *   EMPLOYEES.JS -> Departments.js (for validation)
+ */
 const mongoose = require("mongoose");
 const generateId = require("../utils/generateID");
+const Departments = require("./Departments");
 
 const timeSlotSchema = new mongoose.Schema(
   {
@@ -56,13 +75,21 @@ const employeeSchema = new mongoose.Schema(
         "INACTIVE",
         "PASSWORD_CHANGE_PENDING",
         "ADMIN_APPROVAL_PENDING",
-        "DELETED"
+        "DELETED",
       ],
     },
     department: {
       type: String,
-      enum: ["OPD", "IPD", "LAB", "PHARMACY", "ADMIN", "SUPER_ADMIN"],
       required: true,
+      validate: {
+        validator: async function (value) {
+          const department = await Departments.findOne({
+            departmentName: value,
+          });
+          return !!department;
+        },
+        message: (props) => `${props.value} is not a valid department.`,
+      },
     },
 
     designation: { type: String, required: true },

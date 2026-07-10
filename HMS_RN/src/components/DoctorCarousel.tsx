@@ -1,3 +1,12 @@
+/**
+ * @file DoctorCarousel.tsx
+ * @overview Displays a horizontal scrolling list of doctors.
+ * @description This component renders a `FlatList` of `DoctorCard` components in a carousel format.
+ * It is designed to showcase a list of doctors, for example, on a dashboard or a dedicated doctor listing page.
+ * @connections
+ * - Parent Component (e.g., a screen) -> Passes `doctors` array prop -> `DOCTORCAROUSEL.TSX`.
+ * - `DOCTORCAROUSEL.TSX` -> Renders a `FlatList` where each item is a `DoctorCard` component.
+ */
 import React, { useCallback } from "react";
 import {
   View,

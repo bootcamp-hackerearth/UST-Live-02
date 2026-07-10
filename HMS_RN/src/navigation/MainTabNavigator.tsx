@@ -1,3 +1,20 @@
+/**
+ * @file MainTabNavigator.tsx
+ * @overview Sets up the main bottom tab navigation for the application.
+ * @description This file defines the primary navigation structure after a user logs in. It creates a `Tab.Navigator`
+ * with four main tabs: Home, Appointments, Records, and Profile. The 'Appointments' tab contains its own nested `StackNavigator`
+ * to handle the flow between viewing, booking, and editing appointments.
+ * @routes
+ * - `HomeTab`: Navigates to `HomeScreen`.
+ * - `AppointmentsTab`: Navigates to the `AppointmentNavigator` stack.
+ *   - `ViewAppointments`: `ViewAppointmentsScreen`
+ *   - `BookAppointment`: `BookAppointmentScreen`
+ *   - `EditAppointment`: `EditAppointmentScreen`
+ * - `RecordsTab`: Navigates to `MedicalRecordsScreen`.
+ * - `ProfileTab`: Navigates to `ProfileScreen`.
+ * - MAINTABNAVIGATOR.TSX -> HomeScreen.tsx, ViewAppointmentsScreen.tsx, BookAppointmentScreen.tsx, EditAppointmentScreens.tsx, MedicalRecordsScreen.tsx, ProfileScreen.tsx
+ */
+
 import React, { useEffect, useRef } from "react";
 import { Animated, View, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -9,7 +26,7 @@ import ProfileScreen from "../screens/ProfileScreen";
 import BookAppointmentScreen from "../screens/BookAppointmentScreen";
 import ViewAppointmentsScreen from "../screens/ViewAppointmentsScreen";
 import EditAppointmentScreen from "../screens/EditAppointmentScreens";
-import MedicalRecordsScreen from "../screens/MedicalRecordsScreen"; 
+import MedicalRecordsScreen from "../screens/MedicalRecordsScreen";
 
 import { AppointmentStackParamList } from "../types/navigation";
 

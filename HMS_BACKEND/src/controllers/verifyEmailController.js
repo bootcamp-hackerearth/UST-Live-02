@@ -1,7 +1,28 @@
+/**
+ * @file verifyEmailController.js
+ * @description
+ * This file contains the controller function for handling the email verification process.
+ * This file contains the controller for handling email verification.
+ *
+ * @overview
+ * This controller manages the logic for verifying a user's email address using a token.
+ * It is triggered when a user clicks the verification link sent to their email.
+ * The controller validates the email and token against the `Users` model, ensuring the token is not expired.
+ * Upon success, it updates the user's status and may trigger a notification email. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   API Request -> emailVerificationRoutes -> asyncHandler -> VERIFYEMAILCONTROLLER.JS -> [Users Model, sendMail utility]
+ *   VERIFYEMAILCONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const sendMail = require("../utils/sendMail");
 const Users = require("../models/Users");
 const ERR = require("../utils/errors.utils");
 
+/**
+ * @route   GET /api/email/verify-email
+ * @desc    Verifies a user's email address using a token from the query string.
+ * @access  Public
+ */
 exports.verifyEmail = async (req, res) => {
   const { email, token } = req.query;
 
@@ -30,15 +51,20 @@ exports.verifyEmail = async (req, res) => {
   user.verification_token = undefined;
   user.verification_expiry = undefined;
   await user.save();
+  let messageIfSelfSignup = "";
+  let returnMessageIfSelfSignup = "";
 
   if (user.status === "ADMIN_APPROVAL_PENDING") {
+    messageIfSelfSignup = " and requires your approval";
+    returnMessageIfSelfSignup = " Your account is now pending Admin approval.";
+  }
     try {
       await sendMail({
         to: process.env.ADMIN_EMAIL,
         subject: "HMS Employee Credentials - Approval Required",
         htmlContent: `
             <h2>Hello Admin</h2>
-            <p>An employee profile has successfully verified their email and now requires your approval.</p>
+            <p>An employee [${user.employeeID}] profile has successfully verified their email${messageIfSelfSignup}.</p>
             <p>Kindly check the system and take necessary steps.</p>
             <p><strong>Employee Id:</strong> ${user.employeeID}</p>
           `,
@@ -52,12 +78,7 @@ exports.verifyEmail = async (req, res) => {
 
     return res.status(200).json({
       message:
-        "Email successfully verified. Your account is now pending Admin approval.",
+        `Email successfully verified.${returnMessageIfSelfSignup}`,
     });
-  }
-
-  res.status(200).json({
-    message:
-      "Email successfully verified. You may now log in with your temporary password.",
-  });
+  
 };

@@ -1,3 +1,18 @@
+/**
+ * @file HomeScreen.tsx
+ * @overview The main dashboard screen for the patient.
+ * @description This screen serves as the user's landing page after logging in. It displays a welcome message,
+ * the next upcoming appointment, a doctor search functionality, and a summary of the patient's health info.
+ * It fetches all necessary data from the `appointmentService` and `SecureStore`.
+ * @routes This is the default screen in the `MainTabNavigator`'s `HomeTab`.
+ * - HOMESCREEN.TSX -> appointmentService.ts
+ * @connections
+ * - On focus (`useFocusEffect`) -> `fetchDashboardData()` -> `appointmentService` (fetches appointments/doctors) & `SecureStore` (fetches profile).
+ * - Renders child components `AppointmentCard` and `HealthSummaryCard` with fetched data.
+ * - User types in `SearchBar` -> `searchTerm` state updates -> `filteredDoctors` memo is re-calculated.
+ * - User clicks a doctor result -> `navigateToBookDoctor()` -> `navigation.navigate("AppointmentsTab", ...)` -> Navigates to `BookAppointmentScreen` with doctor ID.
+ */
+
 import React, {
   useState,
   useCallback,
@@ -28,7 +43,6 @@ import HealthSummaryCard from "../components/HealthSummaryCard";
 import { appointmentService } from "../services/appointmentService";
 import { Ionicons } from "@expo/vector-icons";
 import SearchBar from "../components/SearchBar";
-
 
 const EMPTY_ARRAY: Doctor[] = [];
 
@@ -178,7 +192,6 @@ export default function HomeScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
         </TouchableOpacity>
-        
       </View>
     ),
     [navigateToBookDoctor],
@@ -229,7 +242,6 @@ export default function HomeScreen() {
             value={searchTerm}
             onChangeText={setSearchTerm}
             placeholder="Search by name, specialty, or designation"
-            
           />
         </View>
 
@@ -258,7 +270,6 @@ export default function HomeScreen() {
             </View>
           </View>
         )}
-        
       </>
     ),
     [
@@ -268,7 +279,10 @@ export default function HomeScreen() {
       specialties,
       filteredDoctors.length,
       navigateToViewAppointments,
-      profile, nextAppointment, specialties, navigateToViewAppointments
+      profile,
+      nextAppointment,
+      specialties,
+      navigateToViewAppointments,
     ],
   );
 
@@ -290,14 +304,14 @@ export default function HomeScreen() {
           </View>
         ) : (
           <FlatList
-            data={debouncedSearchTerm.trim() ? filteredDoctors : EMPTY_ARRAY} 
-            keyExtractor={keyExtractor} 
+            data={debouncedSearchTerm.trim() ? filteredDoctors : EMPTY_ARRAY}
+            keyExtractor={keyExtractor}
             renderItem={renderDoctorResult}
             initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={11}
             removeClippedSubviews={true}
-            ListFooterComponent={renderListFooter} 
+            ListFooterComponent={renderListFooter}
             ListHeaderComponent={renderListHeader()}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}

@@ -1,0 +1,222 @@
+<div *hasPermission="'VIEW_ROLES'" class="role-management-wrapper">
+  <div class="left-panel">
+    <div class="roles-section">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-bottom: 12px;
+        "
+      >
+        <div>
+          <p class="section-eyebrow">ROLES</p>
+          <h2 class="section-title">All Roles</h2>
+        </div>
+      </div>
+
+      @if (!isLoading) {
+        <div style="max-height: 500px; overflow-y: auto">
+          <div class="roles-list">
+            @for (role of roles; track role._id) {
+              <div
+                class="role-card"
+                [class.active]="selectedRole?._id === role._id"
+                (click)="selectRole(role)"
+                (keydown.enter)="selectRole(role)"
+                (keydown.space)="selectRole(role)"
+              >
+                <div class="role-avatar" [class.active-avatar]="selectedRole?._id === role._id">
+                  {{ getRoleInitials(role.roleName) }}
+                </div>
+                <div class="role-info">
+                  <h4>{{ role.roleName | titlecase }}</h4>
+                  <p>{{ role.rolePermissions?.length || 0 }} permissions</p>
+                </div>
+                <i class="bi bi-chevron-right chevron-icon"></i>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="text-center py-4 text-muted">Loading roles...</div>
+      }
+    </div>
+
+    <div class="register-section mt-4" *hasPermission="'CREATE_ROLES'">
+      <p class="section-eyebrow">NEW ROLE</p>
+      <h2 class="section-title mb-3">Add Role</h2>
+
+      <form [formGroup]="newRoleForm" (ngSubmit)="submitNewRole()">
+        <div class="input-group mb-3">
+          <label for="roleName" style="margin-top: 10px"
+            ><i class="bi bi-person-badge text-purple"></i> ROLE NAME
+            <span class="text-danger">*</span></label
+          >
+          <input
+            aria-label="roleName"
+            type="text"
+            class="form-control"
+            formControlName="roleName"
+            placeholder="e.g. CASHIER"
+          />      
+        </div>
+
+        <div class="input-group mb-3">
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              cursor: pointer;
+              text-transform: none;
+              color: #4b5563;
+              margin-top: 10px;
+            "
+          >
+            <input
+              type="checkbox"
+              formControlName="isMedicalRole"
+              style="width: 18px; height: 18px; accent-color: #5b36b3"
+            />
+            Is Medical Role? (e.g. Doctor, Nurse)
+          </label>
+        </div>
+
+        <button type="submit" class="btn-register" [disabled]="newRoleForm.invalid || isSaving">
+          <i class="bi bi-plus-lg"></i> {{ isSaving ? 'Adding...' : 'Add Role' }}
+        </button>
+      </form>
+    </div>
+
+    <div class="register-section mt-4" *hasPermission="'CREATE_PERMISSIONS'">
+      <p class="section-eyebrow">REGISTER</p>
+      <h2 class="section-title mb-3">New Permission</h2>
+
+      <form [formGroup]="newPermForm" (ngSubmit)="registerNewPermission()">
+        <div class="input-group mb-3">
+          <label for="action" style="margin-top: 10px"
+            ><i class="bi bi-lightning text-purple"></i> ACTION
+            <span class="text-danger">*</span></label
+          >
+          <input
+            aria-label="action"
+            type="text"
+            class="form-control"
+            formControlName="action"
+            placeholder="e.g. create"
+          />
+        </div>
+
+        <div class="input-group mb-3">
+          <label for="resource" style="margin-top: 10px"
+            ><i class="bi bi-box text-purple"></i> RESOURCE
+            <span class="text-danger">*</span></label
+          >
+          <input
+            aria-label="resource"
+            type="text"
+            class="form-control"
+            formControlName="resource"
+            placeholder="e.g. patient"
+          />
+        </div>
+
+        <button type="submit" class="btn-register" [disabled]="newPermForm.invalid">
+          <i class="bi bi-plus-lg"></i> Register Permission
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    @if (selectedRole) {
+      <div class="editing-header">
+        <div>
+          <p class="section-eyebrow">EDITING</p>
+          <h2 class="section-title">{{ selectedRole.roleName | titlecase }}</h2>
+        </div>
+
+        <div class="header-actions">
+          <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input
+              aria-label="search"
+              type="text"
+              placeholder="Filter permissions"
+              [(ngModel)]="searchQuery"
+            />
+          </div>
+          <button
+            class="btn-save"
+            *hasPermission="['UPDATE_PERMISSIONS', 'DELETE_PERMISSIONS', 'MANAGE_PERMISSIONS']"
+            (click)="saveRoleChanges()"
+            [disabled]="isSaving || !userCanUpdatePermissions"
+          >
+            <i class="bi bi-save"></i> {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="permissions-container">
+        @for (group of filteredGroups; track group.groupName) {
+          <div class="permission-group">
+            <div class="group-header">
+              <div class="group-title">
+                <span class="dot" [ngClass]="'dot-' + (group.groupName | lowercase)"></span>
+                <h3>{{ group.groupName | titlecase }}</h3>
+                <span class="badge-count">{{ group.permissions.length }}</span>
+              </div>
+
+              @if (isGroupFullyAssigned(group)) {
+                <button
+                  class="btn-group-action remove"
+                  (click)="toggleGroup(group)"
+                  [disabled]="!userCanUpdatePermissions"
+                >
+                  Remove All
+                </button>
+              } @else {
+                <button
+                  class="btn-group-action assign"
+                  (click)="toggleGroup(group)"
+                  [disabled]="!userCanUpdatePermissions"
+                >
+                  Assign All
+                </button>
+              }
+            </div>
+
+            <div class="pills-grid">
+              @for (perm of group.permissions; track perm) {
+                <div
+                  class="perm-pill"
+                  [class.active]="hasPermission(perm)"
+                  [class.disabled]="!userCanUpdatePermissions"
+                  (click)="userCanUpdatePermissions && togglePermission(perm)"
+                  (keydown.enter)="userCanUpdatePermissions && togglePermission(perm)"
+                >
+                  <span class="pill-dot"></span>
+                  <span class="pill-text">{{ formatPermissionForUI(perm) }}</span>
+                  <i class="bi" [ngClass]="hasPermission(perm) ? 'bi-check2' : 'bi-plus'"></i>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (filteredGroups.length === 0) {
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-search fs-2 d-block mb-2"></i>
+            No permissions found matching "{{ searchQuery }}"
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <i class="bi bi-shield-lock text-muted fs-1 d-block mb-3"></i>
+        <h3 class="text-muted">Select a role to view permissions</h3>
+      </div>
+    }
+  </div>
+</div>

@@ -1,3 +1,15 @@
+/**
+ * @file apiClient.ts
+ * @overview Centralized Axios client configuration for API communication.
+ * @description This file sets up a single Axios instance with a base URL, timeout, and headers.
+ * It attaches interceptors for handling authentication tokens (`AuthInterceptor`) and for global
+ * error handling and token refreshing (`ErrorInterceptor`). All other service files use this client.
+ * @connections
+ * - All services (`authService`, `appointmentService`, etc.) -> import and use `apiClient` to make HTTP requests.
+ * - `apiClient` -> `attachAuthInterceptor` -> Request runs through `AuthInterceptor` first.
+ * - `apiClient` -> `attachErrorInterceptor` -> Response runs through `ErrorInterceptor` for centralized error handling.
+ */
+
 import axios from "axios";
 import Toast from "react-native-toast-message";
 import { attachAuthInterceptor } from "../interceptors/AuthInterceptor";

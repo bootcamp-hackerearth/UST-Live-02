@@ -1,8 +1,30 @@
+/**
+ * @file roleController.js
+ * @description
+ * This file contains the controller functions for managing user roles.
+ * It handles the creation, retrieval, updating, and deletion of roles within the system.
+ * It handles CRUD operations for roles.
+ *
+ * @overview
+ * This controller provides the business logic for role management.
+ * It interacts directly with the `Roles` model to perform CRUD operations.
+ * It allows administrators to define different roles and their associated permissions. If an error occurs, it is thrown to be caught by `asyncHandler` and forwarded to the global `errorMiddleware`.
+ *
+ * Connections:
+ *   ... -> requirePermission -> asyncHandler -> ROLECONTROLLER.JS -> Roles Model
+ *   ROLECONTROLLER.JS -> (on error) -> asyncHandler -> errorMiddleware
+ */
 const Role = require("../models/Roles");
 const ERR = require("../utils/errors.utils");
 
+/**
+ * @route   POST /api/roles/create
+ * @desc    Create a new user role.
+ * @access  Private
+ */
 exports.createRole = async (req, res) => {
-  const { roleName, rolePermissions } = req.body;
+  // Added isMedicalRole to destructuring
+  const { roleName, rolePermissions, isMedicalRole } = req.body;
 
   if (!roleName) {
     throw ERR.invalidRequest("roleName is required", "ROLE_NAME_REQUIRED");
@@ -18,6 +40,7 @@ exports.createRole = async (req, res) => {
   const newRole = await Role.create({
     roleName: roleName.toUpperCase(),
     rolePermissions: rolePermissions || [],
+    isMedicalRole: isMedicalRole || false, // Added to creation
   });
 
   return res.status(201).json({
@@ -27,11 +50,41 @@ exports.createRole = async (req, res) => {
   });
 };
 
+/**
+ * @route   GET /api/roles/show
+ * @desc    Get all user roles.
+ * @access  Private
+ */
+const PUBLIC_ROLE_BLOCKLIST = new Set([
+  "ADMIN",
+  "OWNER",
+  "PATIENT",
+  "SUPER_ADMIN",
+]);
+
+const filterPublicRoles = (roles) => {
+  return roles.filter((role) => {
+    const name = String(role.roleName || "").toUpperCase();
+    return !PUBLIC_ROLE_BLOCKLIST.has(name);
+  });
+};
+
 exports.getAllRoles = async (req, res) => {
   const roles = await Role.find({});
   return res.status(200).json({ success: true, data: roles });
 };
 
+exports.getPublicRoles = async (req, res) => {
+  const roles = await Role.find({});
+  const publicRoles = filterPublicRoles(roles);
+  return res.status(200).json({ success: true, data: publicRoles });
+};
+
+/**
+ * @route   PUT /api/roles/:id
+ * @desc    Update an existing user role.
+ * @access  Private
+ */
 exports.updateRole = async (req, res) => {
   const { id } = req.params;
   const { roleName, rolePermissions } = req.body;
@@ -51,6 +104,11 @@ exports.updateRole = async (req, res) => {
   });
 };
 
+/**
+ * @route   DELETE /api/roles/:id
+ * @desc    Delete a user role.
+ * @access  Private
+ */
 exports.deleteRole = async (req, res) => {
   const { id } = req.params;
   const deletedRole = await Role.findByIdAndDelete(id);

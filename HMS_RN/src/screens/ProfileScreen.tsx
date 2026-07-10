@@ -1,3 +1,18 @@
+/**
+ * @file ProfileScreen.tsx
+ * @overview Displays and allows editing of the patient's profile.
+ * @description This screen shows the user's profile information. It has two modes: view and edit.
+ * In view mode, it displays data using `ProfileField` components. In edit mode, it renders the `PatientForm`
+ * to allow updates. It also contains the logout functionality.
+ * @routes This screen is a main tab in the `MainTabNavigator`.
+ * - PROFILESCREEN.TSX -> patientService.ts
+ * @connections
+ * - On mount -> `fetchProfileData()` -> `SecureStore.getItemAsync("patient_profile")` -> Loads user data into state.
+ * - User clicks 'Edit Profile' -> Toggles `isEditing` state -> Renders `PatientForm` component.
+ * - `PatientForm` submits -> `handleUpdateProfile()` -> `patientService.updateProfile()` -> Updates profile on backend and in `SecureStore`.
+ * - User clicks 'Logout' -> `handleLogout()` -> `Alert` confirmation -> `executeLogout()` -> Deletes session from `SecureStore` and navigates to `LoginScreen`.
+ */
+
 import React, {
   useEffect,
   useState,

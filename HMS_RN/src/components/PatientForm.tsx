@@ -1,3 +1,16 @@
+/**
+ * @file PatientForm.tsx
+ * @overview A comprehensive form for patient registration and profile updates.
+ * @description This component uses `react-hook-form` and `yup` for robust form management and validation.
+ * It can be configured for both registration (create mode) and profile editing (edit mode),
+ * conditionally showing/hiding fields like passwords.
+ * - PATIENTFORM.TSX -> RegisterScreen.tsx
+ * @connections
+ * - Parent Screen (`RegisterScreen` or `ProfileScreen`) -> Renders `PATIENTFORM.TSX` with `initialValues`, `onSubmit` callback, and `isEditMode` flag.
+ * - `PATIENTFORM.TSX` -> `useForm` hook with `yupResolver` -> `getPatientValidationSchema()` from `patientValidations.ts` to get validation rules.
+ * - User fills form -> State is managed by `react-hook-form` via `FormInput` and other controlled components.
+ * - User Submits -> `handleSubmit(onSubmit)` -> `react-hook-form` validates data -> If valid, calls the `onSubmit` prop provided by the parent screen.
+ */
 import React, { useState } from "react";
 import {
   View,

@@ -1,3 +1,17 @@
+/**
+ * @file MedicalRecordsScreen.tsx
+ * @overview Screen to view a list of the patient's medical records.
+ * @description This screen fetches and displays a paginated list of the patient's medical records.
+ * It includes pull-to-refresh and infinite scroll (load more) functionalities. It also integrates the
+ * `MedicalRecordFilter` component to allow users to search and filter their records.
+ * @routes This screen is a main tab in the `MainTabNavigator`.
+ * @connections
+ * - On focus/refresh -> `fetchRecords()` -> `recordService.getMyRecords()` -> Fetches paginated records.
+ * - `handleFilterChange` (callback from `MedicalRecordFilter`) -> `fetchRecords(1, newFilters)` -> Re-fetches records with new filter criteria.
+ * - `FlatList` scrolls to end -> `handleLoadMore()` -> `fetchRecords(page + 1, ...)` -> Fetches next page of data.
+ * - Renders `MedicalRecordCard` for each item in the `records` state array.
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
@@ -69,7 +83,7 @@ export default function MedicalRecordsScreen() {
       try {
         const response = await recordService.getMyRecords(
           loadPage,
-          10,
+          5,
           appliedFilters,
         );
         const { data, pagination } = response;
@@ -112,7 +126,7 @@ export default function MedicalRecordsScreen() {
     useCallback(() => {
       // Reset state and fetch the first page
       fetchRecords(1, filters);
-    }, [fetchRecords]), // filters are not included to avoid re-fetching on every keystroke in search
+    }, [fetchRecords]),
   );
 
   useEffect(() => {
@@ -207,8 +221,8 @@ export default function MedicalRecordsScreen() {
             ListHeaderComponent={renderListHeader}
             showsVerticalScrollIndicator={true}
             contentContainerStyle={styles.listContent}
-            initialNumToRender={10}
-            maxToRenderPerBatch={10}
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
             windowSize={10}
             removeClippedSubviews={true}
             onEndReached={handleLoadMore}

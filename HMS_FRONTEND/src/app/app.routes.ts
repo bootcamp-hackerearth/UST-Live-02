@@ -1,3 +1,17 @@
+/**
+ * @file app.routes.ts
+ * @description
+ * This file defines the main routing configuration for the Angular application.
+ *
+ * @overview
+ * This file contains the `Routes` array which maps URL paths to their corresponding Angular components.
+ * It defines the application's page structure, including public routes like `/login` and protected routes nested within the main `LayoutComponent`.
+ * Protected routes are secured using the `authGuard` and `roleGuard` to control access based on authentication status and user permissions.
+ *
+ * Connections:
+ *   Angular Router -> APP.ROUTES.TS -> [authGuard, roleGuard] -> (on success) -> [LayoutComponent -> (Child Component)]
+ *   Angular Router -> APP.ROUTES.TS -> (public route) -> [LoginComponent, SignupComponent, etc.]
+ */
 import { Routes } from '@angular/router';
 import { Login } from './components/login/login';
 import { Signup } from './components/signup/signup';
@@ -12,6 +26,10 @@ import { authGuard } from './guards/authGuard';
 import { roleGuard } from './guards/roleGuard';
 import { AccessDenied } from './components/access-denied/access-denied';
 import { MedicalRecordComponent } from './components/medical-record/medical-record';
+import { RoleManagement } from './components/role-management/role-management';
+import { NodeManagementComponent } from './components/node-management/node-management';
+import { DepartmentManagementComponent } from './components/departments/department-management';
+
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -29,7 +47,9 @@ export const routes: Routes = [
       },
       {
         path: 'appointments', component: Appointment, canActivate: [roleGuard], data: {
-          permissions: ['ADMIN_ACCESS', 'RECEPTIONIST_ACCESS', 'DOCTOR_ACCESS', 'CREATE_APOINTMENT_FOR_ANY_DOCTOR', 'VIEW_ALL_APPOINTMENT', 'COMPLETE_APPOINTMENT', 'VIEW_MY_APPOINTMENT', 'UPDATE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPROVE_APPOINTMENT']
+          permissions: ['ADMIN_ACCESS', 'RECEPTIONIST_ACCESS', 'DOCTOR_ACCESS',
+            'CREATE_APOINTMENT_FOR_ANY_DOCTOR', 'VIEW_ALL_APPOINTMENT', 'COMPLETE_APPOINTMENT',
+            'VIEW_MY_APPOINTMENT', 'UPDATE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPROVE_APPOINTMENT']
         }
       },
       {
@@ -39,7 +59,8 @@ export const routes: Routes = [
       },
       {
         path: 'employees', component: Employee, canActivate: [roleGuard], data: {
-          permissions: ['CREATE_EMPLOYEE', 'VIEW_EMPLOYEES', 'UPDATE_EMPLOYEE', 'DELETE_EMPLOYEE', 'APPROVE_EMPLOYEE']
+          permissions: ['CREATE_EMPLOYEE', 'VIEW_EMPLOYEES', 'UPDATE_EMPLOYEE',
+            'DELETE_EMPLOYEE', 'APPROVE_EMPLOYEE']
         }
       },
       {
@@ -54,9 +75,26 @@ export const routes: Routes = [
       },
       {
         path: 'records', component: MedicalRecordComponent, canActivate: [roleGuard], data: {
-          permissions: ['VIEW_ALL_RECORDS', 'VIEW_MY_PATIENT_RECORD', 'VIEW_MY_RECORDS', 'CREATE_MY_RECORD', 'CREATE_RECORD_FOR_ANYONE']
+          permissions: ['VIEW_ALL_RECORDS', 'VIEW_MY_PATIENT_RECORD', 'VIEW_MY_RECORDS',
+            'CREATE_MY_RECORD', 'CREATE_RECORD_FOR_ANYONE']
         }
       },
+      {
+        path: 'permissions', component: RoleManagement, canActivate: [roleGuard], data: {
+          permissions: ['MANAGE_PERMISSIONS']
+        }
+      },
+      {
+        path: 'menuNode', component: NodeManagementComponent, canActivate: [roleGuard], data: {
+          permissions: ['VIEW_NODES']
+        }
+      },
+      {
+        path: 'departments', component: DepartmentManagementComponent, canActivate: [roleGuard], data: {
+          permissions: ['VIEW_DEPARTMENTS']
+        }
+      },
+      
       { path: '', redirectTo: 'profile', pathMatch: 'full' }
     ],
   },
