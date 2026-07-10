@@ -1,0 +1,371 @@
+import React, {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+} from "react";
+import { signal } from "@preact/signals-react";
+import { useSignals } from "@preact/signals-react/runtime";
+
+import SecureStorage from "../utils/secureStorage";
+
+import {
+    loginPatient,
+    registerPatient,
+    refreshTokenApi,
+    logoutApi,
+} from "../api/authService";
+
+
+import PropTypes from "prop-types";
+
+import {
+    updatePatientApi,
+} from "../api/patientService";
+
+const AuthContext = createContext(null);
+
+const tokenSignal = signal(null);
+const userSignal = signal(null);
+const patientSignal = signal(null);
+const authLoadingSignal = signal(true);
+const tokenExpirySignal = signal(null);
+
+const SESSION_KEYS = [
+    "token",
+    "refreshToken",
+    "user",
+    "patient",
+    "tokenExpiry",
+];
+
+const decodeJWT = (token) => {
+    try {
+        const parts = token.split(".");
+        if (parts.length !== 3) return null;
+        return JSON.parse(Buffer.from(parts[1], "base64").toString());
+    } catch (err) {
+        console.log("JWT decode error:", err);
+        return null;
+    }
+};
+
+const getTokenExpiry = (token) => {
+    const decoded = decodeJWT(token);
+    return decoded?.exp ? decoded.exp * 1000 : null;
+};
+
+const normalizePatient = (p) => {
+    console.log(p);
+    if (!p) return null;
+
+    return {
+        ...p,
+        address:
+            typeof p.address === "object" && p.address !== null
+                ? p.address
+                : {
+                    street: p.address || "",
+                    city: "",
+                    state: "",
+                    pincode: "",
+                },
+    };
+};
+
+const normalizeLogin = (payload) => {
+    console.log(payload);
+    const d = payload?.data || payload;
+
+    return {
+        token: d?.token || null,
+        refreshToken: d?.refreshToken || null,
+        user: d?.user || null,
+        patient: normalizePatient(d?.patient),
+    };
+};
+
+const persistTokenSession = async ({
+    token,
+    refreshToken,
+    expiry,
+}) => {
+    await SecureStorage.multiSet([
+        ["token", token],
+        ["refreshToken", refreshToken],
+        ["tokenExpiry", expiry.toString()],
+    ]);
+
+    tokenSignal.value = token;
+    tokenExpirySignal.value = expiry;
+};
+
+export function AuthProvider({ children }) {
+    useSignals();
+
+    const token = tokenSignal.value;
+    const user = userSignal.value;
+    const patient = patientSignal.value;
+    const authLoading = authLoadingSignal.value;
+    const tokenExpiry = tokenExpirySignal.value;
+
+    const clearSession = useCallback(async () => {
+        await SecureStorage.multiRemove(SESSION_KEYS);
+        tokenSignal.value = null;
+        userSignal.value = null;
+        patientSignal.value = null;
+        tokenExpirySignal.value = null;
+    }, []);
+
+    const refreshAccessToken = useCallback(async (refreshToken) => {
+        const refreshed = await refreshTokenApi(refreshToken);
+        const newToken = refreshed?.token;
+        const newRefreshToken = refreshed?.refreshToken;
+
+        if (!newToken || !newRefreshToken) {
+            throw new Error("Empty refresh response");
+        }
+
+        const newExpiry =
+            getTokenExpiry(newToken) ??
+            (Date.now() + 15 * 60 * 1000);
+
+        await persistTokenSession({
+            token: newToken,
+            refreshToken: newRefreshToken,
+            expiry: newExpiry,
+        });
+
+        return {
+            token: newToken,
+            refreshToken: newRefreshToken,
+            expiry: newExpiry,
+        };
+    }, []);
+
+    const restoreSession = useCallback(async () => {
+        try {
+            const [t, rt, u, p, expiryStr] =
+                await SecureStorage.multiGet(SESSION_KEYS);
+
+            const storedToken = t[1];
+            const storedRefreshToken = rt[1];
+            const storedUser = u[1];
+            const storedPatient = p[1];
+            const storedExpiry = expiryStr[1];
+
+            if (!storedToken || !storedRefreshToken || !storedPatient) {
+                return;
+            }
+
+            const expiryTime = storedExpiry ? Number.parseInt(storedExpiry) : getTokenExpiry(storedToken);
+            const now = Date.now();
+
+            if (expiryTime && now < expiryTime) {
+                // Access token still valid
+                await persistTokenSession({
+                    token: storedToken,
+                    refreshToken: storedRefreshToken,
+                    expiry: expiryTime,
+                });
+                userSignal.value = storedUser ? JSON.parse(storedUser) : null;
+                patientSignal.value = normalizePatient(JSON.parse(storedPatient));
+            } else {
+                // Access token expired — attempt silent refresh
+                console.log("Access token expired on restore, trying refresh...");
+                try {
+                    await refreshAccessToken(storedRefreshToken);
+                    userSignal.value = storedUser ? JSON.parse(storedUser) : null;
+                    patientSignal.value = normalizePatient(JSON.parse(storedPatient));
+                } catch (error_) {
+                    console.log("Silent refresh failed, clearing session:", error_?.message);
+                    await clearSession();
+                }
+            }
+        } catch (err) {
+            console.log("RESTORE SESSION ERROR:", err);
+        } finally {
+            authLoadingSignal.value = false;
+        }
+    }, [clearSession, refreshAccessToken]);
+
+    useEffect(() => {
+        restoreSession();
+    }, [restoreSession]);
+
+    const login = useCallback(async ({ email, password }) => {
+        const response = await loginPatient({
+            email: email.trim().toLowerCase(),
+            password,
+        });
+
+        console.log("LOGIN RESPONSE:", response);
+
+        if (response.requiresPasswordReset) {
+            const error = new Error("Temporary password reset required");
+            error.requiresPasswordReset = true;
+            error.email = response.email;
+            throw error;
+        }
+
+        const data = normalizeLogin(response);
+
+        if (!data.token || !data.patient) {
+            throw new Error("Invalid login response from server");
+        }
+
+        const expiry = getTokenExpiry(data.token) ?? (Date.now() + 15 * 60 * 1000);
+
+        await persistTokenSession({
+            token: data.token,
+            refreshToken: data.refreshToken ?? "",
+            expiry,
+        });
+
+        await SecureStorage.setItem(
+            "patient",
+            JSON.stringify(data.patient)
+        );
+
+        if (data.user) {
+            await SecureStorage.setItem(
+                "user",
+                JSON.stringify(data.user)
+            );
+        } else {
+            await SecureStorage.removeItem("user");
+        }
+
+        userSignal.value = data.user || null;
+        patientSignal.value = data.patient;
+
+        return data;
+    }, []);
+
+    const register = useCallback((data) => {
+        return registerPatient(data);
+    }, []);
+
+    const logout = useCallback(async () => {
+        const storedRefreshToken = await SecureStorage.getItem("refreshToken");
+        await logoutApi(storedRefreshToken);
+        await clearSession();
+    }, [clearSession]);
+
+    // Proactively refresh the access token 1 minute before it expires
+    useEffect(() => {
+        if (!token || !tokenExpiry) return;
+
+        const now = Date.now();
+        const timeUntilRefresh = tokenExpiry - now - 60 * 1000; // 1 min before expiry
+
+        if (timeUntilRefresh <= 0) {
+            // Already at or past the refresh window — refresh immediately
+            SecureStorage.getItem("refreshToken").then(async (rt) => {
+                if (!rt) { logout(); return; }
+                try {
+                    await refreshAccessToken(rt);
+                } catch (err) {
+                    console.log("Proactive refresh failed:", err?.message);
+                    logout();
+                }
+            });
+            return;
+        }
+
+        const timeoutId = setTimeout(async () => {
+            const rt = await SecureStorage.getItem("refreshToken");
+            if (!rt) { logout(); return; }
+            try {
+                await refreshAccessToken(rt);
+            } catch (err) {
+                console.log("Proactive refresh failed:", err?.message);
+                logout();
+            }
+        }, timeUntilRefresh);
+
+        return () => clearTimeout(timeoutId);
+    }, [token, tokenExpiry, logout, refreshAccessToken]);
+
+    const updatePatientState = useCallback(async (p) => {
+        const n = normalizePatient(p);
+
+        if (!n) {
+            await SecureStorage.removeItem("patient");
+            patientSignal.value = null;
+            return;
+        }
+
+        patientSignal.value = n;
+
+        await SecureStorage.setItem(
+            "patient",
+            JSON.stringify(n)
+        );
+    }, []);
+
+    const updateProfile = useCallback(async (data) => {
+        if (!patient?.UHID) {
+            throw new Error("Patient UHID missing");
+        }
+
+        const updated = await updatePatientApi(
+            patient.UHID,
+            data
+        );
+
+        const finalPatient = normalizePatient(
+            updated?.patient || updated
+        );
+
+        await updatePatientState(finalPatient);
+
+        return finalPatient;
+    }, [patient, updatePatientState]);
+
+    const value = useMemo(() => ({
+        token,
+        user,
+        patient,
+        tokenExpiry,
+        isLoggedIn: !!token,
+        authLoading,
+        login,
+        register,
+        logout,
+        updateProfile,
+        updatePatientState,
+    }), [
+        token,
+        user,
+        patient,
+        tokenExpiry,
+        authLoading,
+        login,
+        register,
+        logout,
+        updateProfile,
+        updatePatientState,
+    ]);
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+export const useAuth = () => {
+    const v = useContext(AuthContext);
+
+    if (!v) {
+        throw new Error("useAuth must be used inside AuthProvider");
+    }
+
+    return v;
+};
+
+AuthProvider.propTypes = {
+    children: PropTypes.node.isRequired,
+};

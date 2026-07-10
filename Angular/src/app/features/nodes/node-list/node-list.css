@@ -1,0 +1,89 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.node-table .mat-column-nodeId {
+  width: 13%;
+}
+
+.node-table .mat-column-name {
+  width: 17%;
+}
+
+.node-table .mat-column-path {
+  width: 23%;
+}
+
+.node-table .mat-column-icon {
+  width: 17%;
+}
+
+.node-table .mat-column-order {
+  width: 9%;
+}
+
+.node-table .mat-column-status {
+  width: 9%;
+}
+
+.node-table .mat-column-actions {
+  width: 12%;
+  text-align: center;
+}
+
+.node-icon-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  color: #263238;
+  font-weight: 600;
+}
+
+.node-icon-preview mat-icon {
+  width: 17px;
+  height: 17px;
+  color: #0d47a1;
+  font-size: 17px;
+  flex: 0 0 auto;
+}
+
+.hms-inline-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 31px;
+}
+
+.hms-inline-actions button {
+  width: 31px !important;
+  height: 31px !important;
+  min-width: 31px !important;
+  padding: 0 !important;
+  line-height: 31px !important;
+}
+
+.hms-inline-actions button mat-icon {
+  width: 18px;
+  height: 18px;
+  color: #0d47a1;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.hms-inline-actions button[color='warn'] mat-icon {
+  color: #8b0000;
+}

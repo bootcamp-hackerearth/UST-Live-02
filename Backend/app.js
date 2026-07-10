@@ -1,0 +1,69 @@
+
+
+require("dotenv").config();
+
+const express = require("express");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const mongoose = require("mongoose");
+const employeeRoutes = require("./src/routes/employeeRoutes");
+const patientRoutes = require("./src/routes/patientRoute");
+const appointmentRoutes = require("./src/routes/appointmentRoutes");
+const patientAuthRoutes = require("./src/routes/patientAuthRoutes");
+const patientAppointmentRoutes = require("./src/routes/patientAppointmentRoutes");
+const roleRoutes = require("./src/routes/roleRoutes");
+const nodeRoutes = require("./src/routes/nodeRoutes");
+const healthRecordRoutes = require("./src/routes/healthRecordRoutes");
+const errorMiddleware = require("./src/middleware/errorMiddleware");
+
+const app = express();
+
+// Security middleware
+app.use(helmet());
+
+app.use(cors({
+  origin: ['http://localhost:4200', 'https://hms.avitam.com'],
+  credentials: true
+}));
+
+// Logs requests
+app.use(morgan("dev"));
+
+// Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Test route
+app.get("/", (req, res) => {
+  return res.status(200).json({
+    message: "API running"
+  });
+});
+
+// API routes
+app.use("/api/employees", employeeRoutes);
+app.use("/api/patients", patientRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/patient-auth", patientAuthRoutes);
+app.use("/api/patientAppointment-auth", patientAppointmentRoutes);
+app.use("/api/roles", roleRoutes);
+app.use("/api/nodes", nodeRoutes);
+app.use("/api/health-records", healthRecordRoutes);
+app.use('/api/permissions', require('./src/routes/permissionCatalog.routes'));
+// Global error middleware should always be last
+app.use(errorMiddleware);
+
+// Database connection
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err.message);
+  });
+
+module.exports = app;
