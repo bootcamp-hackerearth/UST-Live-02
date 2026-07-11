@@ -32,7 +32,7 @@
       "expo-secure-store"
     ],
     "extra": {
-      "API_URL": "http://10.0.2.2:8080"
+      "API_URL": "http://hms.fortrancer.in/api"
     }
   }
 }
