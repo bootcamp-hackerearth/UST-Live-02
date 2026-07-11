@@ -53,9 +53,12 @@
 
           <td>
             <div class="action-buttons">
-              <button class="approve-btn" (click)="approveRequest(request._id)" (keypress)="approveRequest(request._id)"
-                (keydown)="approveRequest(request._id)" (keyup)="approveRequest(request._id)">
+              <button type="button" class="approve-btn" (click)="approveRequest(request._id)">
                 Approve
+              </button>
+
+              <button type="button" class="reject-btn" (click)="rejectRequest(request._id)">
+                Reject
               </button>
             </div>
           </td>

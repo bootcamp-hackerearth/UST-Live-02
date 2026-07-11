@@ -1,14 +1,16 @@
 const crypto = require('node:crypto');
-const JoinUs = require('../models/JoinUs.model');
+const JoinUs = require('../models/joinUs.model');
 const User = require('../models/User.model');
 const ApiError = require('../utils/ApiError');
 const bcrypt = require('bcrypt')
 const Role = require('../models/Role.model')
 const Employee = require('../models/Employee.model')
 const Doctor = require('../models/Doctor.model')
+const sendMail = require('./mail.service');
+
 const {
-  getPagination,
-  buildPaginationResponse
+    getPagination,
+    buildPaginationResponse
 } = require('../utils/pagination');
 
 exports.createJoinUsRequest = async (joinUsData) => {
@@ -32,6 +34,35 @@ exports.createJoinUsRequest = async (joinUsData) => {
         experienceYears
     } = joinUsData;
 
+    //helper function for sending the format of the mail
+    const sendJoinUsVerificationMail = async (email, firstName, verificationLink) => {
+        const html = `
+    <div style="font-family: Arial, sans-serif; padding:20px;">
+      <h2>Email Verification</h2>
+
+      <p>Hello <strong>${firstName}</strong>,</p>
+
+      <p>Thank you for submitting your join request.</p>
+
+      <p>Please click the button below to verify your email address:</p>
+
+      <a href="${verificationLink}"
+         style="display:inline-block;padding:10px 16px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:6px;">
+        Verify Email
+      </a>
+
+      <p style="margin-top:20px;">This link will expire in 15 minutes.</p>
+
+      <p>
+        Regards,<br/>
+        <strong>Hospital Management System</strong>
+      </p>
+    </div>
+  `;
+
+        await sendMail(email, 'Verify Your Email - HMS', html);
+    };
+
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -51,9 +82,15 @@ exports.createJoinUsRequest = async (joinUsData) => {
             await existingRequest.save();
 
             const verificationLink =
-                `http://localhost:5000/api/join-us/verify/${newToken}`;
+                `${process.env.BACKEND_URL}/api/join-us/verify/${newToken}`;
 
             console.log('Verification Link Resent:', verificationLink);
+
+            await sendJoinUsVerificationMail(
+                existingRequest.email,
+                existingRequest.firstName,
+                verificationLink
+            );
 
             return {
                 message: 'Verification email resent. Please verify your email.',
@@ -91,9 +128,16 @@ exports.createJoinUsRequest = async (joinUsData) => {
         verificationTokenExpiry: new Date(Date.now() + 15 * 60 * 1000)
     });
     const verificationLink =
-        `http://localhost:5000/api/join-us/verify/${verificationToken}`;
+        `${process.env.BACKEND_URL}/api/join-us/verify/${verificationToken}`;
 
     console.log('Verification Link:', verificationLink);
+
+
+    await sendJoinUsVerificationMail(
+        email,
+        firstName,
+        verificationLink
+    );
 
     return {
         message: 'Join request submitted. Please verify your email.',
@@ -121,109 +165,109 @@ exports.verifyJoinUsEmail = async (token) => {
 };
 
 exports.getAllJoinUsRequests = async (query = {}) => {
-  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
-  const search = query.search ? query.search.trim() : '';
+    const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+    const search = query.search ? query.search.trim() : '';
 
-  const allowedSortFields = [
-    'createdAt',
-    'firstName',
-    'lastName',
-    'email',
-    'status'
-  ];
-
-  const finalSortBy = allowedSortFields.includes(sortBy)
-    ? sortBy
-    : 'createdAt';
-
-  const filter = {};
-
-  if (search) {
-    filter.$or = [
-      { firstName: { $regex: search, $options: 'i' } },
-      { lastName: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-      { phone: { $regex: search, $options: 'i' } },
-      { role: { $regex: search, $options: 'i' } },
-      { department: { $regex: search, $options: 'i' } },
-      { designation: { $regex: search, $options: 'i' } },
-      { status: { $regex: search, $options: 'i' } }
+    const allowedSortFields = [
+        'createdAt',
+        'firstName',
+        'lastName',
+        'email',
+        'status'
     ];
-  }
 
-  const totalRecords = await JoinUs.countDocuments(filter);
+    const finalSortBy = allowedSortFields.includes(sortBy)
+        ? sortBy
+        : 'createdAt';
 
-  const requests = await JoinUs.find(filter)
-    .sort({ [finalSortBy]: sortOrder })
-    .skip(skip)
-    .limit(limit);
+    const filter = {};
 
-  return {
-    requests,
-    pagination: {
-      ...buildPaginationResponse({
-        page,
-        limit,
-        totalRecords
-      }),
-      sortBy: finalSortBy,
-      sortOrder: sortOrder === 1 ? 'asc' : 'desc'
+    if (search) {
+        filter.$or = [
+            { firstName: { $regex: search, $options: 'i' } },
+            { lastName: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+            { phone: { $regex: search, $options: 'i' } },
+            { role: { $regex: search, $options: 'i' } },
+            { department: { $regex: search, $options: 'i' } },
+            { designation: { $regex: search, $options: 'i' } },
+            { status: { $regex: search, $options: 'i' } }
+        ];
     }
-  };
+
+    const totalRecords = await JoinUs.countDocuments(filter);
+
+    const requests = await JoinUs.find(filter)
+        .sort({ [finalSortBy]: sortOrder })
+        .skip(skip)
+        .limit(limit);
+
+    return {
+        requests,
+        pagination: {
+            ...buildPaginationResponse({
+                page,
+                limit,
+                totalRecords
+            }),
+            sortBy: finalSortBy,
+            sortOrder: sortOrder === 1 ? 'asc' : 'desc'
+        }
+    };
 };
 
 exports.getPendingJoinUsRequests = async (query = {}) => {
-  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
-  const search = query.search ? query.search.trim() : '';
+    const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
+    const search = query.search ? query.search.trim() : '';
 
-  const allowedSortFields = [
-    'createdAt',
-    'firstName',
-    'lastName',
-    'email',
-    'approvalStatus'
-  ];
-
-  const finalSortBy = allowedSortFields.includes(sortBy)
-    ? sortBy
-    : 'createdAt';
-
-  const filter = {
-    isVerified: true,
-    approvalStatus: 'PENDING'
-  };
-
-  if (search) {
-    filter.$or = [
-      { firstName: { $regex: search, $options: 'i' } },
-      { lastName: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-      { phone: { $regex: search, $options: 'i' } },
-      { role: { $regex: search, $options: 'i' } },
-      { department: { $regex: search, $options: 'i' } },
-      { designation: { $regex: search, $options: 'i' } }
+    const allowedSortFields = [
+        'createdAt',
+        'firstName',
+        'lastName',
+        'email',
+        'approvalStatus'
     ];
-  }
 
-  const totalRecords = await JoinUs.countDocuments(filter);
+    const finalSortBy = allowedSortFields.includes(sortBy)
+        ? sortBy
+        : 'createdAt';
 
-  const requests = await JoinUs.find(filter)
-    .sort({ [finalSortBy]: sortOrder })
-    .skip(skip)
-    .limit(limit);
+    const filter = {
+        isVerified: true,
+        approvalStatus: 'PENDING'
+    };
 
-  return {
-    requests,
-    pagination: {
-      ...buildPaginationResponse({
-        page,
-        limit,
-        totalRecords
-      }),
-      sortBy: finalSortBy,
-      sortOrder: sortOrder === 1 ? 'asc' : 'desc'
+    if (search) {
+        filter.$or = [
+            { firstName: { $regex: search, $options: 'i' } },
+            { lastName: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+            { phone: { $regex: search, $options: 'i' } },
+            { role: { $regex: search, $options: 'i' } },
+            { department: { $regex: search, $options: 'i' } },
+            { designation: { $regex: search, $options: 'i' } }
+        ];
     }
-  };
+
+    const totalRecords = await JoinUs.countDocuments(filter);
+
+    const requests = await JoinUs.find(filter)
+        .sort({ [finalSortBy]: sortOrder })
+        .skip(skip)
+        .limit(limit);
+
+    return {
+        requests,
+        pagination: {
+            ...buildPaginationResponse({
+                page,
+                limit,
+                totalRecords
+            }),
+            sortBy: finalSortBy,
+            sortOrder: sortOrder === 1 ? 'asc' : 'desc'
+        }
+    };
 };
 
 exports.checkJoinUsEmail = async (email) => {
@@ -300,7 +344,7 @@ exports.approveJoinUsRequest = async (requestId, approvedBy) => {
         return res.status(400).json({ success: false, message: "Request not found" });
     }
 
-    if(!newUser){
+    if (!newUser) {
         return res.status(400).json({ success: false, message: "User not found" });
     }
 
@@ -349,5 +393,31 @@ exports.approveJoinUsRequest = async (requestId, approvedBy) => {
             employee: newEmployee,
             doctor: newDoctor
         }
+    };
+};
+
+exports.rejectJoinUsRequest = async (requestId, rejectedBy, reason) => {
+    const request = await JoinUs.findById(requestId);
+
+    if (!request) {
+        throw new ApiError(404, "Join request not found");
+    }
+
+    if (request.approvalStatus === "APPROVED") {
+        throw new ApiError(400, "Cannot reject an already approved request");
+    }
+
+    if (request.approvalStatus === "REJECTED") {
+        throw new ApiError(400, "Request is already rejected");
+    }
+
+    request.approvalStatus = "REJECTED";
+    request.rejectionReason = reason?.trim() || "No reason provided";
+
+    await JoinUs.findByIdAndDelete(requestId);
+
+    return {
+        message: "Join request rejected successfully",
+        data: request,
     };
 };

@@ -9,6 +9,7 @@ const nodeSchema =new mongoose.Schema({
     path:{
         type:String,
         required:true,
+        unique:true,
         trim:true
         //admin/dashboard like that kind of path 
     },
@@ -24,8 +25,12 @@ const nodeSchema =new mongoose.Schema({
     order:{
         type:Number,
         default:0
-    }
+    },
 
+     isActive: {
+        type: Boolean,
+        default: true   //lets Admin toggle visibility instead of hard-deleting
+    }
 },{
     timestamps:true
 })

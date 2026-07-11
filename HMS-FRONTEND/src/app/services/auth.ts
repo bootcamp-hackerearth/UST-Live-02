@@ -68,4 +68,27 @@ export class Auth {
       }
     );
   }
+
+  forgotPassword(email: string) {
+    return this.http.post<any>(
+      `${this.baseUrl}/auth/forgot-password`,
+      { email }
+    );
+  }
+
+  resetPassword(
+    token: string,
+    newPassword: string,
+    confirmPassword: string
+  ) {
+    return this.http.post<any>(
+      `${this.baseUrl}/auth/reset-password/${token}`,
+      {
+        newPassword,
+        confirmPassword,
+      }
+    );
+  }
+
 }
+

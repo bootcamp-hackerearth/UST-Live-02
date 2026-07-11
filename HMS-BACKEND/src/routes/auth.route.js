@@ -33,4 +33,18 @@ router.put(
 
 router.get("/verify-email/:token", authController.verifyEmail);
 
+router.post(
+  "/forgot-password",
+  authValidator.validateForgotPassword,
+  validate,
+  authController.forgotPassword,
+);
+ 
+router.post(
+  "/reset-password/:token",
+  authValidator.validateResetPassword,
+  validate,
+  authController.resetPassword
+);
+
 module.exports = router;

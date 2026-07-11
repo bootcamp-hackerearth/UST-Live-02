@@ -85,12 +85,20 @@ getMyAppointments(
   );
 }
 
-  cancelAppointment(appointmentId: string) {
+cancelAppointment(appointmentId: string) {
   return this.http.put(
     `${this.baseUrl}/appointments/cancel/${appointmentId}`,
     {}
   );
 }
+
+markAsUnattended(appointmentId: string) {
+  return this.http.put(
+    `${this.baseUrl}/appointments/unattended/${appointmentId}`,
+    {}
+  );
+}
+
 getAppointmentDetails(id: string): Observable<AppointmentDetailsResponse> {
   return this.http.get<AppointmentDetailsResponse>(
     `${this.baseUrl}/appointments/details/${id}`

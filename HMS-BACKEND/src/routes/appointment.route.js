@@ -1,54 +1,65 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const appointmentController = require('../controller/appointment.controller')
+const appointmentController = require("../controller/appointment.controller");
 
-const {validateCreateAppointment}=require('../validation/appointment.validation')
-const authMiddleware=require('../middleware/authMiddleware')
-const validate=require('../middleware/validate')
+const {
+  validateCreateAppointment,
+} = require("../validation/appointment.validation");
+const authMiddleware = require("../middleware/authMiddleware");
+const validate = require("../middleware/validate");
 
-const authRoles=require('../middleware/authRoles')
-const permissions=require('../utils/permissions')
+const authRoles = require("../middleware/authRoles");
+const permissions = require("../utils/permissions");
 
 router.post(
-    '/create',
-    authMiddleware,
-    authRoles(permissions.ADD_APPOINTMENT)
-    ,
-    validateCreateAppointment,
-    validate,
-    appointmentController.createAppointment
+  "/create",
+  authMiddleware,
+  authRoles(permissions.ADD_APPOINTMENT),
+  validateCreateAppointment,
+  validate,
+  appointmentController.createAppointment,
 );
 
 router.get(
-    '/list',
-    authMiddleware,
-    authRoles(permissions.VIEW_APPOINTMENT),
-    appointmentController.getAppointments
+  "/list",
+  authMiddleware,
+  authRoles(permissions.VIEW_APPOINTMENT),
+  appointmentController.getAppointments,
 );
 
-router.get('/available-slots',
-    authMiddleware,
-    appointmentController.getAvailableSlots
+router.get(
+  "/available-slots",
+  authMiddleware,
+  appointmentController.getAvailableSlots,
 );
 
 router.get(
   "/my-appointments",
   authMiddleware,
   authRoles(permissions.VIEW_APPOINTMENT),
-  appointmentController.getMyAppointments
+  appointmentController.getMyAppointments,
 );
 
 router.put(
-    '/cancel/:appointmentId',
-    authMiddleware,
-    authRoles(permissions.CANCEL_APPOINTMENT),
-    appointmentController.cancelAppointment
+  "/cancel/:appointmentId",
+  authMiddleware,
+  authRoles(permissions.CANCEL_APPOINTMENT),
+  appointmentController.cancelAppointment,
 );
 
-router.get('/details/:id',
-     authMiddleware,
-     authRoles(permissions.VIEW_APPOINTMENT),
-      appointmentController.getAppointmentDetails);
+router.put(
+  "/unattended/:appointmentId",
+  authMiddleware,
+  authRoles(permissions.UPDATE_APPOINTMENT),
+  appointmentController.markAppointmentUnattended,
+);
+
+router.get(
+  "/details/:id",
+  authMiddleware,
+  authRoles(permissions.VIEW_APPOINTMENT),
+  appointmentController.getAppointmentDetails,
+);
 
 module.exports = router;

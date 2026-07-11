@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink ,RouterLinkActive} from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-
+import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-sidebar',
   imports: [RouterLink, CommonModule,RouterLinkActive],
@@ -22,7 +22,7 @@ export class Sidebar implements OnInit {
 
 
    
-    this.http.get("http://localhost:5000/api/node/list").subscribe((Response: any) => {
+    this.http.get(`${environment.apiUrl}/node/list`).subscribe((Response: any) => {
       this.nodes = Response.data;
       this.cd.detectChanges();
 

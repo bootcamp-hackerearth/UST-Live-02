@@ -1,0 +1,42 @@
+# Backend
+HMS-BACKEND/node_modules/
+HMS-BACKEND/.env
+HMS-BACKEND/.scannerwork/
+HMS-BACKEND/sonar-project.properties
+
+
+
+# Frontend
+HMS-FRONTEND/node_modules/
+HMS-FRONTEND/.angular/
+HMS-FRONTEND/dist/
+HMS-FRONTEND/.scannerwork
+HMS-FRONTEND/sonar-project.properties
+
+
+
+# Mobile App
+HMS-APP/node_modules/
+HMS-APP/.expo/
+HMS-APP/.expo-shared/
+HMS-APP/dist/
+HMS-APP/web-build/
+HMS-APP/.scannerwork/
+HMS-APP/sonar-project.properties
+HMS-APP/.metro-cache/
+HMS-APP/.cache/
+HMS-APP/.env
+HMS-APP/.env.local
+HMS-APP/.env.development
+HMS-APP/.env.production
+HMS-APP/npm-debug.log*
+HMS-APP/yarn-debug.log*
+HMS-APP/yarn-error.log*
+HMS-APP/pnpm-debug.log*
+# VS Code
+.vscode/
+
+HMS-APP/sonar-project.properties
+# OS files
+.DS_Store
+Thumbs.dbgit rm -r --cached HMS-BACKEND/node_modules

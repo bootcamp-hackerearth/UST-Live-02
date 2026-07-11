@@ -15,6 +15,8 @@ import { JoinUs } from './pages/join-us/join-us';
 import { Doctors } from './pages/doctors/doctors';
 import { AppointmentDetails } from './pages/appointments/appointment-details/appointment-details';
 import { HealthRecords } from './pages/health-records/health-records';
+import { ForgotPassword } from './pages/forgot-password/forgot-password';
+import { ResetPassword } from './pages/reset-password/reset-password';
 
 export const routes: Routes = [
     {
@@ -24,6 +26,8 @@ export const routes: Routes = [
     { path: '', redirectTo: 'login', pathMatch: 'full' },
     { path: 'signup', component: Signup },
     { path: 'login', component: Login },
+    { path: 'forgot-password', component: ForgotPassword },
+    { path: 'reset-password/:token', component: ResetPassword },
     { path: 'change-password', component: ChangePassword },
     {
         path: 'profile',
@@ -135,7 +139,7 @@ export const routes: Routes = [
                 path: 'health-records',
                 component: HealthRecords
             },
-             {
+            {
                 path: 'appointments/details/:id',
                 component: AppointmentDetails
             },

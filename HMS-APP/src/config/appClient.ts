@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { tokenStorage } from '@/storage/tokenStorage';
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'https://pod2hms.duckdns.org/api';
 
 const apiClient = axios.create({
     baseURL: BASE_URL,
