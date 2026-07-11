@@ -1,0 +1,14 @@
+.dashboard-layout{
+    min-height: 100vh;
+}
+
+.body-section{
+    display: flex;
+}
+
+.content{
+    
+    flex:1;
+    padding:20px;
+    background-color: white;
+}
