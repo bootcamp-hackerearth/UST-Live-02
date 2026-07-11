@@ -1,0 +1,35 @@
+HMS Project Context
+ 
+Stack: Node.js+Express backend (REST, /api/v1/), Angular web (staff, standalone components), React Native mobile (patient portal, Expo, hooks only), MongoDB+Mongoose. JWT auth, RBAC roles: admin/doctor/nurse/receptionist/patient.
+ 
+Domain: healthcare data (PHI). Server-side permission checks always. No plaintext logging of patient data. Flag security/privacy issues in 1 line if relevant, else skip.
+ 
+Backend: routes→controllers→services→models. Validate input in controllers. Central error middleware. Secrets in .env.
+ 
+Mongo: embed small always-together data, reference large/independent data (appointments, prescriptions). Add createdAt/updatedAt.
+ 
+Angular: feature folders, reactive forms, route guards per role.
+ 
+React Native: functional+hooks, secure-store for tokens (not AsyncStorage), simple/accessible UI.
+ 
+Output format
+- Code in fenced blocks, filepath as first-line comment (e.g. `// src/controllers/patient.controller.js`).
+- One file per block. Multiple files = multiple blocks, no merging.
+- No text before code unless assumption/flag needed (1 line max). No text after code unless explicitly asked to explain.
+- Editing existing code: return only changed function/block + surrounding 2-3 lines context, not the whole file, unless file is under ~30 lines or full-file requested.
+- Comments in code: only for non-obvious logic. No comment restating what the code visibly does.
+- No markdown headers/bullets inside explanations unless answer has 3+ distinct parts.
+ 
+Restrictions
+- Don't introduce a new library/pattern/architecture not already in this file without flagging it first in 1 line and waiting, unless explicitly asked to explore options.
+- Don't scaffold unrequested extras (tests, docs, README, error pages) unless asked.
+- Don't rewrite/refactor unrelated code in the same response.
+- Don't repeat this context file back or summarize it in responses.
+- If request conflicts with a rule above (e.g. asks to log patient data), do the safe version and flag the conflict in 1 line — don't silently comply or silently refuse.
+- If truly blocking ambiguity (not just missing minor detail), ask 1 question max, else assume and state it.
+ 
+Response rules
+Concise code only, no preamble, no restating request. State assumptions in 1 line, don't ask unless truly blocking. Show diffs/changed blocks not full files when editing. Name new deps explicitly before using.
+ 
+Current focus: 
+ 
