@@ -1,0 +1,68 @@
+const Role = require("../models/Role.model");
+
+const roles = [
+    {
+        roleCode: "OWN",
+        name: "Owner",
+        basePath: "/admin"
+    },
+    {
+        roleCode: "DOC",
+        name: "Doctor",
+        basePath: "/doctor"
+    },
+    {
+        roleCode: "REC",
+        name: "Receptionist",
+        basePath: "/receptionist"
+    },
+    {
+        roleCode: "PAT",
+        name: "Patient",
+        basePath: "/patient"
+    },
+    {
+        roleCode: "CSH",
+        name: "Cashier",
+        basePath: "/cashier"
+    },
+
+    {
+        roleCode: "EMP",
+        name: "Employee",
+        basePath: "/employee"
+    },
+    {
+        roleCode: "LAB",
+        name: "Lab Technician",
+        basePath: "/lab"
+    },
+    {
+        roleCode: "PHA",
+        name: "Pharmacist",
+        basePath: "/pharmacist"
+    },
+    {
+        roleCode: "ADMIN",
+        name: "Admin",
+        basePath: "/admin"
+    }
+];
+
+const seedRoles = async () => {
+    try {
+        await Role.insertMany(roles, {
+            ordered: false,
+        });
+
+        console.log("✅ Roles seeded successfully");
+    } catch (error) {
+        if (error.code === 11000) {
+            console.log("⚡ Roles already seeded");
+        } else {
+            console.error("❌ Error seeding roles:", error.message);
+        }
+    }
+};
+
+module.exports = seedRoles;
