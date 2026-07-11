@@ -1,23 +1,23 @@
-const Appointment = require('../models/Appointment.model');
-const Patient = require('../models/Patient.model');
-const Employee = require('../models/Employee.model');
-const User = require('../models/User.model');
-const ApiError = require('../utils/ApiError');
-const Doctor = require('../models/Doctor.model');
-const sendMail = require('./mail.service');
+const Appointment = require("../models/appointment.model");
+const Patient = require("../models/Patient.model");
+const Employee = require("../models/Employee.model");
+const User = require("../models/User.model");
+const ApiError = require("../utils/ApiError");
+const Doctor = require("../models/Doctor.model");
+const sendMail = require("./mail.service");
 const {
   getPagination,
-  buildPaginationResponse
-} = require('../utils/pagination');
+  buildPaginationResponse,
+} = require("../utils/pagination");
 
-const HealthRecord = require('../models/healthRecord.model');
+const HealthRecord = require("../models/healthRecord.model");
 
 const parseTime = (timeStr) => {
-  const [time, period] = timeStr.split(' ');
-  let [hours, minutes] = time.split(':').map(Number);
+  const [time, period] = timeStr.split(" ");
+  let [hours, minutes] = time.split(":").map(Number);
 
-  if (period === 'PM' && hours !== 12) hours += 12;
-  if (period === 'AM' && hours === 12) hours = 0;
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
 
   return hours * 60 + minutes;
 };
@@ -26,12 +26,12 @@ const formatTime = (totalMinutes) => {
   let hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  const period = hours >= 12 ? 'PM' : 'AM';
+  const period = hours >= 12 ? "PM" : "AM";
 
   if (hours === 0) hours = 12;
   else if (hours > 12) hours -= 12;
 
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${period}`;
 };
 
 const generateTimeSlots = (startTime, endTime) => {
@@ -81,19 +81,49 @@ const validateTodaySlot = (appointmentDate, timeSlot) => {
   const selectedSlotMinutes = parseTime(timeSlot);
 
   if (selectedSlotMinutes <= currentMinutes) {
-    throw new ApiError(400, 'Cannot book a past time slot for today');
+    throw new ApiError(400, "Cannot book a past time slot for today");
   }
 };
 
-const getFinalPatientId = async (patientId, loggedInUserId, loggedInUserRole) => {
-  if (patientId || loggedInUserRole !== 'Patient') {
+const updateExpiredAppointments = async () => {
+  const bookedAppointments = await Appointment.find({
+    status: "BOOKED",
+  });
+
+  const now = new Date();
+
+  for (const appointment of bookedAppointments) {
+    const appointmentDateTime = new Date(appointment.appointmentDate);
+
+    const slotMinutes = parseTime(appointment.timeSlot);
+
+    appointmentDateTime.setHours(
+      Math.floor(slotMinutes / 60),
+      slotMinutes % 60,
+      0,
+      0,
+    );
+
+    if (appointmentDateTime < now) {
+      appointment.status = "UNATTENDED";
+      await appointment.save();
+    }
+  }
+};
+
+const getFinalPatientId = async (
+  patientId,
+  loggedInUserId,
+  loggedInUserRole,
+) => {
+  if (patientId || loggedInUserRole !== "Patient") {
     return patientId;
   }
 
   const loggedInPatient = await Patient.findOne({ userId: loggedInUserId });
 
   if (!loggedInPatient) {
-    throw new ApiError(404, 'Patient profile not found');
+    throw new ApiError(404, "Patient profile not found");
   }
 
   return loggedInPatient._id;
@@ -118,20 +148,20 @@ const sendAppointmentConfirmationMail = async ({
   reason,
 }) => {
   const patient = await Patient.findById(patientId).populate({
-    path: 'userId',
-    select: 'firstName lastName email',
+    path: "userId",
+    select: "firstName lastName email",
   });
 
   const doctor = await Doctor.findById(doctorId).populate({
-    path: 'employeeId',
+    path: "employeeId",
     populate: {
-      path: 'userId',
-      select: 'firstName lastName email',
+      path: "userId",
+      select: "firstName lastName email",
     },
   });
 
   const patientName =
-    `${patient?.userId?.firstName || patient?.firstName || ''} ${patient?.userId?.lastName || patient?.lastName || ''}`.trim();
+    `${patient?.userId?.firstName || patient?.firstName || ""} ${patient?.userId?.lastName || patient?.lastName || ""}`.trim();
 
   const email = patient?.userId?.email;
 
@@ -140,12 +170,12 @@ const sendAppointmentConfirmationMail = async ({
   }
 
   const doctorName =
-    `Dr. ${doctor?.employeeId?.userId?.firstName || ''} ${doctor?.employeeId?.userId?.lastName || ''}`.trim();
+    `Dr. ${doctor?.employeeId?.userId?.firstName || ""} ${doctor?.employeeId?.userId?.lastName || ""}`.trim();
 
-  const formattedDate = new Date(appointmentDate).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
+  const formattedDate = new Date(appointmentDate).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
   });
 
   const html = `
@@ -179,7 +209,7 @@ const sendAppointmentConfirmationMail = async ({
         </tr>
         <tr>
           <td style="padding:8px;border:1px solid #ddd;">Reason</td>
-          <td style="padding:8px;border:1px solid #ddd;">${reason || '-'}</td>
+          <td style="padding:8px;border:1px solid #ddd;">${reason || "-"}</td>
         </tr>
         <tr>
           <td style="padding:8px;border:1px solid #ddd;">Status</td>
@@ -196,25 +226,25 @@ const sendAppointmentConfirmationMail = async ({
     </div>
   `;
 
-  await sendMail(email, 'Appointment Confirmation ✅', html);
+  await sendMail(email, "Appointment Confirmation ✅", html);
 };
 
 const sendAppointmentCancellationMail = async (appointment) => {
   const patient = await Patient.findById(appointment.patientId).populate({
-    path: 'userId',
-    select: 'firstName lastName email',
+    path: "userId",
+    select: "firstName lastName email",
   });
 
   const doctor = await Doctor.findById(appointment.doctorId).populate({
-    path: 'employeeId',
+    path: "employeeId",
     populate: {
-      path: 'userId',
-      select: 'firstName lastName',
+      path: "userId",
+      select: "firstName lastName",
     },
   });
 
   const patientName =
-    `${patient?.userId?.firstName || patient?.firstName || ''} ${patient?.userId?.lastName || patient?.lastName || ''}`.trim();
+    `${patient?.userId?.firstName || patient?.firstName || ""} ${patient?.userId?.lastName || patient?.lastName || ""}`.trim();
 
   const email = patient?.userId?.email;
 
@@ -223,12 +253,14 @@ const sendAppointmentCancellationMail = async (appointment) => {
   }
 
   const doctorName =
-    `Dr. ${doctor?.employeeId?.userId?.firstName || ''} ${doctor?.employeeId?.userId?.lastName || ''}`.trim();
+    `Dr. ${doctor?.employeeId?.userId?.firstName || ""} ${doctor?.employeeId?.userId?.lastName || ""}`.trim();
 
-  const formattedDate = new Date(appointment.appointmentDate).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
+  const formattedDate = new Date(
+    appointment.appointmentDate,
+  ).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
   });
 
   const html = `
@@ -262,7 +294,7 @@ const sendAppointmentCancellationMail = async (appointment) => {
         </tr>
         <tr>
           <td style="padding:8px;border:1px solid #ddd;">Reason</td>
-          <td style="padding:8px;border:1px solid #ddd;">${appointment.reason || '-'}</td>
+          <td style="padding:8px;border:1px solid #ddd;">${appointment.reason || "-"}</td>
         </tr>
         <tr>
           <td style="padding:8px;border:1px solid #ddd;">Status</td>
@@ -281,46 +313,47 @@ const sendAppointmentCancellationMail = async (appointment) => {
     </div>
   `;
 
-  await sendMail(email, 'Appointment Cancelled ❌', html);
+  await sendMail(email, "Appointment Cancelled ❌", html);
 };
 
 exports.createAppointment = async (
   appointmentData,
   loggedInUserId,
-  loggedInUserRole
+  loggedInUserRole,
 ) => {
-  const { patientId, doctorId, appointmentDate, timeSlot, reason } = appointmentData;
+  const { patientId, doctorId, appointmentDate, timeSlot, reason } =
+    appointmentData;
 
   const finalPatientId = await getFinalPatientId(
     patientId,
     loggedInUserId,
-    loggedInUserRole
+    loggedInUserRole,
   );
 
   if (!finalPatientId) {
-    throw new ApiError(400, 'Patient is required');
+    throw new ApiError(400, "Patient is required");
   }
 
   const patient = await Patient.findById(finalPatientId);
 
   if (!patient) {
-    throw new ApiError(404, 'Patient not found');
+    throw new ApiError(404, "Patient not found");
   }
 
   const employeeRecord = await Employee.findById(doctorId).populate({
-    path: 'userId',
-    populate: { path: 'roleId' },
+    path: "userId",
+    populate: { path: "roleId" },
   });
 
   if (!employeeRecord) {
-    throw new ApiError(404, 'Doctor not found');
+    throw new ApiError(404, "Doctor not found");
   }
 
   const roleName = employeeRecord.userId?.roleId?.name;
   const roleCode = employeeRecord.userId?.roleId?.roleCode;
 
-  if (roleName !== 'Doctor' && roleCode !== 'DOC') {
-    throw new ApiError(400, 'Selected employee is not a doctor');
+  if (roleName !== "Doctor" && roleCode !== "DOC") {
+    throw new ApiError(400, "Selected employee is not a doctor");
   }
 
   const appointmentDateObj = new Date(appointmentDate);
@@ -332,25 +365,25 @@ exports.createAppointment = async (
   if (appointmentDateObj < joiningDateObj) {
     throw new ApiError(
       400,
-      `Doctor is not yet joined. Appointments can only be booked on or after ${joiningDateObj.toISOString().split('T')[0]}`
+      `Doctor is not yet joined. Appointments can only be booked on or after ${joiningDateObj.toISOString().split("T")[0]}`,
     );
   }
 
   const doctor = await Doctor.findOne({ employeeId: doctorId });
 
   if (!doctor) {
-    throw new ApiError(404, 'Doctor profile not found');
+    throw new ApiError(404, "Doctor profile not found");
   }
 
   const availableSlots = generateTimeSlots(
     doctor.availabilityStartTime,
-    doctor.availabilityEndTime
+    doctor.availabilityEndTime,
   );
 
   if (!availableSlots.includes(timeSlot)) {
     throw new ApiError(
       400,
-      `Doctor is only available from ${doctor.availabilityStartTime} to ${doctor.availabilityEndTime}`
+      `Doctor is only available from ${doctor.availabilityStartTime} to ${doctor.availabilityEndTime}`,
     );
   }
 
@@ -365,11 +398,14 @@ exports.createAppointment = async (
       $lt: endDate,
     },
     timeSlot,
-    status: 'BOOKED',
+    status: "BOOKED",
   });
 
   if (existingAppointment) {
-    throw new ApiError(409, 'Doctor already has an appointment in this time slot');
+    throw new ApiError(
+      409,
+      "Doctor already has an appointment in this time slot",
+    );
   }
 
   const patientExistingAppointment = await Appointment.findOne({
@@ -379,11 +415,14 @@ exports.createAppointment = async (
       $lt: endDate,
     },
     timeSlot,
-    status: 'BOOKED',
+    status: "BOOKED",
   });
 
   if (patientExistingAppointment) {
-    throw new ApiError(409, 'Patient already has an appointment at this time slot');
+    throw new ApiError(
+      409,
+      "Patient already has an appointment at this time slot",
+    );
   }
 
   const appointment = await Appointment.create({
@@ -405,87 +444,90 @@ exports.createAppointment = async (
       reason,
     });
   } catch (error) {
-    console.error('Failed to send appointment confirmation email:', error.message);
+    console.error(
+      "Failed to send appointment confirmation email:",
+      error.message,
+    );
   }
 
   return appointment;
 };
 exports.getAppointments = async (query = {}) => {
   const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
-  const search = query.search ? query.search.trim() : '';
+  const search = query.search ? query.search.trim() : "";
 
   const allowedSortFields = [
-    'createdAt',
-    'appointmentDate',
-    'appointmentCode',
-    'status'
+    "createdAt",
+    "appointmentDate",
+    "appointmentCode",
+    "status",
   ];
 
-  const finalSortBy = allowedSortFields.includes(sortBy)
-    ? sortBy
-    : 'createdAt';
+  const finalSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
 
   const filter = {};
 
   if (search) {
     const matchingPatients = await Patient.find({
       $or: [
-        { UHID: { $regex: search, $options: 'i' } },
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } }
-      ]
-    }).select('_id');
+        { UHID: { $regex: search, $options: "i" } },
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+      ],
+    }).select("_id");
 
-    const matchingPatientIds = matchingPatients.map(patient => patient._id);
+    const matchingPatientIds = matchingPatients.map((patient) => patient._id);
 
     const matchingUsers = await User.find({
       $or: [
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
-      ]
-    }).select('_id');
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    }).select("_id");
 
-    const matchingUserIds = matchingUsers.map(user => user._id);
+    const matchingUserIds = matchingUsers.map((user) => user._id);
 
     const matchingEmployees = await Employee.find({
-      userId: { $in: matchingUserIds }
-    }).select('_id');
+      userId: { $in: matchingUserIds },
+    }).select("_id");
 
-    const matchingEmployeeIds = matchingEmployees.map(employee => employee._id);
+    const matchingEmployeeIds = matchingEmployees.map(
+      (employee) => employee._id,
+    );
 
     const matchingDoctors = await Doctor.find({
-      employeeId: { $in: matchingEmployeeIds }
-    }).select('_id');
+      employeeId: { $in: matchingEmployeeIds },
+    }).select("_id");
 
-    const matchingDoctorIds = matchingDoctors.map(doctor => doctor._id);
+    const matchingDoctorIds = matchingDoctors.map((doctor) => doctor._id);
 
     filter.$or = [
-      { appointmentCode: { $regex: search, $options: 'i' } },
-      { status: { $regex: search, $options: 'i' } },
-      { timeSlot: { $regex: search, $options: 'i' } },
-      { reason: { $regex: search, $options: 'i' } },
+      { appointmentCode: { $regex: search, $options: "i" } },
+      { status: { $regex: search, $options: "i" } },
+      { timeSlot: { $regex: search, $options: "i" } },
+      { reason: { $regex: search, $options: "i" } },
       { patientId: { $in: matchingPatientIds } },
-      { doctorId: { $in: matchingDoctorIds } }
+      { doctorId: { $in: matchingDoctorIds } },
     ];
   }
 
   const totalRecords = await Appointment.countDocuments(filter);
 
   const appointments = await Appointment.find(filter)
-    .populate('patientId')
+    .populate("patientId")
     .populate({
-      path: 'doctorId',
+      path: "doctorId",
       populate: {
-        path: 'employeeId',
+        path: "employeeId",
         populate: {
-          path: 'userId',
-          select: 'firstName lastName email',
+          path: "userId",
+          select: "firstName lastName email",
         },
       },
     })
-    .populate('createdBy', 'firstName lastName email')
+    .populate("createdBy", "firstName lastName email")
     .sort({ [finalSortBy]: sortOrder })
     .skip(skip)
     .limit(limit);
@@ -496,11 +538,11 @@ exports.getAppointments = async (query = {}) => {
       ...buildPaginationResponse({
         page,
         limit,
-        totalRecords
+        totalRecords,
       }),
       sortBy: finalSortBy,
-      sortOrder: sortOrder === 1 ? 'asc' : 'desc'
-    }
+      sortOrder: sortOrder === 1 ? "asc" : "desc",
+    },
   };
 };
 exports.getMyAppointments = async (user, query = {}) => {
@@ -508,46 +550,49 @@ exports.getMyAppointments = async (user, query = {}) => {
   const roleCode = user.roleCode || user.rolecode;
 
   const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
-  const search = query.search ? query.search.trim() : '';
+  const search = query.search ? query.search.trim() : "";
 
-  if (!['DOC', 'PAT'].includes(roleCode)) {
-    throw new ApiError(403, 'Only patients and doctors can access my appointments');
+  if (!["DOC", "PAT"].includes(roleCode)) {
+    throw new ApiError(
+      403,
+      "Only patients and doctors can access my appointments",
+    );
   }
 
   const allowedSortFields = [
-    'createdAt',
-    'appointmentDate',
-    'appointmentCode',
-    'status'
+    "createdAt",
+    "appointmentDate",
+    "appointmentCode",
+    "status",
   ];
 
   const finalSortBy = allowedSortFields.includes(sortBy)
     ? sortBy
-    : 'appointmentDate';
+    : "appointmentDate";
 
   const filter = {};
 
-  if (roleCode === 'DOC') {
+  if (roleCode === "DOC") {
     const employee = await Employee.findOne({ userId });
 
     if (!employee) {
-      throw new ApiError(404, 'Employee profile not found');
+      throw new ApiError(404, "Employee profile not found");
     }
 
     const doctor = await Doctor.findOne({ employeeId: employee._id });
 
     if (!doctor) {
-      throw new ApiError(404, 'Doctor profile not found');
+      throw new ApiError(404, "Doctor profile not found");
     }
 
     filter.doctorId = doctor._id;
   }
 
-  if (roleCode === 'PAT') {
+  if (roleCode === "PAT") {
     const patient = await Patient.findOne({ userId });
 
     if (!patient) {
-      throw new ApiError(404, 'Patient profile not found');
+      throw new ApiError(404, "Patient profile not found");
     }
 
     filter.patientId = patient._id;
@@ -555,24 +600,24 @@ exports.getMyAppointments = async (user, query = {}) => {
 
   if (search) {
     filter.$or = [
-      { appointmentCode: { $regex: search, $options: 'i' } },
-      { status: { $regex: search, $options: 'i' } },
-      { timeSlot: { $regex: search, $options: 'i' } },
-      { reason: { $regex: search, $options: 'i' } }
+      { appointmentCode: { $regex: search, $options: "i" } },
+      { status: { $regex: search, $options: "i" } },
+      { timeSlot: { $regex: search, $options: "i" } },
+      { reason: { $regex: search, $options: "i" } },
     ];
   }
 
   const totalRecords = await Appointment.countDocuments(filter);
 
   const appointments = await Appointment.find(filter)
-    .populate('patientId', 'UHID firstName lastName phone gender bloodGroup')
+    .populate("patientId", "UHID firstName lastName phone gender bloodGroup")
     .populate({
-      path: 'doctorId',
+      path: "doctorId",
       populate: {
-        path: 'employeeId',
+        path: "employeeId",
         populate: {
-          path: 'userId',
-          select: 'firstName lastName email',
+          path: "userId",
+          select: "firstName lastName email",
         },
       },
     })
@@ -586,11 +631,11 @@ exports.getMyAppointments = async (user, query = {}) => {
       ...buildPaginationResponse({
         page,
         limit,
-        totalRecords
+        totalRecords,
       }),
       sortBy: finalSortBy,
-      sortOrder: sortOrder === 1 ? 'asc' : 'desc'
-    }
+      sortOrder: sortOrder === 1 ? "asc" : "desc",
+    },
   };
 };
 
@@ -599,12 +644,12 @@ exports.getAvailableSlots = async (doctorId, appointmentDate) => {
   const doctor = await Doctor.findOne({ employeeId: doctorId });
 
   if (!doctor) {
-    throw new ApiError(404, 'Doctor not found');
+    throw new ApiError(404, "Doctor not found");
   }
 
   const originalSlots = generateTimeSlots(
     doctor.availabilityStartTime,
-    doctor.availabilityEndTime
+    doctor.availabilityEndTime,
   );
 
   const visibleSlots = removePastSlotsForToday(originalSlots, appointmentDate);
@@ -617,13 +662,13 @@ exports.getAvailableSlots = async (doctorId, appointmentDate) => {
       $gte: startDate,
       $lt: endDate,
     },
-    status: 'BOOKED',
-  }).select('timeSlot');
+    status: "BOOKED",
+  }).select("timeSlot");
 
   const bookedSlots = bookedAppointments.map((apt) => apt.timeSlot);
 
   const availableSlots = visibleSlots.filter(
-    (slot) => !bookedSlots.includes(slot)
+    (slot) => !bookedSlots.includes(slot),
   );
 
   return {
@@ -641,65 +686,117 @@ exports.cancelAppointment = async (appointmentId) => {
   const appointment = await Appointment.findById(appointmentId);
 
   if (!appointment) {
-    throw new ApiError(404, 'Appointment not found');
+    throw new ApiError(404, "Appointment not found");
   }
 
-  if (appointment.status === 'CANCELLED') {
-    throw new ApiError(400, 'Appointment is already cancelled');
+  if (appointment.status === "CANCELLED") {
+    throw new ApiError(400, "Appointment is already cancelled");
   }
 
-  if (appointment.status === 'COMPLETED') {
-    throw new ApiError(400, 'Completed appointment cannot be cancelled');
+  if (appointment.status === "COMPLETED") {
+    throw new ApiError(400, "Completed appointment cannot be cancelled");
   }
 
-  const appointmentDate = new Date(appointment.appointmentDate);
-  appointmentDate.setHours(0, 0, 0, 0);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (appointmentDate < today) {
-    throw new ApiError(400, 'Past appointments cannot be cancelled');
+  if (appointment.status === "UNATTENDED") {
+    throw new ApiError(400, "Unattended appointment cannot be cancelled");
   }
 
-  appointment.status = 'CANCELLED';
+  const appointmentDateTime = new Date(appointment.appointmentDate);
+
+  const slotMinutes = parseTime(appointment.timeSlot);
+
+  appointmentDateTime.setHours(
+    Math.floor(slotMinutes / 60),
+    slotMinutes % 60,
+    0,
+    0,
+  );
+
+  if (appointmentDateTime < new Date()) {
+    throw new ApiError(400, "Past appointments cannot be cancelled");
+  }
+
+  appointment.status = "CANCELLED";
   await appointment.save();
 
   try {
     await sendAppointmentCancellationMail(appointment);
   } catch (error) {
-    console.error('Failed to send cancellation email:', error.message);
+    console.error("Failed to send cancellation email:", error.message);
   }
+
+  return appointment;
+};
+
+exports.markAppointmentUnattended = async (appointmentId) => {
+  const appointment = await Appointment.findById(appointmentId);
+
+  if (!appointment) {
+    throw new ApiError(404, "Appointment not found");
+  }
+
+  if (appointment.status === "COMPLETED") {
+    throw new ApiError(
+      400,
+      "Completed appointment cannot be marked as unattended",
+    );
+  }
+
+  if (appointment.status === "CANCELLED") {
+    throw new ApiError(
+      400,
+      "Cancelled appointment cannot be marked as unattended",
+    );
+  }
+
+  if (appointment.status === "UNATTENDED") {
+    throw new ApiError(400, "Appointment is already marked as unattended");
+  }
+
+  const healthRecord = await HealthRecord.findOne({
+    appointmentId: appointment._id,
+    isDeleted: false,
+  });
+
+  if (healthRecord) {
+    throw new ApiError(
+      400,
+      "Health record already exists for this appointment",
+    );
+  }
+
+  appointment.status = "UNATTENDED";
+  await appointment.save();
 
   return appointment;
 };
 
 exports.getAppointmentDetails = async (id) => {
   const appointment = await Appointment.findById(id)
-    .populate('patientId', 'UHID firstName lastName phone gender dob')
+    .populate("patientId", "UHID firstName lastName phone gender dob")
     .populate({
-      path: 'doctorId',
+      path: "doctorId",
       populate: {
-        path: 'employeeId',
-        select: 'employeeCode department designation userId',
+        path: "employeeId",
+        select: "employeeCode department designation userId",
         populate: {
-          path: 'userId',
-          select: 'firstName lastName email'
-        }
-      }
+          path: "userId",
+          select: "firstName lastName email",
+        },
+      },
     });
 
   if (!appointment) {
-    throw new ApiError(404, 'Appointment not found');
+    throw new ApiError(404, "Appointment not found");
   }
 
   const healthRecord = await HealthRecord.findOne({
     appointmentId: appointment._id,
-    isDeleted: false
+    isDeleted: false,
   });
 
   return {
     appointment,
-    healthRecord
+    healthRecord,
   };
 };

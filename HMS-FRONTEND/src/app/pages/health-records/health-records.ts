@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 
 import { HealthRecordService } from '../../services/health-record.service';
 import { HealthRecord } from '../../models/health-record.model';
+import { AppointmentService } from '../../services/appointments.service';
 
 @Component({
   selector: 'app-health-records',
@@ -28,8 +29,9 @@ export class HealthRecords implements OnInit {
 
   constructor(
     readonly healthRecordService: HealthRecordService,
+    readonly appointmentService: AppointmentService,
     readonly router: Router
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.loadHealthRecords();
@@ -180,5 +182,24 @@ export class HealthRecords implements OnInit {
         }
       }
     );
+  }
+
+  markAsUnattended(record: HealthRecord): void {
+    const appointmentId = this.getAppointmentId(record);
+
+    if (!appointmentId) {
+      return;
+    }
+
+    this.appointmentService.markAsUnattended(appointmentId).subscribe({
+      next: () => {
+        this.loadHealthRecords();
+      },
+      error: (error) => {
+        this.errorMessage.set(
+          error?.error?.message || 'Unable to mark appointment as unattended'
+        );
+      }
+    });
   }
 }

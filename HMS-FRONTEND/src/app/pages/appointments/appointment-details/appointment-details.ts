@@ -288,6 +288,40 @@ ngOnInit(): void {
     });
   }
 
+markAppointmentUnattended(): void {
+  const appointment = this.appointment();
+
+  if (!appointment?._id) {
+    return;
+  }
+
+  const confirmed = confirm(
+    'Are you sure you want to mark this appointment as unattended?'
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  this.loading.set(true);
+  this.errorMessage.set('');
+  this.successMessage.set('');
+
+  this.appointmentService.markAsUnattended(appointment._id).subscribe({
+    next: () => {
+      this.loading.set(false);
+      this.successMessage.set('Appointment marked as unattended successfully');
+      this.loadAppointmentDetails();
+    },
+    error: (error: { error?: { message?: string } }) => {
+      this.loading.set(false);
+      this.errorMessage.set(
+        error?.error?.message || 'Unable to mark appointment as unattended'
+      );
+    }
+  });
+}
+
 goBack(): void {
   const basePath = localStorage.getItem('basePath') || '/admin';
 
@@ -308,5 +342,11 @@ goBack(): void {
 
   canFinalize(): boolean {
     return (this.roleCode === 'DOC'|| this.roleCode==='Doctor') && this.healthRecord()?.status === 'DRAFT';
+  }
+  canMarkUnattended(): boolean {
+    return (
+      this.appointment()?.status === 'BOOKED' &&
+      !this.healthRecord()
+    );
   }
 }

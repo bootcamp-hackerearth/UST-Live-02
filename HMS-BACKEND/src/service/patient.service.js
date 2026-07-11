@@ -13,9 +13,7 @@ const {
   buildPaginationResponse,
 } = require("../utils/pagination");
 
-const generateTemporaryPassword = require(
-  "../utils/passwordGenerator"
-);
+const generateTemporaryPassword = require("../utils/passwordGenerator");
 
 const sendEmail = require("../service/mail.service");
 
@@ -40,10 +38,7 @@ exports.createPatient = async (patientData, employeeId) => {
   });
 
   if (existingUser) {
-    throw new ApiError(
-      409,
-      "A user is already registered with this email"
-    );
+    throw new ApiError(409, "A user is already registered with this email");
   }
 
   const patientRole = await Role.findOne({
@@ -51,19 +46,12 @@ exports.createPatient = async (patientData, employeeId) => {
   });
 
   if (!patientRole) {
-    throw new ApiError(
-      500,
-      "Patient role not configured"
-    );
+    throw new ApiError(500, "Patient role not configured");
   }
 
-  const temporaryPassword =
-    generateTemporaryPassword();
+  const temporaryPassword = generateTemporaryPassword();
 
-  const passwordHash = await bcrypt.hash(
-    temporaryPassword,
-    10
-  );
+  const passwordHash = await bcrypt.hash(temporaryPassword, 10);
 
   let user;
   let patient;
@@ -83,9 +71,10 @@ exports.createPatient = async (patientData, employeeId) => {
       mustChangePassword: true,
     });
 
-
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
     patient = await Patient.create({
       userId: user._id,
@@ -104,11 +93,11 @@ exports.createPatient = async (patientData, employeeId) => {
     });
   } catch (error) {
     if (patient?._id) {
-      await Patient.findByIdAndDelete(patient._id).catch(() => { });
+      await Patient.findByIdAndDelete(patient._id).catch(() => {});
     }
 
     if (user?._id) {
-      await User.findByIdAndDelete(user._id).catch(() => { });
+      await User.findByIdAndDelete(user._id).catch(() => {});
     }
 
     throw error;
@@ -156,17 +145,13 @@ exports.createPatient = async (patientData, employeeId) => {
       </div>
     `;
 
-    await sendEmail(
-      normalizedEmail,
-      subject,
-      html
-    );
+    await sendEmail(normalizedEmail, subject, html);
 
     credentialsEmailSent = true;
   } catch (emailError) {
     console.error(
       "Patient created, but credentials email failed:",
-      emailError.message
+      emailError.message,
     );
   }
 
@@ -179,30 +164,13 @@ exports.createPatient = async (patientData, employeeId) => {
 };
 
 exports.getAllPatients = async (query = {}) => {
-  const {
-    page,
-    limit,
-    skip,
-    sortBy,
-    sortOrder,
-  } = getPagination(query);
+  const { page, limit, skip, sortBy, sortOrder } = getPagination(query);
 
-  const search = query.search
-    ? query.search.trim()
-    : "";
+  const search = query.search ? query.search.trim() : "";
 
-  const allowedSortFields = [
-    "createdAt",
-    "firstName",
-    "lastName",
-    "UHID",
-  ];
+  const allowedSortFields = ["createdAt", "firstName", "lastName", "UHID"];
 
-  const finalSortBy = allowedSortFields.includes(
-    sortBy
-  )
-    ? sortBy
-    : "createdAt";
+  const finalSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
 
   const filter = {
     isDeleted: false,
@@ -267,8 +235,7 @@ exports.getAllPatients = async (query = {}) => {
     ];
   }
 
-  const totalRecords =
-    await Patient.countDocuments(filter);
+  const totalRecords = await Patient.countDocuments(filter);
 
   const patients = await Patient.find(filter)
     .populate({
@@ -277,8 +244,7 @@ exports.getAllPatients = async (query = {}) => {
     })
     .populate({
       path: "createdBy",
-      select:
-        "firstName lastName email roleId",
+      select: "firstName lastName email roleId",
       populate: {
         path: "roleId",
         select: "name roleCode",
@@ -290,49 +256,42 @@ exports.getAllPatients = async (query = {}) => {
     .skip(skip)
     .limit(limit);
 
-  const formattedPatients = patients.map(
-    (patient) => ({
-      patientId: patient._id,
-      UHID: patient.UHID,
+  const formattedPatients = patients.map((patient) => ({
+    patientId: patient._id,
+    UHID: patient.UHID,
 
-      firstName: patient.firstName,
-      lastName: patient.lastName,
-      phone: patient.phone,
-      email: patient.userId?.email,
+    firstName: patient.firstName,
+    lastName: patient.lastName,
+    phone: patient.phone,
+    email: patient.userId?.email,
 
-      gender: patient.gender,
-      dob: patient.dob,
-      bloodGroup: patient.bloodGroup,
+    gender: patient.gender,
+    dob: patient.dob,
+    bloodGroup: patient.bloodGroup,
 
-      city: patient.address?.city,
-      state: patient.address?.state,
-      pincode: patient.address?.pincode,
+    city: patient.address?.city,
+    state: patient.address?.state,
+    pincode: patient.address?.pincode,
 
-      emergencyContactName:
-        patient.emergencyContactName,
+    emergencyContactName: patient.emergencyContactName,
 
-      emergencyContactPhone:
-        patient.emergencyContactPhone,
+    emergencyContactPhone: patient.emergencyContactPhone,
 
-      createdByName:
-        `${patient.createdBy?.firstName || ""} ${
-          patient.createdBy?.lastName || ""
-        }`.trim() ||
-        patient.createdBy?.email ||
-        "Unknown User",
+    createdByName:
+      `${patient.createdBy?.firstName || ""} ${
+        patient.createdBy?.lastName || ""
+      }`.trim() ||
+      patient.createdBy?.email ||
+      "Unknown User",
 
-      createdByEmail:
-        patient.createdBy?.email,
+    createdByEmail: patient.createdBy?.email,
 
-      createdByRole:
-        patient.createdBy?.roleId?.name,
+    createdByRole: patient.createdBy?.roleId?.name,
 
-      createdByRoleCode:
-        patient.createdBy?.roleId?.roleCode,
+    createdByRoleCode: patient.createdBy?.roleId?.roleCode,
 
-      createdAt: patient.createdAt,
-    })
-  );
+    createdAt: patient.createdAt,
+  }));
 
   return {
     patients: formattedPatients,
@@ -346,8 +305,7 @@ exports.getAllPatients = async (query = {}) => {
 
       sortBy: finalSortBy,
 
-      sortOrder:
-        sortOrder === 1 ? "asc" : "desc",
+      sortOrder: sortOrder === 1 ? "asc" : "desc",
     },
   };
 };
@@ -367,19 +325,14 @@ exports.registerPatient = async (body) => {
     emergencyContactPhone,
   } = body;
 
-  const normalizedEmail = email
-    .trim()
-    .toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
 
   const existing = await User.findOne({
     email: normalizedEmail,
   });
 
   if (existing) {
-    throw new ApiError(
-      409,
-      "Email already registered"
-    );
+    throw new ApiError(409, "Email already registered");
   }
 
   const patientRole = await Role.findOne({
@@ -387,16 +340,10 @@ exports.registerPatient = async (body) => {
   });
 
   if (!patientRole) {
-    throw new ApiError(
-      500,
-      "Patient role not configured"
-    );
+    throw new ApiError(500, "Patient role not configured");
   }
 
-  const passwordHash = await bcrypt.hash(
-    password,
-    10
-  );
+  const passwordHash = await bcrypt.hash(password, 10);
 
   const user = await User.create({
     firstName,
@@ -413,10 +360,7 @@ exports.registerPatient = async (body) => {
   });
 
   if (!user) {
-    throw new ApiError(
-      404,
-      "User not found"
-    );
+    throw new ApiError(404, "User not found");
   }
 
   const userId = user._id;
@@ -424,7 +368,7 @@ exports.registerPatient = async (body) => {
     { userId },
     process.env.JWT_EMAIL_VERIFICATION_EXPIRY,
   );
-  const verifyLink = `http://localhost:5000/api/auth/verify-email/${token}`;
+  const verifyLink = `${process.env.BACKEND_URL}/api/auth/verify-email/${token}`;
   const html = `
     <h2>Welcome to HMS 👋</h2>
 
@@ -455,11 +399,7 @@ exports.registerPatient = async (body) => {
     <p>This link will expire in 24 hours.</p>
   `;
 
-  await sendEmail(
-    normalizedEmail,
-    "Welcome to HMS 🎉",
-    html
-  );
+  await sendEmail(normalizedEmail, "Welcome to HMS 🎉", html);
 
   const patient = await Patient.create({
     userId: user._id,
@@ -481,55 +421,41 @@ exports.registerPatient = async (body) => {
   };
 };
 
-exports.getPatientProfile = async (
-  userId
-) => {
-  const patientProfile =
-    await Patient.findOne({
-      userId,
-    }).populate({
-      path: "userId",
-      select: "-passwordHash",
+exports.getPatientProfile = async (userId) => {
+  const patientProfile = await Patient.findOne({
+    userId,
+  }).populate({
+    path: "userId",
+    select: "-passwordHash",
 
-      populate: {
-        path: "roleId",
-        select: "name roleCode",
-      },
-    });
+    populate: {
+      path: "roleId",
+      select: "name roleCode",
+    },
+  });
 
   if (!patientProfile) {
-    throw new ApiError(
-      404,
-      "Patient profile not found"
-    );
+    throw new ApiError(404, "Patient profile not found");
   }
 
   return {
     userId: patientProfile.userId._id,
 
-    firstName:
-      patientProfile.userId.firstName,
+    firstName: patientProfile.userId.firstName,
 
-    lastName:
-      patientProfile.userId.lastName,
+    lastName: patientProfile.userId.lastName,
 
     email: patientProfile.userId.email,
 
-    role:
-      patientProfile.userId.roleId.name,
+    role: patientProfile.userId.roleId.name,
 
-    roleCode:
-      patientProfile.userId.roleId.roleCode,
+    roleCode: patientProfile.userId.roleId.roleCode,
 
-    isVerified:
-      patientProfile.userId.isVerified,
+    isVerified: patientProfile.userId.isVerified,
 
-    status:
-      patientProfile.userId.status,
+    status: patientProfile.userId.status,
 
-    mustChangePassword:
-      patientProfile.userId
-        .mustChangePassword,
+    mustChangePassword: patientProfile.userId.mustChangePassword,
 
     patientId: patientProfile._id,
     UHID: patientProfile.UHID,
@@ -540,27 +466,19 @@ exports.getPatientProfile = async (
 
     address: patientProfile.address,
 
-    emergencyContactName:
-      patientProfile.emergencyContactName,
+    emergencyContactName: patientProfile.emergencyContactName,
 
-    emergencyContactPhone:
-      patientProfile.emergencyContactPhone,
+    emergencyContactPhone: patientProfile.emergencyContactPhone,
   };
 };
 
-exports.updatePatientProfile = async (
-  userId,
-  updateData
-) => {
+exports.updatePatientProfile = async (userId, updateData) => {
   const patient = await Patient.findOne({
     userId,
   });
 
   if (!patient) {
-    throw new ApiError(
-      404,
-      "Patient profile not found"
-    );
+    throw new ApiError(404, "Patient profile not found");
   }
 
   const patientAllowedFields = [
@@ -579,55 +497,39 @@ exports.updatePatientProfile = async (
     }
   });
 
-  if (
-    updateData.firstName !== undefined ||
-    updateData.lastName !== undefined
-  ) {
+  if (updateData.firstName !== undefined || updateData.lastName !== undefined) {
     await User.findByIdAndUpdate(userId, {
-      ...(updateData.firstName !==
-        undefined && {
+      ...(updateData.firstName !== undefined && {
         firstName: updateData.firstName,
       }),
 
-      ...(updateData.lastName !==
-        undefined && {
+      ...(updateData.lastName !== undefined && {
         lastName: updateData.lastName,
       }),
     });
   }
 
   if (updateData.firstName !== undefined) {
-    patient.firstName =
-      updateData.firstName;
+    patient.firstName = updateData.firstName;
   }
 
   if (updateData.lastName !== undefined) {
-    patient.lastName =
-      updateData.lastName;
+    patient.lastName = updateData.lastName;
   }
 
   await patient.save();
 
-  return Patient.findById(
-    patient._id
-  ).populate(
+  return Patient.findById(patient._id).populate(
     "userId",
-    "firstName lastName email"
+    "firstName lastName email",
   );
 };
 
-exports.updatePatient = async (
-  patientId,
-  updateData
-) => {
-  const patient =
-    await Patient.findById(patientId);
+exports.updatePatient = async (patientId, updateData) => {
+  const patient = await Patient.findById(patientId);
 
   if (!patient) {
-    throw new ApiError(
-      404,
-      "Patient not found"
-    );
+    throw new ApiError(404, "Patient not found");
   }
 
   const patientAllowedFields = [
@@ -646,34 +548,24 @@ exports.updatePatient = async (
     }
   });
 
-  if (
-    updateData.firstName !== undefined ||
-    updateData.lastName !== undefined
-  ) {
-    await User.findByIdAndUpdate(
-      patient.userId,
-      {
-        ...(updateData.firstName !==
-          undefined && {
-          firstName: updateData.firstName,
-        }),
+  if (updateData.firstName !== undefined || updateData.lastName !== undefined) {
+    await User.findByIdAndUpdate(patient.userId, {
+      ...(updateData.firstName !== undefined && {
+        firstName: updateData.firstName,
+      }),
 
-        ...(updateData.lastName !==
-          undefined && {
-          lastName: updateData.lastName,
-        }),
-      }
-    );
+      ...(updateData.lastName !== undefined && {
+        lastName: updateData.lastName,
+      }),
+    });
   }
 
   if (updateData.firstName !== undefined) {
-    patient.firstName =
-      updateData.firstName;
+    patient.firstName = updateData.firstName;
   }
 
   if (updateData.lastName !== undefined) {
-    patient.lastName =
-      updateData.lastName;
+    patient.lastName = updateData.lastName;
   }
 
   await patient.save();
@@ -681,42 +573,32 @@ exports.updatePatient = async (
   return patient;
 };
 
-exports.softDeletePatientById = async (
-  patientId,
-  deletedByUserId
-) => {
+exports.softDeletePatientById = async (patientId, deletedByUserId) => {
+
   const patient = await Patient.findOne({
     _id: patientId,
     isDeleted: false,
   });
 
   if (!patient) {
-    throw new ApiError(
-      404,
-      "Patient not found"
-    );
+    throw new ApiError(404, "Patient not found");
   }
 
-  const user = await User.findById(
-    patient.userId
-  );
+  const user = await User.findById(patient.userId);
 
   if (!user) {
-    throw new ApiError(
-      404,
-      "User not found for this patient"
-    );
+    throw new ApiError(404, "User not found for this patient");
   }
 
   const invalidAppointments = await Appointment.find({
     patientId: patient._id,
-    status: { $nin: ["COMPLETED", "CANCELLED"] }
+    status: { $nin: ["COMPLETED", "CANCELLED", "UNATTENDED"] },
   });
 
   if (invalidAppointments.length > 0) {
     throw new ApiError(
       400,
-      "Patient cannot be deleted because active appointments exist"
+      "Patient cannot be deleted because active appointments exist",
     );
   }
 

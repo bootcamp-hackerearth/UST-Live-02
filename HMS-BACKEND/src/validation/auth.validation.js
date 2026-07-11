@@ -81,8 +81,35 @@ const validateFirstLoginPasswordChange = [
     }),
 ];
 
+const validateResetPassword = [
+  passwordValidation,
+
+  body("confirmPassword")
+    .notEmpty()
+    .withMessage("Confirm password is required")
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      return true;
+    }),
+];
+
+const validateForgotPassword = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Enter a valid email"),
+];
+
 module.exports = {
   validateLogin,
   validateChangePassword,
   validateFirstLoginPasswordChange,
+  validateResetPassword,
+  validateForgotPassword
+
 };

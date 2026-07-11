@@ -13,6 +13,7 @@ const appointmentRoutes = require("./src/routes/appointment.route");
 const joinUsRoutes = require("./src/routes/joinUs.route");
 const healthRecordRoutes = require("./src/routes/healthRecord.route");
 const errorMiddleware = require("./src/middleware/error.middleware");
+const seedRoutes = require("./src/routes/seed.route");
 
 const app = new express();
 
@@ -27,7 +28,16 @@ app.use(morgan("dev"));
 
 app.use(express.json());
 
+//to check the vercel is running 
+app.get("/", (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "HMS backend is running",
+  });
+});
+
 app.use(cookieParser());
+app.use("/api/seed", seedRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

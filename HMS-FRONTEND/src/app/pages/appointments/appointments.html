@@ -69,7 +69,8 @@
                         <span class="status-badge" [ngClass]="{
                                 'status-booked': appointment.status === 'BOOKED',
                                 'status-completed': appointment.status === 'COMPLETED',
-                                'status-cancelled': appointment.status === 'CANCELLED'
+                                'status-cancelled': appointment.status === 'CANCELLED',
+                                'status-unattended': appointment.status === 'UNATTENDED'
                             }">
                             {{ appointment.status }}
                         </span>

@@ -514,20 +514,51 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .action-btn {
+  min-width: 72px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
+.edit-btn {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  margin-right: 8px;
+}
+
+.edit-btn:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
 .delete-btn {
-  color: #a32d2d;
-  border: 1px solid #f2b8b8;
-  background: #fcebeb;
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--border-color);
 }
 
 .delete-btn:hover {
-  background: #f7d7d7;
+  background-color: var(--danger-text);
+  color: #ffffff;
+  border-color: var(--danger-text);
+}
+
+.doctor-table-section th:last-child,
+.doctor-table-section td:last-child {
+  min-width: 180px;
+  width: 180px;
 }

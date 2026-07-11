@@ -31,6 +31,16 @@ const verifyRefreshToken = (token) => {
   return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 };
 
+const generatePasswordResetToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_PASSWORD_RESET_EXPIRY,
+  });
+};
+ 
+const verifyPasswordResetToken = (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET);
+};
+
 module.exports = {
   generateToken,
   verifyToken,
@@ -38,4 +48,6 @@ module.exports = {
   generateRefreshToken,
   verifyAccessToken,
   verifyRefreshToken,
+  generatePasswordResetToken,
+  verifyPasswordResetToken
 };

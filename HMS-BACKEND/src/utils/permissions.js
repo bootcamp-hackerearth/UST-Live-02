@@ -19,6 +19,7 @@ const permissions = {
   ADD_APPOINTMENT: ["Owner", "Admin", "Receptionist", "Patient"],
   VIEW_APPOINTMENT: ["Owner", "Admin", "Receptionist", "Doctor", "Patient"],
   CANCEL_APPOINTMENT: ["Owner", "Admin", "Receptionist", "Patient"],
+  UPDATE_APPOINTMENT: ["Owner", "Admin", "Receptionist", "Doctor"],
 
   ADD_HEALTH_RECORD: ["Owner", "Admin", "Receptionist", "Doctor"],
   VIEW_HEALTH_RECORD: ["Owner", "Admin", "Receptionist", "Doctor", "Patient"],

@@ -154,6 +154,11 @@
   color: var(--danger-text);
 }
 
+.status-unattended {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
 .empty-state {
   text-align: center;
   padding: 35px 20px 45px;

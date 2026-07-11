@@ -92,6 +92,23 @@ exports.cancelAppointment = async (req, res, next) => {
     }
 };
 
+exports.markAppointmentUnattended = async (req, res, next) => {
+  try {
+    const appointment =
+      await appointmentService.markAppointmentUnattended(
+        req.params.appointmentId
+      );
+
+    return res.status(200).json({
+      success: true,
+      message: "Appointment marked as unattended successfully",
+      data: appointment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.getAppointmentDetails = async (req, res, next) => {
     try {
         const data = await appointmentService.getAppointmentDetails(req.params.id);

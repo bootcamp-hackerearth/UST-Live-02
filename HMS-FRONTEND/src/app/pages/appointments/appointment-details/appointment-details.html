@@ -143,6 +143,17 @@
             </button>
           }
 
+          @if (canMarkUnattended()) {
+            <button
+              type="button"
+              class="unattended-btn"
+              (click)="markAppointmentUnattended()"
+            >
+              <i class="bi bi-person-x"></i>
+              Mark as Unattended
+            </button>
+          }
+
           @if (canEditDraft()) {
             <button
               type="button"

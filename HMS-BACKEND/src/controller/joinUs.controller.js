@@ -106,3 +106,25 @@ exports.approveJoinUsRequest = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.rejectJoinUsRequest = async (req, res, next) => {
+  try {
+    const { requestId } = req.params;
+    const rejectedBy = req.user?._id;
+    const { reason } = req.body;
+
+    const result = await joinUsService.rejectJoinUsRequest(
+      requestId,
+      rejectedBy,
+      reason,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
