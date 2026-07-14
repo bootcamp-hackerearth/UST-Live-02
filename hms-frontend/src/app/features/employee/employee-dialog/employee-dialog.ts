@@ -237,7 +237,7 @@ export class EmployeeDialog implements OnInit {
           .filter((role) => role?.status !== false)
           .map((role) => role.name)
           .filter((name) => name?.toLowerCase() !== 'patient')
-          .sort();
+          .sort((a, b) => 0);
 
         this.rolesLoading = false;
       },

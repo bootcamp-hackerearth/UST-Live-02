@@ -108,8 +108,7 @@ export class Register implements OnInit {
     const control = this.registerForm.get(controlName);
 
     return !!(
-      control &&
-      control.invalid &&
+      control?.invalid &&
       (control.dirty || control.touched)
     );
   }
